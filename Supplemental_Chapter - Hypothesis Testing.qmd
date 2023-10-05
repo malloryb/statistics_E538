@@ -1,0 +1,295 @@
+---
+title: "Supplemental Chapter - Hypothesis Testing"
+author: "Mallory Barnes"
+---
+
+------------------------------------------------------------------------
+
+# Hypothesis Testing
+
+Hypothesis testing is a way to decide if a certain statement about a population might be true based on sample data.
+
+## Example:
+
+Let's say we want to know if the average pollution in a set of water samples is above the legal limit. Or if young deer in a region are, on average, healthy.
+
+#### Step 1: Define Your Hypotheses
+
+First, we need to define two hypotheses: the **research hypothesis** and the **null hypothesis**.
+
+-   **Research Hypothesis (H~a~)**: This is what we aim to support. **Remember, we can never "prove" H~a~, only fail to reject H~0~**. It can take a few forms based on the question:
+    -   H~a~: average pollution \> legal limit (pollution is too high)
+    -   H~a~: average pollution \< legal limit (pollution is too low)
+    -   H~a~: average pollution ≠ legal limit (pollution is just different)
+-   **Null Hypothesis (H~0~)**: This is the default or 'no change' scenario. It's opposite to the research hypothesis.
+    -   H~0~: average pollution ≤ legal limit (for the first H~a~)
+    -   H~0~: average pollution ≥ legal limit (for the second H~a~)
+    -   H~0~: average pollution = legal limit (for the third H~a~)
+
+#### Step 2: Choose Your Test Statistic
+
+Based on the data, we'll compute a **test statistic**. This number will help us decide which hypothesis seems more likely.
+
+#### Step 3: Determine the Rejection Region
+
+Before running the test, we decide on a **rejection region**. If our test statistic falls in this region, we'll reject the null hypothesis.
+
+#### Step 4: Check Assumptions
+
+Before drawing conclusions, ensure that the test's conditions and assumptions are satisfied.
+
+#### Step 5: Draw Conclusions
+
+Finally, based on the test statistic and the rejection region, decide whether to reject the null hypothesis.
+
+------------------------------------------------------------------------
+
+# Errors in Hypothesis Testing
+
+Sometimes, even with the best methods, we make incorrect decisions.
+
+-   **Type I Error (**$\alpha$): This happens when we mistakenly reject the true null hypothesis. Imagine wrongly accusing someone innocent. Typically, $\alpha$ is set at 0.05 (5%).
+
+-   **Type II Error (**$\beta$): Here, we mistakenly accept a false null hypothesis. Think of it as letting a guilty person go free.
+
+| Decision                | If the null hypothesis is True | If the null hypothesis is False |
+|-------------------|--------------------------|----------------------------|
+| **Reject H~0~**         | Type I error (prob = $\alpha$) | Correct (prob = 1 - $\beta$)    |
+| **Fail to reject H~0~** | Correct (prob = 1 - $\alpha$)  | Type II error (prob = $\beta$)  |
+
+> **Key Takeaway**: As $\alpha$ gets smaller, $\beta$ gets bigger, and vice-versa.
+
+------------------------------------------------------------------------
+
+# One Tail or Two?
+
+Consider our pollution scenario, where the historic pollution level was 10.0 ppb. We can set our hypotheses as:
+
+-   **H~0~**: pollution = 10.0 ppb. This is a two-tailed test. We want to know if the pollution is either significantly higher or lower than 10 ppb.
+
+-   **H~0~**: pollution \< 10.0 ppb. A one-tailed test. We're checking if pollution might be significantly above 10 ppb.
+
+-   **H~0~**: pollution \> 10.0 ppb. Another one-tailed test. We're seeing if pollution might be significantly below 10 ppb.
+
+------------------------------------------------------------------------
+
+# Deciphering Significance with P-values
+
+The p-value gives us an idea of how strange our data would appear if the null hypothesis were indeed accurate.
+
+-   **One-Tailed Test**: The p-value shows the likelihood of observing an average as extreme as our sample's if the null hypothesis stands.
+
+-   **Two-Tailed Test**: This p-value represents the odds of spotting an average as different from the null value as our sample's.
+
+> **Rule of Thumb**: If the p-value is less than $\alpha$, we opt to reject the null hypothesis.
+
+# Graphical Review
+---
+
+## Key Players in Hypothesis Testing Visualization
+
+Sure thing, I've revised the Markdown code to ensure consistent terminology throughout the document. Here's the revised version:
+
+---
+
+## Key Players in Hypothesis Testing Visualization
+
+We define and visualize the core components essential to understanding the graphical representations of hypothesis testing:
+
+1. **Null Distribution** - The hypothesized parent distribution under the assumption that the null hypothesis H~0~ is true.
+2. **Inferred Sample Distribution** - The inferred parent distribution of our sample, often associated with the alternate hypothesis H~a~.
+3. **True Parent Distribution** - The genuine distribution from which our sample originates.
+4. **Sampling Distribution of the Sample Mean** - Represents the means of various samples drawn from the parent distribution.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=3}
+library(ggplot2)
+theme_set(theme_minimal() + 
+          theme(legend.position="right", axis.text = element_blank(), 
+                axis.title = element_blank(), axis.ticks = element_blank()))
+
+# Define the data
+x_vals <- seq(-4.5, 4.5, by=0.01)
+h0 <- dnorm(x_vals, mean=0, sd=0.5)
+sample_parent <- dnorm(x_vals, mean=0.5, sd=0.5)
+sampling_mean <- dnorm(x_vals, mean=0.75, sd=0.2)
+Inferred_sample <- dnorm(x_vals, mean=1, sd=0.5)
+
+# Plot
+p_key <- ggplot() + 
+  geom_line(aes(x_vals, h0, color="Null Distribution"), size=1.5) +
+  geom_line(aes(x_vals, sample_parent, color="True Parent Distribution"), size=1.5) +
+  geom_line(aes(x_vals, Inferred_sample, color="Inferred Sample Distribution"), linetype="dashed", size=1.2) +
+  geom_line(aes(x_vals, sampling_mean, color="Sampling Distribution of the Mean"), linetype="dotdash", size=1) +
+  scale_color_manual(values=c("Null Distribution"="blue", "True Parent Distribution"="orange", "Inferred Sample Distribution"="salmon", "Sampling Distribution of the Mean"="black")) +
+  theme(legend.position="right", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank(),
+        legend.text = element_text(size = 8))  # Adjusted legend text size
+
+print(p_key)
+```
+
+Using the above, we can easily identify and understand the different components in the hypothesis testing figures.
+
+---
+
+With this in place, you should be able to refer back to this section as a quick reference when going through the subsequent detailed graphs.
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=2}
+# Define the data and functions
+x_vals <- seq(-4, 4, by=0.01)
+ha_left <- dnorm(x_vals, mean=-2, sd=1)
+h0 <- dnorm(x_vals, mean=0, sd=1)
+ha_right <- dnorm(x_vals, mean=2, sd=1)
+
+# Plot
+p <- ggplot() + 
+  geom_line(aes(x_vals, ha_left, color="Inferred Sample Distribution"), linetype="dashed", size=1.2) +
+  geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1.2) +
+  geom_line(aes(x_vals, ha_right, color="Inferred Sample Distribution"), linetype="dashed", size=1.2) +
+  annotate("text", x = 0, y = 0.42, label = expression("H"[0] ~ ": " ~ mu == "X    " ~ "H"[a] ~ ": " ~ mu != "X"), size = 5) +
+  scale_color_manual(values=c("Inferred Sample Distribution"="salmon", "Null Distribution"="blue")) +
+  theme_minimal() + 
+  ylim(0,0.6)+
+  theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
+  labs(title="Hypothesis Testing Concepts")
+
+print(p)
+```
+
+For a two-tailed alternative, we are interested in the possibility that a sample comes from a parent distribution that may have a lower or higher location than the null.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=2}
+library(ggplot2)
+library(gridExtra)
+
+# Define the data and functions for the one-tailed alternatives
+x_vals <- seq(-4, 4, by=0.01)
+ha_left <- dnorm(x_vals, mean=-2, sd=1)
+h0 <- dnorm(x_vals, mean=0, sd=1)
+ha_right <- dnorm(x_vals, mean=2, sd=1)
+
+# First Plot: Ha: µ < X
+p1 <- ggplot() + 
+  geom_line(aes(x_vals, ha_left, color="Inferred Sample Distribution (Ha)"), linetype="dashed", size=1.2) +
+  geom_line(aes(x_vals, h0, color="Null Distribution (H0)"), linetype="solid", size=1.2) +
+  annotate("text", x = 0, y = 0.42, label = expression("H"[a] ~ ": " ~ mu < "X"), size = 5) +
+  scale_color_manual(values=c("Inferred Sample Distribution (Ha)"="salmon", "Null Distribution (H0)"="blue")) +
+  theme_minimal() + 
+    ylim(0,0.6)+
+  theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
+
+# Second Plot: Ha: µ > X
+p2 <- ggplot() + 
+  geom_line(aes(x_vals, h0, color="Null Distribution (H0)"), linetype="solid", size=1.2) +
+  geom_line(aes(x_vals, ha_right, color="Inferred Sample Distribution (Ha)"), linetype="dashed", size=1.2) +
+  annotate("text", x = 0, y = 0.42, label = expression("H"[a] ~ ": " ~ mu >"X"), size = 5) +
+  scale_color_manual(values=c("Inferred Sample Distribution (Ha)"="salmon", "Null Distribution (H0)"="blue")) +
+  theme_minimal() + 
+    ylim(0,0.6)+
+  theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
+
+# Plot them side by side
+grid.arrange(p1, p2, ncol=2)
+```
+
+For a one-tailed alternative, we are interested in the possibility that a sample comes from a parent distribution that is either at a lower or higher location than the null, but not both.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=2}
+# Define the data and functions
+x_vals <- seq(-4.5, 4.5, by=0.01)
+h0 <- dnorm(x_vals, mean=0, sd=1)
+
+# Plot: Two identical distributions
+p3 <- ggplot() + 
+    geom_line(aes(x_vals, h0, color="Sample"), linetype="solid", size=4, alpha=1) +
+  geom_line(aes(x_vals, h0, color="H0"), linetype="solid", size=1) +
+  scale_color_manual(values=c("Sample"="orange", "H0"="blue")) +
+  theme_minimal() + 
+  theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
+  labs(title=expression("H"[0] ~ ": " ~ mu == "X    " ~ mu >= "X    " ~ mu <= "X"))
+
+print(p3)
+```
+
+In a \"perfect\" world in which the null hypothesis is true, the sample\'s parent distribution (solid, orange) is exactly the same parent distribution described by the null hypothesis (solid, blue).
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=4, fig.height=3}
+ sampling_dist <- dnorm(x_vals, mean=0, sd=0.5)  # Sample distribution is narrower
+
+# Plot: Sampling distribution
+p4 <- ggplot() + 
+  geom_line(aes(x_vals, h0, color="H0"), linetype="solid", size=1.5) +
+  geom_line(aes(x_vals, h0, color="Sample Parent"), linetype="dashed", size=1.5) +
+  geom_line(aes(x_vals, sampling_dist, color="Sampling"), linetype="dotdash", size=1) +
+  geom_segment(aes(x = 0, xend = 0, y = 0, yend = max(h0)), linetype="solid", size=0.5) + # Thin black vertical line
+  geom_segment(aes(x = -0.5, xend = 0.5, y = 0, yend = 0), size=1.5) +  # Thick short black line for CI
+  scale_color_manual(values=c("Sample Parent"="salmon", "H0"="blue", "Sampling"="black")) +
+  theme_minimal() + 
+  theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
+
+print(p4)
+```
+
+**We never know the true parent distribution of the sample** -- we infer it from the sample. Here, the tall dash-dotted line shows the sampling distribution of the mean, from which we infer the parent distribution (salmon, dashed).
+
+In this even more perfect world, that parent distribution is the same as the parent distribution described by the null hypothesis and we have taken a perfectly representative sample, so all 3 curves line up perfectly on the same mean. The thick, short, flat black line is the confidence interval for the sample mean.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=3}
+x_vals <- seq(-4.5, 4.5, by=0.01)
+
+# Distributions
+h0 <- dnorm(x_vals, mean=0, sd=1)
+sample_parent <- dnorm(x_vals, mean=0.5, sd=1)
+sampling_mean <- dnorm(x_vals, mean=0.5, sd=0.5)
+
+p7 <- ggplot() + 
+  geom_line(aes(x=x_vals, y=h0, color="Null Hypothesis"), size=1.5) +
+  geom_line(aes(x=x_vals, y=sample_parent, color="Sample Parent"), size=1.5, linetype="solid") +
+  geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Mean"), linetype="dashed", size=1) +
+  theme_minimal() + 
+  theme(legend.position="right", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
+  scale_color_manual(values=c("Null Hypothesis"="blue", "Sample Parent"="orange", "Sampling Mean"="black"))
+
+print(p7)
+```
+
+In an imperfect but convenient world, the sample is not a perfect representation of the parent population, but is fairly close. The sample mean is close to hypothesized mean, and (in the 2-tailed case) the confidence interval for the sample mean "catches" the mean of the null hypothesis (thin solid line). A hypothesis test will correctly determine that there is not a significant difference between the sample mean and the mean of the null hypothesis.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=3}
+Inferred_sample <- dnorm(x_vals, mean=2, sd=1)
+h0_shifted <- dnorm(x_vals, mean=-0.5, sd=1)
+sampling_mean_shifted <- dnorm(x_vals, mean=2, sd=0.5)
+
+p8 <- ggplot() + 
+  geom_line(aes(x=x_vals, y=h0_shifted, color="Null Hypothesis"), size=1.5) +
+  geom_line(aes(x=x_vals, y=Inferred_sample, color="Inferred Sample"), size=1.5, linetype="dashed") +
+  geom_line(aes(x=x_vals, y=sampling_mean_shifted, color="Sampling Mean"), linetype="dashed", size=1) +
+  theme_minimal() + 
+  theme(legend.position="right", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
+  scale_color_manual(values=c("Null Hypothesis"="blue", "Inferred Sample"="salmon", "Sampling Mean"="black"))
+
+print(p8)
+```
+
+In an imperfect and inconvenient world, the random sample is, by chance, sufficiently imperfect that the apparent (inferred) parent distribution is far from the true parent distribution and (in the 2-tailed case) the confidence interval for the sample mean no longer "catches" the mean of the null hypothesis. A hypothesis test will now find a significant difference between the sample mean and the mean of the null hypothesis. **This is a type I error**.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=3}
+
+true_alternate <- dnorm(x_vals, mean=4, sd=1)
+Inferred_sample <- dnorm(x_vals, mean=1, sd=1)
+sampling_mean_shifted <- dnorm(x_vals, mean=1, sd=0.5)
+
+p9 <- ggplot() + 
+  geom_line(aes(x=x_vals, y=h0, color="Null Hypothesis"), size=1.5) +
+  geom_line(aes(x=x_vals, y=true_alternate, color="True Alternate"), size=1.5) +
+  geom_line(aes(x=x_vals, y=Inferred_sample, color="Inferred Sample"), size=1.5, linetype="dashed") +
+  geom_line(aes(x=x_vals, y=sampling_mean_shifted, color="Sampling Mean"), linetype="dashed", size=1) +
+  theme_minimal() + 
+  xlim(-2,7)+
+  theme(legend.position="right", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
+  scale_color_manual(values=c("Null Hypothesis"="blue", "True Alternate"="orange", "Inferred Sample"="salmon", "Sampling Mean"="black"))
+
+print(p9)
+```
+
+In another imperfect and inconvenient world, the sample (dashed lines) really is drawn from the alternative distribution (the sample's true parent distribution; orange), but is unrepresentative of its parent and similar to the null (solid black line). The confidence interval (in the 2-tailed case) of the sample "catches" the mean of the null hypothesis although it is far from the mean of the true parent of the sample. A hypothesis test will find no significant difference between the sample mean and the mean of the null hypothesis. **This is a type II error.**
