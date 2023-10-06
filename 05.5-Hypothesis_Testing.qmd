@@ -58,9 +58,7 @@ Grasping how these three terms connect and differ is key to making sense of the 
 
 Let's say we want to know if the average pollution in a set of water samples is above the legal limit. Or if young deer in a region are, on average, healthy.
 
-1. Define Your Hypotheses
-
-First, we need to define two hypotheses: the **research hypothesis** and the **null hypothesis**.
+**Step 1**: Define Your Hypotheses: First, we need to define two hypotheses: the **research hypothesis** and the **null hypothesis**.
 
 -   **Research Hypothesis (H~a~)**: This is what we aim to support. **Keep in mind, we can't exactly "prove" H~a~ is correct, we can only say that H~0~ isn't likely**. It can take a few forms based on the question:
     -   H~a~: average pollution \> legal limit (pollution is too high)
@@ -71,21 +69,13 @@ First, we need to define two hypotheses: the **research hypothesis** and the **n
     -   H~0~: average pollution ≥ legal limit (for the second H~a~)
     -   H~0~: average pollution = legal limit (for the third H~a~)
 
-2. Choose Your Test Statistic
+**Step 2**: Choose Your Test Statistic: Based on the data, we'll compute a **test statistic**. This number will help us decide which hypothesis seems more likely.
 
-Based on the data, we'll compute a **test statistic**. This number will help us decide which hypothesis seems more likely.
+**Step 3**: Determine the Rejection Region: Before running the test, we decide on a **rejection region**. If our test statistic falls in this region, we'll reject the null hypothesis.
 
-3. Determine the Rejection Region
+**Step 4**: Check Assumptions: Before drawing conclusions, ensure that the test's conditions and assumptions are satisfied.
 
-Before running the test, we decide on a **rejection region**. If our test statistic falls in this region, we'll reject the null hypothesis.
-
-4. Check Assumptions
-
-Before drawing conclusions, ensure that the test's conditions and assumptions are satisfied.
-
-5. Draw Conclusions
-
-Finally, based on the test statistic and the rejection region, decide whether to reject the null hypothesis.
+**Step 5**: Draw Conclusions: Finally, based on the test statistic and the rejection region, decide whether to reject the null hypothesis.
 
 ---
 
@@ -148,12 +138,11 @@ We define and visualize the core components essential to understanding the graph
 
 ```{r}
 #| label: fig-5-5.keyfig
-#| fig-cap: "This figure shows the 4 important distributions that we need to think about with regard to hypothesis testing."
+#| fig-cap: "Comparison of four distributions essential for hypothesis testing: Null, True Parent, Inferred Parent, and Sampling Distribution of the Sample Mean."
 #| out-width: "100%"
 
-library(ggplot2)
-theme_set(theme_minimal() + 
-          theme(legend.position="right", axis.text = element_blank(), 
+theme_set(theme_classic() + 
+          theme(legend.position=c(0.8,0.8), axis.text = element_blank(), # Adjusted legend position to be inside the plot
                 axis.title = element_blank(), axis.ticks = element_blank()))
 
 # Define the data
@@ -170,13 +159,15 @@ p_key <- ggplot() +
   geom_line(aes(x_vals, inferred_parent, color="Inferred Parent Distribution"), linetype="dashed", size=1.2) +
   geom_line(aes(x_vals, sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
   scale_color_manual(values=c("Null Distribution"="blue", "True Parent Distribution"="orange", "Inferred Parent Distribution"="green3", "Sampling Distribution of the Sample Mean"="darkgreen")) +
-  theme(legend.position="right", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank(),
-        legend.text = element_text(size = 8))  # Adjusted legend text size
+ theme(legend.position=c(0.2,0.8),  # Centered legend
+      legend.text = element_text(size = 12),  # Increased legend text size
+      plot.margin = margin(1, 1, 1, 4, "cm")) + # Adjusted plot margins size
+  labs(color = NULL)  # Removes the "colour" label from the legend
 
 print(p_key)
 ```
 
-Using the above, we can hopefully identify and understand the different components in the hypothesis testing figures. With this in place, you should be able to refer back to this section as a quick reference when going through the subsequent detailed graphs.
+From the figure above, we've outlined the various elements crucial for hypothesis testing. Think of this section as a handy guide. Whenever you come across detailed graphs later in this chapter, you can circle back here for clarity.
 ---
 
 
@@ -184,9 +175,8 @@ Using the above, we can hopefully identify and understand the different componen
 ```{r}
 #| label: fig-5-5.twotailed
 #| fig-cap: "Two-tailed distribution"
+#| out-width: "100%"
 
-library(ggplot2)
-library(gridExtra)
 # Define the data and functions
 x_vals <- seq(-6, 6, by=0.01)
 ha_left <- dnorm(x_vals, mean=-3, sd=0.75)
@@ -200,7 +190,7 @@ p <- ggplot() +
   geom_line(aes(x_vals, ha_right, color="Inferred Parent Distribution"), linetype="dashed", size=1.2) +
   annotate("text", x = 0, y = 0.62, label = expression("H"[0] ~ ": " ~ mu == "X    " ~ "H"[a] ~ ": " ~ mu != "X"), size = 5) +
   scale_color_manual(values=c("Null Distribution"="blue", "Inferred Parent Distribution"="green3"))+
-  theme_minimal() + 
+  theme_classic() + 
   ylim(0,0.8)+
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) 
 
@@ -214,44 +204,47 @@ For a two-tailed alternative, we are interested in the possibility that a sample
 
 ```{r}
 #| label: fig-5-5.onetailed
-#| fig-cap: "One-tailed t-test"
-
+#| fig-cap: "Side-by-side comparison of one-tailed t-test scenarios: exploring if our sample comes from a distribution either below or above the null hypothesis."
+#| out-width: "100%"
 
 # Define the data and functions for the one-tailed alternatives
 x_vals <- seq(-10, 10, by=0.01)
-ha_left <- dnorm(x_vals, mean=-4, sd=1.5)
-h0 <- dnorm(x_vals, mean=0, sd=1.5)
-ha_right <- dnorm(x_vals, mean=4, sd=1.5)
+ha_left <- dnorm(x_vals, mean=-4, sd=2)  # Adjusted standard deviation for wider curve
+h0 <- dnorm(x_vals, mean=0, sd=2)       # Adjusted standard deviation for wider curve
+ha_right <- dnorm(x_vals, mean=4, sd=2) # Adjusted standard deviation for wider curve
 
 # First Plot: Ha: µ < X
 p1 <- ggplot() + 
   geom_line(aes(x_vals, ha_left, color="Inferred Parent Distribution"), linetype="dashed", size=1.2) +
   geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1.2) +
-  annotate("text", x = 0, y = 0.32, label = expression("H"[a] ~ ": " ~ mu < "X"), size = 5) +
+    ylim(0, 0.3)+
+  annotate("text", x = 0, y = 0.22, label = expression("H"[a] ~ ": " ~ mu < "X"), size = 5) + # adjusted y value
 scale_color_manual(values=c("Null Distribution"="blue", "Inferred Parent Distribution"="green3"))+
-  theme_minimal() + 
+  theme_classic() + 
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
 
 # Second Plot: Ha: µ > X
 p2 <- ggplot() + 
   geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1.2) +
   geom_line(aes(x_vals, ha_right, color="Inferred Parent Distribution"), linetype="dashed", size=1.2) +
-  annotate("text", x = 0, y = 0.32, label = expression("H"[a] ~ ": " ~ mu > "X"), size = 5) +
+  annotate("text", x = 0, y = 0.22, label = expression("H"[a] ~ ": " ~ mu > "X"), size = 5) + # adjusted y value
 scale_color_manual(values=c("Null Distribution"="blue", "Inferred Parent Distribution"="green3"))+
-  theme_minimal() + 
+    ylim(0, 0.3)+
+  theme_classic() + 
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
 
 # Plot them side by side
 grid.arrange(p1, p2, ncol=2)
 ```
 
-For a one-tailed alternative, we are interested in the possibility that a sample comes from a parent distribution that is either at a lower or higher location than the null, but not both.
+In a one-tailed t-test, we're examining if our sample originates from a parent distribution that's situated either below or above the null hypothesis. Unlike a two-tailed test, we're only interested in one of these directions, not both.
 
 ---
 
 ```{r}
 #| label: fig-5-5.null_identical_sample
 #| fig-cap: "True parent distribution & null distribution are the same"
+#| out-width: "100%"
 
 # Define the data and functions
 x_vals <- seq(-4.5, 4.5, by=0.01)
@@ -262,11 +255,11 @@ p3 <- ggplot() +
   geom_line(aes(x_vals, h0, color="True Parent Distribution"), linetype="solid", size=4, alpha=1) +
   geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1) +
   annotate("text", x = -2.5, y = 0.35, label = expression("H"[0] ~ ": " ~ mu == "X"), size = 5) +
-  annotate("text", x = 0, y = 0.35, label = expression(mu >= "X"), size = 5) +
-  annotate("text", x = 2.5, y = 0.35, label = expression(mu <= "X"), size = 5) +
+  annotate("text", x = -2.5, y = 0.25, label = expression(mu >= "X"), size = 5) +
+  annotate("text", x = -2.5, y = 0.15, label = expression(mu <= "X"), size = 5) +
   geom_vline(aes(xintercept=0), linetype="dotted", color="black", size=0.5) +
 scale_color_manual(values=c("Null Distribution"="blue", "True Parent Distribution"="orange"))+
-  theme_minimal() + 
+  theme_classic() + 
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
 
 print(p3)
@@ -279,6 +272,7 @@ In a \"perfect\" world in which the null hypothesis is true, the sample\'s paren
 ```{r}
 #| label: fig-5-5.perfectly_representative_sample
 #| fig-cap: "Here, we have a perfectly representative sample"
+#| out-width: "100%"
 
 x_vals <- seq(-6, 6, by=0.01)
 h0 <- dnorm(x_vals, mean=0, sd=1) # Null distribution
@@ -290,9 +284,9 @@ p4 <- ggplot() +
   geom_line(aes(x=x_vals, y=h0, color="True Parent Distribution"), linetype="dashed", size=1.5) +
   geom_line(aes(x=x_vals, y=sampling_dist, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
   geom_vline(aes(xintercept=0), linetype="dotted", color="black", size=0.5) +
-  geom_segment(aes(x = -0.5, xend = 0.5, y = 0, yend = 0), color="darkgreen", size=1.5) +  # Thick short darkgreen line for CI
+geom_segment(aes(x = -0.7, xend = 0.7, y = 0, yend = 0), color="darkgreen", size=1.5)+ # Adjusted CI width
 scale_color_manual(values=c("Null Distribution"="blue", "True Parent Distribution"="orange", "Sampling Distribution of the Sample Mean"="darkgreen"))+
-  theme_minimal() + 
+  theme_classic() + 
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
 
 print(p4)
@@ -307,6 +301,7 @@ In this even more perfect world, that parent distribution is the same as the par
 ```{r}
 #| label: fig-5-5.sample_imperfect_convenient
 #| fig-cap: "Imperfect, but convenient"
+#| out-width: "100%"
 
 x_vals <- seq(-6, 6, by=0.01)
 h0 <- dnorm(x_vals, mean=0, sd=1)
@@ -321,7 +316,7 @@ p7 <- ggplot() +
   geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
   geom_vline(aes(xintercept=0), linetype="dotted", color="black", size=0.5) +
   geom_segment(aes(x = CI_left, xend = CI_right, y = 0, yend = 0), color="darkgreen", size=1.5) +  # Thick short darkgreen line for CI
-  theme_minimal() + 
+  theme_classic() + 
   theme(legend.position="right", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
   scale_color_manual(values=c("Null Distribution"="blue", "True Parent Distribution"="orange", "Sampling Distribution of the Sample Mean"="darkgreen"))
 
@@ -335,6 +330,7 @@ In an imperfect but convenient world, the sample is not a perfect representation
 ```{r}
 #| label: fig-5-5.type1_error
 #| fig-cap: "Type 1 Error"
+#| out-width: "100%"
 
 h0_shifted <- dnorm(x_vals, mean=-0.5, sd=1)
 Inferred_sample <- dnorm(x_vals, mean=2, sd=1)
@@ -348,7 +344,7 @@ p8 <- ggplot() +
   geom_line(aes(x=x_vals, y=sampling_mean_shifted, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
    geom_vline(aes(xintercept=0), linetype="dotted", color="black", size=0.5) +
   geom_segment(aes(x = CI_left, xend = CI_right, y = 0, yend = 0), color="darkgreen", size=1.5) +  # Thick short darkgreen line for CI
-  theme_minimal() + 
+  theme_classic() + 
   theme(legend.position="right", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
   scale_color_manual(values=c("Null Distribution"="blue", "Inferred Parent Distribution"="green3", "Sampling Distribution of the Sample Mean"="darkgreen"))
 
@@ -363,6 +359,7 @@ In an imperfect and inconvenient world, the random sample is, by chance, suffici
 #| label: fig-5-5.type2_error
 #| fig-cap: "Type 2 Error"
 
+
 true_alternate <- dnorm(x_vals, mean=4, sd=1)
 Inferred_sample <- dnorm(x_vals, mean=1, sd=1)
 sampling_mean_shifted <- dnorm(x_vals, mean=1, sd=0.5)
@@ -376,7 +373,7 @@ p9 <- ggplot() +
   geom_line(aes(x=x_vals, y=sampling_mean_shifted, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
    geom_vline(aes(xintercept=0), linetype="dotted", color="black", size=0.5) +
   geom_segment(aes(x = CI_left, xend = CI_right, y = 0, yend = 0), color="darkgreen", size=1.5) +  # Thick short darkgreen line for CI
-  theme_minimal() + 
+  theme_classic() + 
   theme(legend.position="right", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
   scale_color_manual(values=c("Null Distribution"="blue", "True Parent Distribution"="orange", "Inferred Parent Distribution"="green3", "Sampling Distribution of the Sample Mean"="darkgreen"))
 
