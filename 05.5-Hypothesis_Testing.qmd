@@ -170,8 +170,6 @@ print(p_key)
 From the figure above, we've outlined the various elements crucial for hypothesis testing. Think of this section as a handy guide. Whenever you come across detailed graphs later in this chapter, you can circle back here for clarity.
 ---
 
-
-
 ```{r}
 #| label: fig-5-5.twotailed
 #| fig-cap: "Two-tailed distribution"
@@ -209,7 +207,7 @@ For a two-tailed alternative, we are interested in the possibility that a sample
 
 # Define the data and functions for the one-tailed alternatives
 x_vals <- seq(-10, 10, by=0.01)
-ha_left <- dnorm(x_vals, mean=-4, sd=2)  # Adjusted standard deviation for wider curve
+ha_left <- dnorm(x_vals, mean=-5, sd=2)  # Adjusted standard deviation for wider curve
 h0 <- dnorm(x_vals, mean=0, sd=2)       # Adjusted standard deviation for wider curve
 ha_right <- dnorm(x_vals, mean=4, sd=2) # Adjusted standard deviation for wider curve
 
@@ -217,7 +215,7 @@ ha_right <- dnorm(x_vals, mean=4, sd=2) # Adjusted standard deviation for wider 
 p1 <- ggplot() + 
   geom_line(aes(x_vals, ha_left, color="Inferred Parent Distribution"), linetype="dashed", size=1.2) +
   geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1.2) +
-    ylim(0, 0.3)+
+    ylim(0, 0.25)+
   annotate("text", x = 0, y = 0.22, label = expression("H"[a] ~ ": " ~ mu < "X"), size = 5) + # adjusted y value
 scale_color_manual(values=c("Null Distribution"="blue", "Inferred Parent Distribution"="green3"))+
   theme_classic() + 
@@ -255,8 +253,8 @@ p3 <- ggplot() +
   geom_line(aes(x_vals, h0, color="True Parent Distribution"), linetype="solid", size=4, alpha=1) +
   geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1) +
   annotate("text", x = -2.5, y = 0.35, label = expression("H"[0] ~ ": " ~ mu == "X"), size = 5) +
-  annotate("text", x = -2.5, y = 0.25, label = expression(mu >= "X"), size = 5) +
-  annotate("text", x = -2.5, y = 0.15, label = expression(mu <= "X"), size = 5) +
+  annotate("text", x = -2.5, y = 0.33, label = expression(mu >= "X"), size = 5) +
+  annotate("text", x = -2.5, y = 0.31, label = expression(mu <= "X"), size = 5) +
   geom_vline(aes(xintercept=0), linetype="dotted", color="black", size=0.5) +
 scale_color_manual(values=c("Null Distribution"="blue", "True Parent Distribution"="orange"))+
   theme_classic() + 
@@ -274,22 +272,44 @@ In a \"perfect\" world in which the null hypothesis is true, the sample\'s paren
 #| fig-cap: "Here, we have a perfectly representative sample"
 #| out-width: "100%"
 
-x_vals <- seq(-6, 6, by=0.01)
-h0 <- dnorm(x_vals, mean=0, sd=1) # Null distribution
-sampling_dist <- dnorm(x_vals, mean=0, sd=0.5)  # Sampling distribution is narrower
+plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd, true_mean, true_sd) {
+  x_vals <- seq(-6, 6, by=0.01)
+  
+  h0 <- dnorm(x_vals, mean=null_mean, sd=null_sd)
+  sampling_mean <- dnorm(x_vals, mean=sample_mean, sd=sample_sd)
+  inferred_parent <- dnorm(x_vals, mean=inferred_mean, sd=inferred_sd)
+  true_parent <- dnorm(x_vals, mean=true_mean, sd=true_sd)
+  CI_left <- qnorm(0.025, mean=sample_mean, sd=sample_sd)
+  CI_right <- qnorm(0.975, mean=sample_mean, sd=sample_sd)
+  y_intersect = dnorm(null_mean, mean=null_mean, sd=null_sd)
 
-# Plot: Sampling distribution
-p4 <- ggplot() + 
-  geom_line(aes(x=x_vals, y=h0, color="Null Distribution"), linetype="solid", size=1.5) +
-  geom_line(aes(x=x_vals, y=h0, color="True Parent Distribution"), linetype="dashed", size=1.5) +
-  geom_line(aes(x=x_vals, y=sampling_dist, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
-  geom_vline(aes(xintercept=0), linetype="dotted", color="black", size=0.5) +
-geom_segment(aes(x = -0.7, xend = 0.7, y = 0, yend = 0), color="darkgreen", size=1.5)+ # Adjusted CI width
-scale_color_manual(values=c("Null Distribution"="blue", "True Parent Distribution"="orange", "Sampling Distribution of the Sample Mean"="darkgreen"))+
-  theme_classic() + 
-  theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
+  
+  p <- ggplot() + 
+    geom_line(aes(x=x_vals, y=h0, color="Null Distribution"), size=1.5) +
+    geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
+    geom_line(aes(x=x_vals, y=inferred_parent, color="Inferred Parent Distribution"), linetype="dashed", size=1.5) +
+    geom_line(aes(x=x_vals, y=true_parent, color="True Parent Distribution"), size=1.5) +
+    geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dotted", color="black", size=1) +
+    geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) +
+    theme_classic() + 
+    theme(legend.position='bottom', 
+          axis.text = element_blank(), 
+          axis.title = element_blank(), 
+          axis.ticks = element_blank(), 
+          legend.text = element_text(size = 12)) + 
+    guides(color=guide_legend(title=NULL)) +
+    scale_color_manual(values=c("Null Distribution"="blue", 
+                                "Sampling Distribution of the Sample Mean"="darkgreen", 
+                                "Inferred Parent Distribution"="green3", 
+                                "True Parent Distribution"="orange"))
 
+  return(p)
+}
+
+
+p4 <-  plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=0.6, sample_sd=0.3, inferred_mean=0.6, inferred_sd=1, true_mean=0.5, true_sd=1)
 print(p4)
+
 ```
 
 **We never know the true parent distribution of the sample** -- we infer it from the sample. Here, the tall dash-dotted line shows the sampling distribution of the mean, from which we infer the parent distribution (green3, dashed).
@@ -303,24 +323,10 @@ In this even more perfect world, that parent distribution is the same as the par
 #| fig-cap: "Imperfect, but convenient"
 #| out-width: "100%"
 
-x_vals <- seq(-6, 6, by=0.01)
-h0 <- dnorm(x_vals, mean=0, sd=1)
-sample_parent <- dnorm(x_vals, mean=0.5, sd=1)
-sampling_mean <- dnorm(x_vals, mean=0.5, sd=0.5)
-CI_left <- qnorm(0.025, mean=0.5, sd=0.5)
-CI_right <- qnorm(0.975, mean=0.5, sd=0.5)
-
-p7 <- ggplot() + 
-  geom_line(aes(x=x_vals, y=h0, color="Null Distribution"), size=1.5) +
-  geom_line(aes(x=x_vals, y=sample_parent, color="True Parent Distribution"), size=1.5, linetype="solid") +
-  geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
-  geom_vline(aes(xintercept=0), linetype="dotted", color="black", size=0.5) +
-  geom_segment(aes(x = CI_left, xend = CI_right, y = 0, yend = 0), color="darkgreen", size=1.5) +  # Thick short darkgreen line for CI
-  theme_classic() + 
-  theme(legend.position="right", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
-  scale_color_manual(values=c("Null Distribution"="blue", "True Parent Distribution"="orange", "Sampling Distribution of the Sample Mean"="darkgreen"))
+p7 <- plot_distributions(null_mean=-0.2, null_sd=1, sample_mean=0.5, sample_sd=0.4, inferred_mean=0.5, inferred_sd=1, true_mean=0.5, true_sd=1)
 
 print(p7)
+
 ```
 
 In an imperfect but convenient world, the sample is not a perfect representation of the parent population, but is fairly close. The sample mean is close to hypothesized mean, and (in the 2-tailed case) the confidence interval for the sample mean "catches" the mean of the null hypothesis (thin solid line). A hypothesis test will correctly determine that there is not a significant difference between the sample mean and the mean of the null hypothesis.
@@ -332,22 +338,7 @@ In an imperfect but convenient world, the sample is not a perfect representation
 #| fig-cap: "Type 1 Error"
 #| out-width: "100%"
 
-h0_shifted <- dnorm(x_vals, mean=-0.5, sd=1)
-Inferred_sample <- dnorm(x_vals, mean=2, sd=1)
-sampling_mean_shifted <- dnorm(x_vals, mean=2, sd=0.5)
-CI_left_shifted <- qnorm(0.025, mean=2, sd=0.5)
-CI_right_shifted <- qnorm(0.975, mean=2, sd=0.5)
-
-p8 <- ggplot() + 
-  geom_line(aes(x=x_vals, y=h0_shifted, color="Null Distribution"), size=1.5) +
-  geom_line(aes(x=x_vals, y=Inferred_sample, color="Inferred Parent Distribution"), size=1.5, linetype="dashed") +
-  geom_line(aes(x=x_vals, y=sampling_mean_shifted, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
-   geom_vline(aes(xintercept=0), linetype="dotted", color="black", size=0.5) +
-  geom_segment(aes(x = CI_left, xend = CI_right, y = 0, yend = 0), color="darkgreen", size=1.5) +  # Thick short darkgreen line for CI
-  theme_classic() + 
-  theme(legend.position="right", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
-  scale_color_manual(values=c("Null Distribution"="blue", "Inferred Parent Distribution"="green3", "Sampling Distribution of the Sample Mean"="darkgreen"))
-
+p8 <- plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=2, sample_sd=0.5, inferred_mean=2, inferred_sd=1, true_mean=2, true_sd=1)
 print(p8)
 ```
 
@@ -358,25 +349,9 @@ In an imperfect and inconvenient world, the random sample is, by chance, suffici
 ```{r}
 #| label: fig-5-5.type2_error
 #| fig-cap: "Type 2 Error"
+#| out-width: "100%"
 
-
-true_alternate <- dnorm(x_vals, mean=4, sd=1)
-Inferred_sample <- dnorm(x_vals, mean=1, sd=1)
-sampling_mean_shifted <- dnorm(x_vals, mean=1, sd=0.5)
-CI_left_alt <- qnorm(0.025, mean=1, sd=0.5)
-CI_right_alt <- qnorm(0.975, mean=1, sd=0.5)
-
-p9 <- ggplot() + 
-  geom_line(aes(x=x_vals, y=h0, color="Null Distribution"), size=1.5) +
-  geom_line(aes(x=x_vals, y=true_alternate, color="True Parent Distribution"), size=1.5) +
-  geom_line(aes(x=x_vals, y=Inferred_sample, color="Inferred Parent Distribution"), size=1.5, linetype="dashed") +
-  geom_line(aes(x=x_vals, y=sampling_mean_shifted, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
-   geom_vline(aes(xintercept=0), linetype="dotted", color="black", size=0.5) +
-  geom_segment(aes(x = CI_left, xend = CI_right, y = 0, yend = 0), color="darkgreen", size=1.5) +  # Thick short darkgreen line for CI
-  theme_classic() + 
-  theme(legend.position="right", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
-  scale_color_manual(values=c("Null Distribution"="blue", "True Parent Distribution"="orange", "Inferred Parent Distribution"="green3", "Sampling Distribution of the Sample Mean"="darkgreen"))
-
+p9 <- plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=1, sample_sd=0.4, inferred_mean=1, inferred_sd=1, true_mean=4, true_sd=1)
 print(p9)
 ```
 
