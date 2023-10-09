@@ -297,7 +297,7 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
           axis.title = element_blank(), 
           axis.ticks = element_blank(), 
           legend.text = element_text(size = 12)) + 
-    guides(color=guide_legend(title=NULL)) +
+    guides(color=guide_legend(title=NULL, nrow=2)) +
     scale_color_manual(values=c("Null Distribution"="blue", 
                                 "Sampling Distribution of the Sample Mean"="darkgreen", 
                                 "Inferred Parent Distribution"="green3", 
@@ -369,22 +369,87 @@ In the figures below, blue lines represent the null parent distribution (defined
   
 - ***Dashed dark green line**: Shows the sampling distribution of the sample mean, described by our sample mean and the standard error (SE).
 
-```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=4}
-# [Your R code for the figures here]
-```
+
 
 ### Graphical Descriptions:
 
-1. **Fail to Reject the Null Hypothesis - Sample Mean Supports the Null Hypothesis**: The means have a significant distance between them but not in our direction of interest. For a one-tailed test, only data on one side of the rejection region can support the null hypothesis. Question to ponder: If we gather more data and obtain the same sample mean, could our conclusion change?
+1. **Fail to Reject the Null Hypothesis - Sample Mean Supports the Null Hypothesis**: The means have a significant distance between them but **not in our direction of interest**. For a one-tailed test, only data on one side of the rejection region can support the null hypothesis. Question to ponder: If we gather more data and obtain the same sample mean, could our conclusion change?
+
+```{r}
+#| label: fig-5-5.fail_to_reject_1
+#| fig-cap: "Ha:μ < X"
+#| out-width: "100%"
+
+plot_distributions_no_error <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd) {
+  x_vals <- seq(-6, 6, by=0.01)
+  
+  h0 <- dnorm(x_vals, mean=null_mean, sd=null_sd)
+  sampling_mean <- dnorm(x_vals, mean=sample_mean, sd=sample_sd)
+  inferred_parent <- dnorm(x_vals, mean=inferred_mean, sd=inferred_sd)
+  CI_left <- qnorm(0.025, mean=sample_mean, sd=sample_sd)
+  CI_right <- qnorm(0.975, mean=sample_mean, sd=sample_sd)
+  y_intersect = dnorm(null_mean, mean=null_mean, sd=null_sd)
+
+  p <- ggplot() + 
+    geom_line(aes(x=x_vals, y=h0, color="Null Distribution"), size=1.5) +
+    geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
+    geom_line(aes(x=x_vals, y=inferred_parent, color="Inferred Parent Distribution"), linetype="dashed", size=1.5) +
+    geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dotted", color="black", size=1) +
+    geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) +
+    theme_classic() + 
+    theme(legend.position='bottom', 
+          axis.text = element_blank(), 
+          axis.title = element_blank(), 
+          axis.ticks = element_blank(), 
+          legend.text = element_text(size = 12)) + 
+    guides(color=guide_legend(title=NULL, nrow=2)) +
+    scale_color_manual(values=c("Null Distribution"="blue", 
+                                "Sampling Distribution of the Sample Mean"="darkgreen", 
+                                "Inferred Parent Distribution"="green3"))
+
+  return(p)
+}
+
+# Graph 1
+
+plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-0.2, sample_sd=0.7, inferred_mean=-0.2, inferred_sd=1)
+
+```
+
 
 2. **Fail to Reject the Null Hypothesis**: The sample mean leans towards the alternate hypothesis, residing on the suitable side of the rejection region. However, the sample size could be too small. The sample mean's proximity, just about 1SE from the null mean, makes it too close to be statistically significant. Hypothetical situation: With more data and the same sample mean, could our conclusion differ?
 
+```{r}
+#| label: fig-5-5.fail_to_reject_2
+#| fig-cap: "Ha:μ < X"
+#| out-width: "100%"
+
+plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-0.2, sample_sd=0.7, inferred_mean=-0.2, inferred_sd=1)
+
+```
+
+
+
 3. **Reject the Null Hypothesis**: The sample mean is on the right side of the rejection region. It's significantly distant from the null mean, over 3 SE, which is typically considered significant for most standard values of α.
 
-4. **Reject the Null Hypothesis (Two-Tailed Test)**: This situation mirrors the previous example, but the test is two-tailed.
+```{r}
+#| label: fig-5-5.reject_1
+#| fig-cap: "Ha:μ < X"
+#| out-width: "100%"
 
-```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=6, fig.height=4}
-# [Your R code for the figures here]
+plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-0.5, sample_sd=0.3, inferred_mean=-0.5, inferred_sd=1)
+```
+
+
+4. **Reject the Null Hypothesis (Two-Tailed Test)**: Reject the null hypothesis for the same reasons as the previous example. This case is two-tailed, but nothing else has changed.
+
+```{r}
+#| label: fig-5-5.reject_2_two_tailed
+#| fig-cap: "Ha:μ ≠ X"
+#| out-width: "100%"
+
+plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=0.5, sample_sd=0.3, inferred_mean=0.5, inferred_sd=1)
+
 ```
 
 ---
