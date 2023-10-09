@@ -14,6 +14,70 @@ library(ggplot2)
 library(dplyr)
 library(gridExtra)
 library(kableExtra)
+
+plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd, true_mean, true_sd) {
+  x_vals <- seq(-6, 6, by=0.01)
+  
+  h0 <- dnorm(x_vals, mean=null_mean, sd=null_sd)
+  sampling_mean <- dnorm(x_vals, mean=sample_mean, sd=sample_sd)
+  inferred_parent <- dnorm(x_vals, mean=inferred_mean, sd=inferred_sd)
+  true_parent <- dnorm(x_vals, mean=true_mean, sd=true_sd)
+  CI_left <- qnorm(0.025, mean=sample_mean, sd=sample_sd)
+  CI_right <- qnorm(0.975, mean=sample_mean, sd=sample_sd)
+  y_intersect = dnorm(null_mean, mean=null_mean, sd=null_sd)
+
+  
+  p <- ggplot() + 
+    geom_line(aes(x=x_vals, y=h0, color="Null Distribution"), size=1.5) +
+    geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
+    geom_line(aes(x=x_vals, y=inferred_parent, color="Inferred Parent Distribution"), linetype="dashed", size=1.5) +
+    geom_line(aes(x=x_vals, y=true_parent, color="True Parent Distribution"), size=1.5) +
+    geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) +
+    geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dashed", color="magenta", size=1) +
+    theme_classic() + 
+    theme(legend.position='bottom', 
+          axis.text = element_blank(), 
+          axis.title = element_blank(), 
+          axis.ticks = element_blank(), 
+          legend.text = element_text(size = 12)) + 
+    guides(color=guide_legend(title=NULL, nrow=2)) +
+    scale_color_manual(values=c("Null Distribution"="blue", 
+                                "Sampling Distribution of the Sample Mean"="darkgreen", 
+                                "Inferred Parent Distribution"="green3", 
+                                "True Parent Distribution"="orange"))
+
+  return(p)
+}
+
+plot_distributions_no_error <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd) {
+  x_vals <- seq(-6, 6, by=0.01)
+  
+  h0 <- dnorm(x_vals, mean=null_mean, sd=null_sd)
+  sampling_mean <- dnorm(x_vals, mean=sample_mean, sd=sample_sd)
+  inferred_parent <- dnorm(x_vals, mean=inferred_mean, sd=inferred_sd)
+  CI_left <- qnorm(0.025, mean=sample_mean, sd=sample_sd)
+  CI_right <- qnorm(0.975, mean=sample_mean, sd=sample_sd)
+  y_intersect = dnorm(null_mean, mean=null_mean, sd=null_sd)
+
+  p <- ggplot() + 
+    geom_line(aes(x=x_vals, y=h0, color="Null Distribution"), size=1.5) +
+    geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
+    geom_line(aes(x=x_vals, y=inferred_parent, color="Inferred Parent Distribution"), linetype="dashed", size=1.5) +
+    geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dotted", color="black", size=1) +
+    geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) +
+    theme_classic() + 
+    theme(legend.position='bottom', 
+          axis.text = element_blank(), 
+          axis.title = element_blank(), 
+          axis.ticks = element_blank(), 
+          legend.text = element_text(size = 12)) + 
+    guides(color=guide_legend(title=NULL, nrow=2)) +
+    scale_color_manual(values=c("Null Distribution"="blue", 
+                                "Sampling Distribution of the Sample Mean"="darkgreen", 
+                                "Inferred Parent Distribution"="green3"))
+
+  return(p)
+}
 ```
 
 ## Hypothesis Testing - The Nuts & Bolts 
@@ -271,42 +335,7 @@ In a \"perfect\" world in which the null hypothesis is true, the sample\'s paren
 #| label: fig-5-5.perfectly_representative_sample
 #| fig-cap: "Here, we have a perfectly representative sample"
 #| out-width: "100%"
-
-plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd, true_mean, true_sd) {
-  x_vals <- seq(-6, 6, by=0.01)
-  
-  h0 <- dnorm(x_vals, mean=null_mean, sd=null_sd)
-  sampling_mean <- dnorm(x_vals, mean=sample_mean, sd=sample_sd)
-  inferred_parent <- dnorm(x_vals, mean=inferred_mean, sd=inferred_sd)
-  true_parent <- dnorm(x_vals, mean=true_mean, sd=true_sd)
-  CI_left <- qnorm(0.025, mean=sample_mean, sd=sample_sd)
-  CI_right <- qnorm(0.975, mean=sample_mean, sd=sample_sd)
-  y_intersect = dnorm(null_mean, mean=null_mean, sd=null_sd)
-
-  
-  p <- ggplot() + 
-    geom_line(aes(x=x_vals, y=h0, color="Null Distribution"), size=1.5) +
-    geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
-    geom_line(aes(x=x_vals, y=inferred_parent, color="Inferred Parent Distribution"), linetype="dashed", size=1.5) +
-    geom_line(aes(x=x_vals, y=true_parent, color="True Parent Distribution"), size=1.5) +
-    geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) +
-    geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dashed", color="yellow", size=1) +
-    theme_classic() + 
-    theme(legend.position='bottom', 
-          axis.text = element_blank(), 
-          axis.title = element_blank(), 
-          axis.ticks = element_blank(), 
-          legend.text = element_text(size = 12)) + 
-    guides(color=guide_legend(title=NULL, nrow=2)) +
-    scale_color_manual(values=c("Null Distribution"="blue", 
-                                "Sampling Distribution of the Sample Mean"="darkgreen", 
-                                "Inferred Parent Distribution"="green3", 
-                                "True Parent Distribution"="orange"))
-
-  return(p)
-}
-
-
+#| 
 p4 <-  plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=0.6, sample_sd=0.3, inferred_mean=0.6, inferred_sd=1, true_mean=0.5, true_sd=1)
 print(p4)
 
@@ -378,36 +407,6 @@ In the figures below, blue lines represent the null parent distribution (defined
 #| label: fig-5-5.fail_to_reject_1
 #| fig-cap: "Ha:μ < X"
 #| out-width: "100%"
-
-plot_distributions_no_error <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd) {
-  x_vals <- seq(-6, 6, by=0.01)
-  
-  h0 <- dnorm(x_vals, mean=null_mean, sd=null_sd)
-  sampling_mean <- dnorm(x_vals, mean=sample_mean, sd=sample_sd)
-  inferred_parent <- dnorm(x_vals, mean=inferred_mean, sd=inferred_sd)
-  CI_left <- qnorm(0.025, mean=sample_mean, sd=sample_sd)
-  CI_right <- qnorm(0.975, mean=sample_mean, sd=sample_sd)
-  y_intersect = dnorm(null_mean, mean=null_mean, sd=null_sd)
-
-  p <- ggplot() + 
-    geom_line(aes(x=x_vals, y=h0, color="Null Distribution"), size=1.5) +
-    geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
-    geom_line(aes(x=x_vals, y=inferred_parent, color="Inferred Parent Distribution"), linetype="dashed", size=1.5) +
-    geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dotted", color="black", size=1) +
-    geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) +
-    theme_classic() + 
-    theme(legend.position='bottom', 
-          axis.text = element_blank(), 
-          axis.title = element_blank(), 
-          axis.ticks = element_blank(), 
-          legend.text = element_text(size = 12)) + 
-    guides(color=guide_legend(title=NULL, nrow=2)) +
-    scale_color_manual(values=c("Null Distribution"="blue", 
-                                "Sampling Distribution of the Sample Mean"="darkgreen", 
-                                "Inferred Parent Distribution"="green3"))
-
-  return(p)
-}
 
 # Graph 1
 
