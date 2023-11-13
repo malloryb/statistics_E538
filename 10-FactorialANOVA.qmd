@@ -928,61 +928,15 @@ Here's a couple of options. We could work through, by hand, more and more ANOVAs
 
 The other options are to work at a slightly higher level. We will discuss some research designs, and the ANOVAs that are appropriate for their analysis. We will conduct the ANOVAs using R, and print out the ANOVA tables. This is what you do in the lab, and what most researchers do. They use software most of the time to make the computer do the work. Because of this, it is most important that you know what the software is doing. You can make mistakes when telling software what to do, so you need to be able to check the software's work so you know when the software is giving you wrong answers. All of these skills are built up over time through the process of analyzing different data sets. So, for the remainder of our discussion on ANOVAs we stick to that higher level. No more monster tables of SSes. You are welcome.
 
-## Real Data
 
-Consider an example where a researcher is testing the effects of metal contamination on the number of species found in sessile marine invertebrates (sponges, bryozoans and sea squirts etc.). They would like to know whether copper reduces species richness, but also know that the richness of invertebrates can depend on whether the substrate is vertical or horizontal. Consequently, they ran an experiment where species richness was recorded in replicate samples in each of the six combinations of copper enrichment ("None","Low","High") and orientation ("Vertical","Horizontal"). 
 
-The factorial ANOVA will test:  
-* whether there are any differences in richness among the three levels of copper enrichment  
-* whether there are any differences in richness among the two levels of substrate orientation  
-* whether there is any interaction between copper and orientation
+## Factorial summary
 
-You have three null hypotheses:  
-* there is no difference between the means for each level of copper, H~o~: $\mu_{None} = \mu_{Low} = \mu_{High}$  
-* there is no difference between the means for each level of orientation, $H~o~: $\mu_{Vertical} = \mu_{Horizontal}$  
-* there is no interaction between the factors
+We have introduced you to factorial designs, which are simply designs with more than one IV. The special property of factorial designs is that all of the levels of each IV need to be crossed with the other IVs.
 
-This is far better than running two separate single factor ANOVAs that contrast copper effects for each level of orientation because you have more statistical power (higher degrees of freedom) for the tests of interest, and you get a formal test of the interaction between factors which is often scientifically interesting.
+We showed you how to analyse a repeated measures 2x2 design with paired samples-tests, and what an ANOVA table would look like if you did this in R. We also went through, by hand, the task of calculating an ANOVA table for a 2x2 between subjects design.
 
-Note that an ANOVA is a linear model, just like linear regression except that the predictor variables are categorical rather than continuous. With two predictor variables, the linear model is:
+The main point we want you take away is that factorial designs are extremely useful for determining things that cause effects to change. Generally a researcher measures an effect of interest (their IV 1). Then, they want to know what makes that effect get bigger or smaller. They want to exert experimental control over their effect. For example, they might have a theory that says doing X should make the effect bigger, but doing Y should make it smaller. They can test these theories using factorial designs, and manipulating X or Y as a second independent variable.
 
-$$y_{ijk} = \mu + \alpha_i + \beta_j + (\alpha\beta)_{ij} + \varepsilon_{ijk}$$
-
-where $\mu$ is the overall mean, $\alpha_i$ is the effect of the i^th^ group of the first factor, and $\beta_i$ is the effect of the j^th^ group of the second factor and $(\alpha\beta)$ is the interaction.
-
-Athough we have two factors, and an interaction effect, this requires fitting more than 3 parameters in our model because we have 3 levels of Factor A (Copper) and 2 levels of Factor B (Orientation) (if you can figure out how many parameters must be fit in this model, you are officially a stats geek! This is tricky even for those 'in the know').
-
-With two factors, ANOVA partitions the total variance into a component that can be explained by the first predictor variable (among levels of the treatment A), a component that can be explained by the second predictor variable (among levels of the treatment B), a component that can be explained by the interaction, and a component that cannot be explained (within levels, the residual variance). The test statistic, *F*, is calculated three times to test each of the null hypotheses. For two fixed factors, the *F* ratios are:
-
-$$F = \frac{MS_{A}}{MS_{within}}$$
-$$F = \frac{MS_{B}}{MS_{within}}$$
-$$F = \frac{MS_{AB}}{MS_{within}}$$
-
-where *MS* are the mean squares, a measure of variation. The probability of obtaining the observed value of *F* is calculated from the known probability distribution of *F*, with two degrees of freedom (one for the numerator = the number of levels -1) and one for the denominator. Note that these *F* ratios will change if any factors are random (see below for the distinction between fixed and random factors),
-  
-### Running the analysis
- 
-Your data should be formatted with the measurements from each replicate as a row and each of the variables as columns, corresponding to the dependent variable *y*, Factor A and Factor B.
-
-We'll download a sample data set for sessile invertebrates and import into R to to see the desired format. Check that your predictor variables are factors with the function `str`
-
-```{r, eval=FALSE}
-Sessile <- read.csv(file = "data/Sessile.csv", header = TRUE)
-str(Sessile)
-```
-
-With our predictor variable correctly assigned as factors, we can now run the analysis. As with other forms of linear models we have a model formula with the dependent variable, *y*, to the left of the ~ and the predictor variables to the right. For this two factor design, we use:
-
-```{r, eval=FALSE}
-Sessile.aov <- aov(Richness ~ Copper * Orientation, data = Sessile)
-```
-
-Note that when you specify a model with * between the two predictors, R automatically includes both variables and their interaction. This same model could also be written as:
-
-```{r, eval = FALSE}
-Sessile.aov <- aov(Richness ~ Copper + Orientation + Copper:Orientation, data = Sessile)
-```
-
-The output from this analysis can be seen by using the `summary` function on the object created.
-
+In a factorial design each IV will have it's own main effect. Sometimes the main effect themselves are what the researcher is interested in measures. But more often, it is the interaction effect that is most relevant. The interaction can test whether the effect of IV1 changes between the levels of IV2. When it does, researchers can infer that their second manipulation (IV2) causes change in their effect of interest. These changes are then documented and used to test underlying causal theories about the effects of interest.
 
