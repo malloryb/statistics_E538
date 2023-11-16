@@ -6,6 +6,7 @@ aliases: [simulating-data.html]
 
 ```{r, include = FALSE}
 source("global_stuff.R")
+knitr::opts_chunk$set(cache=FALSE)
 ```
 
 # ANCOVA
@@ -31,30 +32,69 @@ In our journey through statistical modeling, we've encountered three primary par
 
 ### Model Statements:
 
--   **No Groups/Relationships:** `y∼N(μ,σ²)`
--   **Categories with Different Means:** `yᵢ,ⱼ = μ + τᵢ + ε` (t-test allows for unequal variance: `yᵢ,ⱼ = μ + τᵢ + εᵢ`)
--   **Linear Relationship:** `y = β₀ + β₁x + ε`
+-   **No Groups/Relationships:** $y \sim N(\mu, \sigma^2)$
+-   **Categories with Different Means:** $y_{i,j} = \mu + \tau_i + \epsilon$ (t-test allows for unequal variance: $y_{i,j} = \mu + \tau_i + \epsilon_i$)
+-   **Linear Relationship:** $y = \beta_0 + \beta_1x + \epsilon$
 
-### Flexibility and Applicability of GLMs in Environmental Informatics
+### Flexibility and Applicability of GLMs
 
 So far, in our exploration of parametric tests, we have primarily focused on two types of relationships:
 
 -   **A categorical X and a continuous Y:** This includes tests like the t-test and ANOVA.
 -   **A continuous X and a continuous Y:** This is typically analyzed using linear regression.
 
-General Linear Models (GLMs) significantly expand our analytical capabilities in environmental informatics. They are not limited to just these basic scenarios but offer a more versatile toolkit. GLMs are particularly adept at handling:
+General Linear Models (GLMs) significantly expand our analytical capabilities. They are not limited to just these basic scenarios but offer a more versatile toolkit. GLMs are particularly adept at handling:
 
 -   **More Complex Relationships:** They can model scenarios where relationships between variables are not strictly linear.
 -   **Diverse Data Types:** GLMs are suitable for various data types, including count data, which is often encountered in environmental studies.
 
 This flexibility makes GLMs an invaluable tool in our field, allowing us to explore and understand the intricate dynamics of environmental systems more comprehensively.
 
-## Moving Beyond Regression and ANOVA to GLM
+## Understanding ANOVA as a linear model: 
+
+ANOVA, or Analysis of Variance, is traditionally viewed as a technique to compare means across multiple groups. However, at its core, ANOVA is a linear model. It's a special case where the predictors are categorical, not continuous. This distinction is important but subtle. Let's delve into an example that illustrates this concept clearly.
+
+Imagine a researcher is exploring the effects of metal contamination on the species richness of sessile marine invertebrates. They're particularly interested in the impact of copper and the orientation of the substrate on which these organisms live. To investigate this, they conduct a factorial experiment, measuring species richness across different levels of copper enrichment (None, Low, High) and substrate orientation (Vertical, Horizontal). This setup allows us to not only consider each factor separately but also examine their potential interaction.
+
+The ANOVA framework provides three null hypotheses to test:
+1. There are no differences in species richness across the copper levels.
+2. There are no differences in species richness between substrate orientations.
+3. There is no interaction effect between copper levels and substrate orientation.
+
+These hypotheses can be represented in a linear model as follows:
+
+\[ y_{ijk} = \beta_0 + \beta_{Copper_i} + \beta_{Orientation_j} + \beta_{Copper \times Orientation_{ij}} + \varepsilon_{ijk} \]
+
+Here, \( \beta_0 \) is the overall mean (intercept), \( \beta_{Copper_i} \) and \( \beta_{Orientation_j} \) are the main effects of the copper levels and orientation, respectively, and \( \beta_{Copper \times Orientation_{ij}} \) represents the interaction between these factors. The \( \varepsilon_{ijk} \) term captures the residual variance, or the random deviation of each observation from the model prediction. The significance of each beta coefficient is tested to determine if it makes a meaningful contribution to the model. A non-significant beta suggests that the corresponding factor or interaction does not have a distinct effect on the outcome, and therefore, might be omitted from the model for parsimony.
+
+So, when we talk about conducting an ANOVA, what we're really doing is fitting a linear model where:
+- The continuous outcome variable (y) is the species richness.
+- The predictor variables (factors) are categorical and coded using indicator (dummy) variables.
+- We examine the significance of the predictors by calculating the F-statistic for each main effect and interaction:
+  
+  \[ F = \frac{MS_{Treatment}}{MS_{Error}} \]
+
+ANOVA essentially decomposes the total variance observed in the data into components attributable to each predictor and their interaction. By doing so, it contrasts this variance with the unexplained variance to determine the statistical significance of each factor.
+
+With two factors, ANOVA partitions the total variance into a component that can be explained by the first predictor variable (among levels of the treatment A), a component that can be explained by the second predictor variable (among levels of the treatment B), a component that can be explained by the interaction, and a component that cannot be explained (within levels, the residual variance). The test statistic, *F*, is calculated three times to test each of the null hypotheses. For two fixed factors, the *F* ratios are:
+
+$$F = \frac{MS_{A}}{MS_{within}}$$
+$$F = \frac{MS_{B}}{MS_{within}}$$
+$$F = \frac{MS_{AB}}{MS_{within}}$$
+
+where *MS* are the mean squares, a measure of variation. The probability of obtaining the observed value of *F* is calculated from the known probability distribution of *F*, with two degrees of freedom (one for the numerator = the number of levels -1) and one for the denominator. Note that these *F* ratios will change if any factors are random (see below for the distinction between fixed and random factors). 
+  
+It turns out that ANOVAs are just a type of linear model in which the predictor variable is categorical. This means that we can actually run the ANOVA using the lm() function as well! However, there is a slight difference in how to get the results of test.
+In practice, we can perform ANOVA using the `lm()` function in R, treating the categorical predictors as factors. This allows us to use the familiar beta notation and interpret ANOVA as a linear regression model with categorical predictors.
+
+## Moving Beyond Regression and ANOVA to GLM (General Linear Model)
 
 Now, we integrate the concepts of ANOVA with regression. This integration allows us to explore x-y relationships across multiple categories. Our aim is to address questions about relationships in two distinct categories, such as:
 
 -   **Are dbh (Diameter at Breast Height) and height related similarly for tulip poplars and oaks?**
+
 -   **Are biomass and BTUs (British Thermal Units) related similarly for corn stover and Miscanthus?**
+
 -   **Are age and proportion of income donated to charity similarly related for Democrats and Republicans?**
 
 This specific subsection of general linear models is known as **Analysis of Covariance -- ANCOVA**.
@@ -108,6 +148,7 @@ When an indicator variable (`xc`) is set to 1, it effectively activates any term
 For example, in the equation `y = 2xl + 3 + 1xcxl - 7xc`:
 
 - When `xc` = 0 (turned off), the equation simplifies to `y = 2xl + 3`. Here, the terms `1xcxl` and `-7xc` are deactivated because they are multiplied by `xc`, which is 0.
+
 - When `xc` = 1 (turned on), the equation becomes `y = (2xl + 3) + (1xl - 7)`. In this case, the terms `1xcxl` and `-7xc` are activated, altering the slope and intercept of the line.
 
 #### Visualizing the Effect
@@ -115,10 +156,11 @@ For example, in the equation `y = 2xl + 3 + 1xcxl - 7xc`:
 The R plots below demonstrate the change in the regression line when the indicator variable is toggled between being active (`xc = 1`) and inactive (`xc = 0`).
 
 **When `xc` = 0:**  
+
 *Equation Simplified:* `y = 2xl + 3`  
 This plot shows the regression line when the indicator variable is inactive. The equation simplifies, reflecting a scenario where the categorical variable does not influence the outcome.
 
-```{r}
+```{r, fig.width= 3, fig.height=2}
 # Graph for when xc = 0
 # Equation becomes: y = 2xl + 3
 
@@ -138,10 +180,11 @@ ggplot(data_xc0, aes(x = xl, y = y)) +
 ```
 
 **When `xc` = 1:**  
+
 *Equation Modified:* `y = (2xl + 3) + (1xl - 7)`  
 This plot illustrates the regression line when the indicator variable is active. The equation now includes additional terms, showcasing how the presence of the categorical variable changes the relationship between `xl` and `y`.
 
-```{r}
+```{r, fig.width= 3, fig.height=2}
 # Graph for when xc = 1
 # Equation becomes: y = (2xl + 3) + (1xl - 7)
 data_xc1 <- data.frame(
@@ -164,77 +207,215 @@ Using indicator variables, we can create models in which regression lines change
 
 ### Interaction Term in GLMs
 
-If we only have β2 in our equation, we have an odd subset of the two-line case.
+You know about interaction terms from our work with ANOVA. We have to talk about this now in a more math-y way, since we are talking about GLMs here. But, so we're on the same page, here's a definition. 
 
-Consider this equation in β0, β1, and β2
+- **Simple Definition:** In statistics, an interaction term helps us understand if the effect of one factor (like temperature) on an outcome (like plant growth) changes when another factor (like rainfall) is also considered. It's like asking, "Does the relationship between temperature and plant growth change when we also consider how much it rains?"
 
-y = 14.2 + 5.2xl + 3.9xc β0 β1 β2
+#### The Math Behind The Interactions
 
-What equation is operating when the categorical variable (xc) = 0?
+- **Model Equation Explained:** 
 
-What equation is operating when the categorical variable (xc) = 1?
+Let's break down a typical equation: 
 
-Graph these on the axes below:
+$$
+y = \beta_0 + \beta_1x_l + \beta_2x_c + \beta_3x_lx_c + \epsilon
+$$
 
-```         
-                               48   -      
-                               44   -
-                               42   -
-                               38   -
-                               34   -
-                               30   -
-                               26   -
-                               22   -
-                               18   - 
-                               14   -
+Here, \(x_lx_c\) is the interaction term, and \(\beta_3\) is its coefficient. 
 
-                                          0                 1                 2
-```
+- \(y\) is what we're trying to predict (like plant growth).
+- \(\beta_0\) is the starting point of our prediction when all other factors are zero.
+- \(\beta_1x_l\) shows how our prediction changes with changes in a continuous variable (like temperature).
+- \(\beta_2x_c\) shows the change with a categorical variable (like type of plant).
+- \(\beta_3x_lx_c\) is the key player here. It shows how the effect of our continuous variable (temperature) changes across different categories (types of plants).
+- \(\epsilon\) is the error term, accounting for variations we can't explain with our model.
 
-What is the effect of "turning on" β2 ?
+\(\beta_1x_l\) and \(\beta_2x_c\) represent the main effects of the continuous and categorical variables, 
 
-Now, consider the more usual case, when we need all four parameters, β0, β1, β2, and β3
+#### When is the Interaction Term Significant?
 
-y = 14.2 + 5.2xl + 3.9xc + 0.2xlx¬c β0 β1 β2 β3
+- **Significance of \(\beta_3x_lx_c\) :** If \(\beta_3x_lx_c\) (our interaction term) is significant, it means the relationship between our continuous variable (like temperature) and our outcome (plant growth) is different for different categories (like types of plants). If \(\beta_3x_lx_c\) is not significant, it suggests that the effect of our continuous variable is consistent across categories, and we might not need this term in our model.
 
-What equation is operating when the categorical variable (xc) = 0?
+#### What are the options for our model? 
 
-What equation is operating when the categorical variable (xc) = 1?
+1. **Full Model with Interaction (β0, β1, β2, β3):** 
+   - When both the categorical (xc) and continuous (xl) variables are significant, and there is a significant interaction (β3), the model unfolds into two distinct linear equations for each category of xc. This indicates that the relationship between the continuous variable and the outcome differs depending on the category of the categorical variable.
+   - Equations:
+     - For xc = 0: \( y = \beta_0 + \beta_1xl \)
+     - For xc = 1: \( y = (\beta_0 + \beta_2) + (\beta_1 + \beta_3)xl \)
 
-Graph these on the axes below:
+2. **Model without Interaction (β0, β1, β2):**
+   - If both the categorical and continuous variables are significant, but there is no interaction, the model simplifies to parallel lines for each category of xc, indicating that the slope (effect of xl) is consistent across categories.
+   - Equations:
+     - For xc = 0: \( y = \beta_0 + \beta_1xl \)
+     - For xc = 1: \( y = (\beta_0 + \beta_2) + \beta_1xl \)
 
-```         
-                               52   -  
-                               48   -      
-                               44   -
-                               42   -
-                               38   -
-                               34   -
-                               30   -
-                               26   -
-                               22   -
-                               18   - 
-                               14   -
+3. **Simple Linear Regression (β0, β1):**
+   - If only the continuous variable (xl) is significant, the model reduces to a simple linear regression, indicating a linear relationship between xl and y, regardless of the category of xc.
+   - Equation: \( y = \beta_0 + \beta_1xl \)
 
-                                          0                 1                 2
-```
+4. **Two Different Means (T-test Equivalent) (β0, β2):**
+   - If the continuous variable is not significant but the categorical variable is, the model effectively becomes a comparison of means between two groups (similar to a t-test).
+   - Equations:
+     - For xc = 0: \( y = \beta_0 \)
+     - For xc = 1: \( y = \beta_0 + \beta_2 \)
 
-What is the effect of "turning on" β2 and β3?
-
-  β3 is called an interaction term because when it is significant, it tells us that the continuous and categorical variables interact, so that the effect of the continuous variable is different for the different categories.
-
-y = β0 + β1xl + β2xc + β3xlxc + ε `β3` is known as an interaction term. It's significant when the continuous and categorical variables interact, meaning the effect of the continuous variable differs across categories.
-
-`y = β0 + β1xl + β2xc + β3xlxc + ε`
+5. **Single Mean (One Sample Data) (β0):**
+   - If neither variable is significant, the model reduces to a single mean, indicating no effect of either the continuous or categorical variable.
+   - Equation: \( y = \beta_0 \)
 
 ### Terminology in GLMs
 
--   **Fixed Factor:** If the categorical X variable represents specific values of interest (e.g., season, harvest strategy, political party), it's a fixed factor.
--   **Random Factor:** If the categorical X variable represents random values from a broader range (e.g., output from randomly chosen machines), it's a random factor.
--   **Covariate:** The continuous X variable, varying with Y.
+Understanding the terminology used in General Linear Models (GLMs) is important for grasping the concepts and effectively communicating your findings. Here are some key terms:
 
-### Understanding Interactions Through an Example
+- **Fixed Factor:** This refers to a categorical variable with specific, predefined categories. For example, if you're studying the effect of different seasons (spring, summer, autumn, winter) on plant growth, 'season' is a fixed factor because it represents specific, distinct categories of interest.
 
-Seedling density varies with distance from the parent tree for both species -- the covariate is significant. The intercepts are different, so the categorical variable is likely to be significant. The slopes are different, meaning that the differences between the species are different at different values of the covariate X. This means the interaction term is significant. The differences are different. There is an interaction between the value of the covariate (distance) and the difference between the species (the categorical factor).
+- **Random Factor:** This is a categorical variable where the categories represent a random sample from a larger population. For instance, if you're examining the output quality from different machines in a factory, and these machines are randomly selected from a larger set, then 'machine' is a random factor.
 
-The mark of a significant interaction is that you do not have constant differences between categories or between points along the continuous variable.
+- **Covariate:** This is your continuous variable that varies along with the dependent variable (Y). In environmental studies, this could be something like temperature, rainfall, or pollution levels, which you suspect might influence your outcome of interest (like species distribution or plant growth).
+
+---
+
+## Wait, so what's ANCOVA? 
+
+Maybe you're wondering why I've been talking so much about GLMs, when this is suupposed to be about ANCOVA. ANCOVA, or Analysis of Covariance, is a statistical technique that blends ANOVA and regression. It's used when you want to compare one or more categorical independent variables (like different treatments or groups), but also need to control for the variability of continuous variables (covariates) that aren't part of the main experimental manipulation but could influence the dependent variable.
+
+For an ANCOVA, you need: 
+
+1) A continuous dependent variable
+2) A continuous independent variable (that's your covariate)
+3) A categorical independent variable (this can be a fixed or a random factor)
+
+IF we want to model ANCOVA using regression, we must use dummy variables for the categorical independents. When creating dummy variables, one must use one less category than there are values of each independent. For full ANCOVA one would also add the interaction cross-product terms for each pair of independents included in the
+equation, including the dummies. Then one computes multiple regression. The resulting F tests will be the same as in classical ANCOVA. F ratio can also be computed through the extra sum of squares using Full-Reduced Model approach. 
+
+#### What is our null hypothesis? 
+
+**Basic Definition**: The null hypothesis in ANCOVA asserts that any observed differences in the dependent variable across different levels of the categorical independent variable(s) are not statistically significant once we adjust for the covariates. In simpler terms, it suggests that, after accounting for the influence of the continuous covariate(s), the different categories of the independent variable do not have different effects on the dependent variable. 
+
+Mathematical Representation: If we consider a basic ANCOVA model with one categorical independent variable and one covariate, the null hypothesis can be represented as:
+
+Hypothesis tests for the ANCOVA model are very similar to an ANOVA, but the key difference is that the population means for each treatment t are adjusted for the covariate. For example, we can label the population mean of the first factor level as μ∗1
+
+. The null and alternative hypotheses can be written as
+
+H0=μ∗1=μ∗2=...=μ∗t
+
+HA=μ∗i≠μ∗j,for some i≠j
+
+
+In words, H0: The adjusted means of the dependent variable (Y) are the same across the different levels of the categorical independent variable (Xc), after controlling for the covariate (Xl).
+
+Impications of the Null Hypothesis
+
+**Testing the Hypothesis**: In practice, when we conduct ANCOVA, we are essentially testing this null hypothesis. Like ANOVA, ANCOVA is an omnibus test. If the data provide sufficient evidence to reject the null hypothesis, it implies that there are significant differences in the adjusted means of the dependent variable across the groups defined by the categorical independent variable, even after accounting for the covariate.
+
+**Interpreting Results**: The rejection of the null hypothesis in ANCOVA leads us to conclude that the categorical independent variable does have a statistically significant effect on the dependent variable, beyond the effect of the covariate. However, it's important to remember that statistical significance does not necessarily imply practical or clinical significance, and results should always be interpreted in the context of the specific research question and study design.
+
+### Understanding ANCOVA Through an Example
+
+#### Setting things up
+
+Let's use a dataset that's relevant to environmental science. For this example, we'll explore how air pollution levels (a continuous variable) affect the distribution of a particular bird species (our outcome) across different urban and rural areas (categorical variable). I have generated fake data for this example. 
+
+```{r}
+# Set seed for reproducibility
+set.seed(123)
+
+# Generate data
+n <- 200  # Number of observations
+area_type <- sample(c("Urban", "Rural"), n, replace = TRUE)  # Randomly assign area type
+air_pollution <- runif(n, min = 0, max = 100)  # Generate continuous air pollution levels
+
+# Generate bird density data
+# Assuming a simple linear relationship with air pollution and different intercepts for urban and rural
+# Generate bird density data
+# Adjusting the formula to avoid negative values
+bird_density <- 10 + 0.3 * air_pollution - ifelse(area_type == "Urban", 5, 0) + rnorm(n, mean = 0, sd = 3)
+
+# Ensure all bird densities are positive
+bird_density <-(round(ifelse(bird_density < 0, 0, bird_density), 0))
+
+# Combine into a data frame
+data <- data.frame(AreaType = area_type, AirPollution = air_pollution, BirdDensity = bird_density)
+
+# View the first few rows of the dataset
+head(data)
+```
+
+#### Data Description (Fake Data)
+
+- **Dataset Overview:** Our dataset comprises 200 observations, capturing bird species density in various urban and rural locations, along with corresponding levels of air pollution.
+- **Relevance:** This dataset serves as a model to explore the impacts of urbanization and air pollution on avian biodiversity. It's a simplified representation to help students grasp the application of ANCOVA in environmental science.
+
+#### Hypothesis Formation
+
+- **Research Question:** Does the effect of air pollution on bird species density differ between urban and rural areas?
+- **Hypothesis:** We hypothesize that air pollution will have a more pronounced negative effect on bird species density in urban areas compared to rural areas.
+
+#### Null and Alternative Hypotheses in ANCOVA
+
+1. **Null Hypothesis** The null hypothesis of our ANCOVA is that is that all of the slopes for all of the parameters are equal. This means B1 = B2 = B3. 
+   
+Hypothesis tests for the ANCOVA model are very similar to an ANOVA, but the key difference is that the population means for each treatment t are adjusted for the covariate. For example, we can label the population mean of the first factor level as μ∗1
+
+. The null and alternative hypotheses can be written as
+
+H0=μ∗1=μ∗2=...=μ∗t
+
+HA=μ∗i≠μ∗j,for some i≠j
+
+
+This might be a little confusing so we could also think of it as two null hypotheses: 
+
+1. Null Hypothesis for Slop (H01) :  The first null hypothesis of ancova is that the slopes of the regression lines for each dependent variable and interaction (β) are all equal; in other words, that the regression lines are parallel to each other. This would mean that 
+
+- **H01:** The slopes of the regression lines are equalt ot each other: β1=β2=β3
+   - **HA1:** The slopes of the regression lines are not equlat to each other
+
+
+If we find that the slopes are not significantly different, then we do one more thing: 
+
+2. **Null Hypothesis for Intercept (H0₂):** If the slopes are found to be parallel, we then we test whether the intercepts (β₀) of these lines are the same. This tests for a significant difference in bird density between urban and rural areas when air pollution is at zero.
+
+   - **H0₂:** The intercepts of the regression lines are zero. 
+   - **HA₂:** The intercepts of the regression lines are not zero. 
+
+   A significant difference in intercepts would indicate that, independent of air pollution levels, bird density differs between urban and rural areas.
+   
+       Null Hypothesis for Categorical Variable (H0₂): Tests if the main effect of the categorical variable (urban vs. rural) is significant.
+        H0₂: β2=0β2​=0, indicating no significant difference in bird density between urban and rural areas at a fixed level of air pollution.
+        HA₂: β2≠0β2​=0, indicating a significant difference between urban and rural areas.
+
+    Null Hypothesis for Interaction Term (H0₃): Tests if the interaction between the continuous and categorical variables is significant.
+        H0₃: β3=0β3​=0, suggesting that the relationship between air pollution and bird density is consistent across urban and rural areas.
+        HA₃: β3≠0β3​=0, suggesting that the effect of air pollution on bird density differs between urban and rural areas.
+
+#### Decision Rules
+
+- For **H0₁ (Slope):** We reject the null hypothesis if the F-statistic from the ANCOVA is greater than the critical value from the F-distribution for the given degrees of freedom. This would suggest that the effect of air pollution on bird density varies between urban and rural areas.
+
+- For **H0₂ (Intercept):** If the slopes are parallel, we then look at the intercepts. We reject the null hypothesis of equal intercepts if the F-statistic for this comparison is significant.
+
+#### Model Building
+
+- **Constructing the ANCOVA Model:** We'll set up our ANCOVA model with air pollution levels as the covariate, urban/rural classification as the categorical variable, and bird species count as the dependent variable. We'll also include an interaction term to test our hypothesis about the differing effects in urban and rural areas.
+
+#### Result Interpretation
+
+- **Main Effects:** We'll look at how air pollution levels overall affect bird species distribution, regardless of the area type.
+- **Interaction Effect:** We'll specifically interpret the interaction term to see if the impact of air pollution differs significantly between urban and rural areas.
+
+#### Visual Representation
+
+- **Graphs and Charts:** We'll use scatter plots to show the relationship between air pollution and bird species count in both urban and rural areas, with different colors or symbols for each area type. A line of best fit will help visualize the trend in each category.
+
+### What to Report When We Finish Our Analysis
+
+- **Statistical Details:** Include the ANCOVA model coefficients, significance levels (p-values), and confidence intervals.
+- **Contextualizing Findings:** Discuss the implications of your findings in the context of environmental conservation and urban planning. Highlight any significant interactions and what they mean for understanding the impact of urbanization on biodiversity.
+- **Limitations and Future Research:** Acknowledge any limitations of your study and suggest areas for future research.
+
+---
+
+This structure should provide a comprehensive and accessible guide to conducting and reporting an ANCOVA analysis in environmental science. If you need more details or specific content for any of these sections, feel free to let me know!
