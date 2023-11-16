@@ -9,7 +9,7 @@ source("global_stuff.R")
 knitr::opts_chunk$set(cache=FALSE)
 ```
 
-# ANCOVA
+# Analysis of Covariance (ANCOVA)
 
 ```{r}
 library(ggplot2)
@@ -54,11 +54,11 @@ General Linear Models (GLMs) significantly expand our analytically capabilities.
 -   **More Complex Relationships:** They can model scenarios where relationships between variables are not strictly linear.
 -   **Diverse Data Types:** GLMs are suitable for various data types, including count data, which is often encountered in environmental studies.
 
-## Understanding ANOVA as a linear model: 
+### Understanding ANOVA as a linear model: 
 
 ANOVA, or Analysis of Variance, is traditionally viewed as a technique to compare means across multiple groups. However, at its core, ANOVA is a linear model. It's a special case where the predictors are categorical, not continuous. This distinction is important but subtle. Let's delve into an example that illustrates this concept clearly.
 
-We've talked about this example before. Imagine a researcher is exploring the effects of metal contamination on the species richness of sessile marine invertebrates. They're particularly interested in the impact of copper and the orientation of the substrate on which these organisms live. To investigate this, they conduct a factorial experiment, measuring species richness across different levels of copper enrichment (None, Low, High) and substrate orientation (Vertical, Horizontal). This setup allows us to not only consider each factor separately but also examine their potential interaction.
+This example should be familiar from lecture. Imagine a researcher is exploring the effects of metal contamination on the species richness of sessile marine invertebrates. They're particularly interested in the impact of copper and the orientation of the substrate on which these organisms live. To investigate this, they conduct a factorial experiment, measuring species richness across different levels of copper enrichment (None, Low, High) and substrate orientation (Vertical, Horizontal). This setup allows us to not only consider each factor separately but also examine their potential interaction.
 
 The ANOVA framework provides three null hypotheses to test:
 1. There are no differences in species richness across the copper levels.
@@ -94,19 +94,9 @@ Consider these questions that may arise in environmental research:
 
 -   **Does the exposure to PFAS correlate with the lifetime incidence of cancer uniformily across low- and high-income American populations?**
 
-This specific subsection of general linear models is known as **Analysis of Covariance -- ANCOVA**. Each of these questions challenges us to compare relationships across categories, which is precisely where ANCOVA shines. Let's dive into an activity that will clarify how indicator variables enable us to perform such comparisons within a unified statistical framework.Your introduction to ANCOVA is well-crafted. It makes a smooth transition from foundational concepts to more advanced applications and sets the stage for a practical exercise. Here are some subtle refinements for clarity and engagement:
+This specific subsection of general linear models is known as **Analysis of Covariance -- ANCOVA**. Each of these questions challenges us to compare relationships across categories, which is precisely where ANCOVA shines. 
 
 ---
-
-"As we've navigated the realm of statistical modeling, we've harnessed the strengths of both regression and ANOVA. Now it's time to converge these methods to expand our analytical capabilities. ANCOVA, or Analysis of Covariance, equips us with the means to assess relationships across varied categories, thereby enriching our ability to discern and interpret diverse trends within our data.
-
-Ponder these inquiries that one might encounter in the field of environmental research:
-
-- **Are dbh (Diameter at Breast Height) and height correlated in the same way for tulip poplars and oaks?**
-- **Do biomass and BTUs (British Thermal Units) exhibit a similar relationship for corn stover and Miscanthus?**
-- **Does the exposure to PFAS correlate with the lifetime incidence of cancer uniformly across low- and high-income American populations?**
-
-These questions introduce us to a specialized subset of general linear models: **Analysis of Covariance -- ANCOVA**. Each question invites us to scrutinize and compare relationships spanning different groups—a challenge adeptly met by ANCOVA. Let's embark on an activity designed to demystify how indicator variables allow us to conduct these comparative analyses within a cohesive statistical framework.
 
 ### Understanding ANCOVA
 
@@ -313,54 +303,25 @@ This translates to: "After controlling for the covariate, the different levels o
 
 **Interpreting the Findings**: Rejecting the null hypothesis indicates that the categorical independent variable has a significant impact on the dependent variable, aside from the covariate's effect. It's crucial to remember, though, that statistical significance doesn't automatically translate to practical significance. We must always consider the results within the specific context and aims of the study.
 
-### Illustrating ANCOVA with an Example
+## Illustrating ANCOVA with an Example
 
-#### Setting the Stage
+### Setting the Stage
 
 Imagine we're environmental scientists studying the impact of air pollution—a continuous variable—on bird species distribution, our dependent variable. We want to see if this relationship differs between urban and rural areas—our categorical variable. For this purpose, we've created a synthetic dataset to model the scenario.
 
-#### Crafting the Model
+### Crafting the Model
 
-With our data in hand, we'd construct an ANCOVA model to discern whether location type influences bird distribution, beyond what can be explained by pollution levels alone. This would involve coding our categorical variable (urban vs. rural) into a dummy variable and including air pollution as a covariate in the model.
-
-The detailed analysis would proceed with fitting the model, checking assumptions, conducting the F-test, and interpreting the results to understand the environmental factors influencing bird distribution patterns.
-
-#### Data Description (Fake Data)
+With our data in hand, we'd construct an ANCOVA model to discern whether location type influences bird distribution, beyond what can be explained by pollution levels alone. This would involve coding our categorical variable (urban vs. rural) into a dummy variable and including air pollution as a covariate in the model. I've done this for you already by creating the synthetic dataset. 
 
 - **Dataset Overview:** Our dataset comprises 200 observations, capturing bird species density in various urban and rural locations, along with corresponding levels of air pollution.
 
-```{r}
-# Set seed for reproducibility
-set.seed(123)
-
-# Generate data
-n <- 200  # Number of observations
-area_type <- sample(c("Urban", "Rural"), n, replace = TRUE)  # Randomly assign area type
-air_pollution <- runif(n, min = 0, max = 100)  # Generate continuous air pollution levels
-
-# Generate bird density data
-# Assuming a simple linear relationship with air pollution and different intercepts for urban and rural
-# Generate bird density data
-# Adjusting the formula to avoid negative values
-bird_density <- 10 + 0.3 * air_pollution - ifelse(area_type == "Urban", 5, 0) + rnorm(n, mean = 0, sd = 3)
-
-# Ensure all bird densities are positive
-bird_density <-(round(ifelse(bird_density < 0, 0, bird_density), 0))
-AirPollution <- round(AirPollution, 1)
-
-# Combine into a data frame
-data <- data.frame(AreaType = area_type, AirPollution = air_pollution, BirdDensity = bird_density)
-
-# View the first few rows of the dataset
-head(data)
-```
-
-#### Why We're Running the ANCOVA
+### Why We're Running the ANCOVA
 
 - **Research Question:** Does the effect of air pollution on bird species density differ between urban and rural areas?
+
 - **Expectation:** We predict that air pollution will have a more pronounced negative effect on bird species density in urban areas than in rural areas.
 
-#### Null and Alternative Hypotheses in ANCOVA
+### Null and Alternative Hypotheses in our example ANCOVA
 
 1. **Omnibus Null Hypothesis** (\( H_0 \)): The null hypothesis posits that once we adjust for air pollution, the mean bird species density does not differ between urban and rural areas.
 
@@ -389,25 +350,114 @@ Rejecting \( H_{02} \) would imply that there is an inherent difference in bird 
 
 These hypotheses guide our ANCOVA model and analysis, aiming to isolate the effects of urbanization from the influence of air pollution on avian populations.
 
-#### Model Building
+### Analysis
 
-- **Constructing the ANCOVA Model:** We'll set up our ANCOVA model with air pollution levels as the covariate, urban/rural classification as the categorical variable, and bird species count as the dependent variable. We'll also include an interaction term to test our hypothesis about the differing effects in urban and rural areas.
+#### Explore the data
 
 ```{r}
+# Set seed for reproducibility
+set.seed(123)
+
+# Generate data
+n <- 200  # Number of observations
+area_type <- sample(c("Urban", "Rural"), n, replace = TRUE)  # Randomly assign area type
+air_pollution <- runif(n, min = 25, max = 150)  # Generate continuous air pollution levels
+
+# Generate bird density data
+# Assuming a simple linear relationship with air pollution and different intercepts for urban and rural
+# Generate bird density data
+# Adjusting the formula to avoid negative values
+bird_density <- 10 + 0.2 * air_pollution - ifelse(area_type == "Urban", 5, 0) + rnorm(n, mean = 0, sd = 4)
+
+# Ensure all bird densities are positive
+bird_density <-(round(ifelse(bird_density < 0, 0, bird_density), 0))
+
+#Reverse air pollution for negative relationship
+air_pollution <- rev(round(air_pollution, 1))
+
+# Combine into a data frame
+data <- data.frame(AreaType = area_type, AirPollution = air_pollution, BirdDensity = bird_density)
+
+# View the first few rows of the dataset
+head(data)
+```
+
+Let's create a summary of our current dataset
+
+```{r, echo=TRUE}
+summary(data)
+```
+
+This will give us a quick statistical summary of our variables.
+
+Now, let's visualize the distribution of bird density in different areas.
+
+```{r, echo=TRUE}
+
+# Boxplot for bird density by area type
+boxplot(BirdDensity ~ AreaType, data = data, 
+        main = "Bird Density by Area Type", 
+        xlab = "Area Type", ylab = "Bird Density", 
+        col = "aquamarine", border = "black")
+```
+
+And the same for air pollution:
+
+```{r, echo=TRUE}
+boxplot(AirPollution ~area_type, data=data, main="Air Pollution by Area", xlab="Area Type", ylab= "Air Pollution", col="aquamarine", border="black")
+```
+
+### Results of the ANCOVA Model
+
+The anova results
+```{r, echo=TRUE}
 ancova <- aov(BirdDensity ~ AirPollution*AreaType, data=data)
 summary(ancova)
 ```
 
-#### Result Interpretation
+The linear model results
+```{r, echo=TRUE}
+ancova_lm <- lm(BirdDensity ~ AirPollution*AreaType, data=data)
+summary(ancova_lm)
+```
 
-- **Main Effects:** We'll look at how air pollution levels overall affect bird species distribution, regardless of the area type.
-- **Interaction Effect:** We'll specifically interpret the interaction term to see if the impact of air pollution differs significantly between urban and rural areas.
+#### Main Effects:
 
-#### Visual Representation
+- **Air Pollution**: The ANCOVA model does not find a significant main effect of air pollution on bird density (p = 0.7690 from ANOVA), indicating no consistent impact across the areas. However, the linear model's marginal p-value (p = 0.081641) suggests a trend that might have been significant with a larger sample size or reduced variability.
 
-- **Graphs and Charts:** We'll use scatter plots to show the relationship between air pollution and bird species count in both urban and rural areas, with different colors or symbols for each area type. A line of best fit will help visualize the trend in each category.
+-**Area Type**: There is a significant main effect of AreaType on bird density (p < 0.001), indicating that there are considerable differences in bird density between rural and urban areas, with urban areas showing lower bird density.
 
-#### Results Sentences
+#### Interpreting the Beta Coefficients:
 
-- **Statistical Details:** Include the ANCOVA model coefficients, significance levels (p-values), and confidence intervals.
+- **Intercept**: Reflecting the expected bird density in rural areas at zero air pollution, the intercept is quite high, indicating a relatively healthy bird population in the absence of pollution.
+
+- **Area Type**: The beta coefficient for our area type factor is significantly different from zero (p < 0.001), suggesting a distinct difference in bird density between urban and rural areas. However, this effect is captured more precisely in the interaction term.
+
+- **Interaction Term**: The significant beta for the interaction term confirms our hypothesis that air pollution's effect on bird density is not uniform across urban and rural areas.
+
+#### Visual Representation:
+
+The scatter plot with regression lines will demonstrate these relationships visually, showing the differing trends for urban and rural areas suggested by the significant interaction term.
+
+```{r}
+# Scatter plot with regression lines
+ggplot(data, aes(x = AirPollution, y = BirdDensity, color = AreaType)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_minimal() +
+  labs(title = "Bird Density vs. Air Pollution by Area Type",
+       x = "Air Pollution Level", y = "Bird Density")
+```
+
+#### Interpretation:
+
+The significant interaction term indicates that the simple main effect of air pollution is not adequate to describe its impact on bird density. In urban areas, there seems to be a slightly positive or less negative relationship compared to rural areas, which could reflect a range of urban-specific factors affecting bird populations differently than in rural areas.
+
+### Contextualizing the Findings:
+
+The lack of a significant main effect for air pollution in the presence of a significant interaction suggests complex underlying ecological dynamics. These findings call for nuanced environmental management strategies that address the specific challenges and conditions of urban and rural habitats to support bird conservation effectively. By considering the interaction term's significance, we gain a more accurate understanding of the ecological effects of air pollution, which is essential for developing targeted conservation policies.
+
+## Chapter Summary 
+
+In this chapter, we explored the fundamental principles and applications of Analysis of Covariance (ANCOVA), a powerful statistical tool that extends beyond the capabilities of ANOVA by incorporating covariates. We began by understanding the conceptual framework of ANOVA as a linear model, setting the stage for the more complex ANCOVA analysis. Through our discussions, we emphasized the importance of the null and alternative hypotheses in ANCOVA, using practical examples like the study of bird species density in different environments to illustrate these concepts. The chapter highlighted how ANCOVA adjusts for the effects of additional variables, allowing us to more accurately isolate and understand the impact of our factors of interest. By integrating real-world scenarios and focusing on clear, practical applications, we aimed to demystify the process of hypothesis testing in ANCOVA, making it accessible and relevant to environmental science.
 
