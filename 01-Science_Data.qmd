@@ -73,11 +73,6 @@ dat %>% group_by(Country) %>% summarise(Total_cases = sum(Cases), Total_deaths =
                                         CFR_crude_pct = 100*Total_deaths/Total_cases)
 # Italy ~ 3.31%, China ~ 0.59%
 
-# ------------------------------------------------------------------------------
-# 2) Figure 1: crude (overall) fatality rate by country
-#    Knit this, then add a short paragraph before the next chunk.
-# ------------------------------------------------------------------------------
-
 fig1_df <- dat %>%
   group_by(Country) %>%
   summarise(
@@ -97,9 +92,12 @@ ggplot(fig1_df, aes(x = Country, y = CFR_crude_pct, fill = Country)) +
   theme(legend.position = "none")
 ```
 
-At face value, Italy looks worse. But what happens when we disaggregate by age group?
+At face value, Italy looks worse. The crude rate is higher in Italy, which could tempt a quick conclusion if you stop there. But what happens when we disaggregate by age group? Age is a confounder, so you stratify by 10-year bands. Look, point out that within every band China’s CFR is higher.
 
 ```{r}
+#| label: fig-simpson-by-age-group
+#| fig-cap: "Fatality rates by age group (same made-up numbers)."
+
 fig2_df <- dat %>%
   select(Country, Age, CFR_band_pct)
 
@@ -109,12 +107,13 @@ ggplot(fig2_df, aes(x = Age, y = CFR_band_pct, fill = Country)) +
        x = "Age band", y = "Fatality rate (%)", fill = NULL) +
   theme_classic(base_size = 13) +
   theme(legend.position = "top")
+```
 
-# ------------------------------------------------------------------------------
-# 4) Figure 3: case age distribution by country
-#    Shows why the crude rates reverse: Italy is older, China is younger.
-#    Plot proportions so the skew is obvious.
-# ------------------------------------------------------------------------------
+Italy’s cases skew older while China’s skew younger, which flips the crude comparison. Then give the moral: check stratified results and adjust for key covariates when you can. Within every age group, China’s fatality rate is higher. The reversal arises because China had many more young cases, and younger groups have much lower fatality rates. Aggregating the data without age adjustment hid this reality.
+
+```{r}
+#| label: fig-age-distributions
+#| fig-cap: "Age distribution by country.  Italy is older, China is younger."
 
 fig3_df <- dat %>%
   group_by(Country, Age) %>%
@@ -122,26 +121,16 @@ fig3_df <- dat %>%
   group_by(Country) %>%
   mutate(Prop = Cases / sum(Cases))
 
-ggplot(fig3_df, aes(x = Age, y = Prop, fill = Country)) +
-  geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+
+ggplot(fig3_df, aes(x = Age, y = Prop, fill = Country, group=Country)) +
+  geom_col(position = position_dodge(width = 0.4), width = 0.7) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  facet_wrap(~Country)+
   labs(title = "Case age mix: Italy skewed older, China skewed younger",
        x = "Age band", y = "Share of cases", fill = NULL) +
   theme_classic(base_size = 13) +
-  theme(legend.position = "top")
-
-
+  theme(legend.position = "top", panel.border = element_rect(size = 1, fill=NA))
 ```
-
--   he crude rate is higher in Italy, which could tempt a quick conclusion if you stop there.
-
--   
-
-    Before **Figure 2**: explain that age is a confounder, so you stratify by 10-year bands. Point out that within every band China’s CFR is higher.
-
--   
-
-    Before **Figure 3**: show that Italy’s cases skew older while China’s skew younger, which flips the crude comparison. Then give the moral: check stratified results and adjust for key covariates when you can.Within every age group, China’s fatality rate is higher. The reversal arises because China had many more young cases, and younger groups have much lower fatality rates. Aggregating the data without age adjustment hid this reality.
 
 In short there are a lot of critical questions that you can't answer with statistics, but the answers to those questions will have a huge impact on how you analyse and interpret data. And this is the reason why you should always think of statistics as a tool to help you learn about your data, no more and no less. It's a powerful tool to that end, but there's no substitute for careful thought.
 
