@@ -1,7 +1,7 @@
 ---
 author: Mallory L. Barnes
 abstract-title: Chapter notes
-abstract: Adapted to environmental science by Mallory Barnes. Portions adapted nearly verbatim from Chapters 1 and 2 in Navarro, D. J. "Learning Statistics with R." <https://compcogscisydney.org/learning-statistics-with-r/>
+abstract: Adapted to environmental science by Mallory Barnes. Portions adapted from Chapters 1 and 2 in Navarro, D. J. "Learning Statistics with R." <https://compcogscisydney.org/learning-statistics-with-r/>
 aliases: [why-statistics.html]
 ---
 
@@ -15,29 +15,23 @@ source("global_stuff.R")
 
 ## On the Importance of Statistics in Environmental Science
 
-Many students come into statistics classes with a mix of nerves and low expectations. It is not always the most eagerly anticipated part of an environmental science degree. But statistics is one of the most important tools we have for understanding complex systems. Data are noisy, ecosystems are variable, and our own judgments are often biased. Without statistical methods, we would be left with anecdotes and guesses. With them, we can detect real patterns, test competing explanations, and make stronger arguments for environmental decisions.\
-\
-Common sense is useful, but it is prone to bias. If you see sick fish downstream of a factory, you might conclude that the factory caused it. Maybe you are right, but maybe the fish were already stressed by temperature, parasites, or another pollutant. Statistics gives us tools to test these ideas systematically. It helps us separate patterns from noise, avoid being misled by our own expectations, and draw conclusions that are more likely to hold up under scrutiny.
+Many students come into statistics classes with a mix of nerves and low expectations. It is not always the most eagerly anticipated part of an environmental science degree. But statistics is one of the most important tools we have for understanding complex systems. Environmental data are messy: ecosystems shift, climate varies, and our judgments are often biased. Without statistical methods we risk telling convenient stories. With them, we can detect real patterns, test competing explanations, and make stronger arguments for environmental decisions.
 
-Environmental science is especially messy. Ecosystems shift, climate varies, and data are rarely clean. Without statistical tools we risk telling convenient stories instead of uncovering real patterns. With them we can keep ourselves honest, which is why statistics is essential for environmental science.
+### Why we need Statistics: Bias and Simpson's Paradox
 
-### Why we need Statistics: Bias
+Common sense is useful, but it is prone to bias. When we already believe something to be true, we are more likely to interpret new evidence as supporting it, even if it does not. This tendency can lead us astray in environmental science.
 
-Human judgment is powerful but far from perfect. When we already believe something to be true, we are more likely to interpret new evidence as supporting it, even if it does not. This tendency can lead us astray in environmental science. For example, if you are convinced that industrial farming is the main driver of bee declines, you might see every new drop in bee abundance as confirmation of that belief, even when disease or weather may be stronger contributors. Statistics gives us a systematic way to test these competing explanations, rather than relying on intuition that can be biased.
-
-Think of it this way: relying only on our intuition is a bit like trying to identify trends in a messy field notebook by eye. We might be right more often than chance, but our judgments are still shaped by what we expect to see. With statistics, we move from a “better than guessing” success rate to a much higher level of reliability. It is not magic, but it dramatically increases the chance that we draw the correct conclusion. That is reason number one why scientists use statistics. It helps us check our assumptions and keep our conclusions grounded in evidence rather than belief.
-
-### Why we need Statistics: Simpson's paradox
+For example, if you see sick fish downstream of a factory, you might conclude that the factory caused it. For example, if you are convinced that industrial farming is the main driver of bee declines, you might see every new drop in bee abundance as confirmation of that belief. Maybe you are right, but maybe disease or weather are stronger contributors. Statistics gives us tools to test these ideas systematically. It helps us separate patterns from noise, avoid being misled by our own expectations, and draw conclusions that are more likely to hold up under scrutiny. It's not magic, but it makes our conclusions far more reliable. 
 
 Another challenge is that data can tell very different stories depending on how they are aggregated. *Simpson’s paradox* occurs when a trend seen in combined data reverses after you split the data into meaningful groups.
 
 Here's a recent example. During the COVID-19 pandemic, early data showed that Italy’s overall case fatality rate was higher than China’s. But, once researchers *disaggregated by age group,* the trend flipped: within every age group, the fatality rate was actually higher in China. The apparent contradiction was explained by differences in the age distribution of cases [@vonkügelgen2021].
 
-Here's how that could look, and we'll use case fatality rate (CFR). This is a real phenomenon but I made up numbers for this. 
+Using case fatality rate (CFR), here are some illustrative numbers (made up for teaching). 
 
 ```{r}
 #| label: fig-simpson-covid-overall
-#| fig-cap: "CCrude case fatality rates. Italy appears to have a higher fatality rate than China when all cases are combined."
+#| fig-cap: "Crude case fatality rates. Italy appears to have a higher fatality rate than China when all cases are combined."
 library(ggplot2)
 library(tibble)
 
@@ -81,7 +75,8 @@ fig1_df <- dat %>%
     Cases = sum(Cases),
     Deaths = sum(Deaths),
     CFR_crude_pct = 100 * Deaths / Cases
-  )
+  ) %>%
+  invisible()
 
 ggplot(fig1_df, aes(x = Country, y = CFR_crude_pct, fill = Country)) +
   geom_col(width = 0.6) +
@@ -94,7 +89,7 @@ ggplot(fig1_df, aes(x = Country, y = CFR_crude_pct, fill = Country)) +
   theme(legend.position = "none")
 ```
 
-At face value, Italy looks worse. The crude rate is higher in Italy, which could tempt a quick conclusion if you stop there. But what happens when we disaggregate by age group? We know age is a major confounder (define) for COVID fatality, so let's stratify by 10-year bands. When we do, China’s fatalitiy rate is higher in every band.
+At face value, Italy looks worse. But what happens when we stratify by age group? Because age strongly affects COVID fatality, splitting cases into 10-year bands reveals a different picture. When we do, China’s fatality rate is higher in every band.
 
 ```{r}
 #| label: fig-simpson-by-age-group
@@ -131,10 +126,10 @@ ggplot(fig3_df, aes(x = Age, y = Prop, fill = Country, group=Country)) +
   labs(title = "Case age mix: Italy skewed older, China skewed younger",
        x = "Age band", y = "Share of cases", fill = NULL) +
   theme_classic(base_size = 13) +
-  theme(legend.position = "top", panel.border = element_rect(size = 1, fill=NA))
+  theme(legend.position = "top", panel.border = element_rect(size = 1, fill=NA), axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-In short there are a lot of critical questions that you can't answer with statistics, but the answers to those questions will have a huge impact on how you analyse and interpret data. And this is the reason why you should always think of statistics as a tool to help you learn about your data, no more and no less. It's a powerful tool to that end, but there's no substitute for careful thought.
+Statistics will not answer every scientific question, but it gives us a disciplined way to sort signal from bias so our inferences age well.
 
 ## Statistics in Environmental Science: Why All the Numbers?
 
