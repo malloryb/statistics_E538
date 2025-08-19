@@ -21,21 +21,23 @@ Common sense is useful, but it is prone to bias. If you see sick fish downstream
 
 Environmental science is especially messy. Ecosystems shift, climate varies, and data are rarely clean. Without statistical tools we risk telling convenient stories instead of uncovering real patterns. With them we can keep ourselves honest, which is why statistics is essential for environmental science.
 
-### Why we need Statistics: Bias and Simpson's Paradox
+### Why we need Statistics: Bias
 
 Human judgment is powerful but far from perfect. When we already believe something to be true, we are more likely to interpret new evidence as supporting it, even if it does not. This tendency can lead us astray in environmental science. For example, if you are convinced that industrial farming is the main driver of bee declines, you might see every new drop in bee abundance as confirmation of that belief, even when disease or weather may be stronger contributors. Statistics gives us a systematic way to test these competing explanations, rather than relying on intuition that can be biased.
 
 Think of it this way: relying only on our intuition is a bit like trying to identify trends in a messy field notebook by eye. We might be right more often than chance, but our judgments are still shaped by what we expect to see. With statistics, we move from a “better than guessing” success rate to a much higher level of reliability. It is not magic, but it dramatically increases the chance that we draw the correct conclusion. That is reason number one why scientists use statistics. It helps us check our assumptions and keep our conclusions grounded in evidence rather than belief.
 
-## Simpson's paradox
+### Why we need Statistics: Simpson's paradox
 
-Another challenge is that data can tell very different stories depending on how they are aggregated. A phenomenon known as *Simpson’s paradox* occurs when trends in combined data reverse once you separate the data into groups.
+Another challenge is that data can tell very different stories depending on how they are aggregated. *Simpson’s paradox* occurs when a trend seen in combined data reverses after you split the data into meaningful groups.
 
-Here's a recent example from the early COVID-19 era. During the COVID-19 pandemic, early data showed that Italy’s overall case fatality rate was higher than China’s. Once researchers *disaggregated by age group,* the trend flipped: within every age group, the fatality rate was actually higher in China. The apparent contradiction was explained by differences in the age distribution of cases [@vonkügelgen2021] .
+Here's a recent example. During the COVID-19 pandemic, early data showed that Italy’s overall case fatality rate was higher than China’s. But, once researchers *disaggregated by age group,* the trend flipped: within every age group, the fatality rate was actually higher in China. The apparent contradiction was explained by differences in the age distribution of cases [@vonkügelgen2021].
+
+Here's how that could look, and we'll use case fatality rate (CFR). This is a real phenomenon but I made up numbers for this. 
 
 ```{r}
 #| label: fig-simpson-covid-overall
-#| fig-cap: "Crude case fatality rates (made-up numbers). Italy appears to have a higher fatality rate than China when all cases are combined."
+#| fig-cap: "CCrude case fatality rates. Italy appears to have a higher fatality rate than China when all cases are combined."
 library(ggplot2)
 library(tibble)
 
@@ -92,11 +94,11 @@ ggplot(fig1_df, aes(x = Country, y = CFR_crude_pct, fill = Country)) +
   theme(legend.position = "none")
 ```
 
-At face value, Italy looks worse. The crude rate is higher in Italy, which could tempt a quick conclusion if you stop there. But what happens when we disaggregate by age group? Age is a confounder, so you stratify by 10-year bands. Look, point out that within every band China’s CFR is higher.
+At face value, Italy looks worse. The crude rate is higher in Italy, which could tempt a quick conclusion if you stop there. But what happens when we disaggregate by age group? We know age is a major confounder (define) for COVID fatality, so let's stratify by 10-year bands. When we do, China’s fatalitiy rate is higher in every band.
 
 ```{r}
 #| label: fig-simpson-by-age-group
-#| fig-cap: "Fatality rates by age group (same made-up numbers)."
+#| fig-cap: "Fatality rates by age group (same made-up numbers). Within each age band, China's CFR exceeds Italy's."
 
 fig2_df <- dat %>%
   select(Country, Age, CFR_band_pct)
@@ -109,11 +111,11 @@ ggplot(fig2_df, aes(x = Age, y = CFR_band_pct, fill = Country)) +
   theme(legend.position = "top")
 ```
 
-Italy’s cases skew older while China’s skew younger, which flips the crude comparison. Then give the moral: check stratified results and adjust for key covariates when you can. Within every age group, China’s fatality rate is higher. The reversal arises because China had many more young cases, and younger groups have much lower fatality rates. Aggregating the data without age adjustment hid this reality.
+Why the reversal? Italy’s cases skew older while China’s skew younger, and baseline risk rises steeply with age. The differing age distributions weight the overall averages in opposite ways. Aggregating without age adjustment hid the within-group pattern.
 
 ```{r}
 #| label: fig-age-distributions
-#| fig-cap: "Age distribution by country.  Italy is older, China is younger."
+#| fig-cap: "Case age distribution by country. Italy’s cases are older on average; China’s are younger."
 
 fig3_df <- dat %>%
   group_by(Country, Age) %>%
