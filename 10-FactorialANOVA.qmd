@@ -2,13 +2,16 @@
 author: 
   - Mallory L. Barnes
 aliases: [factorial-anova.html]
+format:
+  pdf: default
+  html: default
+prefer-html: true
 ---
 
 ```{r, include = FALSE}
 source("global_stuff.R")
 ```
 
-# Factorial ANOVA
 
 ```{r}
 library(dplyr)
@@ -18,6 +21,46 @@ library(ggpubr)
 library(kableExtra)
 #library(data.table)
 ```
+
+
+```{r, include=FALSE}
+
+suppressPackageStartupMessages({
+  library(knitr)
+  library(kableExtra)
+})
+
+# Allow HTML inside a PDF build (prevents early abort).
+knitr::opts_knit$set(allow_html = TRUE)
+
+# --- 1) Mask kable() so it auto-chooses format per target ---
+# This catches calls like kable(x, "html") and makes them LaTeX when knitting PDF.
+kable <- function(x, format = NULL, ...) {
+  if (knitr::is_latex_output()) {
+    format <- "latex"
+  } else if (is.null(format)) {
+    format <- "html"
+  }
+  knitr::kable(x, format = format, ...)
+}
+
+# --- 2) Make scroll_box() a no-op in PDF (keeps your pipes intact) ---
+scroll_box <- function(x, ...) {
+  if (knitr::is_latex_output()) {
+    return(x)  # do nothing in PDF builds
+  }
+  kableExtra::scroll_box(x, ...)
+}
+
+# Optional nicety: default to LaTeX in PDF, HTML in HTML for any plain kables
+if (knitr::is_latex_output()) {
+  options(knitr.table.format = "latex")
+} else {
+  options(knitr.table.format = "html")
+}
+```
+
+# Factorial ANOVA
 
 In environmental science, things are rarely simple. Factors like climate, soil type, and water availability all work together, affecting ecosystems in ways that aren't always straightforward. That's where factorial designs come in handy. They help us understand how different factors interact with each other.
 
