@@ -9,10 +9,11 @@ source("global_stuff.R")
 
 # Describing Data {#DescribingData}
 
-> Far better an approximate answer to the right question, which is often vague, than an exact answer to the wrong question, which can always be made precise. ---John W. Tukey
+> Far better an approximate answer to the right question, which is often vague, than an exact answer to the wrong question, which can always be made precise. \*\
+---John W. Tukey
 
-Statistics often begins with the problem of **too much data**. Modern environmental science generates vast amounts of information: rainfall at hundreds of stations, thousands of tree measurements in a forest survey, millions of satellite pixels. Looking at raw numbers alone is overwhelming and uninformative. We need tools to compress, summarize, and visualize. These are **descriptive statistics**.\
-\
+Statistics often begins with the problem of **too much data**. Modern environmental science generates vast amounts of information: rainfall at hundreds of stations, thousands of tree measurements in a forest survey, millions of satellite pixels. Looking at raw numbers alone is overwhelming and uninformative. We need tools to compress, summarize, and visualize. These are **descriptive statistics**.
+
 Keep in mind:
 
 1.  There is more than one useful way to describe data.
@@ -210,7 +211,7 @@ we’re splitting 12 into three equal parts. Each part is 4. Division equalizes 
 This is why the mean is more than just arithmetic. It is the one number that can replace every observation so that, when all those replacements are added together, you get back the original total.
 
 ::: {.callout-note title="Takeaway"}
-The mean is unique: it is the only single value that can replace every observation so that the total stays the same. This balancing property is why the mean plays such a central role in statistics and why we’ll return to it in later chapters.
+The mean is unique: it is the only single value that can replace every observation so that the total stays the same.
 :::
 
 ### Comparing the mean, median, and mode
@@ -235,7 +236,7 @@ qplot(exp_num, col=I("grey"), fill=I("white"))+
   geom_vline(xintercept=mean(exp_num), color="red", size=1.5)+
   geom_vline(xintercept=median(exp_num), color="green", size=1.5)+
   geom_vline(xintercept=my_mode(exp_num), color="blue", size=1.5)+
-  theme_classic(base_size=14)+
+  theme_classic(base_size=16)+
   xlab(element_blank())
 
 ```
@@ -258,11 +259,11 @@ The smallest is 1, the largest is 24. Together they define the **range**. The ra
 
 ### Difference Scores
 
-It would be nice to summarize the amount of different*ness* in the data. Here's why. If you thought that raw data (lots of numbers) is too big to look at, then you will be frightened to contemplate how many differences there are to look at. For example, these 10 numbers are easy to look at:
+It would be nice to summarize the amount of different*ness* in the data. Think about these 10 ordered numbers:
 
 > 1 3 4 5 5 6 7 8 9 24
 
-But, what about the difference between the numbers, what do those look like? We can compute the difference scores between each number, then put them in a matrix like the one below:
+We can compute the differences between each pair of numbers and put them in a matrix:
 
 ```{r 2diffscores}
 numbers<-c(1, 3, 4, 5, 5, 6, 7, 8, 9, 24)
@@ -274,13 +275,11 @@ knitr::kable(differences,row.names=T)
 
 ```
 
-We are looking at all of the possible differences between each number and every other number. So, in the top left, the difference between 1 and itself is 0. One column over to the right, the difference between 3 and 1 (3-1) is 2, etc. As you can see, this is a 10x10 matrix, which means there are 100 differences to look at. Not too bad, but if we had 500 numbers, then we would have 500\*500 = 250,000 differences to look at (go for it if you like looking at that sort of thing).
+In the top left, the difference between 1 and itself is 0. One column over, 3–1 = 2, and so on. With 10 numbers this produces 100 differences. With 500 numbers, you’d have 250,000—too many to be useful.
 
-Pause for a simple question. What would this matrix look like if all of the 10 numbers in our data were the same number? It should look like a bunch of 0s right? Good. In that case, we could easily see that the numbers have no variation.
+If all the numbers were the same, every difference would be 0, making the lack of variation obvious. But with different numbers, we end up with a large table. How can we summarize it? One idea is to apply what we learned about central tendency and take the **average difference**.
 
-But, when the numbers are different, we can see that there is a very large matrix of difference scores. How can we summarize that? How about we apply what we learned from the previous section on measures of central tendency. We have a lot of differences, so we could ask something like, what is the average difference that we have? So, we could just take all of our differences, and compute the mean difference right? What do you think would happen if we did that?
-
-Let's try it out on these three numbers:
+Let's try it with three numbers:
 
 > 1 2 3
 
@@ -293,38 +292,43 @@ colnames(differences)<-numbers
 knitr::kable(differences, row.names=T)
 ```
 
-You might already guess what is going to happen. Let's compute the mean:
+The mean of these nine difference scores is:
 
 $\text{mean of difference scores} = \frac{0+1+2-1+0+1-2-1+0}{9} = \frac{0}{9} = 0$
 
-Uh oh, we get zero for the mean of the difference scores. This will always happen whenever you take the mean of the difference scores. We can see that there are some differences between the numbers, so using 0 as the summary value for the variation in the numbers doesn't make much sense.
+This will always happen: the positives and negatives cancel. So the mean of raw difference scores is not a useful measure of variation.
 
-Furthermore, you might also notice that the matrices of difference scores are redundant. The diagonal is always zero, and numbers on one side of the diagonal are the same as the numbers on the other side, except their signs are reversed. So, that's one reason why the difference scores add up to zero.
+Notice also that the matrix is redundant: the diagonal is always zero, and values above and below the diagonal are the same except for sign.
 
-These are little problems that can be solved by computing the **variance** and the **standard deviation**. For now, the standard deviation is a just a trick that we use to avoid getting a zero. But, later we will see it has properties that are important for other reasons.
+These problems motivate why we compute **variance** and **standard deviation**. They solve the cancellation issue and give us a practical summary of spread.
 
 ### The Variance
 
-Variability, variation, variance, vary, variable, varying, variety. Confused yet? Before we describe **the variance**, we want to you be OK with how this word is used. First, don't forget the big picture. We know that variability and variation refers to the big idea of differences between numbers. We can even use the word variance in the same way. When numbers are different, they have variance.
+We’ve used the words variability, variation, and variance a lot. They all point to the same big idea: numbers differ. When numbers are different, they have variance.\]
 
-::: callout-note
-The formulas for variance and standard deviation depend on whether you think your data represents an entire population of numbers, or is sample from the population. We discuss this issue in later on. For now, we divide by N, later we discuss why you will often divide by N-1 instead.
-:::
+The word *variance* is used in two ways. First, it can mean the general idea of differences between numbers—when values vary, there is variance. Second, it refers to a specific summary statistic: the **mean of the squared deviations from the mean**.
 
-The word **variance** also refers to a specific summary statistic, the sum of the squared deviations from the mean. Hold on what? Plain English please. The variance is the sum of the squared difference scores, where the difference scores are computed between each score and the mean. What are these scores? The scores are the numbers in the data set. Let's see the formula in English first:
+To calculate it, we take each score, subtract the mean to find its **difference score**, then square those differences, then average them. Squaring is the mathematical “trick” that keeps positive and negative deviations from canceling each other out. Finally, we average the squared deviations. In short:
 
 $variance = \frac{\text{Sum of squared difference scores}}{\text{Number of Scores}}$
 
-#### Deviations from the mean, Difference scores from the mean
+Later we’ll distinguish between dividing by $N$ (all data = population) or $N-1$ (sample). For now, just use $N$.
 
-We got a little bit complicated before when we computed the difference scores between all of the numbers in the data. Let's do it again, but in a more manageable way. This time, we calculate the difference between each score and the mean. The idea here is
+#### Deviations from the mean
 
-1.  We can figure out how similar our scores are by computing the mean
-2.  Then we can figure out how different our scores are from the mean
+Earlier we compared every number to every other number, which quickly became unmanageable. A simpler approach is to compare each score to the mean.
 
-This could tell us, 1) something about whether our scores are really all very close to the mean (which could help us know if the mean is good representative number of the data), and 2) something about how much differences there are in the numbers.
+-   Step 1: Find the mean.
 
-Take a look at this table:
+-   Step 2: Subtract the mean from each score.
+
+This tells us:
+
+1.  How well the mean represents the data
+
+2.  How much spread there is around that mean.
+
+Here's an example:
 
 ```{r 2deviations,echo=F, message=F,warning=F}
 library(dplyr)
@@ -341,37 +345,160 @@ knitr::kable(the_df)
 
 ```
 
-The first column shows we have 6 scores in the data set, and the `value` columns shows each score. The sum of the values, and the mean is presented on the last two rows. The sum and the mean were obtained by:
+The mean is $4.5$:
 
 $\frac{1+6+4+2+6+8}{6} = \frac{27}{6} = 4.5$.
 
-The third column `mean`, appears a bit silly. We are just listing the mean once for every score. If you think back to our discussion about the meaning of the mean, then you will remember that it equally distributes the total sum across each data point. We can see that here, if we treat each score as the mean, then every score is a 4.5. We can also see that adding up all of the means for each score gives us back 27, which is the sum of the original values. Also, we see that if we find the mean of the mean scores, we get back the mean (4.5 again).
+The third column simply repeats this mean for each row. That looks odd, but it shows the important property I mentioned earlier: the mean distributes the total equally across all points. Six copies of 4.5 add back to the total of 27.
 
-All of the action is occurring in the fourth column, `Difference_from_Mean`. Here, we are showing the difference scores from the mean, using $X_{i}-\bar{X}$. In other words, we subtracted the mean from each score. So, the first score, 1, is -3.5 from the mean, the second score, 6, is +1.5 from the mean, and so on.
+The fourth column shows the **deviation from the mean:** $X_{i}-\bar{X}$. For example, 1, is -3.5 from the mean, 6, is +1.5, and so on.
 
-Now, we can look at our original scores and we can look at their differences from the mean. Notice, we don't have a matrix of raw difference scores, so it is much easier to look at out. But, we still have a problem:
+Now notice the problem: the deviations add up to zero. The positive and negative differences cancel, which makes it seem like there’s no variation. Clearly that isn’t true, so we’ll need another step, squaring the deviations, to solve it. But first let's investigate *why* this happens.
 
-We can see that there are non-zero values in the difference scores, so we know there are a differences in the data. But, when we add them all up, we still get zero, which makes it seem like there are a total of zero differences in the data...Why does this happen...and what to do about it?
+------------------------------------------------------------------------
 
-#### The mean is the balancing point in the data
+#### Mean as the Balancing Point
 
-One brief pause here to point out another wonderful property of the mean. It is the balancing point in the data. If you take a pen or pencil and try to balance it on your figure so it lays flat what are you doing? You need to find the center of mass in the pen, so that half of it is on one side, and the other half is on the other side. That's how balancing works. One side = the other side.
+The mean is the balancing point of the data. Imagine laying a ruler across your finger. The place where it balances is the point where the weight on each side is equal. Data works the same way: if we treat each value like a weight, the mean is where the total “mass” to the left and right cancel out.
 
-We can think of data as having mass or weight to it. If we put our data on our bathroom scale, we could figure out how heavy it was by summing it up. If we wanted to split the data down the middle so that half of the weight was equal to the other half, then we could balance the data on top of a pin. The mean of the data tells you where to put the pin. It is the location in the data, where the numbers on the one side add up to the same sum as the numbers on the other side.
+This balancing property explains why the deviations always sum to zero. The values below the mean contribute negative deviations, the values above contribute positive ones, and together they cancel:
 
-If we think this through, it means that the sum of the difference scores from the mean will always add up to zero. This is because the numbers on one side of the mean will always add up to -x (whatever the sum of those numbers is), and the numbers of the other side of the mean will always add up to +x (which will be the same value only positive). And:
+$-x + x = 0$
 
-$-x + x = 0$, right.
+To see this more concretely, consider the numbers
 
-Right.
+$X = (1,2,6,7,9)$
+
+```{r}
+#| label: fig-number-line
+#| fig-cap: "Values on a number line."
+#| fig-alt: "Horizontal number line with dots at 1, 2, 6, 7, and 9, each labeled above."
+
+library(tidyverse)
+
+values <- c(1, 2, 6, 7, 9)
+rng <- range(values)
+pad <- diff(rng) * 0.12
+xmin <- rng[1] - pad
+xmax <- rng[2] + pad
+
+tibble(values = values) %>%
+  ggplot(aes(x = values, y = 0)) +
+  # the number line (horizontal at y = 0)
+  geom_segment(aes(x = xmin, xend = xmax, y = 0, yend = 0),
+               linewidth = 1, color = "grey65") +
+  # small end caps (optional)
+  geom_point(data = tibble(xs = c(xmin, xmax), ys = 0),
+             aes(x = xs, y = ys),
+             shape = 22, size = 5, fill = "black", color = "grey50") +
+  # points (the values)
+  geom_point(size = 3, color = "#3B82F6") +
+  # labels above each dot
+  geom_text(aes(y = 0.02, label = values),
+            vjust = 0, size = 6, color = "grey20") +
+  # tidy canvas
+  scale_y_continuous(NULL, breaks = NULL, limits = c(-0.15, 0.25)) +
+  coord_cartesian(xlim = c(xmin, xmax), expand = FALSE) +
+  labs(x = NULL, y = NULL) +
+  theme_classic(base_size = 12) +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.line  = element_blank(),
+    plot.margin = margin(0, 0, 0, 0)
+  )
+```
+
+Now imagine the number line as a teeter-totter. Only when the fulcrum is placed at 5 does the board balance:
+
+```{r}
+#| label: fig-mean-balance-panels
+#| fig-cap: "Mean as the unique balancing point. Only at the mean do signed deviations cancel."
+#| fig-alt: "Three panels with a horizontal number line and a triangular fulcrum; the board tilts left/right when the fulcrum is not at the mean, and is level at the mean."
+
+library(tidyverse)
+library(patchwork)   # or ggpubr/cowplot if you prefer
+
+# ---- Helper to draw one board given a candidate fulcrum 'a' ----
+balance_board <- function(x, a, title = NULL) {
+  rng <- range(x)
+  pad <- diff(rng) * 0.12
+  xmin <- rng[1] - pad; xmax <- rng[2] + pad
+  
+  # Tilt proportional to (mean - a): zero tilt at a = mean(x)
+  tilt <- (mean(x) - a) / diff(rng) * 0.25
+  
+  fulcrum_drop <- 0.1
+  
+  tibble(x = x) %>%
+    ggplot(aes(x = x)) +
+    # the board
+    geom_segment(aes(x = xmin, xend = xmax,
+                     y = -tilt*(xmin - a), yend = -tilt*(xmax - a)),
+                 linewidth = 1, color = "grey65") +
+    # supports as light squares (purely decorative)
+    geom_point(data = tibble(xs = c(xmin, xmax),
+                             ys = c(-tilt*(xmin - a), -tilt*(xmax - a))),
+               aes(x = xs, y = ys),
+               shape = 22, size = 4, fill = "black", color = "grey50") +
+    # dots (the "weights")
+    geom_point(aes(y = -tilt*(x - a)), size = 3, color = "#3B82F6") +
+    # labels above dots
+    geom_text(aes(y = -tilt*(x - a) + 0.08, label = x),
+              vjust = 0, size = 6, color = "grey20") +
+    # fulcrum (triangle)
+    geom_point(aes(x = a, y = -fulcrum_drop), shape = 24, size = 8,
+               fill = "#F97316", color = "#F97316") +
+    annotate("text", x = a, y = -0.3,
+             label = format(a, trim = TRUE), size = 7) +
+    coord_cartesian(ylim = c(-0.4, 0.35), xlim = c(xmin, xmax), expand = FALSE) +
+    labs(title = NULL, x = NULL, y = NULL) +
+    theme_classic(base_size = 14) +
+    theme(axis.ticks = element_blank(),
+          axis.line = element_blank(),
+          axis.text = element_blank(),
+          plot.title = element_blank())
+}
+
+# ---- Example vector and candidate fulcrums ----
+x <- c(1, 2, 6, 7, 9)
+mu <- mean(x)
+
+p_left  <- balance_board(x, a = 3)
+p_right <- balance_board(x, a = 7)
+p_mean  <- balance_board(x, a = mu)
+
+top <- (p_left| plot_spacer()) +
+  plot_layout(widths = c(3, 2))
+middle <- (plot_spacer() | p_right) +
+  plot_layout(widths = c(2, 3)) 
+bottom <- (plot_spacer() | p_mean | plot_spacer()) +
+  plot_layout(widths = c(1, 3, 1))   # << apply to bottom row only
+
+top / middle/ bottom
+```
+
+Formally, this means the signed distances from the mean always cancel out:
+
+$(1−5)+(2−5)+(6−5)+(7−5)+(9−5)=0$
+
+This makes the mean unique. It is the **only value** for which the sum of deviations equals zero:
+
+$\sum_{i=1}^{n}x_{{i}-a} = 0 \quad \Rightarrow \quad a = \bar{x}$
+
+The mean is not just a “typical” value, it is the one point where the data balance. And that balancing property is exactly why the raw deviations always sum to zero. To summarize variation, we need a way around this problem.
 
 #### The squared deviations
 
-Some devious someone divined a solution to the fact that differences scores from the mean always add to zero. Can you think of any solutions? For example, what could you do to the difference scores so that you could add them up, and they would weigh something useful, that is they would not be zero?
+The standard trick is to square the deviations. Squaring converts negatives to positives:
 
-The devious solution is to square the numbers. Squaring numbers converts all the negative numbers to positive numbers. For example, $2^2 = 4$, and $-2^2 = 4$. Remember how squaring works, we multiply the number twice: $2^2 = 2*2 = 4$, and $-2^2 = -2*-2 = 4$. We use the term **squared deviations** to refer to differences scores that have been squared. Deviations are things that move away from something. The difference scores move away from the mean, so we also call them **deviations**.
+$2^2 = 4$
 
-Let's look at our table again, but add the squared deviations.
+$-2^2 = 4$.\
+\
+Since a squared number is always non-negative, the deviations no longer cancel. We call these **squared deviations**: differences from the mean that have been squared.
+
+Let’s revisit our table, this time adding a column for squared deviations:
 
 ```{r 2deviationssquared,echo=F}
 scores<-1:6
@@ -388,41 +515,41 @@ knitr::kable(the_df)
 
 ```
 
-OK, now we have a new column called `squared_deviations`. These are just the difference scores squared. So, $-3.5^2 = 12.25$, etc. You can confirm for yourself with your cellphone calculator.
+For example, the first score is 1, which is 3.5 below the mean. Its deviation is $−3.5$, and its squared deviation is $(−3.5)^2=12.25$.
 
-Now that all of the squared deviations are positive, we can add them up. When we do this we create something very special called the sum of squares (SS), also known as the sum of the squared deviations from the mean. We will talk at length about this SS later on in the ANOVA chapter. So, when you get there, remember that you already know what it is, just some sums of some squared deviations, nothing fancy.
+Now that all deviations are positive, we can add them up. The result is the **sum of squares (SS)**, the sum of squared deviations from the mean. You’ll see this quantity again in the ANOVA chapter, but the idea is simple: it’s just the total of those squared deviations, nothing more.
 
 #### Finally, the variance
 
-Guess what, we already computed the variance. It already happened, and maybe you didn't notice. "Wait, I missed that, what happened?".
+Guess what, we’ve already computed the variance. Maybe you didn’t notice.
 
-First, see if you can remember what we are trying to do here. Take a pause, and see if you can tell yourself what problem we are trying solve.
+Let’s remind ourselves of the goal: we want a single number that summarizes how spread out the data are. Deviations from the mean show those differences, but there are as many deviations as data points. To simplify, we want the *average* squared deviation.
 
-> pause
+Look back at the table. We added up the squared deviations (the *sum of squares*, SS), and then we divided by the number of observations. That's **the variance**. The variance is the mean of the sum of the squared deviations:
 
-Without further ado, we are trying to get a summary of the differences in our data. There are just as many difference scores from the mean as there are data points, which can be a lot, so it would be nice to have a single number to look at, something like a mean, that would tell us about the average differences in the data.
+$variance = \frac{SS}{N}$
 
-If you look at the table, you can see we already computed the mean of the squared deviations. First, we found the sum (SS), then below that we calculated the mean = 5.916 repeating. This is **the variance**. The variance is the mean of the sum of the squared deviations:
+where SS is the sum of squared deviations, and N is the number of observations.
 
-$variance = \frac{SS}{N}$, where SS is the sum of the squared deviations, and N is the number of observations.
+For our data, this came out to 5.916 (repeating).
 
-OK, now what. What do I do with the variance? What does this number mean? Good question. The variance is often an unhelpful number to look at. Why? Because it is not in the same scale as the original data. This is because we squared the difference scores before taking the mean. Squaring produces large numbers. For example, we see a 12.25 in there. That's a big difference, bigger than any difference between any two original values. What to do? How can we bring the numbers back down to their original unsquared size?
+So what does that number mean? Honestly, not much on its own. The problem is that it’s on the *squared* scale, remember, we squared the deviations before averaging. Squaring inflates the values, so the variance is no longer in the same units as the original data.
 
-If you are thinking about taking the square root, that's a ding ding ding, correct answer for you. We can always unsquare anything by taking the square root. So, let's do that to 5.916. $\sqrt{5.916} =$ `r sqrt(5.916)`.
+The fix is straightforward: take the square root. For our example,
+
+$\sqrt{5.916} ≈2.43$
 
 ### The Standard Deviation
 
-Oops, we did it again. We already computed the standard deviation, and we didn't tell you. The standard deviation is the square root of the variance...At least, it is right now, until we complicate matters for you in the next chapter.
-
-Here is the formula for the standard deviation:
+We did it again, we already computed the **standard deviation (SD)**, without calling it by name. The standard deviation is just the square root of the variance:
 
 $\text{standard deviation} = \sqrt{Variance} = \sqrt{\frac{SS}{N}}$.
 
-We could also expand this to say:
+or, written out fully,
 
 $\text{standard deviation} = \sqrt{\frac{\sum_{i}^{n}({x_{i}-\bar{x})^2}}{N}}$
 
-Don't let those big square root signs put you off. Now, you know what they are doing there. Just bringing our measure of the variance back down to the original size of the data. Let's look at our table again:
+Those square root signs simply “unsquare” the variance, bringing the measure of spread back to the original scale of the data. Let's look at our table again:
 
 ```{r,echo=F}
 scores<-1:6
@@ -439,25 +566,21 @@ knitr::kable(the_df)
 
 ```
 
-We measured the standard deviation as `r sqrt(5.916)`. Notice this number fits right in the with differences scores from the mean. All of the scores are kind of in and around + or - `r sqrt(5.916)`. Whereas, if we looked at the variance, 5.916 is just too big, it doesn't summarize the actual differences very well.
+We calculated our standard deviation as:
 
-What does all this mean? Well, if someone told they had some number with a mean of 4.5 (like the values in our table), and a standard deviation of `r sqrt(5.916)`, you would get a pretty good summary of the numbers. You would know that many of the numbers are around 4.5, and you would know that not all of the numbers are 4.5. You would know that the numbers spread around 4.5. You also know that the spread isn't super huge, it's only + or - `r sqrt(5.916)` on average. That's a good starting point for describing numbers.
+$\sqrt{5.916} ≈2.43$
 
-If you had loads of numbers, you could reduce them down to the mean and the standard deviation, and still be pretty well off in terms of getting a sense of those numbers.
+This value makes much more sense than the variance. A variance of 5.916 feels too large for this dataset, because it’s on the squared scale. But a standard deviation of 2.43 lines up with the actual differences from the mean—most scores are within about ±2.4 of 4.5.
 
-## Using Descriptive Statistics with data
+So if someone told you their dataset had a mean of 4.5 and a standard deviation of 2.4, you’d already have a good sense of it: the numbers cluster around 4.5, but not exactly at 4.5, and the typical spread is about 2 to 3 units in either direction.
 
-Remember, you will be learning how to compute descriptive statistics using software in the labs. Check out the [lab manual exercises for descriptives](https://crumplab.github.io/statisticsLab/lab-2-descriptive-statistics.html) to see some examples of working with real data.
+That’s the power of the standard deviation: it gives you a single number that describes the *typical deviation* from the mean, while staying on the same scale as the original data.
 
-## Rolling your own descriptive statistics
+### Mean Absolute Deviation 
 
-We spent many paragraphs talking about variation in numbers, and how to use calculate the **variance** and **standard deviation** to summarize the average differences between numbers in a data set. The basic process was to 1) calculate some measure of the differences, then 2) average the differences to create a summary. We found that we couldn't average the raw difference scores, because we would always get a zero. So, we squared the differences from the mean, then averaged the squared differences differences. Finally, we square rooted our measure to bring the summary back down to the scale of the original numbers.
+So far we’ve handled the “differences cancel out” problem by squaring deviations. But there’s another simple option: take the **absolute value** of each deviation from the mean. That way, every difference becomes positive, and when we add them up we don’t end up at zero.
 
-Perhaps you haven't heard, but there is more than one way to skin a cat, but we prefer to think of this in terms of petting cats, because some of us love cats. Jokes aside, perhaps you were also thinking that the problem of summing differences scores (so that they don't equal zero), can be solved in more than one way. Can you think of a different way, besides squaring?
-
-### Absolute deviations
-
-How about just taking the absolute value of the difference scores. Remember, the absolute value converts any number to a positive value. Check out the following table:
+Here’s what that looks like for our data:
 
 ```{r 2absolute,echo=F}
 scores<-1:6
@@ -474,21 +597,19 @@ knitr::kable(the_df)
 
 ```
 
-This works pretty well too. By converting the difference scores from the mean to positive values, we can now add them up and get a non-zero value (if there are differences). Then, we can find the mean of the sum of the absolute deviations. If we were to map the terms sum of squares (SS), variance and standard deviation onto these new measures based off of the absolute deviation, how would the mapping go? For example, what value in the table corresponds to the SS? That would be the sum of absolute deviations in the last column. How about the variance and standard deviation, what do those correspond to? Remember that the variance is mean ($SS/N$), and the standard deviation is a square-rooted mean ($\sqrt{SS/N}$). In the table above we only have one corresponding mean, the mean of the sum of the absolute deviations. So, we have a **variance** measure that does not need to be square rooted. We might say the mean absolute deviation, is doing double-duty as a variance and a standard-deviation. Neat.
-
-### Other sign-inverting operations
-
-In principle, we could create lots of different summary statistics for variance that solve the summing to zero problem. For example, we could raise every difference score to any even numbered power beyond 2 (which is the square). We could use, 4, 6, 8, 10, etc. There is an infinity of even numbers, so there is an infinity of possible variance statistics. We could also use odd numbers as powers, and then take their absolute value. Many things are possible. The important aspect to any of this is to have a reason for what you are doing, and to choose a method that works for the data-analysis problem you are trying to solve. Note also, we bring up this general issue because we want you to understand that statistics is a creative exercise. We invent things when we need them, and we use things that have already been invented when they work for the problem at hand.
+The last column shows absolute deviations. If we take their mean, we get the mean absolute deviation (MAD). Notice this acts a lot like the standard deviation: it’s the average size of a deviation from the mean, only without squaring.Both approaches—squaring or taking absolute values—solve the same problem in slightly different ways. Squaring is more common because it leads to nice mathematical properties (like in regression and ANOVA), but the MAD can be more intuitive to interpret.
 
 ## Remember to look at your data
 
-Descriptive statistics are great and we will use them a lot in the course to describe data. You may suspect that descriptive statistics also have some short-comings. This is very true. They are compressed summaries of large piles of numbers. They will almost always be unable to represent all of the numbers fairly. There are also different kinds of descriptive statistics that you could use, and it sometimes not clear which one's you should use.
+Descriptive statistics are useful, but they are also compressed summaries. They reduce a dataset to a few numbers, which means they always lose detail. That’s fine if the summary captures the important features, but sometimes it doesn’t.
 
-Perhaps the most important thing you can do when using descriptives is to use them in combination with looking at the data in a graph form. This can help you see whether or not your descriptives are doing a good job of representing the data.
+The safest habit is to **always combine descriptive statistics with graphs**. Graphs show you the shape of the data and reveal patterns summaries can hide.
 
 ### Anscombe's Quartet
 
-To hit this point home, and to get you thinking about the issues we discuss in the next chapter, check this out. It's called Anscombe's Quartet, because these interesting graphs and numbers and numbers were produced by @Anscombe1973. In @fig-anscombe you are looking at pairs of measurements. Each graph has an X and Y axis, and each point represents two measurements. Each of the graphs looks very different, right?
+Francis Anscombe (@Anscombe1973) made this point with a famous example, now called *Anscombe’s Quartet*. Each panel in Figure @fig-anscombe shows pairs of $x$ and $y$ values as a scatterplot. 
+
+Visually, the four panels are very different: one looks linear, one curved, one has an outlier, and one forms a vertical line.
 
 ```{r}
 #| label: fig-anscombe
@@ -513,13 +634,12 @@ ac_long<-data.frame(x=c(ac[,1],
 ggplot(ac_long, aes(x=x, y=y, color=quartet))+
   geom_point(size=1.5)+
   geom_smooth()+
-  theme_classic(base_size=12)+
+  theme_classic(base_size=16)+
   facet_wrap(~quartet)
-
 
 ```
 
-Well, would you be surprised if I told that the descriptive statistics for the numbers in these graphs are exactly the same? It turns out they do have the same descriptive statistics. In the table below I present the mean and variance for the x-values in each graph, and the mean and the variance for the y-values in each graph.
+Now here’s the kicker:
 
 ```{r}
 library(dplyr)
@@ -535,11 +655,23 @@ knitr::kable(ac_long_summary)
 
 ```
 
-The descriptives are all the same! Anscombe put these special numbers together to illustrate the point of graphing your numbers. If you only look at your descriptives, you don't know what patterns in the data they are hiding. If you look at the graph, then you can get a better understanding.
+All four datasets have the **exact same descriptive statistics**:
+
+same mean and variance for $x$
+
+same mean and variance for $y$
+
+same correlation between $x$ and $y$
+
+Yet the scatterplots could not look more different.
+
+::: {.callout-note title="Takeaway"}
+Descriptive statistics alone can be misleading. Always look at the graph. Numbers may be identical, but patterns can be radically different.
+:::
 
 ### Datasaurus Dozen
 
-If you thought that Anscombe's quartet was neat, you should take a look at the [Datasaurus Dozen](https://www.autodeskresearch.com/publications/samestats) [@matejka2017same]. Scroll down to see the examples. You will be looking at dot plots. The dot plots show many different patterns, including dinosaurs! What's amazing is that all of the dots have very nearly the same descriptive statistics. Just another reminder to look at your data, it might look like a dinosaur!
+If you thought that Anscombe's quartet was neat, you should take a look at the [Datasaurus Dozen](https://www.autodeskresearch.com/publications/samestats) [@matejka2017same]. hey constructed 13 datasets with nearly identical means, variances, and correlations — but when plotted, the points form shapes like a star, a circle, or even a dinosaur. Another reminder: your numbers might look like a dinosaur if you don’t plot them.
 
 ## Videos
 
