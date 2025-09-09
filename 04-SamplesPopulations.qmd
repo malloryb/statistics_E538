@@ -12,126 +12,72 @@ aliases: [redirects/probability-sampling-and-estimation.html]
 source("global_stuff.R")
 ```
 
-# Probability, Sampling, and Estimation
+# Probability and Distributions
 
-> I have studied many languages-French, Spanish and a little Italian, but no one told me that Statistics was a foreign language. ---Charmaine J. Forde
+> I have studied many languages-French, Spanish and a little Italian, but no one told me that Statistics was a foreign language .\*\
+> -- Charmaine J. Forde
 
-Up to this point in the book, we've discussed some of the key ideas in experimental design, and we've talked a little about how you can summarize a data set. To a lot of people, this is all there is to statistics: it's about calculating averages, collecting all the numbers, drawing pictures, and putting them all in a report somewhere. Kind of like stamp collecting, but with numbers. However, statistics covers much more than that. In fact, descriptive statistics is one of the smallest parts of statistics, and one of the least powerful. The bigger and more useful part of statistics is that it provides tools **that let you make inferences about data**.
+## From description to inference
 
-Once you start thinking about statistics in these terms -- that statistics is there to help us draw inferences from data -- you start seeing examples of it everywhere. For instance, here's a tiny extract from a newspaper article in the Sydney Morning Herald (30 Oct 2010):
+Up to this point, we've focused on experimental design and descriptive statistics: how to collect data and how to summarize it with graphs and averages. But statistics is more than description. Its power is in inference---using limited data to say something about a broader population.
 
-> "I have a tough job," the Premier said in response to a poll which found her government is now the most unpopular Labor administration in polling history, with a primary vote of just 23 per cent.
-
-This kind of remark is entirely unremarkable in the papers or in everyday life, but let's have a think about what it entails. A polling company has conducted a survey, usually a pretty big one because they can afford it. I'm too lazy to track down the original survey, so let's just imagine that they called 1000 voters at random, and 230 (23%) of those claimed that they intended to vote for the party. For the 2010 Federal election, the Australian Electoral Commission reported 4,610,795 enrolled voters in New South Whales; so the opinions of the remaining 4,609,795 voters (about 99.98% of voters) remain unknown to us. Even assuming that no-one lied to the polling company the only thing we can say with 100% confidence is that the true primary vote is somewhere between 230/4610795 (about 0.005%) and 4610025/4610795 (about 99.83%). So, on what basis is it legitimate for the polling company, the newspaper, and the readership to conclude that the ALP primary vote is only about 23%?
-
-The answer to the question is pretty obvious: if I call 1000 people at random, and 230 of them say they intend to vote for the ALP, then it seems very unlikely that these are the **only** 230 people out of the entire voting public who actually intend to do so. In other words, we assume that the data collected by the polling company is pretty representative of the population at large. But how representative? Would we be surprised to discover that the true ALP primary vote is actually 24%? 29%? 37%? At this point everyday intuition starts to break down a bit. No-one would be surprised by 24%, and everybody would be surprised by 37%, but it's a bit hard to say whether 29% is plausible. We need some more powerful tools than just looking at the numbers and guessing.
-
+[Tighten up but the distinction is useful]
 **Inferential statistics** provides the tools that we need to answer these sorts of questions, and since these kinds of questions lie at the heart of the scientific enterprise, they take up the lions share of every introductory course on statistics and research methods. However, our tools for making statistical inferences are 1) built on top of **probability theory**, and 2) require an understanding of how samples behave when you take them from distributions (defined by probability theory...). So, this chapter has two main parts. A brief introduction to probability theory, and an introduction to sampling from distributions.
+[Tighten up but the destinction is useful]
 
-## How are probability and statistics different?
+## Probability vs. Statistics
 
-Before we start talking about probability theory, it's helpful to spend a moment thinking about the relationship between probability and statistics. The two disciplines are closely related but they're not identical. Probability theory is "the doctrine of chances". It's a branch of mathematics that tells you how often different kinds of events will happen. For example, all of these questions are things you can answer using probability theory:
+Probability and statistics are closely related but not the same.
 
--   What are the chances of a fair coin coming up heads 10 times in a row?
+**Probability** starts with a known model of the world and asks: what kinds of data are likely?
 
--   If I roll two six sided dice, how likely is it that I'll roll two sixes?
+-   Example: What is the chance of flipping 10 heads in a row with a fair coin?
+-   Example: What is the chance of drawing five hearts from a shuffled deck?
 
--   How likely is it that five cards drawn from a perfectly shuffled deck will all be hearts?
+Here, the **model is known** (fair coin, fair deck). Data are imagined.
 
--   What are the chances that I'll win the lottery?
+**Statistics** starts with data and asks: what model of the world generated these data?
 
-Notice that all of these questions have something in common. In each case the "truth of the world" is known, and my question relates to the "what kind of events" will happen. In the first question I **know** that the coin is fair, so there's a 50% chance that any individual coin flip will come up heads. In the second question, I **know** that the chance of rolling a 6 on a single die is 1 in 6. In the third question I **know** that the deck is shuffled properly. And in the fourth question, I **know** that the lottery follows specific rules. You get the idea. The critical point is that probabilistic questions start with a known *model* of the world, and we use that model to do some calculations.
+-   Example: If a coin comes up heads 10 times in a row, is it fair?
+-   Example: If five cards in a row are hearts, was the deck shuffled?
 
-The underlying model can be quite simple. For instance, in the coin flipping example, we can write down the model like this: $P(\mbox{heads}) = 0.5$ which you can read as "the probability of heads is 0.5".
+Here, the **data are known**. The model is what we want to learn about.
 
-As we'll see later, in the same way that percentages are numbers that range from 0% to 100%, probabilities are just numbers that range from 0 to 1. When using this probability model to answer the first question, I don't actually know exactly what's going to happen. Maybe I'll get 10 heads, like the question says. But maybe I'll get three heads. That's the key thing: in probability theory, the **model** is known, but the **data** are not.
+**Takeaway:**
 
-So that's probability. What about statistics? Statistical questions work the other way around. In statistics, we know the truth about the world. All we have is the data, and it is from the data that we want to **learn** the truth about the world. Statistical questions tend to look more like these:
+-   Probability works from model → data. Statistics works from data → model.
 
--   If my friend flips a coin 10 times and gets 10 heads, are they playing a trick on me?
-
--   If five cards off the top of the deck are all hearts, how likely is it that the deck was shuffled?
-
--   If the lottery commissioner's spouse wins the lottery, how likely is it that the lottery was rigged?
-
-This time around, the only thing we have are data. What I **know** is that I saw my friend flip the coin 10 times and it came up heads every time. And what I want to *infer* is whether or not I should conclude that what I just saw was actually a fair coin being flipped 10 times in a row, or whether I should suspect that my friend is playing a trick on me. The data I have look like this:
-
-```         
-H H H H H H H H H H H
-```
-
-and what I'm trying to do is work out which "model of the world" I should put my trust in. If the coin is fair, then the model I should adopt is one that says that the probability of heads is 0.5; that is, $P(\mbox{heads}) = 0.5$. If the coin is not fair, then I should conclude that the probability of heads is **not** 0.5, which we would write as $P(\mbox{heads}) \neq 0.5$. In other words, the statistical inference problem is to figure out which of these probability models is right. Clearly, the statistical question isn't the same as the probability question, but they're deeply connected to one another. Because of this, a good introduction to statistical theory will start with a discussion of what probability is and how it works.
+-   Because inference depends on probability, we start this chapter with probability foundations.
 
 ## What does probability mean?
 
-Let's start with the first of these questions. What is "probability"? It might seem surprising to you, but while statisticians and mathematicians (mostly) agree on what the **rules** of probability are, there's much less of a consensus on what the word really **means**. It seems weird because we're all very comfortable using words like "chance", "likely", "possible" and "probable", and it doesn't seem like it should be a very difficult question to answer. If you had to explain "probability" to a five year old, you could do a pretty good job. But if you've ever had that experience in real life, you might walk away from the conversation feeling like you didn't quite get it right, and that (like many everyday concepts) it turns out that you don't **really** know what it's all about.
+Statisticians agree on the rules of probability but not always on what the word itself means. In everyday life we're comfortable saying something is "likely" or "unlikely," but the formal meaning varies.
 
-So I'll have a go at it. Let's suppose I want to bet on a soccer game between two teams of robots, **Arduino Arsenal** and **C Milan**. After thinking about it, I decide that there is an 80% probability that **Arduino Arsenal** winning. What do I mean by that? Here are three possibilities...
+Imagine a soccer game between Arsenal and West Ham. You say Arsenal has an 80% chance of winning. That could mean:
 
--   They're robot teams, so I can make them play over and over again, and if I did that, **Arduino Arsenal** would win 8 out of every 10 games on average.
+1.  Long-run frequency: if the teams played many times, Arsenal would win \~8 out of 10.
 
--   For any given game, I would only agree that betting on this game is only "fair" if a \$1 bet on **C Milan** gives a \$5 payoff (i.e. I get my \$1 back plus a \$4 reward for being correct), as would a \$4 bet on **Arduino Arsenal** (i.e., my \$4 bet plus a \$1 reward).
+2.  Betting odds: you'd only take a wager if payoffs reflected an 80/20 split.
 
--   My subjective "belief" or "confidence" in an **Arduino Arsenal** victory is four times as strong as my belief in a **C Milan** victory.
+3.  Subjective belief: your confidence in Arsenal is four times stronger than in West Ham.
 
-Each of these seems sensible. However they're not identical, and not every statistician would endorse all of them. The reason is that there are different statistical ideologies (yes, really!) and depending on which one you subscribe to, you might say that some of those statements are meaningless or irrelevant. In this section, I give a brief introduction the two main approaches that exist in the literature. These are by no means the only approaches, but they're the two big ones.
+All three interpretations follow the same rules but reflect different philosophies.
 
-### The frequentist view
-
-The first of the two major approaches to probability, and the more dominant one in statistics, is referred to as the *frequentist view*, and it defines probability as a *long-run frequency*. Suppose we were to try flipping a fair coin, over and over again. By definition, this is a coin that has $P(H) = 0.5$. What might we observe? One possibility is that the first 20 flips might look like this:
-
-```         
-T,H,H,H,H,T,T,H,H,H,H,T,H,H,T,T,T,T,T,H
-```
-
-In this case 11 of these 20 coin flips (55%) came up heads. Now suppose that I'd been keeping a running tally of the number of heads (which I'll call $N_H$) that I've seen, across the first $N$ flips, and calculate the proportion of heads $N_H / N$ every time. Here's what I'd get (I did literally flip coins to produce this!):
-
-|                 |     |     |     |     |     |     |     |     |     |     |
-|:----------------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| number of flips |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  8  |  9  | 10  |
-| number of heads |  0  |  1  |  2  |  3  |  4  |  4  |  4  |  5  |  6  |  7  |
-| proportion      | .00 | .50 | .67 | .75 | .80 | .67 | .57 | .63 | .67 | .70 |
-
-|                 |     |     |     |     |     |     |     |     |     |     |
-|:----------------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| number of flips | 11  | 12  | 13  | 14  | 15  | 16  | 17  | 18  | 19  | 20  |
-| number of heads |  8  |  8  |  9  | 10  | 10  | 10  | 10  | 10  | 10  | 11  |
-| proportion      | .73 | .67 | .69 | .71 | .67 | .63 | .59 | .56 | .53 | .55 |
-
-Notice that at the start of the sequence, the **proportion** of heads fluctuates wildly, starting at .00 and rising as high as .80. Later on, one gets the impression that it dampens out a bit, with more and more of the values actually being pretty close to the "right" answer of .50. This is the frequentist definition of probability in a nutshell: flip a fair coin over and over again, and as $N$ grows large (approaches infinity, denoted $N\rightarrow \infty$), the proportion of heads will converge to 50%. There are some subtle technicalities that the mathematicians care about, but qualitatively speaking, that's how the frequentists define probability. Unfortunately, I don't have an infinite number of coins, or the infinite patience required to flip a coin an infinite number of times. However, I do have a computer, and computers excel at mindless repetitive tasks. So I asked my computer to simulate flipping a coin 1000 times, and then drew a picture of what happens to the proportion $N_H / N$ as $N$ increases. Actually, I did it four times, just to make sure it wasn't a fluke. The results are shown in @fig-4FreqProb. As you can see, the **proportion of observed heads** eventually stops fluctuating, and settles down; when it does, the number at which it finally settles is the true probability of heads.
-
-```{r}
-#| label: fig-4FreqProb
-#| fig-cap: "An illustration of how frequentist probability works. If you flip a fair coin over and over again, the proportion of heads that you've seen eventually settles down, and converges to the true probability of 0.5. Each panel shows four different simulated experiments: in each case, we pretend we flipped a coin 1000 times, and kept track of the proportion of flips that were heads as we went along. Although none of these sequences actually ended up with an exact value of .5, if we'd extended the experiment for an infinite number of coin flips they would have."
-
-knitr::include_graphics("imgs/navarro_img/probability/frequentistProb-eps-converted-to.png")
-```
-
-The frequentist definition of probability has some desirable characteristics. First, it is objective: the probability of an event is **necessarily** grounded in the world. The only way that probability statements can make sense is if they refer to (a sequence of) events that occur in the physical universe. Second, it is unambiguous: any two people watching the same sequence of events unfold, trying to calculate the probability of an event, must inevitably come up with the same answer.
-
-However, it also has undesirable characteristics. Infinite sequences don't exist in the physical world. Suppose you picked up a coin from your pocket and started to flip it. Every time it lands, it impacts on the ground. Each impact wears the coin down a bit; eventually, the coin will be destroyed. So, one might ask whether it really makes sense to pretend that an "infinite" sequence of coin flips is even a meaningful concept, or an objective one. We can't say that an "infinite sequence" of events is a real thing in the physical universe, because the physical universe doesn't allow infinite anything.
-
-More seriously, the frequentist definition has a narrow scope. There are lots of things out there that human beings are happy to assign probability to in everyday language, but cannot (even in theory) be mapped onto a hypothetical sequence of events. For instance, if a meteorologist comes on TV and says, "the probability of rain in Adelaide on 2 November 2048 is 60%" we humans are happy to accept this. But it's not clear how to define this in frequentist terms. There's only one city of Adelaide, and only 2 November 2048. There's no infinite sequence of events here, just a once-off thing. Frequentist probability genuinely **forbids** us from making probability statements about a single event. From the frequentist perspective, it will either rain tomorrow or it will not; there is no "probability" that attaches to a single non-repeatable event. Now, it should be said that there are some very clever tricks that frequentists can use to get around this. One possibility is that what the meteorologist means is something like this: "There is a category of days for which I predict a 60% chance of rain; if we look only across those days for which I make this prediction, then on 60% of those days it will actually rain". It's very weird and counter intuitive to think of it this way, but you do see frequentists do this sometimes.
-
-### The Bayesian view
-
-The **Bayesian view** of probability is often called the subjectivist view, and it is a minority view among statisticians, but one that has been steadily gaining traction for the last several decades. There are many flavors of Bayesianism, making hard to say exactly what "the" Bayesian view is. The most common way of thinking about subjective probability is to define the probability of an event as the **degree of belief** that an intelligent and rational agent assigns to that truth of that event. From that perspective, probabilities don't exist in the world, but rather in the thoughts and assumptions of people and other intelligent beings. However, in order for this approach to work, we need some way of operationalising "degree of belief". One way that you can do this is to formalize it in terms of "rational gambling", though there are many other ways. Suppose that I believe that there's a 60% probability of rain tomorrow. If someone offers me a bet: if it rains tomorrow, then I win \$5, but if it doesn't rain then I lose \$5. Clearly, from my perspective, this is a pretty good bet. On the other hand, if I think that the probability of rain is only 40%, then it's a bad bet to take. Thus, we can operationalize the notion of a "subjective probability" in terms of what bets I'm willing to accept.
-
-What are the advantages and disadvantages to the Bayesian approach? The main advantage is that it allows you to assign probabilities to any event you want to. You don't need to be limited to those events that are repeatable. The main disadvantage (to many people) is that we can't be purely objective -- specifying a probability requires us to specify an entity that has the relevant degree of belief. This entity might be a human, an alien, a robot, or even a statistician, but there has to be an intelligent agent out there that believes in things. To many people this is uncomfortable: it seems to make probability arbitrary. While the Bayesian approach does require that the agent in question be rational (i.e., obey the rules of probability), it does allow everyone to have their own beliefs; I can believe the coin is fair and you don't have to, even though we're both rational. The frequentist view doesn't allow any two observers to attribute different probabilities to the same event: when that happens, then at least one of them must be wrong. The Bayesian view does not prevent this from occurring. Two observers with different background knowledge can legitimately hold different beliefs about the same event. In short, where the frequentist view is sometimes considered to be too narrow (forbids lots of things that that we want to assign probabilities to), the Bayesian view is sometimes thought to be too broad (allows too many differences between observers).
-
-### What's the difference? And who is right?
-
-Now that you've seen each of these two views independently, it's useful to make sure you can compare the two. Go back to the hypothetical robot soccer game at the start of the section. What do you think a frequentist and a Bayesian would say about these three statements? Which statement would a frequentist say is the correct definition of probability? Which one would a Bayesian do? Would some of these statements be meaningless to a frequentist or a Bayesian? If you've understood the two perspectives, you should have some sense of how to answer those questions.
-
-Okay, assuming you understand the different, you might be wondering which of them is **right**? Honestly, I don't know that there is a right answer. As far as I can tell there's nothing mathematically incorrect about the way frequentists think about sequences of events, and there's nothing mathematically incorrect about the way that Bayesians define the beliefs of a rational agent. In fact, when you dig down into the details, Bayesians and frequentists actually agree about a lot of things. Many frequentist methods lead to decisions that Bayesians agree a rational agent would make. Many Bayesian methods have very good frequentist properties.
-
-For the most part, I'm a pragmatist so I'll use any statistical method that I trust. As it turns out, that makes me prefer Bayesian methods, for reasons I'll explain towards the end of the book, but I'm not fundamentally opposed to frequentist methods. Not everyone is quite so relaxed. For instance, consider Sir Ronald Fisher, one of the towering figures of 20th century statistics and a vehement opponent to all things Bayesian, whose paper on the mathematical foundations of statistics referred to Bayesian probability as "an impenetrable jungle [that] arrests progress towards precision of statistical concepts" @Fisher1922b [p. 311]. Or the psychologist Paul Meehl, who suggests that relying on frequentist methods could turn you into "a potent but sterile intellectual rake who leaves in his merry path a long train of ravished maidens but no viable scientific offspring" @Meehl1967 [p. 114]. The history of statistics, as you might gather, is not devoid of entertainment.
+For our purposes, the math works the same either way. In this course we'll use the **frequentist** view, so you can think of probability as the long-run proportion of times an event would occur if you could repeat the process many times (that's #1 above).
 
 ## Basic probability theory
 
-Ideological arguments between Bayesians and frequentists notwithstanding, it turns out that people mostly agree on the rules that probabilities should obey. There are lots of different ways of arriving at these rules. The most commonly used approach is based on the work of Andrey Kolmogorov, one of the great Soviet mathematicians of the 20th century. I won't go into a lot of detail, but I'll try to give you a bit of a sense of how it works. And in order to do so, I'm going to have to talk about my pants.
+At the core of probability theory is the idea of a distribution: a set of possible outcomes and their probabilities.
 
-### Introducing probability distributions
+Suppose we track which ice cream flavor a customer chooses: chocolate, vanilla, or strawberry. Each choice is an *elementary event*, and the set of all possible events is the *sample space*:
+
+S = {\text{chocolate}, \text{vanilla}, \text{strawberry}}
+
+If we record how often each flavor is chosen, we might estimate the following probabilities:
+
+Flavor Probability - Chocolate $P(\text{choc})=0.5$ - Vanilla $P(\text{van})=0.3$ - Strawberry $P(\text{straw})=0.2$
+
+These probabilities form a distribution. Each value lies between 0 and 1, and together they sum to 1.
 
 One of the disturbing truths about my life is that I only own 5 pairs of pants: three pairs of jeans, the bottom half of a suit, and a pair of tracksuit pants. Even sadder, I've given them names: I call them $X_1$, $X_2$, $X_3$, $X_4$ and $X_5$. I really do: that's why they call me Mister Imaginative. Now, on any given day, I pick out exactly one of pair of pants to wear. Not even I'm so stupid as to try to wear two pairs of pants, and thanks to years of training I never go outside without wearing pants anymore. If I were to describe this situation using the language of probability theory, I would refer to each pair of pants (i.e., each $X$) as an *elementary event*. The key characteristic of elementary events is that every time we make an observation (e.g., every time I put on a pair of pants), then the outcome will be one and only one of these events. Like I said, these days I always wear exactly one pair of pants, so my pants satisfy this constraint. Similarly, the set of all possible events is called a *sample space*. Granted, some people would call it a "wardrobe", but that's because they're refusing to think about my pants in probabilistic terms. Sad.
 
@@ -1172,10 +1118,10 @@ Suppose we go to Brooklyn and 100 of the locals are kind enough to sit through a
 
 In this example, estimating the unknown population parameter is straightforward. I calculate the sample mean, and I use that as my **estimate of the population mean**. It's pretty simple, and in the next section we'll explain the statistical justification for this intuitive answer. However, for the moment let's make sure you recognize that the sample statistic and the estimate of the population parameter are conceptually different things. A sample statistic is a description of your data, whereas the estimate is a guess about the population. With that in mind, statisticians often use different notation to refer to them. For instance, if true population mean is denoted $\mu$, then we would use $\hat\mu$ to refer to our estimate of the population mean. In contrast, the sample mean is denoted $\bar{X}$ or sometimes $m$. However, in simple random samples, the estimate of the population mean is identical to the sample mean: if I observe a sample mean of $\bar{X} = 98.5$, then my estimate of the population mean is also $\hat\mu = 98.5$. To help keep the notation clear, here's a handy table:
 
-| Symbol | What is it? | Do we know what it is? |
+| Symbol      | What is it?                     | Do we know what it is?            |
 |-------------------|--------------------------|----------------------------|
-| $\bar{X}$ | Sample mean | Yes, calculated from the raw data |
-| $\mu$ | True population mean | Almost never known for sure |
+| $\bar{X}$   | Sample mean                     | Yes, calculated from the raw data |
+| $\mu$       | True population mean            | Almost never known for sure       |
 | $\hat{\mu}$ | Estimate of the population mean | Yes, identical to the sample mean |
 
 ### Estimating the population standard deviation
@@ -1249,10 +1195,10 @@ This is the right number to report, of course, it's that people tend to get a li
 
 To finish this section off, here's another couple of tables to help keep things clear:
 
-| Symbol | What is it? | Do we know what it is? |
+| Symbol           | What is it?                         | Do we know what it is?                       |
 |-------------------|------------------------|-----------------------------|
-| $s^2$ | Sample variance | Yes, calculated from the raw data |
-| $\sigma^2$ | Population variance | Almost never known for sure |
+| $s^2$            | Sample variance                     | Yes, calculated from the raw data            |
+| $\sigma^2$       | Population variance                 | Almost never known for sure                  |
 | $\hat{\sigma}^2$ | Estimate of the population variance | Yes, but not the same as the sample variance |
 
 ## Estimating a confidence interval
