@@ -1,10 +1,6 @@
 ---
 author: 
-  - Danielle J. Navarro
-  - Matthew J. C. Crump
   - Mallory L. Barnes
-abstract-title: Chapter notes
-abstract: Sections 4.1 & 4.9 - Adapted text by Danielle Navarro Section 4.10 - 4.11 & 4.13 - Mix of Matthew Crump & Danielle Navarro Section 4.12 - 4.13 - Adapted text by Danielle Navarro, all sections modified by Mallory Barnes. 
 aliases: [redirects/probability-sampling-and-estimation.html]
 ---
 
@@ -16,8 +12,7 @@ library(ggplot2)
 
 # Probability and Distributions
 
-> I have studied many languages-French, Spanish and a little Italian, but no one told me that Statistics was a foreign language .\*\
-> -- Charmaine J. Forde
+> I have studied many languages-French, Spanish and a little Italian, but no one told me that Statistics was a foreign language. -- Charmaine J. Forde
 
 ## From description to inference
 
@@ -69,7 +64,7 @@ For our purposes, the math works the same either way. In this course we'll use t
 
 At the core of probability theory is the idea of a distribution: a set of possible outcomes and their probabilities.
 
-Suppose we track which ice cream flavor a customer chooses: chocolate, vanilla, or strawberry. Each choice is an *elementary event*, and the set of all possible events is the *sample space* $S$:
+Suppose we track which ice cream flavor a customer chooses: chocolate, vanilla, or strawberry. Each choice is an *elementary event*, and the set of all possible events is the *sample space*, $S$:
 
 $S = {\text{chocolate}, \text{vanilla}, \text{strawberry}}$
 
@@ -85,7 +80,6 @@ Flavor Probability:
 
 These probabilities form a distribution. Each value lies between 0 and 1, and together they sum to 1.
 
-
 ```{r}
 #| label: fig-icecream-prob
 #| fig-cap: "A simple probability distribution: the probabilities for three flavors must add to 1."
@@ -100,66 +94,66 @@ ggplot(flavors, aes(x = flavor, y = probability)) +
   geom_text(aes(label = probability), vjust = -0.5) +
   ylim(0, 1) +
   labs(x = "Flavor", y = "Probability") +
-  theme_minimal()
+  theme_classic(base_size=12)
 ```
-
 
 **Non-elementary events**
 
-We can also define events that group multiple outcomes. For example, let $A=$ “not chocolate.” Then
+We can also define events that group multiple outcomes.
 
-P(A) = P(\text{van}) + P(\text{straw}) = 0.5
+For example, let $A=$ "not chocolate." Then:
 
-This illustrates the law of total probability: probabilities across the sample space add up to 1.
+$$P(A) = P(van) + P(straw)  = 0.5$$
 
-The only other thing that I need to point out is that probability theory allows you to talk about *non elementary events* as well as elementary ones. The easiest way to illustrate the concept is with an example. In the pants example, it's perfectly legitimate to refer to the probability that I wear jeans. In this scenario, the "Dan wears jeans" event said to have happened as long as the elementary event that actually did occur is one of the appropriate ones; in this case "blue jeans", "black jeans" or "grey jeans". In mathematical terms, we defined the "jeans" event $E$ to correspond to the set of elementary events $(X_1, X_2, X_3)$. If any of these elementary events occurs, then $E$ is also said to have occurred. Having decided to write down the definition of the $E$ this way, it's pretty straightforward to state what the probability $P(E)$ is: we just add everything up. In this particular case $$P(E) = P(X_1) + P(X_2) + P(X_3)$$ and, since the probabilities of blue, grey and black jeans respectively are .5, .3 and .1, the probability that I wear jeans is equal to .9.
+## Rules of Probability
 
-At this point you might be thinking that this is all terribly obvious and simple and you'd be right. All we've really done is wrap some basic mathematics around a few common sense intuitions. However, from these simple beginnings it's possible to construct some extremely powerful mathematical tools. I'm definitely not going to go into the details in this book, but what I will do is list some of the other rules that probabilities satisfy. These rules can be derived from the simple assumptions that I've outlined above, but since we don't actually use these rules for anything in this book, I won't do so here.
+Some basic rules follow from this framework. Let's consider a sample space $X$ that consists of elementary events $x$, and two non-elementary events, which we'll call $A$ and $B$.
+
+Here are our rules:
 
 | English     |      Notation |     | Formula                     |
 |:------------|--------------:|-----|:----------------------------|
 | not $A$     |   $P(\neg A)$ | $=$ | $1-P(A)$                    |
-| $A$ or $B$  | $P(A \cup B)$ | $=$ | $P(A) + P(B) - P(A \cap B)$ |
 | $A$ and $B$ | $P(A \cap B)$ | $=$ | $P(A|B) P(B)$               |
+| $A$ or $B$  | $P(A \cup B)$ | $=$ | $P(A) + P(B) - P(A \cap B)$ |
 
-: Some basic rules that probabilities must satisfy. You don't really need to know these rules in order to understand the analyses that we'll talk about later in the book, but they are important if you want to understand probability theory a bit more deeply.
+These are ways of expressing relationships within a distribution. They look complicated but let's quickly walk through them. We'll add a fourth flavor to our ice cream flavors here, Rocky Road. So we have our new sample space $S$, and then we'll consider two non-elementary events $A$ and $B$.
 
-Now that we have the ability to "define" non-elementary events in terms of elementary ones, we can actually use this to construct (or, if you want to be all mathematicallish, "derive") some of the other rules of probability. These rules are listed above, and while I'm pretty confident that very few of my readers actually care about how these rules are constructed, I'm going to show you anyway: even though it's boring and you'll probably never have a lot of use for these derivations, if you read through it once or twice and try to see how it works, you'll find that probability starts to feel a bit less mysterious, and with any luck a lot less daunting. So here goes. Firstly, in order to construct the rules I'm going to need a sample space $X$ that consists of a bunch of elementary events $x$, and two non-elementary events, which I'll call $A$ and $B$. Let's say: $$\begin{array}{rcl}
-X &=& (x_1, x_2, x_3, x_4, x_5) \\
-A &=& (x_1, x_2, x_3) \\
-B &=& (x_3, x_4)
-\end{array}$$ To make this a bit more concrete, let's suppose that we're still talking about the pants distribution. If so, $A$ corresponds to the event "jeans", and $B$ corresponds to the event "black": $$\begin{array}{rcl}
-\mbox{``jeans''} &=& (\mbox{``blue jeans''}, \mbox{``grey jeans''}, \mbox{``black jeans''}) \\
-\mbox{``black''} &=& (\mbox{``black jeans''}, \mbox{``black suit''})
-\end{array}$$ So now let's start checking the rules that I've listed in the table.
+$S = (chocolate, vanilla, strawberry, rocky road)$
 
-In the first line, the table says that $$P(\neg A) = 1- P(A)$$ and what it **means** is that the probability of "not $A$" is equal to 1 minus the probability of $A$. A moment's thought (and a tedious example) make it obvious why this must be true. If $A$ corresponds to the even that I wear jeans (i.e., one of $x_1$ or $x_2$ or $x_3$ happens), then the only meaningful definition of "not $A$" (which is mathematically denoted as $\neg A$) is to say that $\neg A$ consists of **all** elementary events that don't belong to $A$. In the case of the pants distribution it means that $\neg A = (x_4, x_5)$, or, to say it in English: "not jeans" consists of all pairs of pants that aren't jeans (i.e., the black suit and the blue tracksuit). Consequently, every single elementary event belongs to either $A$ or $\neg A$, but not both. Okay, so now let's rearrange our statement above: $$P(\neg A) + P(A) = 1$$ which is a trite way of saying either I do wear jeans or I don't wear jeans: the probability of "not jeans" plus the probability of "jeans" is 1. Mathematically: $$\begin{array}{rcl}
-P(\neg A) &=&  P(x_4) + P(x_5) \\
-P(A) &=& P(x_1) + P(x_2) + P(x_3) 
-\end{array}$$ so therefore $$\begin{array}{rcl} 
-P(\neg A) + P(A) &=& P(x_1) + P(x_2) + P(x_3) + P(x_4) + P(x_5) \\
-&=& \sum_{x \in X} P(x) \\
-&=& 1
-\end{array}$$ Excellent. It all seems to work.
+$A = (chocolate, vanilla, strawberry)$
 
-Wow, I can hear you saying. That's a lot of $x$s to tell me the freaking obvious. And you're right: this **is** freaking obvious. The whole **point** of probability theory to to formalize and mathematize a few very basic common sense intuitions. So let's carry this line of thought forward a bit further. In the last section I defined an event corresponding to **not** A, which I denoted $\neg A$. Let's now define two new events that correspond to important everyday concepts: $A$ **and** $B$, and $A$ **or** $B$. To be precise:
+$B = (chocolate, rocky road)$
 
-| English statement:                   | Mathematical notation: |
-|:-------------------------------------|:----------------------:|
-| "$A$ and $B$" both happen            |       $A \cap B$       |
-| at least one of "$A$ or $B$" happens |       $A \cup B$       |
+**Not** $A$:
 
-Since $A$ and $B$ are both defined in terms of our elementary events (the $x$s) we're going to need to try to describe $A \cap B$ and $A \cup B$ in terms of our elementary events too. Can we do this? Yes we can The only way that both $A$ and $B$ can occur is if the elementary event that we observe turns out to belong to both $A$ and $B$. Thus "$A \cap B$" includes only those elementary events that belong to both $A$ and $B$... $$\begin{array}{rcl}
-A &=& (x_1, x_2, x_3) \\
-B &=& (x_3, x_4) \\
-A \cap B & = & (x_3) 
-\end{array}$$ So, um, the only way that I can wear "jeans" $(x_1, x_2, x_3)$ and "black pants" $(x_3, x_4)$ is if I wear "black jeans" $(x_3)$. Another victory for the bloody obvious.
+$P(\neg A)$ = $1-P(A)$
 
-At this point, you're not going to be at all shocked by the definition of $A \cup B$, though you're probably going to be extremely bored by it. The only way that I can wear "jeans" or "black pants" is if the elementary pants that I actually do wear belongs to $A$ or to $B$, or to both. So... $$\begin{array}{rcl}
-A &=& (x_1, x_2, x_3) \\
-B &=& (x_3, x_4) \\
-A \cup B & = & (x_1, x_2, x_3, x_4) 
-\end{array}$$ Oh yeah baby. Mathematics at its finest.
+This means that the probability of "not $A$" is equal to one minus the probability of $A$.
+
+$A$ **and** $B$:
+
+This statement means that $A$ and $B$ both happen. In other words, the elementary events need to belong to both $A$ and $B$.
+
+In our case, the only ice cream flavor that occurs in both $A$ and $B$ is chocolate.
+
+$A = (chocolate, vanilla, strawberry)$
+
+$B = (chocolate, rocky road)$
+
+$A \cap B = (chocolate)$
+
+$A$ **or** $B$:
+
+This statement means that at least one of $A$ or $B$ happens. That means your elementary event must belong to $A$, $B$, or both. 
+
+In our case: 
+
+$A \cup B = (chocolate, vanilla, strawberry, rocky road)$
+
+Next, we can assign probabilities to these events. 
+
+[Stopped here]
 
 So, we've defined what we mean by $A \cap B$ and $A \cup B$. Now let's assign probabilities to these events. More specifically, let's start by verifying the rule that claims that: $$P(A \cup B) = P(A) + P(B) - P(A \cap B)$$ Using our definitions earlier, we know that $A \cup B = (x_1, x_2, x_3, x_4)$, so $$P(A \cup B) = P(x_1) + P(x_2) + P(x_3) + P(x_4)$$ and making similar use of the fact that we know what elementary events belong to $A$, $B$ and $A \cap B$.... $$\begin{array}{rcl}
 P(A)  &=&   P(x_1) + P(x_2) + P(x_3)    \\
