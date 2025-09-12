@@ -170,6 +170,13 @@ By the rule, $P(B|A) = \frac{P(A \cap B)}{P(A)} = \frac{0.4}{0.9} \approx 0.44$
 
 A **probability distribution** is a rule that assigns probabilities to all possible outcomes of a random variable. Many distributions exist, but this book mostly uses five: Binomial, Normal, $t$, χ² ("chi-square"), and $F$. We'll focus on Binomial and Normal here; the others appear when we do inference.
 
+For continuous distributions like the normal, probabilities work differently than in the discrete case. You cannot ask for the probability of one exact value (e.g., $P(X = 23)$), because the answer is essentially zero. Instead, we calculate the probability of being in a **range**, such as $22.5 \leq X \leq 23.5$.
+
+This is why the $y$-axis of a normal curve is labelled **probability density**. The height of the curve at a point, $p(x)$, is not itself a probability. Instead, probabilities come from the **area under the curve** between two values. For example, about 68% of values from a standard normal fall between −1 and 1, because the area between −1 and 1 is 0.68.
+
+In R, functions like `dnorm()` return the density (the curve’s height), while `pnorm()` and `qnorm()` work with cumulative probabilities and quantiles, which are usually more useful for applied problems.
+
+
 ### The binomial distribution
 
 The binomial distribution models the number of "successes" in a fixed number of independent trials.
@@ -199,7 +206,7 @@ ggplot(pmf, aes(x, p)) +
 
 **Two common queries**
 
-To find the \*exact probability of getting 4 heads: $P(X=4)$
+1. To find the *exact probability* of getting 4 heads: $P(X=4)$
 
 ```{r}
 dbinom(x = 4, size = 20, prob = 0.5)
@@ -207,7 +214,7 @@ dbinom(x = 4, size = 20, prob = 0.5)
 
 The probability is about $0.5%$.
 
-You could also find the cumulative probability. We specify a particular quantile q , and we get the probability of obtaining an outcome smaller than or equal to q.
+2. Find the *cumulative probability*. We specify a particular quantile q , and we get the probability of obtaining an outcome smaller than or equal to q.
 
 For $P(X \le 4)$:
 
@@ -273,9 +280,9 @@ ggplot(pdf, aes(x, d)) +
   theme_minimal()
 ```
 
-**Two common queries** \
-\
-What is the probability that x is exactly, less than, or greater than, a given value? For example:
+**Two common queries**
+
+1.     What is the probability that x is exactly, less than, or greater than, a given value? For example:
 
 $P(X \le 1.64)$ for $X \sim \text{Normal}(0,1)$
 
@@ -285,7 +292,9 @@ pnorm(q = 1.64, mean = 0, sd = 1)
 
 In a normal distribution with a mean of 0 and standard deviation of 1, the probability the value is less than or equal to 1.64 is about 95%.
 
--   97.5th percentile
+2.    What value correspondds to the xx-th percentile in a given normal distribution? 
+
+For example, what value corresponds to the 97.5th percentile?
 
 ```{r}
 qnorm(p = 0.975, mean = 0, sd = 1)
@@ -293,75 +302,28 @@ qnorm(p = 0.975, mean = 0, sd = 1)
 
 Takeaway: For continuous variables, use areas (via pnorm/qnorm), not bar heights.
 
-For example, suppose exam scores in a class are centered around 70 ($\mu = 70$) with a standard deviation of 10 ($\sigma = 10$). The normal distribution tells you how likely it is to see a score near 70, or further away (like 50 or 90). Unlike the binomial, the normal distribution is continuous---any real number is possible---and probabilities are represented by the area under the smooth bell-shaped curve.
+For example, suppose exam scores in a class are centered around 70 ($\mu = 70$) with a standard deviation of 10 ($\sigma = 10$). The normal distribution tells you how likely it is to see a score near 70, or further away (like 50 or 90). You can also find the score that correspnods to the 80th percentile, say. 
 
-With this in mind, let's see if we can get an intuition for how the normal distribution works. First, let's have a look at what happens when we play around with the parameters of the distribution. One parameter we can change is the mean. This will shift the distribution to the right or left. The animation in @fig-4normalMeanShift shows a normal distribution with mean = 0, moving up and down from mean = 0 to mean = 5. Note, when you change the mean the whole shape of the distribution does not change, it just shifts from left to right. In the animation the normal distribution bounces up and down a little, but that's just a quirk of the animation (plus it looks fun that way).
-
-::: {.content-visible when-format="html"}
-```{r}
-#| label: fig-4normalMeanShift
-#| fig-cap: "A normal distribution with a moving mean"
-#| out.width: "50%"
-
-knitr::include_graphics(path="imgs/gifs/normalMovingMean-1.gif")
-```
-:::
-
-In contrast, if we increase the standard deviation while keeping the mean constant, the peak of the distribution stays in the same place, but the distribution gets wider. The animation in @fig-4normalSDShift shows what happens when you start with a small standard deviation (sd = 0.5), and move to larger and larger standard deviation (up to sd = 5). As you can see, the distribution spreads out and becomes wider as the standard deviation increases.
-
-::: {.content-visible when-format="html"}
-```{r}
-#| label: fig-4normalSDShift
-#| fig-cap: "A normal distribution with a shifting sd."
-#| out.width: "50%"
-
-knitr::include_graphics(path="imgs/gifs/normalMovingSD-1.gif")
-```
-:::
-
-Notice that when we widen the distribution the height of the peak shrinks. This has to happen: in the same way that the heights of the bars that we used to draw a discrete binomial distribution have to *sum* to 1, the total *area under the curve* for the normal distribution must equal 1. Before moving on, I want to point out one important characteristic of the normal distribution. Irrespective of what the actual mean and standard deviation are, 68.3% of the area falls within 1 standard deviation of the mean. Similarly, 95.4% of the distribution falls within 2 standard deviations of the mean, and 99.7% of the distribution is within 3 standard deviations.
-
-### Probability density
-
-There's something I've been trying to hide throughout my discussion of the normal distribution, something that some introductory textbooks omit completely. They might be right to do so: this "thing" that I'm hiding is weird and counter intuitive even by the admittedly distorted standards that apply in statistics. Fortunately, it's not something that you need to understand at a deep level in order to do basic statistics: rather, it's something that starts to become important later on when you move beyond the basics. So, if it doesn't make complete sense, don't worry: try to make sure that you follow the gist of it.
-
-Throughout my discussion of the normal distribution, there's been one or two things that don't quite make sense. Perhaps you noticed that the $y$-axis in these figures is labelled "Probability Density" rather than density. Maybe you noticed that I used $p(X)$ instead of $P(X)$ when giving the formula for the normal distribution. Maybe you're wondering why R uses the "d" prefix for functions like *dnorm()*. And maybe, just maybe, you've been playing around with the *dnorm()* function, and you accidentally typed in a command like this:
-
-```{r, echo=TRUE}
-dnorm( x = 1, mean = 1, sd = 0.1 )
-```
-
-And if you've done the last part, you're probably very confused. I've asked R to calculate the probability that *x = 1*, for a normally distributed variable with *mean = 1* and standard deviation *sd = 0.1*; and it tells me that the probability is 3.99. But, as we discussed earlier, probabilities *can't* be larger than 1. So either I've made a mistake, or that's not a probability.
-
-As it turns out, the second answer is correct. What we've calculated here isn't actually a probability: it's something else. To understand what that something is, you have to spend a little time thinking about what it really *means* to say that $X$ is a continuous variable. Let's say we're talking about the temperature outside. The thermometer tells me it's 23 degrees, but I know that's not really true. It's not *exactly* 23 degrees. Maybe it's 23.1 degrees, I think to myself. But I know that that's not really true either, because it might actually be 23.09 degrees. But, I know that... well, you get the idea. The tricky thing with genuinely continuous quantities is that you never really know exactly what they are.
-
-Now think about what this implies when we talk about probabilities. Suppose that tomorrow's maximum temperature is sampled from a normal distribution with mean 23 and standard deviation 1. What's the probability that the temperature will be *exactly* 23 degrees? The answer is "zero", or possibly, "a number so close to zero that it might as well be zero". Why is this?
-
-It's like trying to throw a dart at an infinitely small dart board: no matter how good your aim, you'll never hit it. In real life you'll never get a value of exactly 23. It'll always be something like 23.1 or 22.99998 or something. In other words, it's completely meaningless to talk about the probability that the temperature is exactly 23 degrees. However, in everyday language, if I told you that it was 23 degrees outside and it turned out to be 22.9998 degrees, you probably wouldn't call me a liar. Because in everyday language, "23 degrees" usually means something like "somewhere between 22.5 and 23.5 degrees". And while it doesn't feel very meaningful to ask about the probability that the temperature is exactly 23 degrees, it does seem sensible to ask about the probability that the temperature lies between 22.5 and 23.5, or between 20 and 30, or any other range of temperatures.
-
-The point of this discussion is to make clear that, when we're talking about continuous distributions, it's not meaningful to talk about the probability of a specific value. However, what we *can* talk about is the **probability that the value lies within a particular range of values**. To find out the probability associated with a particular range, what you need to do is calculate the "area under the curve".
-
-Okay, so that explains part of the story. I've explained a little bit about how continuous probability distributions should be interpreted (i.e., area under the curve is the key thing), but I haven't actually explained what the *dnorm()* function actually calculates. Equivalently, what does the formula for $p(x)$ that I described earlier actually mean? Obviously, $p(x)$ doesn't describe a probability, but what is it? The name for this quantity $p(x)$ is a *probability density*, and in terms of the plots we've been drawing, it corresponds to the *height* of the curve. The densities themselves aren't meaningful in and of themselves: but they're "rigged" to ensure that the *area* under the curve is always interpretable as genuine probabilities. To be honest, that's about as much as you really need to know for now.
-
-## Other useful distributions
-
-There are many other useful distributions, these include the `t` distribution, the `F` distribution, and the chi squared distribution. We will soon discover more about the `t` and `F` distributions when we discuss t-tests and ANOVAs in later chapters.
+Unlike the binomial, the normal distribution is continuous, any real number is possible, and probabilities are represented by the area under the smooth bell-shaped curve.
 
 ## Summary of Probability
 
-We've talked what probability means, and why statisticians can't agree on what it means. We talked about the rules that probabilities have to obey. And we introduced the idea of a probability distribution, and spent a good chunk talking about some of the more important probability distributions that statisticians work with. We talked about things like this:
+Summary: Probability
 
--   Probability theory versus statistics
+In this section we introduced the building blocks of probability, with an emphasis on the parts most relevant for statistics.
 
--   Frequentist versus Bayesian views of probability
+- What probability means: We use the frequentist view—probability as the long-run proportion of times an event occurs.
 
--   Basics of probability theory
+- Distributions: A probability distribution assigns probabilities to all possible outcomes of a random variable. For discrete variables (like coin flips), probabilities are attached to each outcome; for continuous variables (like exam scores), probabilities come from areas under a curve.
 
--   Binomial distribution, normal distribution
+- Rules of probability: Complements, intersections (and), unions (or), and conditional probabilities all follow from the basic distribution framework. 
 
-As you'd expect, this coverage is by no means exhaustive. Probability theory is a large branch of mathematics in its own right, entirely separate from its application to statistics and data analysis. As such, there are thousands of books written on the subject and universities generally offer multiple classes devoted entirely to probability theory. Even the "simpler" task of documenting standard probability distributions is a big topic.Fortunately for you, very little of this is necessary. You're unlikely to need to know dozens of statistical distributions when you go out and do real world data analysis, and you definitely won't need them for this book, but it never hurts to know that there's other possibilities out there.
+- Key distributions:
+	* Binomial—counts successes across $N$ independent trials.
+	* Normal—describes continuous outcomes centered at a mean, with spread determined by the standard deviation.
+	* Others ($t$, $\chi^2$, $F$) appear later when we turn to inference.
 
-Picking up on that last point, there's a sense in which this whole chapter is something of a digression. Many statistics classes skim over this content very quickly (I know mine did), and even the more advanced classes will often "forget" to revisit the basic foundations of the field. Many academics would not know the difference between probability and density, and until recently very few would have been aware of the difference between Bayesian and frequentist probability. However, I think it's important to understand these things before moving onto the applications. For example, there are a lot of rules about what you're "allowed" to say when doing statistical inference, and many of these can seem arbitrary and weird. However, they start to make sense if you understand that there is this Bayesian/frequentist distinction.
+**Takeaway**: probability provides the language and tools that make statistical inference possible. Once we understand how outcomes behave under these distributions, we can ask questions about samples, uncertainty, and whether results are surprising enough to change what we believe about the world.
 
 ## Samples, populations and sampling
 
