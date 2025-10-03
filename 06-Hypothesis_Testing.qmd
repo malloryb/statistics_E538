@@ -28,8 +28,8 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
   p <- ggplot() + 
     geom_line(aes(x=x_vals, y=h0, color="Null Distribution"), size=1.5) +
     geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
-    geom_line(aes(x=x_vals, y=inferred_parent, color="Inferred Parent Distribution"), linetype="dashed", size=1.5) +
-    geom_line(aes(x=x_vals, y=true_parent, color="True Parent Distribution"), size=1.5) +
+    geom_line(aes(x=x_vals, y=inferred_parent, color="Estimated Population Distribution"), linetype="dashed", size=1.5) +
+    geom_line(aes(x=x_vals, y=true_parent, color="True Population Distribution"), size=1.5) +
     geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) +
     geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dashed", color="magenta", size=1) +
     theme_classic() + 
@@ -41,169 +41,352 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
     guides(color=guide_legend(title=NULL, nrow=2)) +
     scale_color_manual(values=c("Null Distribution"="blue", 
                                 "Sampling Distribution of the Sample Mean"="darkgreen", 
-                                "Inferred Parent Distribution"="green3", 
-                                "True Parent Distribution"="orange"))
+                                "Estimated Population Distribution"="green3", 
+                                "True Population Distribution"="orange"))
 
   return(p)
 }
 
-plot_distributions_no_error <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd) {
-  x_vals <- seq(-6, 6, by=0.01)
-  
-  h0 <- dnorm(x_vals, mean=null_mean, sd=null_sd)
-  sampling_mean <- dnorm(x_vals, mean=sample_mean, sd=sample_sd)
-  inferred_parent <- dnorm(x_vals, mean=inferred_mean, sd=inferred_sd)
-  CI_left <- qnorm(0.025, mean=sample_mean, sd=sample_sd)
-  CI_right <- qnorm(0.975, mean=sample_mean, sd=sample_sd)
-  y_intersect = dnorm(null_mean, mean=null_mean, sd=null_sd)
+plot_distributions_no_error <- function(
+  null_mean, null_sd,
+  sample_mean, sample_sd,     # sample_sd here is the SE used for the sampling dist + CI
+  inferred_mean, inferred_sd,
+  show_ci = TRUE
+){
+  x_vals <- seq(-6, 6, by = 0.01)
 
-  p <- ggplot() + 
-    geom_line(aes(x=x_vals, y=h0, color="Null Distribution"), size=1.5) +
-    geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
-    geom_line(aes(x=x_vals, y=inferred_parent, color="Inferred Parent Distribution"), linetype="dashed", size=1.5) +
-    geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dashed", color="magenta", size=1) +
-    #geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) +
-    theme_classic() + 
-    theme(legend.position='bottom', 
-          axis.text = element_blank(), 
-          axis.title = element_blank(), 
-          axis.ticks = element_blank(), 
-          legend.text = element_text(size = 12)) + 
-    guides(color=guide_legend(title=NULL, nrow=2)) +
-    scale_color_manual(values=c("Null Distribution"="blue", 
-                                "Sampling Distribution of the Sample Mean"="darkgreen", 
-                                "Inferred Parent Distribution"="green3"))
+  h0              <- dnorm(x_vals, mean = null_mean,    sd = null_sd)
+  sampling_mean   <- dnorm(x_vals, mean = sample_mean,  sd = sample_sd)
+  inferred_parent <- dnorm(x_vals, mean = inferred_mean, sd = inferred_sd)
 
-  return(p)
+  # 95% CI for the sample mean (normal approx)
+  CI_left  <- qnorm(0.025, mean = sample_mean, sd = sample_sd)
+  CI_right <- qnorm(0.975, mean = sample_mean, sd = sample_sd)
+
+  # height at mu0 for the magenta reference drop line
+  y_intersect <- dnorm(null_mean, mean = null_mean, sd = null_sd)
+
+  p <- ggplot() +
+    geom_line(aes(x = x_vals, y = h0,             color = "Null Distribution"), size = 1.5) +
+    geom_line(aes(x = x_vals, y = sampling_mean,  color = "Sampling Distribution of the Sample Mean"),
+              linetype = "dotdash", size = 1) +
+    geom_line(aes(x = x_vals, y = inferred_parent, color = "Estimated Population Distribution"),
+              linetype = "dashed", size = 1.5) +
+    # mu0 (magenta dashed)
+    geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0),
+                 linetype = "dashed", color = "magenta", size = 1) +
+    # CI bar (thick dark green) — keep this!
+    { if (show_ci) geom_segment(aes(x = CI_left, xend = CI_right, y = 0, yend = 0),
+                                color = "darkgreen", size = 1.8) } +
+    theme_classic() +
+    theme(
+      legend.position = "bottom",
+      axis.text = element_blank(),
+      axis.title = element_blank(),
+      axis.ticks = element_blank(),
+      legend.text = element_text(size = 12)
+    ) +
+    guides(color = guide_legend(title = NULL, nrow = 2)) +
+    scale_color_manual(values = c(
+      "Null Distribution" = "blue",
+      "Sampling Distribution of the Sample Mean" = "darkgreen",
+      "Estimated Population Distribution" = "green3"
+    ))
+
+  p
 }
+
 ```
 
-## Hypothesis Testing - The Nuts & Bolts
+## What you'll learn 
 
-Hypothesis testing helps us figure out if what we believe about a whole group is likely true, just by looking at a small part of it (a sample).
+Hypothesis testing is the backbone of statistical inference: it lets us decide whether the patterns we see in a sample are strong enough to draw conclusions about the population. By the end of this chapter, you should be able to:
 
-------------------------------------------------------------------------
+* **Define the key players** in hypothesis testing (null, alternative, true/estimated, and population/sampling distributions).
+* **Explain and use decision rules**: decide whether to reject $H_0$.
+* **Connect confidence intervals and hypothesis tests** for common models.
+* **Identify and interpret errors** (Type I and Type II) that can arise in testing.
+* **Recognize the role of effect size and power** in planning a study, even if your main focus is running tests.
+* **Write a clear results statement** that communicates both the statistical and substantive meaning of your test.
 
-### Clarifying Alpha, P-value, and Confidence Level
 
-Before diving deep, let's clear up some terms you'll come across often.
+## Core Players (distributions)
 
-**Alpha (**$\alpha$)
+To make sense of hypothesis testing, it helps to picture four kinds of distributions. Later in the chapter we’ll put them together, but first we define them one at a time:
 
-Alpha ($\alpha$) is the significance level of a statistical test, and it quantifies the risk of committing a Type I error. A Type I error happens when we incorrectly reject a true null hypothesis. The standard value for alpha is often set at 0.05, implying a 5% chance of making a Type I error. In other words, we are willing to accept a 5% risk of concluding that a difference exists when there is no actual difference.
+1.  **Null Distribution** - The hypothesized population distribution under the assumption that the null hypothesis $H_0$ is true.
 
-**P-value**
+2.  **Estimated Population Distribution** - The distribution we infer from our sample. This represents what the data suggest about $H_a$. (Sometimes called the *inferred parent distribution*.)
 
-The p-value is another crucial concept in hypothesis testing. It represents the probability of observing the obtained results, or something more extreme, assuming that the null hypothesis is true. A small p-value (usually ≤ 0.05) suggests that the observed data is inconsistent with the null hypothesis, and thus, you have evidence to reject it.
+3.  **True Population Distribution** - The actual distribution from which our sample was drawn. We never know this perfectly, but it’s the reality we’re trying to approximate.
 
-**Confidence Level**
+4.  **Sampling Distribution of the Sample Mean** - The distribution we’d get if we took many samples and calculated $\bar{X}$ each time. This is key for connecting sample evidence back to the population.
 
-The confidence level is related but distinct from alpha and p-value. While alpha quantifies the risk of a Type I error, the confidence level indicates how confident we are in our statistical estimates. The confidence level is calculated as the complement of alpha:
+**Null value notation.** We’ll write the hypothesized population mean as $\mu_0$. Hypotheses compare the population mean $\mu$ to this constant $\mu_0$. The sample mean $\bar{X}$ is never part of $H_0$ or $H_a$—it’s the evidence we bring to test them.
+
+
+*Note on terms.* In this chapter, you’ll sometimes see the phrase **parent distribution** in the prose. This is just a metaphor: a sample is like a “child” drawn from a “parent” distribution. The standard statistical term is **population distribution**. Both terms mean the same thing here. For clarity, we’ll use *population distribution* in figures and definitions, and you can think of *parent* as a memory aid.
+
+## Terms for Decision Rules
+
+When running a hypothesis test, three terms guide our decision:
+
+**Significance level ($\alpha$).**
+Chosen *before* the test. $\alpha$ is the long-run probability of a Type I error (rejecting a true $H_0$). A common choice is $\alpha = 0.05$. Smaller $\alpha$ makes tests more cautious and produces wider confidence intervals.
+
+**$p$-value.**
+Assuming $H_0$ is true, the $p$-value is the probability of seeing a test statistic at least as extreme as what we observed. Small $p$ means our data look unusual under $H_0$.
+
+**Confidence level.**
+Confidence level is the long-run proportion of confidence intervals that contain the true parameter when we repeat the entire data collection and interval procedure. 
 
 $$
 \text{Confidence Level} = 1 - \alpha
 $$
 
-For example, if $\alpha$ is 0.05, the confidence level would be (1 - 0.05 = 0.95) or 95%. This means we are 95% confident that our results fall within a specific range.
+With $\alpha=0.05$, about 95% of intervals constructed this way will capture the true value.
 
-**Bringing It All Together**
+It’s tempting to misinterpret confidence intervals. Do **not** say:
 
--   **Alpha (**$\alpha$): Risk of Type I error (usually 5%)
--   **P-value**: Probability of observed data given the null is true
--   **Confidence Level**: Confidence in the range of our estimates (usually 95%)
+> “There is a 95% probability this interval contains $\mu$.”
 
-Grasping how these three terms connect and differ is key to making sense of the stats we'll discuss.
+Instead say:
 
-------------------------------------------------------------------------
+> “We used a procedure that captures $\mu$ about 95% of the time in the long run.”
 
-### The Steps of Hypothesis Testing Applied to an Example
+## Three equivalent ways to test $H_0$
 
-Let's say we want to know if the average pollution in a set of water samples is above the legal limit. Or if young deer in a region are, on average, healthy.
+1. **Test statistic / critical values.** Choose $\alpha$, find the corresponding **critical value(s)** for your test statistic, and compute your observed statistic. Reject $H_0$ if the statistic falls in the **rejection region**.
 
-**Step 1**: Define Your Hypotheses: First, we need to define two hypotheses: the **research hypothesis** and the **null hypothesis**.
+2. **Confidence interval (two-sided).** Build a $(1-\alpha)$ CI for the parameter. Reject $H_0$ if $\mu_0$ lies **outside** the CI; fail to reject if it lies **inside**.
 
--   **Research Hypothesis (H~a~)**: This is what we aim to support. **Keep in mind, we can't exactly "prove" H~a~ is correct, we can only say that H~0~ isn't likely**. It can take a few forms based on the question:
-    -   H~a~: average pollution \> legal limit (pollution is too high)
-    -   H~a~: average pollution \< legal limit (pollution is too low)
-    -   H~a~: average pollution ≠ legal limit (pollution is just different)
--   **Null Hypothesis (H~0~)**: This is the default or 'no change' scenario. It's opposite to the research hypothesis.
-    -   H~0~: average pollution ≤ legal limit (for the first H~a~)
-    -   H~0~: average pollution ≥ legal limit (for the second H~a~)
-    -   H~0~: average pollution = legal limit (for the third H~a~)
+3. **$p$-value (probability).** Compute the **$p$-value** for your observed statistic under $H_0$ and compare to $\alpha$. Reject $H_0$ if $p<\alpha$.
 
-**Step 2**: Choose Your Test Statistic: Based on the data, we'll compute a **test statistic**. This number will help us decide which hypothesis seems more likely.
+**Note.** Methods 1–2 yield a yes/no at $\alpha$; method 3 yields a yes/no plus a graded measure of evidence (exact $p$).
 
-**Step 3**: Determine the Rejection Region: Before running the test, we decide on a **rejection region**. If our test statistic falls in this region, we'll reject the null hypothesis.
+### Test statistic/critical values
 
-**Step 4**: Check Assumptions: Before drawing conclusions, ensure that the test's conditions and assumptions are satisfied.
+@fig-rejection-region shows how these ideas come together in a two-sided test. The blue curve is the sampling distribution of the test statistic if the null hypothesis $H_0$ is true. The dashed magenta line marks the expected center at $\mu_0$. The red vertical lines are the **critical values** for $\alpha = 0.05$. They cut off the most extreme 5% of the distribution: 2.5% in each tail. Those shaded tails are the **rejection regions**.
 
-**Step 5**: Draw Conclusions: Finally, based on the test statistic and the rejection region, decide whether to reject the null hypothesis.
+Here’s the decision rule:
 
-------------------------------------------------------------------------
+* If the observed test statistic falls inside the central region, we **fail to reject $H_0$** because the result is consistent with chance variation.
+* If it falls in either rejection region, we **reject $H_0$** because the result is too extreme to attribute to chance alone at the 5% level.
 
-### Errors in Hypothesis Testing
-
-Sometimes, even with the best methods, we make incorrect decisions.
-
--   **Type I Error** ($\alpha$): This happens when we mistakenly reject the true null hypothesis. Imagine sending an innocent person to jail. Typically, $\alpha$ is set at 0.05 (5%).
-
--   **Type II Error** ($\beta$): Here, we mistakenly accept a false null hypothesis. Think of it as letting a guilty person go free.
-
-| Decision | If the null hypothesis is True | If the null hypothesis is False |
-|----|----|----|
-| **Reject H~0~** | Type I error (prob = $\alpha$) | Correct (prob = 1 - $\beta$) |
-| **Fail to reject H~0~** | Correct (prob = 1 - $\alpha$) | Type II error (prob = $\beta$) |
-
-> **Key Takeaway**: As $\alpha$ gets smaller, $\beta$ gets bigger, and vice-versa.
-
-------------------------------------------------------------------------
-
-------------------------------------------------------------------------
-
-### Deciphering Significance with P-values
-
-The p-value is like a reality-check. It tells us how weird our results are if we assume the starting belief (null hypothesis) is spot on.
-
--   **One-Tailed Test**: The p-value shows the likelihood of observing an average as extreme as our sample's if the null hypothesis stands.
-
--   **Two-Tailed Test**: This p-value represents the odds of spotting an average as different from the null value as our sample's.
-
-> **Rule of Thumb**: If the p-value is less than $\alpha$, we opt to reject the null hypothesis.
-
-## Graphical Review
-
-### Key Players in Hypothesis Testing Visualization
-
-We define and visualize the core components essential to understanding the graphical representations of hypothesis testing:
-
-1.  **Null Distribution** - The hypothesized parent distribution under the assumption that the null hypothesis H~0~ is true.
-
-2.  **Inferred Parent Distribution** - The parent distribution inferred from our sample data. This is what we conceptualize as the distribution of H~a~.
-
-3.  **True Parent Distribution** - The actual distribution from which our sample originates.
-
-4.  **Sampling Distribution of the Sample Mean** - Represents the distribution of sample means if we were to draw multiple samples from the parent distribution. This is crucial for making inferences about the **Inferred Parent Distribution**.
-
-------------------------------------------------------------------------
-
-In the figure below, we've outlined the various elements crucial for hypothesis testing. Think of this section as a handy guide. Whenever you come across detailed graphs later in this chapter, you can circle back here for clarity.
+This picture makes clear why $\alpha$ and the $p$-value are linked. $\alpha$ sets the cutoff for how extreme is “too extreme,” while the $p$-value tells us how far into the tails our actual result lies.
 
 ```{r}
-#| label: fig-5-5.keyfig
-#| fig-cap: "Comparison of four distributions essential for hypothesis testing: Null, True Parent, Inferred Parent, and Sampling Distribution of the Sample Mean."
-#| out-width: "100%"
+#| label: fig-rejection-region
+#| fig-cap: 'Two-sided test: blue curve is the sampling distribution under $H_0$ (centered at $\mu_0$). Magenta dashed line marks $\mu_0$. Red vertical lines mark the critical values for $\alpha=0.05$; shaded tails are the rejection regions.'
+#| fig-width: 7
+#| fig-height: 5
 
-pkey <-  plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=0.5, sample_sd=0.3, inferred_mean=0.5, inferred_sd=1, true_mean=1, true_sd=1)
-print(pkey)
+library(tidyverse)
+
+# Parameters (edit alpha if needed)
+mu0   <- 0
+sigma <- 1
+alpha <- 0.05
+crit  <- qnorm(1 - alpha/2, mean = mu0, sd = sigma)
+# Curve data
+df <- tibble::tibble(
+  x = seq(mu0 - 4*sigma, mu0 + 4*sigma, length.out = 2000),
+  y = dnorm(x, mean = mu0, sd = sigma)
+)
+
+y_peak <- dnorm(mu0, mu0, sigma)
+
+ggplot(df, aes(x, y)) +
+  # Shade rejection regions (now mapping x and y explicitly)
+  geom_area(
+    data = df %>% filter(x <= -crit),
+    aes(x = x, y = y),
+    inherit.aes = FALSE, fill = "red", alpha = 0.15
+  ) +
+  geom_area(
+    data = df %>% filter(x >=  crit),
+    aes(x = x, y = y),
+    inherit.aes = FALSE, fill = "red", alpha = 0.15
+  ) +
+  # Blue normal curve
+  geom_line(color = "blue", linewidth = 1.2) +
+  # Magenta dashed line at mu0 (use annotate to avoid recycling warning)
+  annotate("segment",
+           x = mu0, xend = mu0, y = 0, yend = y_peak,
+           colour = "magenta", linetype = "dashed", linewidth = 1) +
+  # Red critical value lines
+  geom_vline(xintercept = c(-crit, crit), color = "red", linewidth = 0.9) +
+  # Labels
+  annotate("text", x =  crit, y = y_peak*0.95,
+           label = "critical value", color = "black", hjust = -0.05, size = 3.6) +
+  annotate("text", x = -crit, y = y_peak*0.95,
+           label = "critical value", color = "black", hjust =  1.05, size = 3.6) +
+  annotate("text", x = mu0 + 2.6*sigma, y = dnorm(crit, mu0, sigma)*0.55,
+           label = "rejection region", color = "black", size = 3.6) +
+  annotate("text", x = mu0 - 2.6*sigma, y = dnorm(crit, mu0, sigma)*0.55,
+           label = "rejection region", color = "black", size = 3.6) +
+  labs(x = "x", y = "Density") +
+  coord_cartesian(ylim = c(0, y_peak*1.05)) +
+  theme_classic(base_size = 12)
+
 ```
 
-------------------------------------------------------------------------
+### Confidence intervals
 
-For a two-tailed alternative, we are interested in the possibility that a sample comes from a parent distribution that may have a lower or higher location than the null.
+@fig-ci-lens-illustrative shows another way to make the same decision. The **blue curve** is the null distribution ($H_0$ true), and the **dark green curve** is the sampling distribution of the mean based on our sample. The **dashed green curve** is the estimated population distribution we infer from the sample.
+
+The **thick dark green bar** at the bottom is the 95% confidence interval around the sample mean $\bar{X}$. The **magenta dashed line** marks $\mu_0$, the hypothesized mean under $H_0$.
+
+Decision rule:
+
+* If $\mu_0$ lies **inside** the CI bar, we **fail to reject $H_0$**.
+* If $\mu_0$ lies **outside** the CI bar, we **reject $H_0$** at $\alpha=0.05$.
+
+
+
+
+```{r}
+#| label: fig-ci-lens-illustrative
+#| fig-cap: 'Confidence-interval lens: null (blue), sampling distribution of $\bar{X}$ (dark green), estimated population (light-green dashed). The thick bar is the $(1-\alpha)$ CI around $\bar{X}$; the magenta dashed line marks $\mu_0$. Decision uses whether $\mu_0$ is inside or outside the CI.'
+#| out-width: "100%"
+
+library(ggplot2)
+library(dplyr)
+library(tibble)
+
+# Parameters you can edit ---
+null_mean    <- 0
+null_sd      <- 1
+sample_mean  <- 0.42   # \bar{X}
+SE           <- 0.4   # standard error for sampling dist + CI
+inferred_sd  <- 1      # for the light-green "estimated population"
+alpha        <- 0.05
+
+# Derived quantities
+x_vals   <- seq(-6, 6, by = 0.01)
+h0       <- dnorm(x_vals, mean = null_mean, sd = null_sd)
+samp     <- dnorm(x_vals, mean = sample_mean, sd = SE)
+inferred <- dnorm(x_vals, mean = sample_mean, sd = inferred_sd)
+
+zcrit   <- qnorm(1 - alpha/2)
+ci_lo   <- sample_mean - zcrit * SE
+ci_hi   <- sample_mean + zcrit * SE
+y_mu0   <- dnorm(null_mean, mean = null_mean, sd = null_sd)
+inside  <- (null_mean >= ci_lo) && (null_mean <= ci_hi)
+
+df <- tibble(x = x_vals, y_h0 = h0, y_samp = samp, y_inf = inferred)
+
+# Helpful y-levels for placing labels
+y_top   <- max(h0, samp, inferred)
+y_mid   <- dnorm(sample_mean, sample_mean, SE)
+
+ggplot() +
+  # Curves
+  geom_line(data = df, aes(x, y_h0),    color = "blue",      linewidth = 1.2) +
+  geom_line(data = df, aes(x, y_samp),  color = "darkgreen", linewidth = 1.0, linetype = "dotdash") +
+  geom_line(data = df, aes(x, y_inf),   color = "green3",    linewidth = 1.0, linetype = "dashed") +
+
+  # mu0 reference (magenta dashed down from the peak of H0)
+  annotate("segment",
+           x = null_mean, xend = null_mean, y = 0, yend = y_mu0,
+           colour = "magenta", linetype = "dashed", linewidth = 1) +
+
+  # CI bar and ticks on baseline
+  annotate("segment",
+           x = ci_lo, xend = ci_hi, y = 0, yend = 0,
+           colour = "darkgreen", linewidth = 2.8) +
+  annotate("segment", x = ci_lo, xend = ci_lo, y = -0.01, yend = 0.03) +
+  annotate("segment", x = ci_hi, xend = ci_hi, y = -0.01, yend = 0.03) +
+
+  # xbar marker
+  annotate("point", x = sample_mean, y = 0, size = 2) +
+  annotate("text",  x = sample_mean, y = 0.06, label = expression(bar(X)), size = 4) +
+
+  # Bracket and label for (1 - alpha) CI
+  annotate("segment", x = ci_lo, xend = ci_lo, y = -0.06, yend = -0.01) +
+  annotate("segment", x = ci_hi, xend = ci_hi, y = -0.06, yend = -0.01) +
+  annotate("segment", x = ci_lo, xend = ci_hi, y = -0.06, yend = -0.06) +
+  annotate("text",   x = (ci_lo + ci_hi)/2, y = -0.095,
+           label = expression(paste("(1 - ", alpha, ") CI")), size = 3.8) +
+
+  # Labels for the three curves (inline, color-matched)
+  annotate("text", x = -3.2, y = dnorm(-3.2, null_mean, null_sd) + 0.015,
+           label = "Null distribution", color = "blue", size = 3.6, hjust = 0, vjust=-0.4) +
+  annotate("text", x = sample_mean + 1.6, y = dnorm(sample_mean + 1.6, sample_mean, SE) + 0.015,
+           label = expression("Sampling dist. of " * bar(X)), color = "darkgreen", size = 3.6, hjust = 0, vjust=0.4) +
+  annotate("text", x = sample_mean - 1.8, y = dnorm(sample_mean - 1.8, sample_mean, inferred_sd) + 0.015,
+           label = "Estimated population", color = "green3", size = 3.6, hjust = 0) +
+
+  # mu0 label
+  annotate("text", x = null_mean, y = y_mu0 + 0.08, label = expression(mu[0]),
+           colour = "magenta", size = 5) +
+
+  # Decision banner
+  annotate("label",
+           x = sample_mean, y = y_top * 0.92,
+           label = ifelse(inside,
+                          paste0("Fail to reject at \u03B1 = ", alpha),
+                          paste0("Reject at \u03B1 = ", alpha)),
+           size = 3.7, fill = "white", label.size = 0.2) +
+
+  # Axes and theme
+  coord_cartesian(ylim = c(-0.12, y_top * 1.05)) +
+  labs(x = NULL, y = NULL) +
+  theme_classic(base_size = 12) +
+  theme(
+    axis.text  = element_blank(),
+    axis.ticks = element_blank()
+  )
+```
+
+For common models, a two-sided level-$\alpha$ test of $H_0:\ \mu=\mu_0$ is equivalent to checking whether $\mu_0$ lies inside the $100(1-\alpha)%$ confidence interval. The **CI** is often the most intuitive way to see this: it shows both the decision (reject or not) *and* the range of parameter values still consistent with the data.
+
+### p-values
+
+The $p$-value is the probability, **under $H_0$**, of obtaining a test statistic **at least as extreme** as the one you observed. In practice, you compute it from your observed statistic using software or a table. Reject if $p<\alpha$.
+
+```{r}
+#| label: fig-pvalue-lens
+#| fig-cap: 'p-value lens: compute the $p$-value from the observed statistic (vertical line) under the null.'
+#| out-width: "100%"
+
+library(tidyverse)
+
+alpha <- 0.05
+z_obs <- 1.85     # observed z (edit this)
+p_two <- 2*pnorm(-abs(z_obs))   # two-sided p under N(0,1)
+
+x <- tibble(
+  x = seq(-4, 4, length.out = 2000),
+  y = dnorm(x)
+)
+
+ggplot(x, aes(x, y)) +
+  geom_line(color = "blue", linewidth = 1.2) +
+  # observed statistic (black)
+  geom_vline(xintercept = z_obs, color = "black", linewidth = 0.9) +
+  # mu0 reference (magenta dashed at 0)
+  annotate("segment", x = 0, xend = 0, y = 0, yend = dnorm(0),
+           linetype = "dashed", colour = "magenta", linewidth = 1) +
+  annotate("text", x = z_obs, y = dnorm(0)*0.95,
+           label = expression(paste("observed ", z)),
+           hjust = ifelse(z_obs > 0, -0.05, 1.05), size = 3.6) +
+  annotate("text", x = 2.9, y = dnorm(0)*0.35,
+           label = paste0("two-sided p ≈ ", sprintf("%.3f", p_two),
+                          ifelse(p_two < alpha, "  (reject)", "  (fail to reject)")),
+           size = 4.2) +
+  labs(x = "z", y = "Density") +
+  coord_cartesian(ylim = c(0, dnorm(0)*1.05)) +
+  theme_classic(base_size = 12)
+```
+
+## One- and Two-Tailed Tests
+
+Two-tailed tests allow for differences in *either* direction:
 
 ```{r}
 #| label: fig-5-5.twotailed
-#| fig-cap: "Two-tailed distribution"
+#| fig-cap: 'Two-sided test: $H_0:\ \mu=\mu_0$ vs $H_a:\ \mu\neq\mu_0$; estimated population distributions shifted left and right of the null.'
 #| out-width: "100%"
 
 # Define the data and functions
@@ -214,11 +397,12 @@ ha_right <- dnorm(x_vals, mean=3, sd=0.75)
 
 # Plot
 p <- ggplot() + 
-  geom_line(aes(x_vals, ha_left, color="Inferred Parent Distribution"), linetype="dashed", size=1.2) +
+  geom_line(aes(x_vals, ha_left, color="Estimated Population Distribution"), linetype="dashed", size=1.2) +
   geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1.2) +
-  geom_line(aes(x_vals, ha_right, color="Inferred Parent Distribution"), linetype="dashed", size=1.2) +
-  annotate("text", x = 0, y = 0.62, label = expression("H"[0] ~ ": " ~ mu == "X    " ~ "H"[a] ~ ": " ~ mu != "X"), size = 5) +
-  scale_color_manual(values=c("Null Distribution"="blue", "Inferred Parent Distribution"="green3"))+
+  geom_line(aes(x_vals, ha_right, color="Estimated Population Distribution"), linetype="dashed", size=1.2) +
+  annotate("text", x = 0, y = 0.62, label = expression(H[0] * ": " * mu == mu[0] ~ "   " ~ H[a] * ": " * mu != mu[0]),
+  size = 5) +
+  scale_color_manual(values=c("Null Distribution"="blue", "Estimated Population Distribution"="green3"))+
   theme_classic() + 
   ylim(0,0.8)+
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) 
@@ -227,13 +411,11 @@ print(p)
 
 ```
 
-------------------------------------------------------------------------
-
-In a one-tailed t-test, we're examining if our sample originates from a parent distribution that's situated either below or above the null hypothesis. Unlike a two-tailed test, we're only interested in one of these directions, not both.
+One-tailed tests only look in *one* direction (smaller or larger than $\mu_0$):
 
 ```{r}
 #| label: fig-5-5.onetailed
-#| fig-cap: "Side-by-side comparison of one-tailed t-test scenarios: exploring if our sample comes from a distribution either below or above the null hypothesis."
+#| fig-cap: 'One-sided tests: $H_a:\ \mu<\mu_0$ (left) and $H_a:\ \mu>\mu_0$ (right), compared to the null.'
 #| out-width: "100%"
 
 # Define the data and functions for the one-tailed alternatives
@@ -244,19 +426,19 @@ ha_right <- dnorm(x_vals, mean=4, sd=2) # Adjusted standard deviation for wider 
 
 # First Plot: Ha: µ < X
 p1 <- ggplot() + 
-  geom_line(aes(x_vals, ha_left, color="Inferred Parent Distribution"), linetype="dashed", size=1.2) +
+  geom_line(aes(x_vals, ha_left, color="Estimated Population Distribution"), linetype="dashed", size=1.2) +
   geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1.2) +
     ylim(0, 0.25)+
-  annotate("text", x = 0, y = 0.22, label = expression("H"[a] ~ ": " ~ mu < "X"), size = 5) + # adjusted y value
-scale_color_manual(values=c("Null Distribution"="blue", "Inferred Parent Distribution"="green3"))+
+  annotate("text", x = 0, y = 0.22, label = expression("H"[a] ~ ": " ~ mu < mu[0]), size = 5) + # adjusted y value
+scale_color_manual(values=c("Null Distribution"="blue", "Estimated Population Distribution"="green3"))+
   theme_classic() + 
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
 
 # Second Plot: Ha: µ > X
 p2 <- ggplot() + 
   geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1.2) +
-  geom_line(aes(x_vals, ha_right, color="Inferred Parent Distribution"), linetype="dashed", size=1.2) +
-  annotate("text", x = 0, y = 0.22, label = expression("H"[a] ~ ": " ~ mu > "X"), size = 5) + # adjusted y value
+  geom_line(aes(x_vals, ha_right, color="Estimated Population Distribution"), linetype="dashed", size=1.2) +
+  annotate("text", x = 0, y = 0.22, label = expression("H"[a] ~ ": " ~ mu > mu[0]), size = 5) + # adjusted y value
 scale_color_manual(values=c("Null Distribution"="blue", "Inferred Parent Distribution"="green3"))+
     ylim(0, 0.25)+
   theme_classic() + 
@@ -266,13 +448,35 @@ scale_color_manual(values=c("Null Distribution"="blue", "Inferred Parent Distrib
 grid.arrange(p1, p2, ncol=2)
 ```
 
-------------------------------------------------------------------------
+### One- vs. Two-Sided: which and why?
 
-In a "perfect" world in which the null hypothesis is true, the sample's parent distribution (solid, orange) is exactly the same parent distribution described by the null hypothesis (solid, blue).
+**Use this rule of thumb:**
+
+* Two-sided (default): You care whether $\mu$ differs from $\mu_0$ **in either direction**.
+* One-sided (only if justified): Differences in the opposite direction are **scientifically irrelevant** and **would not change your decision or action**.
+
+## Putting it all together 
+
+Let’s bring the key players together. The figure below shows the elements we’ll use throughout the chapter:
+
+* **Blue solid line** = Null distribution ($H_0$).
+* **Orange solid line** = True population distribution (what actually generated the data).
+* **Light green dashed line** = Estimated population distribution (inferred from the sample; our stand-in for $H_a$).
+* **Dark green dot-dashed line** = Sampling distribution of the sample mean, $\bar{X}$.
+* **Magenta dashed line** = Hypothesized mean $\mu_0$ (under $H_0$).  
+* **Thick dark green bar** = 95% confidence interval (CI) around the sample mean $\bar{X}$.
+
+Here they are layered together: this figure serves as your legend for the rest of the section.  
+
+Up to now we’ve introduced each distribution separately. Let’s layer them to see how they connect.
+
+**1. Null vs. true population.**
+
+In an idealized world where $H_0$ is exactly true, the true population (orange) and the null distribution (blue) are identical. In reality, we never know the orange curve. It’s shown here for illustration. 
 
 ```{r}
 #| label: fig-5-5.null_identical_sample
-#| fig-cap: "True parent distribution & null distribution are the same"
+#| fig-cap: 'True population distribution equals the null distribution ($H_0$ true): $\mu=\mu_0$.'
 #| out-width: "100%"
 
 # Define the data and functions
@@ -281,348 +485,256 @@ h0 <- dnorm(x_vals, mean=0, sd=1)
 
 # Plot: Two identical distributions
 p3 <- ggplot() + 
-  geom_line(aes(x_vals, h0, color="True Parent Distribution"), linetype="solid", size=4, alpha=1) +
+  geom_line(aes(x_vals, h0, color="True Population Distribution"), linetype="solid", size=4, alpha=1) +
   geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1) +
-  annotate("text", x = -2.5, y = 0.35, label = expression("H"[0] ~ ": " ~ mu == "X"), size = 5) +
-  annotate("text", x = -2.5, y = 0.33, label = expression(mu >= "X"), size = 5) +
-  annotate("text", x = -2.5, y = 0.31, label = expression(mu <= "X"), size = 5) +
-  geom_vline(aes(xintercept=0), linetype="dotted", color="black", size=0.5) +
-scale_color_manual(values=c("Null Distribution"="blue", "True Parent Distribution"="orange"))+
+  annotate("text", x = -2.5, y = 0.35, label = expression("H"[0] ~ ": " ~ mu == mu[0]), size = 5) +
+  geom_vline(aes(xintercept=0), linetype="dashed", color="magenta", size=0.5) +
+scale_color_manual(values=c("Null Distribution"="blue", "True Population Distribution"="orange"))+
   theme_classic() + 
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
 
 print(p3)
 ```
 
-------------------------------------------------------------------------
 
-**We never know the true parent distribution of the sample** -- we infer it from the sample. Here, the tall dash-dotted line shows the sampling distribution of the mean, from which we infer the parent distribution (green3, dashed).
-
-In this even more perfect world, that parent distribution is the same as the parent distribution described by the null hypothesis and we have taken a perfectly representative sample, so all 3 curves line up perfectly on the same mean. The thick, short, flat dark green line is the confidence interval for the sample mean.
+**2. Adding the sampling distribution.**
+We never know the true parent distribution directly. What we do have is a sample, and from that we can construct the **sampling distribution of the mean** (dark-green dot-dash). This distribution underlies our ability to estimate a CI (dark green horizontal line).
 
 ```{r}
 #| label: fig-5-5.perfectly_representative_sample
-#| fig-cap: "Here, we have a perfectly representative sample"
+#| fig-cap: 'Perfectly representative sample: estimated population, null, and true population distributions align; the CI for $\bar{X}$ includes $\mu_0$.'
 #| out-width: "100%"
-#| 
+
 p4 <-  plot_distributions(null_mean=0.5, null_sd=1, sample_mean=0.52, sample_sd=0.3, inferred_mean=0.52, inferred_sd=1, true_mean=0.54, true_sd=1)
 print(p4)
 
 ```
 
-------------------------------------------------------------------------
+**3. Adding the estimated population distribution.**
 
-In an imperfect but convenient world, the sample is not a perfect representation of the parent population, but is fairly close. The sample mean is close to hypothesized mean, and (in the 2-tailed case) the confidence interval for the sample mean "catches" the mean of the null hypothesis (pink dashed line). A hypothesis test will correctly determine that there is not a significant difference between the sample mean and the mean of the null hypothesis.
+From our sample we also infer an **estimated population distribution** (light-green dashed). In the best case, this lines up closely with the true population (orange). The CI bar shows that the sample mean is consistent with $\mu_0$.
 
 ```{r}
 #| label: fig-5-5.sample_imperfect_convenient
-#| fig-cap: "Imperfect, but convenient"
+#| fig-cap: 'Imperfect but convenient sample: estimated population close to the null; the two-sided CI for $\bar{X}$ includes $\mu_0$ (fail to reject $H_0$).'
 #| out-width: "100%"
 
-p7 <- plot_distributions(null_mean=-0.2, null_sd=1, sample_mean=0.5, sample_sd=0.4, inferred_mean=0.5, inferred_sd=1, true_mean=0.52, true_sd=1)
+p7 <- plot_distributions(null_mean=-0.2, null_sd=1, sample_mean=0.5, sample_sd=0.5, inferred_mean=0.5, inferred_sd=1, true_mean=0.6, true_sd=1)
 
 print(p7)
 
 ```
 
-------------------------------------------------------------------------
+Putting everything together, you’ll see graphs moving forward that are all variations on the figure below. By now you should recognize each element. 
 
-In an imperfect and inconvenient world, the random sample is, by chance, sufficiently imperfect that the apparent (inferred) parent distribution is far from the true parent distribution and (in the 2-tailed case) the confidence interval for the sample mean no longer "catches" the mean of the null hypothesis. A hypothesis test will now find a significant difference between the sample mean and the mean of the null hypothesis. **This is a type I error**.
+Key reminder: $\mu_0$ (pink dashed line) comes from the null hypothesis. The unknown $\mu$ is what we’re trying to learn about, and we approximate it from the sample through the estimated population distribution and the sampling distribution of $\bar{X}$.
+
+```{r}
+#| label: fig-5-5.keyfig
+#| fig-cap: 'Key elements of hypothesis testing graphs: null (blue), true population (orange), estimated population (light-green dashed), sampling distribution of $\bar{X}$ (dark-green dot-dash), null mean $\mu_0$ (magenta dashed), and CI for $\bar{X}$ (thick dark-green bar).'
+#| out-width: "100%"
+
+pkey <-  plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=0.5, sample_sd=0.3, inferred_mean=0.5, inferred_sd=1, true_mean=0.75, true_sd=1)
+print(pkey)
+```
+
+### Decision Outcomes
+
+Test outcomes are **binary**: we either **reject $H_0$** or **fail to reject $H_0$**. We never *accept* $H_0$, because sampling variability means we can’t prove it's true, only that the data are consistent with it. Similarly, we don’t formally *accept* $H_a$, but we can say the results provide **support for $H_a$** when $H_0$ is rejected.
+
+If the observed statistic falls in either tail beyond the critical value(s), reject $H_0$. Otherwise, fail to reject $H_0$. Report the exact $p$ and an effect size or CI..
+
+ Here are our options (for a two tailed test). 
+
+1.  **Reject the Null Hypothesis (Two-Tailed Test).**
+The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean (magenta line). In this example, the mean is more than 3 standard errors from $\mu_0$, which is typically considered significant for common choices of $\alpha$.
+
+```{r}
+#| label: fig-5-5.reject_2_two_tailed
+#| fig-cap: 'Two-sided test, reject $H_0$: sample mean far from $\mu_0$ in either direction.'
+#| out-width: "100%"
+
+plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-1.5, sample_sd=0.3, inferred_mean=-1.5, inferred_sd=1)
+
+```
+
+2.  **Fail to Reject the Null Hypothesis (Two-Tailed Test).**
+The sample mean falls in the non-rejection region, and the confidence interval includes the null mean. In this case, the evidence is consistent with chance variation, so we fail to reject $H_0$.
+
+```{r}
+#| label: fig-5-5.reject_1
+#| fig-cap: 'Two-sided test, fail to reject $H_0$: sample mean not greater than critical value (within $3\,SE$ from $\mu_0$).'
+#| out-width: "100%"
+
+plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-0.4, sample_sd=0.7, inferred_mean=-0.4, inferred_sd=1)
+```
+
+## Errors in Hypothesis Testing
+
+Sometimes, even when we apply the test correctly, sampling variability can lead us to the wrong conclusion.
+
+* **Type I Error ($\alpha$):** Rejecting $H_0$ when it is actually true. This is like a smoke alarm going off when there’s no fire: a false alarm. By convention, $\alpha$ is often set at 0.05 (5%).
+
+* **Type II Error ($\beta$):** Failing to reject $H_0$ when it is actually false. This is like a smoke alarm staying silent when there *is* a fire: a missed signal.
+
+| Decision | If the null hypothesis is True | If the null hypothesis is False |
+|------------------------|------------------------|------------------------|
+| **Reject $H_0$** | Type I error (prob = $\alpha$) | Correct (prob = 1 - $\beta$) |
+| **Fail to reject $H_0$** | Correct (prob = 1 - $\alpha$) | Type II error (prob = $\beta$) |
+
+> **Key Takeaway**: As $\alpha$ gets smaller, $\beta$ gets bigger, and vice-versa.
+
+Errors happen because samples are imperfect.
+
+* In @fig-5-5.type1_error, the true population (orange) is almost identical to the null (blue). By chance, however, the sample mean lands far away, and the CI excludes $\mu_0$. The test rejects $H_0$ even though it is true—a **Type I error**.
 
 ```{r}
 #| label: fig-5-5.type1_error
-#| fig-cap: "Type 1 Error"
+#| fig-cap: 'Type I error: $H_0$ is true ($\mu=\mu_0$), but the sample leads us to reject $H_0$.'
 #| out-width: "100%"
 
-p8 <- plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=2, sample_sd=0.5, inferred_mean=2, inferred_sd=1, true_mean=-0.4, true_sd=1)
+p8 <- plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=2, sample_sd=0.5, inferred_mean=2, inferred_sd=1, true_mean=-0.52, true_sd=1)
 print(p8)
 ```
 
-------------------------------------------------------------------------
-
-In another imperfect and inconvenient world, the sample (dashed dark green lines) really is drawn from the alternative distribution (the sample's true parent distribution; orange), but is unrepresentative of its parent and similar to the null (solid blue line). The confidence interval (in the 2-tailed case) of the sample "catches" the mean of the null hypothesis although it is far from the mean of the true parent of the sample. A hypothesis test will find no significant difference between the sample mean and the mean of the null hypothesis. **This is a type II error.**
+* In @fig-5-5.type2_error, the true population mean (orange) is far from $\mu_0$, but the particular sample looks close to the null. The CI includes $\mu_0$, so the test fails to reject when it should reject the null: a **Type II error**.
 
 ```{r}
 #| label: fig-5-5.type2_error
-#| fig-cap: "Type 2 Error"
+#| fig-cap: 'Type II error: $H_0$ is false (true population mean differs from $\mu_0$), but the sample leads us to fail to reject $H_0$.'
 #| out-width: "100%"
 
 p9 <- plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=0, sample_sd=0.4, inferred_mean=0, inferred_sd=1, true_mean=3, true_sd=1)
 print(p9)
 ```
 
-## Graphical Review of Test Outcomes that are Not in Error
+### Effect of Sample Size on Errors
 
-As you review hypothesis testing, it's essential to remember that we don't *accept* the null hypothesis. The possibility of a Type I error means our conclusion might be flawed. Instead of accepting the null hypothesis, we *fail to reject* H~0~. The scarcity of data with small sample sizes can lead to significant differences between the sample mean and the null mean (μ_0). While it's tempting to gather more data to be more certain, in the meantime, the best we can do is fail to reject H~0~.
+With fixed $\alpha$ and correct assumptions, the long-run Type I error rate is $\alpha$ for any $n$. **Sample size mainly affects Type II error:** with small $n$, the sampling distribution is wide, true effects are harder to detect, and **$\beta$ increases** (power decreases). As $n$ grows, the sampling distribution tightens, **$\beta$ falls**, and power rises. Apparent changes in the Type I rate at small $n$ usually reflect **assumption violations** (e.g., non-normality, poor variance estimates, multiple looks), not $n$ itself.
 
-In the figures below, as in the figures above, the blue lines represent the null parent distribution (defined by the null mean and the sample's standard deviation).
+**Takeaway:** Increasing $n$ improves estimation precision and **power** (reduces $\beta$); **Type I error remains at $\alpha$** when assumptions hold.
 
-The green solid lines denote the apparent parent distribution of our sample:
+### How to interpret $p$-values
 
--   **Solid lighter green line**: Represents the distribution described by our sample mean and standard deviation.
+A $p$-value is the probability, **assuming $H_0$ is true**, of obtaining a test statistic **at least as extreme** as the one we observed. We **reject** at level $\alpha$ when $p<\alpha$.
 
--   \***Dashed dark green line**: Shows the sampling distribution of the sample mean, described by our sample mean and the standard error (SE).
+**Tails.** Match the tail(s) to $H_a$:
 
-### Graphical Descriptions:
+- Two-sided ($H_a:\ \mu \neq \mu_0$): $p = 2\cdot P(\text{tail beyond }|z_{\text{obs}}|)$  
+- One-sided ($H_a:\ \mu > \mu_0$): $p = P(Z \ge z_{\text{obs}})$  
+- One-sided ($H_a:\ \mu < \mu_0$): $p = P(Z \le z_{\text{obs}})$
 
-1.  **Fail to Reject the Null Hypothesis** - *Sample Mean Supports the Null Hypothesis*: The means are far apart, but **not in our direction of interest**. For a one-tailed test, only data on one side of the rejection region can support the null hypothesis. Question to ponder: If we gather more data and obtain the same sample mean, could our conclusion change?
 
-```{r}
-#| label: fig-5-5.fail_to_reject_1
-#| fig-cap: "Ha:μ < X"
-#| out-width: "100%"
+ **Common mistakes to avoid.**
 
-# Graph 1
+1. $p$ is **not** the probability that $H_0$ is true.
+ 2. A smaller $p$ does **not** imply a larger effect; report effect size and a CI.
+3. With very **large $n$**, tiny effects can yield tiny $p$; assess practical importance.
+4. With small $n$, true effects can yield large $p$ (low power).
 
-plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=1.2, sample_sd=0.7, inferred_mean=1.2, inferred_sd=1)
+**Takeaway.** Use $p$ for the decision, but interpret results alongside **effect size** and a **95% CI**.
 
-```
+### Reporting results
 
-2.  **Fail to Reject the Null Hypothesis**: *The sample mean supports the alternate hypothesis (it is on the appropriate side of the rejection region), but the sample size is too small*. The sample mean is only about 1SE from the null mean, making it too close to be significant. Hypothetical situation: With more data and the same sample mean, could our conclusion differ?
+A results statement gives the plain-language conclusion and the key statistics in a fixed order. Aim for one clean sentence plus context.
 
-```{r}
-#| label: fig-5-5.fail_to_reject_2
-#| fig-cap: "Ha:μ < X"
-#| out-width: "100%"
+**Template (two-sided test):**
+*Plain-language finding.* *(test, statistic, df or n, value of statistic, p-value, effect size/CI if relevant).*
 
-plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-0.6, sample_sd=0.8, inferred_mean=-0.6, inferred_sd=1)
+**What to include (in order):**
 
-```
+1. Test name (e.g., one-sample *z*, two-sample *t*, χ², regression).
+2. Test statistic and its degrees of freedom (or sample size for *z*).
+3. Exact $p$ (report $p<0.001$ when very small).
+4. An effect size and/or a 95% CI when available.
 
-3.  **Reject the Null Hypothesis**: The sample mean is on the appropriate side of the rejection region. It's significantly distant from the null mean, over 3 SE, which is typically considered significant for most standard values of α.
+**Examples**
 
-```{r}
-#| label: fig-5-5.reject_1
-#| fig-cap: "Ha:μ < X"
-#| out-width: "100%"
+* **One-sample *z*:**
+  The average mercury level within 10 km of the smelter was higher than the legal limit (*z* = 2.85, *n* = 32, p = 0.004).
 
-plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-1.5, sample_sd=0.3, inferred_mean=-1.5, inferred_sd=1)
-```
+* **One-sample *t* with CI:**
+  Mean nitrate exceeded the target by 0.41 mg/L (*t*(31) = 2.6, p = 0.013, 95% CI [0.09, 0.73] mg/L).
 
-4.  **Reject the Null Hypothesis (Two-Tailed Test)**: Reject the null hypothesis for the same reasons as the previous example. This case is two-tailed, but nothing else has changed.
+* **Two-sample *t* with effect size:**
+  Downstream sites had higher turbidity than upstream sites (*t*(58) = 3.1, p = 0.003, Cohen’s (d = 0.80)).
 
-```{r}
-#| label: fig-5-5.reject_2_two_tailed
-#| fig-cap: "Ha:μ ≠ X"
-#| out-width: "100%"
+* **Not significant (be explicit):**
+  Mean canopy temperature did not differ from the baseline (*t*(47) = 1.2, p = 0.24); we fail to reject $H_0$.
 
-plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-1.5, sample_sd=0.3, inferred_mean=-1.5, inferred_sd=1)
+**Rounding & style**
 
-```
+* Round statistics to 2 decimals; $p$ to 3 decimals (use $p<0.001$ when needed).
+* Use “fail to reject $H_0$” (not “accept”).
+* Match tail to hypothesis in prose (e.g., “higher than,” “lower than,” or “different from”).
 
-## Graphical Review of Sample Size Effect when Test Outcomes are in Error
+**Do / Don’t**
 
-It's a given that we never truly grasp the actual parent distribution of a sample. An unrepresentative sample can lead either to a Type I or a Type II error. The term *sampling error* is sometimes invoked to depict such unrepresentative samples, but it's imperative to understand that the researcher hasn't committed any mistakes.
+* **Do** pair the sentence with a short, substantive takeaway (what it means for the question).
+* **Do** include a CI or effect size when it aids interpretation.
+* **Don’t** restate methods; **don’t** claim proof; **don’t** omit units.
 
-### Graphical Descriptions:
+> **Takeaway:** One sentence is enough: state the direction in words, then report (*test*, statistic, df/*n*, (p), and effect size/CI).
 
-**Type I Error**: Here, the green curves depict the sampling distribution (dark green) and the apparent parent distribution (lighter green) of our sample. But in reality, the sample is a product of the null distribution (blue). Question to ponder: How would the representation look if we had utilized a smaller sample size?
+### Beyond the 0.05 cutoff: Effect-size and power
 
-```{r}
-#| label: fig-5-5.type1_samplesize
-#| out-width: "100%"
+Why go beyond a yes/no at $\alpha=0.05$? Because scientists, managers, policymakers, and communities need to know **how large** an effect is and **how likely** a study is to detect it. That’s what **effect size** and **power** provide.
 
-p10 <-  plot_distributions(null_mean=0, null_sd=1, sample_mean=1, sample_sd=0.8, inferred_mean=1, inferred_sd=1, true_mean=NA, true_sd=NA)
-print(p10)
-```
+**Working definitions**
 
-The main thing that would change with a larger sample size is that the sampling distribution of sample means becomes much tighter, thus making the confidence interval smaller. So here, are we more or less likely to have a type 1 error with the larger sample size?
+* **Effect size**: how big the difference or association is (in natural units or standardized units like Cohen’s $d$).
 
-```{r}
-#| label: fig-5-5.type_1_samplesize_larger
-#| out-width: "100%"
+* **Power ($1-\beta$)**: the probability your design will detect a real effect of a specified size at your chosen $\alpha$.
 
-p11 <-  plot_distributions(null_mean=0, null_sd=1, sample_mean=1, sample_sd=0.3, inferred_mean=1, inferred_sd=1, true_mean=NA, true_sd=NA)
-print(p11)
-```
+**Use them before you sample.** Decide what effect is *meaningful* for your context (e.g., a 0.3 mg/L nitrate reduction) and size your study to have adequate power to detect that effect.
 
-**Type II Error**: The sample genuinely hails from the solid orange parent population. However, it was misleading enough (as depicted by the dashed green line) to seem analogous to the null distribution (blue). Query to reflect upon: How would this representation transform if the sample size was substantially larger?
+### Effect size: practical vs. standardized
 
-```{r}
-#| label: fig-5-5.type_2_samplesize
-#| out-width: "100%"
+**What is effect size?**
+It’s how big the difference or association is. You can express it in **original units** (practical meaning) or in **standardized units** (comparability across scales).
 
-p12 <-  plot_distributions(null_mean=0, null_sd=1, sample_mean=1, sample_sd=0.8, inferred_mean=1, inferred_sd=1, true_mean=3.2, true_sd=1)
-print(p12)
-```
+**Practical (original units).**
+Use the scale stakeholders recognize.
 
-The main thing that would change with a larger sample size is that the sampling distribution of sample means becomes much tighter, thus making the confidence interval smaller. So here, are we more or less likely to have a type 2 error with the larger sample size?
+* Exams: “Treatment improved scores by **5 percentage points**” (a letter-grade–sized change).
+* Time-on-task: “New training reduces practice time by **1,000 hours** out of 10,000” (a 10% reduction).
 
-```{r}
-#| label: fig-5-5.type_2_samplesize_larger
-#| out-width: "100%"
+These statements are easy to interpret, but they don’t travel well across contexts or measures.
 
-p13 <-  plot_distributions(null_mean=0, null_sd=1, sample_mean=1, sample_sd=0.3, inferred_mean=1, inferred_sd=1, true_mean=3.2, true_sd=1)
-print(p13)
-```
+**Standardized (unitless).**
+When units are unfamiliar or scales differ, standardize by typical variability. The most common standardized effect size metric is *Cohen's d*. For two means with a common SD $\sigma$,
 
-### How Significant is 'Significant' -- Interpreting p-values
+$$
+d = \frac{\mu_1 - \mu_2}{\sigma}
+$$
 
-When we use a rejection region to test a hypothesis, we get a yes-or-no answer. For a two-tailed test, if we ask whether the confidence interval "captures" the null mean, we get a yes-or-no answer as well.
+Now “how big?” is expressed in **SD units**. If you notice, this is just a kind of z-score. It is a way to standardize the mean difference in terms of the population standard deviation.
 
-#### Calculating p-values
+**Environmental example (biodiversity index).**
+Suppose an index increases from 3 to 4 after reforestation.
 
-We can do better -- we can get an actual probability value. The blue box for the z-test tells us how to calculate our p-value if our mean is in the area of interest for the test.
+* In **raw units**: +1 index point.
+* In **standardized terms**:
 
-1.  **Calculate Z-value**: First, we calculate how many standard errors our mean is from the null mean. This is the z-value for our mean in the world of the null hypothesis.
+  * If the SD across sites is 1.0, then $d = 1.0$: a large shift.
+  * If the SD is 10, then $d = 0.10$: a small shift.
 
-    -   For (H~0~ \< X), we ask about the upper tail probability of our mean.
-    -   For (H~0~ \> X), we ask about the lower tail probability of our mean.
-    -   For (H~0~ = X), we calculate twice the tail probability.
+> **Takeaway:** Report both when possible—original units for meaning (policy/action) and a standardized effect (e.g., $Cohen’s d$) for comparison across studies.
 
-#### One-Tailed vs Two-Tailed Tests
+**Notes for practice**
 
--   **One-Tailed Test**: The p-value tells us the probability of a mean at least as much greater than (H~0~) as our mean, when the null hypothesis is true or as much less than (H~0~).
+* In real data, $\sigma$ is unknown; estimate it (pooled SD for two groups, with small-sample corrections as needed).
+* Heuristics (context matters): $d \approx 0.2$ (small), $d \approx 0.5$ (medium), $d \approx 0.8$ (large).
+* A “small” $d$ can still be important (e.g., small reductions in lead or $\mathrm{PM}_{2.5}$ can matter for health).
+* Pair effect sizes with **95% CIs** to show precision, not just magnitude.
 
--   **Two-Tailed Test**: The p-value tells us the probability of a mean at least as different from (H~0~) as our mean, when the null hypothesis is true.
+Let’s ground effect size in a concrete example. Suppose we’re measuring **final exam performance** (percent correct). The class mean is 65% with a standard deviation of 5%. Group A is a control, while Group B receives some instructional treatment.
 
-#### Rejecting the Null Hypothesis
-
-We reject (H~0~) when (p)-value (\< \alpha). At that point, our data are too unusual when the null hypothesis is true for us to believe that the null hypothesis is true.
-
--   **Small p-value**: When (p) is small, our data provide weak support for (H~0~), and we are more sure that (H~0~) is not true, and that (H~a~) is more likely.
-
-------------------------------------------------------------------------
-
-## Review of Ways to Test (H~0~)
-
-1.  **Confidence Interval**: If the alternative is two-tailed, build a 1-(\alpha) confidence interval. If the CI catches (H~0~) then fail to reject.
-
-2.  **Test Statistic**: Calculate the test statistic and compare to the rejection region of size (\alpha). If the test statistic is in the rejection region, reject (H~0~).
-
-3.  **Probability**: Determine the probability of your test statistic. If (p \< \alpha) then reject (H~0~).
-
-**Note**: The first two methods give you a yes-or-no answer. The third method gives you some additional information.
-
-------------------------------------------------------------------------
-
-### Results Statement
-
-Now that we have started doing statistical tests, we have also started to think about results. A results statement provides an English language version of what we discovered, as well as the statistical results. For a z-test, a results sentence might say:
-
-> The average level of mercury in the ponds within 10 km of the smelter is significantly higher than the legal limit (z = 2.85, n = 32, p = 0.004).
-
-The information in the parentheses, for a one-sample test, is, in this order,
-
-1)  the value of the test statistic, in this case, (z);
-2)  the sample size or degrees of freedom; and
-3)  the probability of the test statistic when the null hypothesis is true.
-
-Most problems that include a test will require a results sentence.
-
-------------------------------------------------------------------------
-
-### Beyond the 0.5 cutoff: Effect-size and power
-
-You've probably heard me mention that the 0.5 cutoff for statistical significance is somewhat arbitrary. So, what's the alternative? Enter effect size and statistical power. These aren't just buzzwords; they're foundational elements for conducting meaningful environmental research. Many scientific journals even have guidelines on how to report them. Ideally, you should be thinking about these factors before you collect your first data point. Given their importance, it's time we delve into what these concepts really mean and why they're crucial for research.
-
-### The importance of knowing what you're doing
-
-Effect size and power analyses are more than just boxes to tick; they're essential tools in your research toolkit for understanding environmental data. Rather than using them simply because you were advised to, see them as integral to designing meaningful studies. These tools help you filter out statistical "noise," revealing actionable insights that can address real-world environmental issues. They shouldn't be applied blindly but should be part of a thoughtful research strategy aimed at making your data work for you.
-
-### Chance vs. Real Effects: The Playground, the Superpower, and the Impact Scale
-
-In environmental research, the goal is often to identify meaningful changes---like the improvement of air quality due to reduced pollution. However, researchers sometimes find themselves grappling with statistical "noise" rather than detecting genuine effects. To navigate this complex landscape, let's use some analogies.
-
-**The Playground and the Mischievous Kid**
-
-First, consider your sample size as a playground and chance as a mischievous kid running around in it. The smaller the playground, the more room this kid has to create chaos, leading to random variations in your data. On the flip side, a larger playground restricts the kid's antics, minimizing the influence of chance. So, your first task is to design your study like an ultimate playground---spacious and well-planned to keep chance at bay.
-
-**The Balls: Different Sizes, Different Impacts**
-
-Next, let's focus on the "stuff" being thrown around on this playground. Think of different types of balls---soccer balls, tennis balls, ping pong balls, and marbles---as representing different effect sizes:
-
--   **Soccer Ball (Strong Effect)**: It's big and noticeable. When it lands, you know something significant has happened.
-
--   **Tennis Ball (Medium Effect)**: Still impactful but not as game-changing as a soccer ball.
-
--   **Ping Pong Ball (Small Effect)**: It might bounce around, but it's not going to change the landscape.
-
--   **Marble (Very Small Effect)**: Almost negligible amid the other activities.
-
-**The Superhero: Statistical Power**
-
-Here's where statistical power comes into play. It's your research superhero, capable of discerning whether the changes you're observing are due to chance, the size of your playground, or the type of ball being thrown (Effect Size). Imagine it as a keen-eyed playground supervisor who can tell the difference between a random bounce and a meaningful impact.
-
-The Takeaway
-
-1.  **Plan Well**: Design your study like you're building the ultimate playground---spacious and well-planned to minimize the role of chance.
-
-2.  **Know Your Ball**: Understand the potential impact (effect size) of what you're introducing into your study. This helps you make meaningful conclusions.
-
-3.  **Power Up**: Conduct a power analysis to ensure your study is equipped to distinguish between meaningful impacts and random noise.
-
-By focusing on these three elements---chance, effect size, and statistical power---you're not just adhering to research best practices; you're elevating the quality and impact of your work.
-
-### Effect size: concrete vs. abstract notions
-
-Generally speaking, the big concept of effect size, is simply how big the differences are, that's it. However, the biggness or smallness of effects quickly becomes a little bit complicated. On the one hand, the raw difference in the means can be very meaningful. Let's say we are measuring performance on a final exam, and we are testing whether or not a miracle drug can make you do better on the test. Let's say taking the drug makes you do 5% better on the test, compared to not taking the drug. You know what 5% means, that's basically a whole letter grade. Pretty good. An effect-size of 25% would be even better, right? Lots of measures have a concrete quality to them, and we often want to the size of the effect expressed in terms of the original measure.
-
-Let's talk about concrete measures some more. How about learning a musical instrument. Let's say it takes 10,000 hours to become an expert piano, violin, or guitar player. And, let's say you found something online that says that using their method, you will learn the instrument in less time than normal. That is a claim about the effect size of their method. You would want to know how big the effect is right? For example, the effect-size could be 10 hours. That would mean it would take you 9,980 hours to become an expert (that's a whole 10 hours less). If I knew the effect-size was so tiny, I wouldn't bother with their new method. But, if the effect size was say 1,000 hours, that's a pretty big deal, that's 10% less (still doesn't seem like much, but saving 1,000 hours seems like a lot).
-
-In environmental science, we often encounter measures that are not as straightforward as, say, temperature or pH levels. Take biodiversity indices as an example. These indices can give us a numerical value representing the variety of life in a particular ecosystem, but interpreting what these numbers mean can be challenging.
-
-Imagine you're assessing the impact of a reforestation project. Your biodiversity index might read 3 before the project and 4 after. That's a difference of only 1 unit, but what does that actually signify? Is it a significant improvement, or just a minor change? The raw numbers alone don't provide enough context.
-
-To make these abstract measures more interpretable, we often turn to standardized metrics, like z-scores. If that 1-unit difference in biodiversity corresponds to a shift of one standard deviation, that's a substantial change worth noting. On the other hand, if the shift is only 0.1 in terms of standard deviation, then the 11-unit difference might not be as impactful as it first seemed. Standardized measures like Cohen's d can further help us understand the practical significance of our findings.
-
-### Cohen's d
-
-Let's look a few distributions to firm up some ideas about effect-size. @fig-5.5effectdists has four panels. The first panel (0) represents the null distribution of no differences. This is the idea that your manipulation (A vs. B) doesn't do anything at all, as a result when you measure scores in conditions A and B, you are effectively sampling scores from the very same overall distribution. The panel shows the distribution as green for condition B, but the red one for condition A is identical and drawn underneath (it's invisible). There is 0 difference between these distributions, so it represent a null effect.
-
-```{r}
-#| label: fig-5.5effectdists
-#| fig-cap: "Each panel shows hypothetical distributions for two conditions. As the effect-size increases, the difference between the distributions become larger."
-#| out-width: "100%"
-
-
-X <- c(
-  seq(-5, 5, .1),
-  seq(-5, 5, .1),
-  seq(-5, 5, .1),
-  seq(-5, 5, .1),
-  seq(-5, 5, .1),
-  seq(-5, 5, .1),
-  seq(-5, 5, .1),
-  seq(-5, 5, .1)
-)
-Y <- c(
-  dnorm(seq(-5, 5, .1), 0, 1),
-  dnorm(seq(-5, 5, .1), 0, 1),
-  dnorm(seq(-5, 5, .1), 0, 1),
-  dnorm(seq(-5, 5, .1), .5, 1),
-  dnorm(seq(-5, 5, .1), 0, 1),
-  dnorm(seq(-5, 5, .1), 1, 1),
-  dnorm(seq(-5, 5, .1), 0, 1),
-  dnorm(seq(-5, 5, .1), 2, 1)
-)
-effect_size <- rep(c(0, .5, 1, 2), each = 101 * 2)
-condition <- rep(rep(c("A", "B"), each = 101), 2)
-df <- data.frame(effect_size,
-                 condition,
-                 X, Y)
-
-ggplot(df, aes(
-  x = X,
-  y = Y,
-  group = condition,
-  color = condition
-)) +
-  geom_line() +
-  theme_classic(base_size = 15) +
-  facet_wrap( ~ effect_size) +
-  xlab("values") +
-  ylab("density")
-
-```
-
-The remaining panels are hypothetical examples of what a true effect could look like, when your manipulation actually causes a difference. For example, if condition A is a control group, and condition B is a treatment group, we are looking at three cases where the treatment manipulation causes a positive shift in the mean of distribution. We are using normal curves with mean =0 and sd =1 for this demonstration, so a shift of .5 is a shift of half of a standard deviation. A shift of 1 is a shift of 1 standard deviation, and a shift of 2 is a shift of 2 standard deviations. We could draw many more examples showing even bigger shifts, or shifts that go in the other direction.
-
-Let's look at another example, but this time we'll use some concrete measurements. Let's say we are looking at final exam performance, so our numbers are grade percentages. Let's also say that we know the mean on the test is 65%, with a standard deviation of 5%. Group A could be a control that just takes the test, Group B could receive some "educational" manipulation designed to improve the test score. These graphs then show us some hypotheses about what the manipulation may or may not be doing.
+@fig-5.5effectdistsB shows four possible scenarios:
 
 ```{r}
 #| label: fig-5.5effectdistsB
-#| fig-cap: "Each panel shows hypothetical distributions for two conditions. As the effect-size increases, the difference between the distributions become larger."
+#| fig-cap: 'Same idea with concrete scores (mean $65$, $sd=5$): treatment shifts correspond to $d=0,\,0.5,\,1,\,2$.'
 #| out-width: "100%"
 
 
@@ -668,136 +780,107 @@ ggplot(df, aes(
 
 ```
 
-The first panel shows that both condition A and B will sample test scores from the same distribution (mean =65, with 0 effect). The other panels show shifted mean for condition B (the treatment that is supposed to increase test performance). So, the treatment could increase the test performance by 2.5% (mean 67.5, .5 sd shift), or by 5% (mean 70, 1 sd shift), or by 10% (mean 75%, 2 sd shift), or by any other amount. In terms of our previous metaphor, a shift of 2 standard deviations is more like jack-hammer in terms of size, and a shift of .5 standard deviations is more like using a pencil. The thing about research, is we often have no clue about whether our manipulation will produce a big or small effect, that's why we are conducting the research.
+* **Panel 1 ($d=0$):** No effect. Both groups sample from the same distribution (mean = 65).
+* **Panel 2 ($d=0.5$):** Group B’s mean shifts upward by 2.5 points (67.5).
+* **Panel 3 ($d=1$):** A 5-point shift (70).
+* **Panel 4 ($d=2$):** A large 10-point shift (75).
 
-You might have noticed that the letter $d$ appears in the above figure. Why is that? Jacob Cohen [@Cohen1988] used the letter $d$ in defining the effect-size for this situation, and now everyone calls it Cohen's $d$. The formula for Cohen's $d$ is:
-
-$d = \frac{\text{mean for condition 1} - \text{mean for condition 2}}{\text{population standard deviation}}$
-
-If you notice, this is just a kind of z-score. It is a way to standardize the mean difference in terms of the population standard deviation.
-
-It is also worth noting again that this measure of effect-size is entirely hypothetical for most purposes. In general, researchers do not know the population standard deviation, they can only guess at it, or estimate it from the sample. The same goes for means, in the formula these are hypothetical mean differences in two population distributions. In practice, researchers do not know these values, they guess at them from their samples.
-
-Before discussing why the concept of effect-size can be useful, we note that Cohen's $d$ is useful for understanding abstract measures. For example, when you don't know what a difference of 10 or 20 means as a raw score, you can standardize the difference by the sample standard deviation, then you know roughly how big the effect is in terms of standard units. If you thought a 20 was big, but it turned out to be only 1/10th of a standard deviation, then you would know the effect is actually quite small with respect to the overall variability in the data.
+The takeaway is that effect size puts raw differences into a standard-deviation scale. A half–SD shift ($d=0.5$) is noticeable but modest; a two–SD shift ($d=2$) is very large. In practice, we rarely know beforehand how big a shift to expect, that’s why we conduct the study.
 
 ## Power
 
-When there is a true effect out there to measure, you want to make sure your design is sensitive enough to detect the effect, otherwise what's the point. We've already talked about the idea that an effect can have different sizes. The next idea is that your design can be more less sensitive in its ability to reliabily measure the effect. We have discussed this general idea many times already in the textbook, for example we know that we will be more likely to detect "significant" effects (when there are real differences) when we increase our sample-size. Here, we will talk about the idea of design sensitivity in terms of the concept of power. Interestingly, the concept of power is a somewhat limited concept, in that it only exists as a concept within some philosophies of statistics.
+When a real effect exists, your design needs to be sensitive enough to detect it, otherwise the test has little value. We’ve already seen that effects can vary in size. Now we add a second idea: study designs differ in their ability to reliably detect those effects. This sensitivity is called **statistical power**.
 
-### A digresssion about hypothesis testing
+Power rises when:
 
-In particular, the concept of power falls out of the Neyman-Pearson concept of null vs. alternative hypothesis testing. Neyman-Pearson ideas are by now the most common and widespread, and in the opinion of some of us, they are also the most widely misunderstood and abused idea.
+1. **Effect size is larger.**
+2. **Sample size ($n$) is larger** (smaller $SE$).
+3. **The test is less conservative** (larger $\alpha$).
+4. **Measurement noise is lower** (smaller $SD$).
 
-What we have been mainly doing is talking about hypothesis testing from the Fisherian (Sir Ronald Fisher, the ANOVA guy) perspective. This is a basic perspective that can't be easily ignored. It is also quite limited. The basic idea is this:
+> **Question:** “With $\alpha = 0.05$, how large must $n$ be to achieve $\ge 80%$ power for the smallest effect that matters?”
 
-1.  We know that chance can cause some differences when we measure something between experimental conditions.
-2.  We want to rule out the possibility that the difference that we observed can not be due to chance
-3.  We construct large N designs that permit us to do this when a real effect is observed, such that we can confidently say that big differences that we find are so big (well outside the chance window) that it is highly implausible that chance alone could have produced.
-4.  The final conclusion is that chance was extremely unlikely to have produced the differences. We then infer that something else, like the manipulation, must have caused the difference.
-5.  We don't say anything else about the something else.
-6.  We either reject the null distribution as an explanation (that chance couldn't have done it), or retain the null (admit that chance could have done it, and if it did we couldn't tell the difference between what we found and what chance could do)
+### Simulation walkthrough
 
-Neyman and Pearson introduced one more idea to this mix, the idea of an alternative hypothesis. The alternative hypothesis is the idea that if there is a true effect, then the data sampled into each condition of the experiment must have come from two different distributions. Remember, when there is no effect we assume all of the data cam from the same distribution (which by definition can't produce true differences in the long run, because all of the numbers are coming from the same distribution). The graphs of effect-sizes from before show examples of these alternative distributions, with samples for condition A coming from one distribution, and samples from condition B coming from a shifted distribution with a different mean.
+Let’s see how design choices affect power with a simple simulation. Suppose we have two groups, each with $n=10$. Group A (control) is sampled from a normal distribution with mean = 10 and $SD = 5$. Group B (treatment) has a mean = 12.5, a shift of 2.5 points (Cohen’s $d=0.5$), considered a medium effect.
 
-So, under the Neyman-Pearson tradition, when a researcher find a signifcant effect they do more than one things. First, they reject the null-hypothesis of no differences, and they accept the alternative hypothesis that there was differences. This seems like a sensible thing to do. And, because the researcher is actually interested in the properties of the real effect, they might be interested in learning more about the actual alternative hypothesis, that is they might want to know if their data come from two different distributions that were separated by some amount...in other words, they would want to know the size of the effect that they were measuring.
+If we simulate this experiment 1,000 times and run an independent-samples $t$-test each time, how often do we reject $H_0$ at $\alpha=0.05$?
 
-### Back to power
 
-We have now discussed enough ideas to formalize the concept of statistical power. For this concept to exist we need to do a couple things.
-
-1.  Agree to set an alpha criterion. When the p-value for our test-statistic is below this value we will call our finding statistically significant, and agree to reject the null hypothesis and accept the "alternative" hypothesis (sidenote, usually it isn't very clear which specific alternative hypothesis was accepted)
-2.  In advance of conducting the study, figure out what kinds of effect-sizes our design is capable of detecting with particular probabilites.
-
-The power of a study is determined by the relationship between
-
-1.  The sample-size of the study
-2.  The effect-size of the manipulation
-3.  The alpha value set by the researcher.
-
-To see this in practice let's do a simulation. We will do a t-test on a between-groups design 10 subjects in each group. Group A will be a control group with scores sampled from a normal distribution with mean of 10, and standard deviation of 5. Group B will be a treatment group, we will say the treatment has an effect-size of Cohen's $d$ = .5, that's a standard deviation shift of .5, so the scores with come from a normal distribution with mean =12.5 and standard deivation of 5. Remember 1 standard deviation here is 5, so half of a standard deviation is 2.5.
-
-The following R script runs this simulated experiment 1000 times. We set the alpha criterion to .05, this means we will reject the null whenever the $p$-value is less than .05. With this specific design, how many times out of of 1000 do we reject the null, and accept the alternative hypothesis?
-
-```{r}
-p<-length(1000)
+```{r, echo=TRUE}
+set.seed(2025)
+p <- numeric(1000)
 for(i in 1:1000){
-  A<-rnorm(10,10,5)
-  B<-rnorm(10,12.5,5)
-  p[i]<-t.test(A,B,var.equal = TRUE)$p.value
+  A <- rnorm(10, 10, 5)
+  B <- rnorm(10, 12.5, 5)
+  p[i] <- t.test(A,B,var.equal=TRUE)$p.value
 }
-
-length(p[p<.05])
 ```
 
-The answer is that we reject the null, and accept the alternative `r length(p[p<.05])` times out of 1000. In other words our experiment succesfully accepts the alternative hypothesis `r 100*length(p[p<.05])/1000` percent of the time, this is known as the power of the study. Power is the probability that a design will succesfully detect an effect of a specific size.
-
-Importantly, power is completely abstract idea that is completely determined by many assumptions including N, effect-size, and alpha. As a result, it is best not to think of power as a single number, but instead as a family of numbers.
-
-For example, power is different when we change N. If we increase N, our samples will more precisely estimate the true distributions that they came from. Increasing N reduces sampling error, and shrinks the range of differences that can be produced by chance. Lets' increase our N in this simulation from 10 to 20 in each group and see what happens.
-
 ```{r}
-p<-length(1000)
-for(i in 1:1000){
-  A<-rnorm(20,10,5)
-  B<-rnorm(20,12.5,5)
-  p[i]<-t.test(A,B,var.equal = TRUE)$p.value
-}
-
-length(p[p<.05])
+mean(p < 0.05)
 ```
 
-Now the number of significant experiments i `r length(p[p<.05])` out of 1000, or a power of `r 100*length(p[p<.05])/1000` percent. That's roughly doubled from before. We have made the design more sensitive to the effect by increasing N.
 
-We can change the power of the design by changing the alpha-value, which tells us how much evidence we need to reject the null. For example, if we set the alpha criterion to 0.01, then we will be more conservative, only rejecting the null when chance can produce the observed difference 1% of the time. In our example, this will have the effect of reducing power. Let's keep N at 20, but reduce the alpha to 0.01 and see what happens:
+This proportion is the **power** of the design: the probability of detecting the true effect in repeated experiments. With $n=10$, it’s only about 20%. Even though we know a medium-sized effect exists, the test usually fails to pick it up with such a small sample.
 
-```{r}
-p<-length(1000)
-for(i in 1:1000){
-  A<-rnorm(20,10,5)
-  B<-rnorm(20,12.5,5)
-  p[i]<-t.test(A,B,var.equal = TRUE)$p.value
-}
+### How power changes
 
-length(p[p<.01])
-```
-
-Now only `r length(p[p<.01])` out of 1000 experiments are significant, that's `r 100*length(p[p<.01])/1000` power.
-
-Finally, the power of the design depends on the actual size of the effect caused by the manipulation. In our example, we hypothesized that the effect caused a shift of .5 standard deviations. What if the effect causes a bigger shift? Say, a shift of 2 standard deviations. Let's keep N= 20, and alpha \< .01, but change the effect-size to two standard deviations. When the effect in the real-world is bigger, it should be easier to measure, so our power will increase.
+1. **Larger $n$.**
+   Doubling to $n=20$ per group reduces sampling error and roughly doubles power:
 
 ```{r}
-p<-length(1000)
+p <- numeric(1000)
 for(i in 1:1000){
-  A<-rnorm(20,10,5)
-  B<-rnorm(20,30,5)
-  p[i]<-t.test(A,B,var.equal = TRUE)$p.value
+  A <- rnorm(20, 10, 5)
+  B <- rnorm(20, 12.5, 5)
+  p[i] <- t.test(A,B,var.equal=TRUE)$p.value
 }
-
-length(p[p<.01])
+mean(p < 0.05)
 ```
 
-Neat, if the effect-size is actually huge (2 standard deviation shift), then we have power `r 100*length(p[p<.01])/1000` percent to detect the true effect.
+2. ***Smaller $\alpha$.**
+   Making the test more conservative (e.g., $\alpha=0.01$) lowers power, because fewer outcomes count as “significant”:
+
+```{r}
+mean(p < 0.01)
+```
+
+3. **Bigger effects are easier to detect.**
+   If the treatment produces a big shift (say 2 standard deviations), the same design has near-perfect power:
+
+```{r, echo=TRUE}
+p <- numeric(1000)
+for(i in 1:1000){
+  A <- rnorm(20, 10, 5)
+  B <- rnorm(20, 20, 5)   # 2SD effect
+  p[i] <- t.test(A,B,var.equal=TRUE)$p.value
+}
+```
+
+```{r}
+mean(p < 0.01)
+```
 
 ### Power curves
 
-We mentioned that it is best to think of power as a family of numbers, rather than as a single number. To elaborate on this consider the power curve below. This is the power curve for a specific design: a between groups experiments with two levels, that uses an independent samples t-test to test whether an observed difference is due to chance. Critically, N is set to 10 in each group, and alpha is set to .05
+It’s best to think of power as a **profile**, not a single number. A power curve shows how sensitive a design is across a range of possible effects.
 
-In @fig-5.5powercurve power (as a proportion, not a percentage) is plotted on the y-axis, and effect-size (Cohen's d) in standard deviation units is plotted on the x-axis.
+In @fig-5.5powercurve, we fix the design to a two-sample $t$-test with $n=10$ per group and $\alpha=0.05$. Power is plotted on the y-axis, and the true effect size (Cohen’s $d$) is on the x-axis.
 
 ```{r}
 #| label: fig-5.5powercurve
-#| fig-cap: "This figure shows power as a function of effect-size (Cohen's d) for a between-subjects independent samples t-test, with N=10, and alpha criterion 0.05."
+#| fig-cap: 'Power vs. effect size (Cohen’s $d$) for a two-sample $t$-test with $n=10$ per group and $\alpha=0.05$.'
 #| out-width: "100%"
-
 
 power<-c()
 for(i in seq(0,2,.1)){
-sd_AB <- 1
-n<-10
-C <- qnorm(0.975)
-se <- sqrt( sd_AB/n + sd_AB/n )
-delta<-i
-power <- c(power,1-pnorm(C-delta/se) + pnorm(-C-delta/se))
+  sd_AB <- 1
+  n<-10
+  C <- qnorm(0.975)
+  se <- sqrt(sd_AB/n + sd_AB/n)
+  delta<-i
+  power <- c(power,1-pnorm(C-delta/se) + pnorm(-C-delta/se))
 }
 
 plot_df<-data.frame(power,
@@ -808,23 +891,31 @@ ggplot(plot_df, aes(x=effect_size, y=power))+
   theme_classic()
 ```
 
-A power curve like this one is very helpful to understand the sensitivity of a particular design. For example, we can see that a between subjects design with N=10 in both groups, will detect an effect of d=.5 (half a standard deviation shift) about 20% of the time, will detect an effect of d=.8 about 50% of the time, and will detect an effect of d=2 about 100% of the time. All of the percentages reflect the power of the design, which is the percentage of times the design would be expected to find a $p$ \< 0.05.
+**Walkthrough.**
 
-Let's imagine that based on prior research, the effect you are interested in measuring is fairly small, d=0.2. If you want to run an experiment that will detect an effect of this size a large percentage of the time, how many subjects do you need to have in each group? We know from the above graph that with N=10, power is very low to detect an effect of d=0.2. Let's make @fig-5.5powercurveN and vary the number of subjects rather than the size of the effect.
+* With $n=10$, the design only detects a medium effect ($d=0.5$) about 20% of the time.
+* A larger effect ($d=0.8$) is caught about half the time.
+* Very large effects ($d=2$) are detected almost every time.
+
+This shows that small samples are only sensitive to big, obvious effects.
+
+Now suppose prior research suggests the effect size is small ($d=0.2$). Instead of varying the effect, we can ask: *how many subjects per group do we need to have decent power?*
+
+@fig-5.5powercurveN plots power against sample size for detecting $d=0.2$. The green line marks 80% power, a common planning target.
 
 ```{r}
 #| label: fig-5.5powercurveN
-#| fig-cap: "This figure shows power as a function of N for a between-subjects independent samples t-test, with d=0.2, and alpha criterion 0.05."
+#| fig-cap: 'Power vs. sample size for detecting $d=0.2$ with a two-sample $t$-test at $\alpha=0.05$; green line marks $0.80$ power.'
 #| out-width: "100%"
 
 power<-c()
 for(i in seq(10,800,10)){
-sd_AB <- 1
-n<-i
-C <- qnorm(0.975)
-se <- sqrt( sd_AB/n + sd_AB/n )
-delta<-0.2
-power <- c(power,1-pnorm(C-delta/se) + pnorm(-C-delta/se))
+  sd_AB <- 1
+  n<-i
+  C <- qnorm(0.975)
+  se <- sqrt(sd_AB/n + sd_AB/n)
+  delta<-0.2
+  power <- c(power,1-pnorm(C-delta/se) + pnorm(-C-delta/se))
 }
 
 plot_df<-data.frame(power,
@@ -833,61 +924,48 @@ plot_df<-data.frame(power,
 ggplot(plot_df, aes(x=N, y=power))+
   geom_line()+
   theme_classic()+
-  geom_hline(yintercept=.8, color="green")
+  geom_hline(yintercept=.8, color="green")+
+  labs(x = "n per group", y = "Power")
 ```
 
-The figure plots power to detect an effect of d=0.2, as a function of N. The green line shows where power = .8, or 80%. It looks like we would nee about 380 subjects in each group to measure an effect of d=0.2, with power = .8. This means that 80% of our experiments would succesfully show p \< 0.05. Often times power of 80% is recommended as a reasonable level of power, however even when your design has power = 80%, your experiment will still fail to find an effect (associated with that level of power) 20% of the time!
+**Walkthrough.**
 
-## Planning your design
+* At $n=10$ per group, power to detect $d=0.2$ is near zero.
+* To reach 80% power, we need about **380 per group**.
+* Even then, 20% of studies would still fail to reject $H_0$ just by chance.
+
+**Takeaway:**
+
+* A power curve shows, for a fixed design, how power rises as the true effect grows.
+* A power-vs-$n$ curve shows how many samples you need to hit a target power for a specific effect.
+* Power analysis is mainly a **planning tool**, not a results-reporting tool. When you design a study, don’t just aim for “power = 0.8.” Always state the **assumed effect size** and the **standard deviation** you used for that calculation. Otherwise, “0.8” has no meaning—power depends entirely on those assumptions.
+
+
+### Planning your design
 
 Our discussion of effect size and power highlight the importance of the understanding the statistical limitations of an experimental design. In particular, we have seen the relationship between:
 
-1.  Sample-size
-2.  Effect-size
-3.  Alpha criterion
-4.  Power
+* **Define a meaningful effect** (environmentally or policy-relevant minimum).
+* **Choose $\alpha$** (often 0.05; justify if different).
+* **Estimate variability** (pilot data, literature, or historical monitoring).
+* **Compute $n$** for $\ge 80%$ power (or explain tradeoffs if you can’t reach it).
+* **Pre-specify** one- vs two-tailed before data collection.
 
-As a general rule of thumb, small N designs can only reliably detect very large effects, whereas large N designs can reliably detect much smaller effects. As a researcher, it is your responsibility to plan your design accordingly so that it is capable of reliably detecting the kinds of effects it is intended to measure.
+As a general rule of thumb, small-$n$ designs can only reliably detect very large effects, whereas large-$n$ designs can reliably detect much smaller effects. As a researcher, it is your responsibility to plan your design accordingly so that it is capable of reliably detecting the kinds of effects it is intended to measure.
 
-## Some considerations
+### Two cautions (common pitfalls)
 
-### Low powered studies
+* **Low power inflates doubt, even when (p<0.05).**
+  Underpowered studies rarely replicate. A design with only 30% power to detect an expected effect might, by luck, produce a “significant” result—but most replications will not. Worse, false positives from small samples tend to look exaggerated: if a spurious finding reaches significance, the estimated effect size is often large enough to seem convincing.
 
-Consider the following case. A researcher runs a study to detect an effect of interest. There is good reason, from prior research, to believe the effect-size is d=0.5. The researcher uses a design that has 30% power to detect the effect. They run the experiment and find a significant p-value, (p\<.05). They conclude their manipulation worked, because it was unlikely that their result could have been caused by chance. How would you interpret the results of a study like this? Would you agree with thte researchers that the manipulation likely caused the difference? Would you be skeptical of the result?
+* **Huge $n$ finds tiny effects.**
+  With very large samples, trivial differences can register as statistically significant. For example, a billion-person trial might show a drug reduces pain by 0.01%. That effect is “real” but practically meaningless. This is why effect size and confidence intervals should be reported alongside $p$-values: significance alone is not enough.
 
-The situation above requires thinking about two kinds of probabilities. On the one hand we know that the result observed by the researchers does not occur often by chance (p is less than 0.05). At the same time, we know that the design was underpowered, it only detects results of the expected size 30% of the time. We are face with wondering what kind of luck was driving the difference. The researchers could have gotten unlucky, and the difference really could be due to chance. In this case, they would be making a type I error (saying the result is real when it isn't). If the result was not due to chance, then they would also be lucky, as their design only detects this effect 30% of the time.
-
-Perhaps another way to look at this situation is in terms of the replicability of the result. Replicability refers to whether or not the findings of the study would be the same if the experiment was repeated. Because we know that power is low here (only 30%), we would expect that most replications of this experiment would not find a significant effect. Instead, the experiment would be expected to replicate only 30% of the time.
-
-### Large N and small effects
-
-Perhaps you have noticed that there is an intriguing relationship between N (sample-size) and power and effect-size. As N increases, so does power to detect an effect of a particular size. Additionally, as N increases, a design is capable of detecting smaller and smaller effects with greater and greater power. For example, if N was large enough, we would have high power to detect very small effects, say d= 0.01, or even d=0.001. Let's think about what this means.
-
-Imagine a drug company told you that they ran an experiment with 1 billion people to test whether their drug causes a significant change in headache pain. Let's say they found a significant effect (with power =100%), but the effect was very small, it turns out the drug reduces headache pain by less than 1%, let's say 0.01%. For our imaginary study we will also assume that this effect is very real, and not caused by chance.
-
-Clearly the design had enough power to detect the effect, and the effect was there, so the design did detect the effect. However, the issue is that there is little practical value to this effect. Nobody is going to by a drug to reduce their headache pain by 0.01%, even if it was "scientifcally proven" to work. This example brings up two issues. First, increasing N to very large levels will allow designs to detect almost any effect (even very tiny ones) with very high power. Second, sometimes effects are meaningless when they are very small, especially in applied research such as drug studies.
-
-These two issues can lead to interesting suggestions. For example, someone might claim that large N studies aren't very useful, because they can always detect really tiny effects that are practically meaningless. On the other hand, large N studies will also detect larger effects too, and they will give a better estimate of the "true" effect in the population (because we know that larger samples do a better job of estimating population parameters). Additionally, although really small effects are often not interesting in the context of applied research, they can be very important in theoretical research. For example, one theory might predict that manipulating X should have no effect, but another theory might predict that X does have an effect, even if it is a small one. So, detecting a small effect can have theoretical implication that can help rule out false theories. Generally speaking, researchers asking both theoretical and applied questions should think about and establish guidelines for "meaningful" effect-sizes so that they can run designs of appropriate size to detect effects of "meaningful size".
-
-### Small N and Large effects
-
-All other things being equal would you trust the results from a study with small N or large N? This isn't a trick question, but sometimes people tie themselves into a knot trying to answer it. We already know that large sample-sizes provide better estimates of the distributions the samples come from. As a result, we can safely conclude that we should trust the data from large N studies more than small N studies.
-
-At the same time, you might try to convince yourself otherwise. For example, you know that large N studies can detect very small effects that are practically and possibly even theoretically meaningless. You also know that that small N studies are only capable of reliably detecting very large effects. So, you might reason that a small N study is better than a large N study because if a small N study detects an effect, that effect must be big and meaningful; whereas, a large N study could easily detect an effect that is tiny and meaningless.
-
-This line of thinking needs some improvement. First, just because a large N study can detect small effects, doesn't mean that it only detects small effects. If the effect is large, a large N study will easily detect it. Large N studies have the power to detect a much wider range of effects, from small to large. Second, just because a small N study detected an effect, does not mean that the effect is real, or that the effect is large. For example, small N studies have more variability, so the estimate of the effect size will have more error. Also, there is 5% (or alpha rate) chance that the effect was spurious. Interestingly, there is a pernicious relationship between effect-size and type I error rate
-
-### Type I errors are convincing when N is small
-
-So what is this pernicious relationship between Type I errors and effect-size? Mainly, this relationship is pernicious for small N studies. For example, the following figure illustrates the results of 1000s of simulated experiments, all assuming the null distribution. In other words, for all of these simulations there is no true effect, as the numbers are all sampled from an identical distribution (normal distribution with mean =0, and standard deviation =1). The true effect-size is 0 in all cases.
-
-We know that under the null, researchers will find p values that are less 5% about 5% of the time, remember that is the definition. So, if a researcher happened to be in this situation (where there manipulation did absolutely nothing), they would make a type I error 5% of the time, or if they conducted 100 experiments, they would expect to find a significant result for 5 of them.
-
-@fig-5.5effectsizeType1 reports the findings from only the type I errors, where the simulated study did produce p \< 0.05. For each type I error, we calculated the exact p-value, as well as the effect-size (cohen's D) (mean difference divided by standard deviation). We already know that the true effect-size is zero, however take a look at this graph, and pay close attention to the smaller sample-sizes.
+@fig-5.5effectsizeType1 shows the first pitfall graphically. Even when the null hypothesis is true, 5% of tests are expected to fall below $\alpha = 0.05$. In small samples, those false positives tend to be paired with large apparent effect sizes. This can give the illusion of a strong, replicable finding when in reality it is just sampling noise.
 
 ```{r}
 #| label: fig-5.5effectsizeType1
-#| fig-cap: "Effect size as a function of p-values for type 1 Errors under the null, for a paired samples t-test."
+#| fig-cap: 'Effect size estimates among Type I errors ($p<0.05$) under the null, by sample size, for a one-sample $t$-test. Small $n$ inflates apparent effects.'
 #| out-width: "100%"
 
 all_df<-data.frame()
@@ -896,59 +974,22 @@ for(i in 1:1000){
     some_data<-rnorm(n,0,1)
     p_value<-t.test(some_data)$p.value
     effect_size<-mean(some_data)/sd(some_data)
-    mean_scores<-mean(some_data)
-    standard_error<-sd(some_data)/sqrt(length(some_data))
-    t_df<-data.frame(sim=i,sample_size=n,p_value,effect_size,mean_scores,standard_error)
+    t_df<-data.frame(sim=i,sample_size=n,p_value,effect_size)
     all_df<-rbind(all_df,t_df)
   }
 }
 
-type_I_error <-all_df[all_df$p_value<.05,]
+type_I_error <- all_df[all_df$p_value<.05,]
 type_I_error$sample_size<-as.factor(type_I_error$sample_size)
 
 ggplot(type_I_error,aes(x=p_value,y=effect_size, group=sample_size,color=sample_size))+
   geom_point()+
   theme_classic()+
-  ggtitle("Effect sizes for type I errors")
-
+  ggtitle("Effect sizes for Type I errors")
 ```
 
-For example, look at the red dots, when sample size is 10. Here we see that the effect-sizes are quite large. When p is near 0.05 the effect-size is around .8, and it goes up and up as when p gets smaller and smaller. What does this mean? It means that when you get unlucky with a small N design, and your manipulation does not work, but you by chance find a "significant" effect, the effect-size measurement will show you a "big effect". This is the pernicious aspect. When you make a type I error for small N, your data will make you think there is no way it could be a type I error because the effect is just so big!. Notice that when N is very large, like 1000, the measure of effect-size approaches 0 (which is the true effect-size in the simulation shown in @fig-5.5cohensD).
+**Takeaway:** statistical significance does not guarantee scientific significance. Always interpret $p$ in the context of effect size, confidence intervals, and study design.
 
-```{r}
-#| label: fig-5.5cohensD
-#| fig-cap: "Each panel shows a histogram of a different sampling statistic."
-#| out-width: "100%"
+**Key point**
 
-all_df<-data.frame()
-for(i in 1:10000){
-  sample      <- rnorm(50,100,20)
-  sample_mean <- mean(sample[1:25]-sample[26:50])
-  sample_sem  <- sd(sample)/sqrt(length(sample))
-  sample_t    <- t.test(sample, mu=100)$statistic
-  sample_d    <- (mean(sample)-100)/sd(sample)
-  t_df<-data.frame(i,sample_mean,
-                   sample_sem,
-                   sample_t,
-                   sample_d)
-  all_df<-rbind(all_df,t_df)
-}
-
-library(ggpubr)
-a<-ggplot(all_df,aes(x=sample_mean))+
-  geom_histogram(color="white")+
-  theme_classic()
-b<-ggplot(all_df,aes(x=sample_sem))+
-  geom_histogram(color="white")+
-  theme_classic()
-c<-ggplot(all_df,aes(x=sample_t))+
-  geom_histogram(color="white")+
-  theme_classic()
-d<-ggplot(all_df,aes(x=sample_d))+
-  geom_histogram(color="white")+
-  theme_classic()
-
-ggarrange(a,b,c,d,
-          ncol = 2, nrow = 2)
-
-```
+Power is not a fixed property of a test—it depends entirely on assumptions about $n$, effect size, $\alpha$, and variability. Think of it as a **family of numbers**, not a single value. That’s why power analysis is most useful **before** you collect data: it tells you whether your design is capable of detecting the kind of effect you care about
