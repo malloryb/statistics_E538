@@ -28,7 +28,7 @@ Gosset set out to quantify the extra uncertainty introduced by **small** samples
 
 1. **One-sample t-test.** Compare a sample mean to a target ($\mu_0$).
 2. **Paired t-test.** Compare before/after (or matched) measurements on the same units by running a one-sample t on the *differences*.
-3. **Independent-samples t-test.** Compare means from two groups measured on different units. Use Welch’s test by default when variances differ.
+3. **Independent-samples t-test (also called two-sample t-test)** Compare means from two groups measured on different units. Use Welch’s test by default when variances differ.
 
 **What you will report.** 
 
@@ -105,43 +105,34 @@ Because $s$ varies from sample to sample, the $t$ distribution has **heavier tai
 library(tidyverse)
 library(patchwork)
 
-xs <- seq(-5, 5, length.out = 2000)
+xs <- seq(-4, 4, length.out = 2000)
 
 df_vals <- tibble(
-  dist = c("z (standard normal)", "t (df=25)", "t (df=2)"),
-  df    = c(NA, 25, 2)   # NA for z
+  dist = c("z (standard normal)", "t (df=10)", "t (df=2)"),
+  df    = c(NA, 8, 2)   # NA for z
 )
 
 # Build a long data frame: every x crossed with each distribution
 plot_df <- tidyr::crossing(x = xs, df_vals) |>
   mutate(density = case_when(
     dist == "z (standard normal)" ~ dnorm(x),
-    dist == "t (df=25)"           ~ dt(x, df = 25),
+    dist == "t (df=10)"           ~ dt(x, df = 8),
     dist == "t (df=2)"            ~ dt(x, df = 2)
   ))
 
 base_cols <- c("z (standard normal)" = "#0072B2",
-               "t (df=25)"           = "#E69F00",
+               "t (df=10)"           = "#E69F00",
                "t (df=2)"            = "#009E73")
 
 p_lin <- ggplot(plot_df, aes(x, density, color = dist)) +
   geom_line(linewidth = 1.2) +
   scale_color_manual(values = base_cols, guide = guide_legend(title = NULL)) +
-  coord_cartesian(xlim = c(-5, 5), ylim = c(0, 0.45)) +
+  coord_cartesian(xlim = c(-4, 4), ylim = c(0, 0.45)) +
   labs(x = expression(mu==0), y = "Density (linear scale)") +
   theme_classic(base_size = 12) +
   theme(legend.position = "top")
 
-p_log <- ggplot(plot_df, aes(x, density, color = dist)) +
-  geom_line(linewidth = 1.2) +
-  scale_color_manual(values = base_cols, guide = "none") +
-  scale_y_log10() +
-  coord_cartesian(xlim = c(-5, 5)) +
-  labs(x = "Value", y = "Density (log scale)") +
-  theme_classic(base_size = 12)
-
-# Stack vertically instead of side by side
-p_lin / p_log
+p_lin
 
 ```
 
@@ -344,6 +335,10 @@ We calculate $t$ in a moment. Let's now consider again why we want to calculate 
 Remember, the whole concept behind $t$, is that it gives an indication of how confident we should be in our mean. Remember, $t$ involves a measure of the mean in the numerator, divided by a measure of variation (standard error of the sample mean) in the denominator. The resulting $t$ value is small when the mean difference is small, or when the variation is large. So small $t$-values tell us that we shouldn't be that confident in the estimate of our mean difference. Large $t$-values occur when the mean difference is large and/or when the measure of variation is small. So, large $t$-values tell us that we can be more confident in the estimate of our mean difference. Let's find $t$ for the mean difference scores. We use the same formulas as we did last time:
 
 ```{r, echo=FALSE}
+library(data.table)
+all_data <- fread("data/MehrSongSpelke2016.csv")
+
+experiment_one <- all_data %>% filter(exp1==1)
 
 paired_sample_df <-  data.frame(infant=1:5, 
                                Baseline = round(experiment_one$Baseline_Proportion_Gaze_to_Singer[1:5],digits=2), 
