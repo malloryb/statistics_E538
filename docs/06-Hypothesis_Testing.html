@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mallory Barnes">
+
+<title>6&nbsp; Hypothesis Testing – Answering questions with data</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./07-ttests.html" rel="next">
+<link href="./05-Foundation_Inference.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-485d01fc63b59abcd3ee1bf1e8e2748d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<meta property="og:title" content="6&nbsp; Hypothesis Testing – Answering questions with data">
+<meta property="og:description" content="">
+<meta property="og:image" content="06-Hypothesis_Testing_files/figure-html/fig-rejection-region-1.png">
+<meta property="og:site_name" content="Answering questions with data">
+<meta name="twitter:title" content="6&nbsp; Hypothesis Testing – Answering questions with data">
+<meta name="twitter:description" content="A free textbook teaching introductory statistics for environmental science graduate students, including a lab manual, and course website. Licensed on CC BY SA 4.0">
+<meta name="twitter:image" content="imgs/TextbookCover.png">
+<meta name="twitter:site" content="@mallory_barnes">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./06-Hypothesis_Testing.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Hypothesis Testing</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Answering questions with data</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/malloryb/statistics_E538" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-Science_Data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Why Statistics?</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-Describing_Data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Describing Data</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-Correlation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Correlation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-SamplesPopulations.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Probability and Distributions</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-Foundation_Inference.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Foundations for inference</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-Hypothesis_Testing.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Hypothesis Testing</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-ttests.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">t-tests</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-ANOVA.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">ANOVA</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-RMANOVA.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Repeated Measures ANOVA</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-FactorialANOVA.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Factorial ANOVA</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-MixedANOVA.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">More On Factorial Designs</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-ANCOVA.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Analysis of Covariance (ANCOVA)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-Thinking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Thinking about answering questions with data</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-Gifs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">GIFs</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#what-youll-learn" id="toc-what-youll-learn" class="nav-link active" data-scroll-target="#what-youll-learn"><span class="header-section-number">6.1</span> What you’ll learn</a></li>
+  <li><a href="#core-players-distributions" id="toc-core-players-distributions" class="nav-link" data-scroll-target="#core-players-distributions"><span class="header-section-number">6.2</span> Core Players (distributions)</a></li>
+  <li><a href="#terms-for-decision-rules" id="toc-terms-for-decision-rules" class="nav-link" data-scroll-target="#terms-for-decision-rules"><span class="header-section-number">6.3</span> Terms for Decision Rules</a></li>
+  <li><a href="#three-equivalent-ways-to-test-h_0" id="toc-three-equivalent-ways-to-test-h_0" class="nav-link" data-scroll-target="#three-equivalent-ways-to-test-h_0"><span class="header-section-number">6.4</span> Three equivalent ways to test <span class="math inline">\(H_0\)</span></a>
+  <ul class="collapse">
+  <li><a href="#test-statisticcritical-values" id="toc-test-statisticcritical-values" class="nav-link" data-scroll-target="#test-statisticcritical-values"><span class="header-section-number">6.4.1</span> Test statistic/critical values</a></li>
+  <li><a href="#confidence-intervals" id="toc-confidence-intervals" class="nav-link" data-scroll-target="#confidence-intervals"><span class="header-section-number">6.4.2</span> Confidence intervals</a></li>
+  <li><a href="#p-values" id="toc-p-values" class="nav-link" data-scroll-target="#p-values"><span class="header-section-number">6.4.3</span> p-values</a></li>
+  </ul></li>
+  <li><a href="#one--and-two-tailed-tests" id="toc-one--and-two-tailed-tests" class="nav-link" data-scroll-target="#one--and-two-tailed-tests"><span class="header-section-number">6.5</span> One- and Two-Tailed Tests</a>
+  <ul class="collapse">
+  <li><a href="#one--vs.-two-sided-which-and-why" id="toc-one--vs.-two-sided-which-and-why" class="nav-link" data-scroll-target="#one--vs.-two-sided-which-and-why"><span class="header-section-number">6.5.1</span> One- vs.&nbsp;Two-Sided: which and why?</a></li>
+  </ul></li>
+  <li><a href="#putting-it-all-together" id="toc-putting-it-all-together" class="nav-link" data-scroll-target="#putting-it-all-together"><span class="header-section-number">6.6</span> Putting it all together</a>
+  <ul class="collapse">
+  <li><a href="#decision-outcomes" id="toc-decision-outcomes" class="nav-link" data-scroll-target="#decision-outcomes"><span class="header-section-number">6.6.1</span> Decision Outcomes</a></li>
+  </ul></li>
+  <li><a href="#errors-in-hypothesis-testing" id="toc-errors-in-hypothesis-testing" class="nav-link" data-scroll-target="#errors-in-hypothesis-testing"><span class="header-section-number">6.7</span> Errors in Hypothesis Testing</a>
+  <ul class="collapse">
+  <li><a href="#effect-of-sample-size-on-errors" id="toc-effect-of-sample-size-on-errors" class="nav-link" data-scroll-target="#effect-of-sample-size-on-errors"><span class="header-section-number">6.7.1</span> Effect of Sample Size on Errors</a></li>
+  <li><a href="#how-to-interpret-p-values" id="toc-how-to-interpret-p-values" class="nav-link" data-scroll-target="#how-to-interpret-p-values"><span class="header-section-number">6.7.2</span> How to interpret <span class="math inline">\(p\)</span>-values</a></li>
+  <li><a href="#reporting-results" id="toc-reporting-results" class="nav-link" data-scroll-target="#reporting-results"><span class="header-section-number">6.7.3</span> Reporting results</a></li>
+  <li><a href="#beyond-the-0.05-cutoff-effect-size-and-power" id="toc-beyond-the-0.05-cutoff-effect-size-and-power" class="nav-link" data-scroll-target="#beyond-the-0.05-cutoff-effect-size-and-power"><span class="header-section-number">6.7.4</span> Beyond the 0.05 cutoff: Effect-size and power</a></li>
+  <li><a href="#effect-size-practical-vs.-standardized" id="toc-effect-size-practical-vs.-standardized" class="nav-link" data-scroll-target="#effect-size-practical-vs.-standardized"><span class="header-section-number">6.7.5</span> Effect size: practical vs.&nbsp;standardized</a></li>
+  </ul></li>
+  <li><a href="#power" id="toc-power" class="nav-link" data-scroll-target="#power"><span class="header-section-number">6.8</span> Power</a>
+  <ul class="collapse">
+  <li><a href="#simulation-walkthrough" id="toc-simulation-walkthrough" class="nav-link" data-scroll-target="#simulation-walkthrough"><span class="header-section-number">6.8.1</span> Simulation walkthrough</a></li>
+  <li><a href="#how-power-changes" id="toc-how-power-changes" class="nav-link" data-scroll-target="#how-power-changes"><span class="header-section-number">6.8.2</span> How power changes</a></li>
+  <li><a href="#power-curves" id="toc-power-curves" class="nav-link" data-scroll-target="#power-curves"><span class="header-section-number">6.8.3</span> Power curves</a></li>
+  <li><a href="#planning-your-design" id="toc-planning-your-design" class="nav-link" data-scroll-target="#planning-your-design"><span class="header-section-number">6.8.4</span> Planning your design</a></li>
+  <li><a href="#two-cautions-common-pitfalls" id="toc-two-cautions-common-pitfalls" class="nav-link" data-scroll-target="#two-cautions-common-pitfalls"><span class="header-section-number">6.8.5</span> Two cautions (common pitfalls)</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/malloryb/statistics_E538/edit/master/06-Hypothesis_Testing.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Hypothesis Testing</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mallory Barnes </p>
+          </div>
+  </div>
+    
+  
+    <div>
+    <div class="quarto-title-meta-heading">Modified</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date-modified">October 3, 2025</p>
+    </div>
+  </div>
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="what-youll-learn" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="what-youll-learn"><span class="header-section-number">6.1</span> What you’ll learn</h2>
+<p>Hypothesis testing is the backbone of statistical inference: it lets us decide whether the patterns we see in a sample are strong enough to draw conclusions about the population. By the end of this chapter, you should be able to:</p>
+<ul>
+<li><strong>Define the key players</strong> in hypothesis testing (null, alternative, true/estimated, and population/sampling distributions).</li>
+<li><strong>Explain and use decision rules</strong>: decide whether to reject <span class="math inline">\(H_0\)</span>.</li>
+<li><strong>Connect confidence intervals and hypothesis tests</strong> for common models.</li>
+<li><strong>Identify and interpret errors</strong> (Type I and Type II) that can arise in testing.</li>
+<li><strong>Recognize the role of effect size and power</strong> in planning a study, even if your main focus is running tests.</li>
+<li><strong>Write a clear results statement</strong> that communicates both the statistical and substantive meaning of your test.</li>
+</ul>
+</section>
+<section id="core-players-distributions" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="core-players-distributions"><span class="header-section-number">6.2</span> Core Players (distributions)</h2>
+<p>To make sense of hypothesis testing, it helps to picture four kinds of distributions. Later in the chapter we’ll put them together, but first we define them one at a time:</p>
+<ol type="1">
+<li><p><strong>Null Distribution</strong> - The hypothesized population distribution under the assumption that the null hypothesis <span class="math inline">\(H_0\)</span> is true.</p></li>
+<li><p><strong>Estimated Population Distribution</strong> - The distribution we infer from our sample. This represents what the data suggest about <span class="math inline">\(H_a\)</span>. (Sometimes called the <em>inferred parent distribution</em>.)</p></li>
+<li><p><strong>True Population Distribution</strong> - The actual distribution from which our sample was drawn. We never know this perfectly, but it’s the reality we’re trying to approximate.</p></li>
+<li><p><strong>Sampling Distribution of the Sample Mean</strong> - The distribution we’d get if we took many samples and calculated <span class="math inline">\(\bar{X}\)</span> each time. This is key for connecting sample evidence back to the population.</p></li>
+</ol>
+<p><strong>Null value notation.</strong> We’ll write the hypothesized population mean as <span class="math inline">\(\mu_0\)</span>. Hypotheses compare the population mean <span class="math inline">\(\mu\)</span> to this constant <span class="math inline">\(\mu_0\)</span>. The sample mean <span class="math inline">\(\bar{X}\)</span> is never part of <span class="math inline">\(H_0\)</span> or <span class="math inline">\(H_a\)</span>—it’s the evidence we bring to test them.</p>
+<p><em>Note on terms.</em> In this chapter, you’ll sometimes see the phrase <strong>parent distribution</strong> in the prose. This is just a metaphor: a sample is like a “child” drawn from a “parent” distribution. The standard statistical term is <strong>population distribution</strong>. Both terms mean the same thing here. For clarity, we’ll use <em>population distribution</em> in figures and definitions, and you can think of <em>parent</em> as a memory aid.</p>
+</section>
+<section id="terms-for-decision-rules" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="terms-for-decision-rules"><span class="header-section-number">6.3</span> Terms for Decision Rules</h2>
+<p>When running a hypothesis test, three terms guide our decision:</p>
+<p><strong>Significance level (<span class="math inline">\(\alpha\)</span>).</strong> Chosen <em>before</em> the test. <span class="math inline">\(\alpha\)</span> is the long-run probability of a Type I error (rejecting a true <span class="math inline">\(H_0\)</span>). A common choice is <span class="math inline">\(\alpha = 0.05\)</span>. Smaller <span class="math inline">\(\alpha\)</span> makes tests more cautious and produces wider confidence intervals.</p>
+<p><strong><span class="math inline">\(p\)</span>-value.</strong> Assuming <span class="math inline">\(H_0\)</span> is true, the <span class="math inline">\(p\)</span>-value is the probability of seeing a test statistic at least as extreme as what we observed. Small <span class="math inline">\(p\)</span> means our data look unusual under <span class="math inline">\(H_0\)</span>.</p>
+<p><strong>Confidence level.</strong> Confidence level is the long-run proportion of confidence intervals that contain the true parameter when we repeat the entire data collection and interval procedure.</p>
+<p><span class="math display">\[
+\text{Confidence Level} = 1 - \alpha
+\]</span></p>
+<p>With <span class="math inline">\(\alpha=0.05\)</span>, about 95% of intervals constructed this way will capture the true value.</p>
+<p>It’s tempting to misinterpret confidence intervals. Do <strong>not</strong> say:</p>
+<blockquote class="blockquote">
+<p>“There is a 95% probability this interval contains <span class="math inline">\(\mu\)</span>.”</p>
+</blockquote>
+<p>Instead say:</p>
+<blockquote class="blockquote">
+<p>“We used a procedure that captures <span class="math inline">\(\mu\)</span> about 95% of the time in the long run.”</p>
+</blockquote>
+</section>
+<section id="three-equivalent-ways-to-test-h_0" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="three-equivalent-ways-to-test-h_0"><span class="header-section-number">6.4</span> Three equivalent ways to test <span class="math inline">\(H_0\)</span></h2>
+<ol type="1">
+<li><p><strong>Test statistic / critical values.</strong> Choose <span class="math inline">\(\alpha\)</span>, find the corresponding <strong>critical value(s)</strong> for your test statistic, and compute your observed statistic. Reject <span class="math inline">\(H_0\)</span> if the statistic falls in the <strong>rejection region</strong>.</p></li>
+<li><p><strong>Confidence interval (two-sided).</strong> Build a <span class="math inline">\((1-\alpha)\)</span> CI for the parameter. Reject <span class="math inline">\(H_0\)</span> if <span class="math inline">\(\mu_0\)</span> lies <strong>outside</strong> the CI; fail to reject if it lies <strong>inside</strong>.</p></li>
+<li><p><strong><span class="math inline">\(p\)</span>-value (probability).</strong> Compute the <strong><span class="math inline">\(p\)</span>-value</strong> for your observed statistic under <span class="math inline">\(H_0\)</span> and compare to <span class="math inline">\(\alpha\)</span>. Reject <span class="math inline">\(H_0\)</span> if <span class="math inline">\(p&lt;\alpha\)</span>.</p></li>
+</ol>
+<p><strong>Note.</strong> Methods 1–2 yield a yes/no at <span class="math inline">\(\alpha\)</span>; method 3 yields a yes/no plus a graded measure of evidence (exact <span class="math inline">\(p\)</span>).</p>
+<section id="test-statisticcritical-values" class="level3" data-number="6.4.1">
+<h3 data-number="6.4.1" class="anchored" data-anchor-id="test-statisticcritical-values"><span class="header-section-number">6.4.1</span> Test statistic/critical values</h3>
+<p><a href="#fig-rejection-region" class="quarto-xref">Figure&nbsp;<span>6.1</span></a> shows how these ideas come together in a two-sided test. The blue curve is the sampling distribution of the test statistic if the null hypothesis <span class="math inline">\(H_0\)</span> is true. The dashed magenta line marks the expected center at <span class="math inline">\(\mu_0\)</span>. The red vertical lines are the <strong>critical values</strong> for <span class="math inline">\(\alpha = 0.05\)</span>. They cut off the most extreme 5% of the distribution: 2.5% in each tail. Those shaded tails are the <strong>rejection regions</strong>.</p>
+<p>Here’s the decision rule:</p>
+<ul>
+<li>If the observed test statistic falls inside the central region, we <strong>fail to reject <span class="math inline">\(H_0\)</span></strong> because the result is consistent with chance variation.</li>
+<li>If it falls in either rejection region, we <strong>reject <span class="math inline">\(H_0\)</span></strong> because the result is too extreme to attribute to chance alone at the 5% level.</li>
+</ul>
+<p>This picture makes clear why <span class="math inline">\(\alpha\)</span> and the <span class="math inline">\(p\)</span>-value are linked. <span class="math inline">\(\alpha\)</span> sets the cutoff for how extreme is “too extreme,” while the <span class="math inline">\(p\)</span>-value tells us how far into the tails our actual result lies.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-rejection-region" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rejection-region-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-rejection-region-1.png" class="img-fluid figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rejection-region-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.1: Two-sided test: blue curve is the sampling distribution under <span class="math inline">\(H_0\)</span> (centered at <span class="math inline">\(\mu_0\)</span>). Magenta dashed line marks <span class="math inline">\(\mu_0\)</span>. Red vertical lines mark the critical values for <span class="math inline">\(\alpha=0.05\)</span>; shaded tails are the rejection regions.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="confidence-intervals" class="level3" data-number="6.4.2">
+<h3 data-number="6.4.2" class="anchored" data-anchor-id="confidence-intervals"><span class="header-section-number">6.4.2</span> Confidence intervals</h3>
+<p><a href="#fig-ci-lens-illustrative" class="quarto-xref">Figure&nbsp;<span>6.2</span></a> shows another way to make the same decision. The <strong>blue curve</strong> is the null distribution (<span class="math inline">\(H_0\)</span> true), and the <strong>dark green curve</strong> is the sampling distribution of the mean based on our sample. The <strong>dashed green curve</strong> is the estimated population distribution we infer from the sample.</p>
+<p>The <strong>thick dark green bar</strong> at the bottom is the 95% confidence interval around the sample mean <span class="math inline">\(\bar{X}\)</span>. The <strong>magenta dashed line</strong> marks <span class="math inline">\(\mu_0\)</span>, the hypothesized mean under <span class="math inline">\(H_0\)</span>.</p>
+<p>Decision rule:</p>
+<ul>
+<li>If <span class="math inline">\(\mu_0\)</span> lies <strong>inside</strong> the CI bar, we <strong>fail to reject <span class="math inline">\(H_0\)</span></strong>.</li>
+<li>If <span class="math inline">\(\mu_0\)</span> lies <strong>outside</strong> the CI bar, we <strong>reject <span class="math inline">\(H_0\)</span></strong> at <span class="math inline">\(\alpha=0.05\)</span>.</li>
+</ul>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-ci-lens-illustrative" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ci-lens-illustrative-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-ci-lens-illustrative-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ci-lens-illustrative-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.2: Confidence-interval lens: null (blue), sampling distribution of <span class="math inline">\(\bar{X}\)</span> (dark green), estimated population (light-green dashed). The thick bar is the <span class="math inline">\((1-\alpha)\)</span> CI around <span class="math inline">\(\bar{X}\)</span>; the magenta dashed line marks <span class="math inline">\(\mu_0\)</span>. Decision uses whether <span class="math inline">\(\mu_0\)</span> is inside or outside the CI.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>For common models, a two-sided level-<span class="math inline">\(\alpha\)</span> test of <span class="math inline">\(H_0:\ \mu=\mu_0\)</span> is equivalent to checking whether <span class="math inline">\(\mu_0\)</span> lies inside the <span class="math inline">\(100(1-\alpha)%\)</span> confidence interval. The <strong>CI</strong> is often the most intuitive way to see this: it shows both the decision (reject or not) <em>and</em> the range of parameter values still consistent with the data.</p>
+</section>
+<section id="p-values" class="level3" data-number="6.4.3">
+<h3 data-number="6.4.3" class="anchored" data-anchor-id="p-values"><span class="header-section-number">6.4.3</span> p-values</h3>
+<p>The <span class="math inline">\(p\)</span>-value is the probability, <strong>under <span class="math inline">\(H_0\)</span></strong>, of obtaining a test statistic <strong>at least as extreme</strong> as the one you observed. In practice, you compute it from your observed statistic using software or a table. Reject if <span class="math inline">\(p&lt;\alpha\)</span>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-pvalue-lens" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pvalue-lens-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-pvalue-lens-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pvalue-lens-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.3: p-value lens: compute the <span class="math inline">\(p\)</span>-value from the observed statistic (vertical line) under the null.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="one--and-two-tailed-tests" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="one--and-two-tailed-tests"><span class="header-section-number">6.5</span> One- and Two-Tailed Tests</h2>
+<p>Two-tailed tests allow for differences in <em>either</em> direction:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5-5.twotailed" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5-5.twotailed-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5-5.twotailed-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5-5.twotailed-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.4: Two-sided test: <span class="math inline">\(H_0:\ \mu=\mu_0\)</span> vs <span class="math inline">\(H_a:\ \mu\neq\mu_0\)</span>; estimated population distributions shifted left and right of the null.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>One-tailed tests only look in <em>one</em> direction (smaller or larger than <span class="math inline">\(\mu_0\)</span>):</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5-5.onetailed" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5-5.onetailed-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5-5.onetailed-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5-5.onetailed-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.5: One-sided tests: <span class="math inline">\(H_a:\ \mu&lt;\mu_0\)</span> (left) and <span class="math inline">\(H_a:\ \mu&gt;\mu_0\)</span> (right), compared to the null.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="one--vs.-two-sided-which-and-why" class="level3" data-number="6.5.1">
+<h3 data-number="6.5.1" class="anchored" data-anchor-id="one--vs.-two-sided-which-and-why"><span class="header-section-number">6.5.1</span> One- vs.&nbsp;Two-Sided: which and why?</h3>
+<p><strong>Use this rule of thumb:</strong></p>
+<ul>
+<li>Two-sided (default): You care whether <span class="math inline">\(\mu\)</span> differs from <span class="math inline">\(\mu_0\)</span> <strong>in either direction</strong>.</li>
+<li>One-sided (only if justified): Differences in the opposite direction are <strong>scientifically irrelevant</strong> and <strong>would not change your decision or action</strong>.</li>
+</ul>
+</section>
+</section>
+<section id="putting-it-all-together" class="level2" data-number="6.6">
+<h2 data-number="6.6" class="anchored" data-anchor-id="putting-it-all-together"><span class="header-section-number">6.6</span> Putting it all together</h2>
+<p>Let’s bring the key players together. The figure below shows the elements we’ll use throughout the chapter:</p>
+<ul>
+<li><strong>Blue solid line</strong> = Null distribution (<span class="math inline">\(H_0\)</span>).</li>
+<li><strong>Orange solid line</strong> = True population distribution (what actually generated the data).</li>
+<li><strong>Light green dashed line</strong> = Estimated population distribution (inferred from the sample; our stand-in for <span class="math inline">\(H_a\)</span>).</li>
+<li><strong>Dark green dot-dashed line</strong> = Sampling distribution of the sample mean, <span class="math inline">\(\bar{X}\)</span>.</li>
+<li><strong>Magenta dashed line</strong> = Hypothesized mean <span class="math inline">\(\mu_0\)</span> (under <span class="math inline">\(H_0\)</span>).<br>
+</li>
+<li><strong>Thick dark green bar</strong> = 95% confidence interval (CI) around the sample mean <span class="math inline">\(\bar{X}\)</span>.</li>
+</ul>
+<p>Here they are layered together: this figure serves as your legend for the rest of the section.</p>
+<p>Up to now we’ve introduced each distribution separately. Let’s layer them to see how they connect.</p>
+<p><strong>1. Null vs.&nbsp;true population.</strong></p>
+<p>In an idealized world where <span class="math inline">\(H_0\)</span> is exactly true, the true population (orange) and the null distribution (blue) are identical. In reality, we never know the orange curve. It’s shown here for illustration.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5-5.null_identical_sample" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5-5.null_identical_sample-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5-5.null_identical_sample-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5-5.null_identical_sample-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.6: True population distribution equals the null distribution (<span class="math inline">\(H_0\)</span> true): <span class="math inline">\(\mu=\mu_0\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>2. Adding the sampling distribution.</strong> We never know the true parent distribution directly. What we do have is a sample, and from that we can construct the <strong>sampling distribution of the mean</strong> (dark-green dot-dash). This distribution underlies our ability to estimate a CI (dark green horizontal line).</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5-5.perfectly_representative_sample" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5-5.perfectly_representative_sample-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5-5.perfectly_representative_sample-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5-5.perfectly_representative_sample-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.7: Perfectly representative sample: estimated population, null, and true population distributions align; the CI for <span class="math inline">\(\bar{X}\)</span> includes <span class="math inline">\(\mu_0\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>3. Adding the estimated population distribution.</strong></p>
+<p>From our sample we also infer an <strong>estimated population distribution</strong> (light-green dashed). In the best case, this lines up closely with the true population (orange). The CI bar shows that the sample mean is consistent with <span class="math inline">\(\mu_0\)</span>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5-5.sample_imperfect_convenient" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5-5.sample_imperfect_convenient-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5-5.sample_imperfect_convenient-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5-5.sample_imperfect_convenient-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.8: Imperfect but convenient sample: estimated population close to the null; the two-sided CI for <span class="math inline">\(\bar{X}\)</span> includes <span class="math inline">\(\mu_0\)</span> (fail to reject <span class="math inline">\(H_0\)</span>).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Putting everything together, you’ll see graphs moving forward that are all variations on the figure below. By now you should recognize each element.</p>
+<p>Key reminder: <span class="math inline">\(\mu_0\)</span> (pink dashed line) comes from the null hypothesis. The unknown <span class="math inline">\(\mu\)</span> is what we’re trying to learn about, and we approximate it from the sample through the estimated population distribution and the sampling distribution of <span class="math inline">\(\bar{X}\)</span>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5-5.keyfig" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5-5.keyfig-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5-5.keyfig-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5-5.keyfig-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.9: Key elements of hypothesis testing graphs: null (blue), true population (orange), estimated population (light-green dashed), sampling distribution of <span class="math inline">\(\bar{X}\)</span> (dark-green dot-dash), null mean <span class="math inline">\(\mu_0\)</span> (magenta dashed), and CI for <span class="math inline">\(\bar{X}\)</span> (thick dark-green bar).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="decision-outcomes" class="level3" data-number="6.6.1">
+<h3 data-number="6.6.1" class="anchored" data-anchor-id="decision-outcomes"><span class="header-section-number">6.6.1</span> Decision Outcomes</h3>
+<p>Test outcomes are <strong>binary</strong>: we either <strong>reject <span class="math inline">\(H_0\)</span></strong> or <strong>fail to reject <span class="math inline">\(H_0\)</span></strong>. We never <em>accept</em> <span class="math inline">\(H_0\)</span>, because sampling variability means we can’t prove it’s true, only that the data are consistent with it. Similarly, we don’t formally <em>accept</em> <span class="math inline">\(H_a\)</span>, but we can say the results provide <strong>support for <span class="math inline">\(H_a\)</span></strong> when <span class="math inline">\(H_0\)</span> is rejected.</p>
+<p>If the observed statistic falls in either tail beyond the critical value(s), reject <span class="math inline">\(H_0\)</span>. Otherwise, fail to reject <span class="math inline">\(H_0\)</span>. Report the exact <span class="math inline">\(p\)</span> and an effect size or CI..</p>
+<p>Here are our options (for a two tailed test).</p>
+<ol type="1">
+<li><strong>Reject the Null Hypothesis (Two-Tailed Test).</strong> The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean (magenta line). In this example, the mean is more than 3 standard errors from <span class="math inline">\(\mu_0\)</span>, which is typically considered significant for common choices of <span class="math inline">\(\alpha\)</span>.</li>
+</ol>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5-5.reject_2_two_tailed" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5-5.reject_2_two_tailed-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5-5.reject_2_two_tailed-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5-5.reject_2_two_tailed-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.10: Two-sided test, reject <span class="math inline">\(H_0\)</span>: sample mean far from <span class="math inline">\(\mu_0\)</span> in either direction.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<ol start="2" type="1">
+<li><strong>Fail to Reject the Null Hypothesis (Two-Tailed Test).</strong> The sample mean falls in the non-rejection region, and the confidence interval includes the null mean. In this case, the evidence is consistent with chance variation, so we fail to reject <span class="math inline">\(H_0\)</span>.</li>
+</ol>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5-5.reject_1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5-5.reject_1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5-5.reject_1-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5-5.reject_1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.11: Two-sided test, fail to reject <span class="math inline">\(H_0\)</span>: sample mean not greater than critical value (within <span class="math inline">\(3\,SE\)</span> from <span class="math inline">\(\mu_0\)</span>).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="errors-in-hypothesis-testing" class="level2" data-number="6.7">
+<h2 data-number="6.7" class="anchored" data-anchor-id="errors-in-hypothesis-testing"><span class="header-section-number">6.7</span> Errors in Hypothesis Testing</h2>
+<p>Sometimes, even when we apply the test correctly, sampling variability can lead us to the wrong conclusion.</p>
+<ul>
+<li><p><strong>Type I Error (<span class="math inline">\(\alpha\)</span>):</strong> Rejecting <span class="math inline">\(H_0\)</span> when it is actually true. This is like a smoke alarm going off when there’s no fire: a false alarm. By convention, <span class="math inline">\(\alpha\)</span> is often set at 0.05 (5%).</p></li>
+<li><p><strong>Type II Error (<span class="math inline">\(\beta\)</span>):</strong> Failing to reject <span class="math inline">\(H_0\)</span> when it is actually false. This is like a smoke alarm staying silent when there <em>is</em> a fire: a missed signal.</p></li>
+</ul>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Decision</th>
+<th>If the null hypothesis is True</th>
+<th>If the null hypothesis is False</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Reject <span class="math inline">\(H_0\)</span></strong></td>
+<td>Type I error (prob = <span class="math inline">\(\alpha\)</span>)</td>
+<td>Correct (prob = 1 - <span class="math inline">\(\beta\)</span>)</td>
+</tr>
+<tr class="even">
+<td><strong>Fail to reject <span class="math inline">\(H_0\)</span></strong></td>
+<td>Correct (prob = 1 - <span class="math inline">\(\alpha\)</span>)</td>
+<td>Type II error (prob = <span class="math inline">\(\beta\)</span>)</td>
+</tr>
+</tbody>
+</table>
+<blockquote class="blockquote">
+<p><strong>Key Takeaway</strong>: As <span class="math inline">\(\alpha\)</span> gets smaller, <span class="math inline">\(\beta\)</span> gets bigger, and vice-versa.</p>
+</blockquote>
+<p>Errors happen because samples are imperfect.</p>
+<ul>
+<li>In <a href="#fig-5-5.type1_error" class="quarto-xref">Figure&nbsp;<span>6.12</span></a>, the true population (orange) is almost identical to the null (blue). By chance, however, the sample mean lands far away, and the CI excludes <span class="math inline">\(\mu_0\)</span>. The test rejects <span class="math inline">\(H_0\)</span> even though it is true—a <strong>Type I error</strong>.</li>
+</ul>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5-5.type1_error" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5-5.type1_error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5-5.type1_error-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5-5.type1_error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.12: Type I error: <span class="math inline">\(H_0\)</span> is true (<span class="math inline">\(\mu=\mu_0\)</span>), but the sample leads us to reject <span class="math inline">\(H_0\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li>In <a href="#fig-5-5.type2_error" class="quarto-xref">Figure&nbsp;<span>6.13</span></a>, the true population mean (orange) is far from <span class="math inline">\(\mu_0\)</span>, but the particular sample looks close to the null. The CI includes <span class="math inline">\(\mu_0\)</span>, so the test fails to reject when it should reject the null: a <strong>Type II error</strong>.</li>
+</ul>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5-5.type2_error" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5-5.type2_error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5-5.type2_error-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5-5.type2_error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.13: Type II error: <span class="math inline">\(H_0\)</span> is false (true population mean differs from <span class="math inline">\(\mu_0\)</span>), but the sample leads us to fail to reject <span class="math inline">\(H_0\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="effect-of-sample-size-on-errors" class="level3" data-number="6.7.1">
+<h3 data-number="6.7.1" class="anchored" data-anchor-id="effect-of-sample-size-on-errors"><span class="header-section-number">6.7.1</span> Effect of Sample Size on Errors</h3>
+<p>With fixed <span class="math inline">\(\alpha\)</span> and correct assumptions, the long-run Type I error rate is <span class="math inline">\(\alpha\)</span> for any <span class="math inline">\(n\)</span>. <strong>Sample size mainly affects Type II error:</strong> with small <span class="math inline">\(n\)</span>, the sampling distribution is wide, true effects are harder to detect, and <strong><span class="math inline">\(\beta\)</span> increases</strong> (power decreases). As <span class="math inline">\(n\)</span> grows, the sampling distribution tightens, <strong><span class="math inline">\(\beta\)</span> falls</strong>, and power rises. Apparent changes in the Type I rate at small <span class="math inline">\(n\)</span> usually reflect <strong>assumption violations</strong> (e.g., non-normality, poor variance estimates, multiple looks), not <span class="math inline">\(n\)</span> itself.</p>
+<p><strong>Takeaway:</strong> Increasing <span class="math inline">\(n\)</span> improves estimation precision and <strong>power</strong> (reduces <span class="math inline">\(\beta\)</span>); <strong>Type I error remains at <span class="math inline">\(\alpha\)</span></strong> when assumptions hold.</p>
+</section>
+<section id="how-to-interpret-p-values" class="level3" data-number="6.7.2">
+<h3 data-number="6.7.2" class="anchored" data-anchor-id="how-to-interpret-p-values"><span class="header-section-number">6.7.2</span> How to interpret <span class="math inline">\(p\)</span>-values</h3>
+<p>A <span class="math inline">\(p\)</span>-value is the probability, <strong>assuming <span class="math inline">\(H_0\)</span> is true</strong>, of obtaining a test statistic <strong>at least as extreme</strong> as the one we observed. We <strong>reject</strong> at level <span class="math inline">\(\alpha\)</span> when <span class="math inline">\(p&lt;\alpha\)</span>.</p>
+<p><strong>Tails.</strong> Match the tail(s) to <span class="math inline">\(H_a\)</span>:</p>
+<ul>
+<li>Two-sided (<span class="math inline">\(H_a:\ \mu \neq \mu_0\)</span>): <span class="math inline">\(p = 2\cdot P(\text{tail beyond }|z_{\text{obs}}|)\)</span><br>
+</li>
+<li>One-sided (<span class="math inline">\(H_a:\ \mu &gt; \mu_0\)</span>): <span class="math inline">\(p = P(Z \ge z_{\text{obs}})\)</span><br>
+</li>
+<li>One-sided (<span class="math inline">\(H_a:\ \mu &lt; \mu_0\)</span>): <span class="math inline">\(p = P(Z \le z_{\text{obs}})\)</span></li>
+</ul>
+<p><strong>Common mistakes to avoid.</strong></p>
+<ol type="1">
+<li><span class="math inline">\(p\)</span> is <strong>not</strong> the probability that <span class="math inline">\(H_0\)</span> is true.</li>
+<li>A smaller <span class="math inline">\(p\)</span> does <strong>not</strong> imply a larger effect; report effect size and a CI.</li>
+<li>With very <strong>large <span class="math inline">\(n\)</span></strong>, tiny effects can yield tiny <span class="math inline">\(p\)</span>; assess practical importance.</li>
+<li>With small <span class="math inline">\(n\)</span>, true effects can yield large <span class="math inline">\(p\)</span> (low power).</li>
+</ol>
+<p><strong>Takeaway.</strong> Use <span class="math inline">\(p\)</span> for the decision, but interpret results alongside <strong>effect size</strong> and a <strong>95% CI</strong>.</p>
+</section>
+<section id="reporting-results" class="level3" data-number="6.7.3">
+<h3 data-number="6.7.3" class="anchored" data-anchor-id="reporting-results"><span class="header-section-number">6.7.3</span> Reporting results</h3>
+<p>A results statement gives the plain-language conclusion and the key statistics in a fixed order. Aim for one clean sentence plus context.</p>
+<p><strong>Template (two-sided test):</strong> <em>Plain-language finding.</em> <em>(test, statistic, df or n, value of statistic, p-value, effect size/CI if relevant).</em></p>
+<p><strong>What to include (in order):</strong></p>
+<ol type="1">
+<li>Test name (e.g., one-sample <em>z</em>, two-sample <em>t</em>, χ², regression).</li>
+<li>Test statistic and its degrees of freedom (or sample size for <em>z</em>).</li>
+<li>Exact <span class="math inline">\(p\)</span> (report <span class="math inline">\(p&lt;0.001\)</span> when very small).</li>
+<li>An effect size and/or a 95% CI when available.</li>
+</ol>
+<p><strong>Examples</strong></p>
+<ul>
+<li><p><strong>One-sample <em>z</em>:</strong> The average mercury level within 10 km of the smelter was higher than the legal limit (<em>z</em> = 2.85, <em>n</em> = 32, p = 0.004).</p></li>
+<li><p><strong>One-sample <em>t</em> with CI:</strong> Mean nitrate exceeded the target by 0.41 mg/L (<em>t</em>(31) = 2.6, p = 0.013, 95% CI [0.09, 0.73] mg/L).</p></li>
+<li><p><strong>Two-sample <em>t</em> with effect size:</strong> Downstream sites had higher turbidity than upstream sites (<em>t</em>(58) = 3.1, p = 0.003, Cohen’s (d = 0.80)).</p></li>
+<li><p><strong>Not significant (be explicit):</strong> Mean canopy temperature did not differ from the baseline (<em>t</em>(47) = 1.2, p = 0.24); we fail to reject <span class="math inline">\(H_0\)</span>.</p></li>
+</ul>
+<p><strong>Rounding &amp; style</strong></p>
+<ul>
+<li>Round statistics to 2 decimals; <span class="math inline">\(p\)</span> to 3 decimals (use <span class="math inline">\(p&lt;0.001\)</span> when needed).</li>
+<li>Use “fail to reject <span class="math inline">\(H_0\)</span>” (not “accept”).</li>
+<li>Match tail to hypothesis in prose (e.g., “higher than,” “lower than,” or “different from”).</li>
+</ul>
+<p><strong>Do / Don’t</strong></p>
+<ul>
+<li><strong>Do</strong> pair the sentence with a short, substantive takeaway (what it means for the question).</li>
+<li><strong>Do</strong> include a CI or effect size when it aids interpretation.</li>
+<li><strong>Don’t</strong> restate methods; <strong>don’t</strong> claim proof; <strong>don’t</strong> omit units.</li>
+</ul>
+<blockquote class="blockquote">
+<p><strong>Takeaway:</strong> One sentence is enough: state the direction in words, then report (<em>test</em>, statistic, df/<em>n</em>, (p), and effect size/CI).</p>
+</blockquote>
+</section>
+<section id="beyond-the-0.05-cutoff-effect-size-and-power" class="level3" data-number="6.7.4">
+<h3 data-number="6.7.4" class="anchored" data-anchor-id="beyond-the-0.05-cutoff-effect-size-and-power"><span class="header-section-number">6.7.4</span> Beyond the 0.05 cutoff: Effect-size and power</h3>
+<p>Why go beyond a yes/no at <span class="math inline">\(\alpha=0.05\)</span>? Because scientists, managers, policymakers, and communities need to know <strong>how large</strong> an effect is and <strong>how likely</strong> a study is to detect it. That’s what <strong>effect size</strong> and <strong>power</strong> provide.</p>
+<p><strong>Working definitions</strong></p>
+<ul>
+<li><p><strong>Effect size</strong>: how big the difference or association is (in natural units or standardized units like Cohen’s <span class="math inline">\(d\)</span>).</p></li>
+<li><p><strong>Power (<span class="math inline">\(1-\beta\)</span>)</strong>: the probability your design will detect a real effect of a specified size at your chosen <span class="math inline">\(\alpha\)</span>.</p></li>
+</ul>
+<p><strong>Use them before you sample.</strong> Decide what effect is <em>meaningful</em> for your context (e.g., a 0.3 mg/L nitrate reduction) and size your study to have adequate power to detect that effect.</p>
+</section>
+<section id="effect-size-practical-vs.-standardized" class="level3" data-number="6.7.5">
+<h3 data-number="6.7.5" class="anchored" data-anchor-id="effect-size-practical-vs.-standardized"><span class="header-section-number">6.7.5</span> Effect size: practical vs.&nbsp;standardized</h3>
+<p><strong>What is effect size?</strong> It’s how big the difference or association is. You can express it in <strong>original units</strong> (practical meaning) or in <strong>standardized units</strong> (comparability across scales).</p>
+<p><strong>Practical (original units).</strong> Use the scale stakeholders recognize.</p>
+<ul>
+<li>Exams: “Treatment improved scores by <strong>5 percentage points</strong>” (a letter-grade–sized change).</li>
+<li>Time-on-task: “New training reduces practice time by <strong>1,000 hours</strong> out of 10,000” (a 10% reduction).</li>
+</ul>
+<p>These statements are easy to interpret, but they don’t travel well across contexts or measures.</p>
+<p><strong>Standardized (unitless).</strong> When units are unfamiliar or scales differ, standardize by typical variability. The most common standardized effect size metric is <em>Cohen’s d</em>. For two means with a common SD <span class="math inline">\(\sigma\)</span>,</p>
+<p><span class="math display">\[
+d = \frac{\mu_1 - \mu_2}{\sigma}
+\]</span></p>
+<p>Now “how big?” is expressed in <strong>SD units</strong>. If you notice, this is just a kind of z-score. It is a way to standardize the mean difference in terms of the population standard deviation.</p>
+<p><strong>Environmental example (biodiversity index).</strong> Suppose an index increases from 3 to 4 after reforestation.</p>
+<ul>
+<li><p>In <strong>raw units</strong>: +1 index point.</p></li>
+<li><p>In <strong>standardized terms</strong>:</p>
+<ul>
+<li>If the SD across sites is 1.0, then <span class="math inline">\(d = 1.0\)</span>: a large shift.</li>
+<li>If the SD is 10, then <span class="math inline">\(d = 0.10\)</span>: a small shift.</li>
+</ul></li>
+</ul>
+<blockquote class="blockquote">
+<p><strong>Takeaway:</strong> Report both when possible—original units for meaning (policy/action) and a standardized effect (e.g., <span class="math inline">\(Cohen’s d\)</span>) for comparison across studies.</p>
+</blockquote>
+<p><strong>Notes for practice</strong></p>
+<ul>
+<li>In real data, <span class="math inline">\(\sigma\)</span> is unknown; estimate it (pooled SD for two groups, with small-sample corrections as needed).</li>
+<li>Heuristics (context matters): <span class="math inline">\(d \approx 0.2\)</span> (small), <span class="math inline">\(d \approx 0.5\)</span> (medium), <span class="math inline">\(d \approx 0.8\)</span> (large).</li>
+<li>A “small” <span class="math inline">\(d\)</span> can still be important (e.g., small reductions in lead or <span class="math inline">\(\mathrm{PM}_{2.5}\)</span> can matter for health).</li>
+<li>Pair effect sizes with <strong>95% CIs</strong> to show precision, not just magnitude.</li>
+</ul>
+<p>Let’s ground effect size in a concrete example. Suppose we’re measuring <strong>final exam performance</strong> (percent correct). The class mean is 65% with a standard deviation of 5%. Group A is a control, while Group B receives some instructional treatment.</p>
+<p><a href="#fig-5.5effectdistsB" class="quarto-xref">Figure&nbsp;<span>6.14</span></a> shows four possible scenarios:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5.5effectdistsB" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5.5effectdistsB-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5.5effectdistsB-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5.5effectdistsB-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.14: Same idea with concrete scores (mean <span class="math inline">\(65\)</span>, <span class="math inline">\(sd=5\)</span>): treatment shifts correspond to <span class="math inline">\(d=0,\,0.5,\,1,\,2\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li><strong>Panel 1 (<span class="math inline">\(d=0\)</span>):</strong> No effect. Both groups sample from the same distribution (mean = 65).</li>
+<li><strong>Panel 2 (<span class="math inline">\(d=0.5\)</span>):</strong> Group B’s mean shifts upward by 2.5 points (67.5).</li>
+<li><strong>Panel 3 (<span class="math inline">\(d=1\)</span>):</strong> A 5-point shift (70).</li>
+<li><strong>Panel 4 (<span class="math inline">\(d=2\)</span>):</strong> A large 10-point shift (75).</li>
+</ul>
+<p>The takeaway is that effect size puts raw differences into a standard-deviation scale. A half–SD shift (<span class="math inline">\(d=0.5\)</span>) is noticeable but modest; a two–SD shift (<span class="math inline">\(d=2\)</span>) is very large. In practice, we rarely know beforehand how big a shift to expect, that’s why we conduct the study.</p>
+</section>
+</section>
+<section id="power" class="level2" data-number="6.8">
+<h2 data-number="6.8" class="anchored" data-anchor-id="power"><span class="header-section-number">6.8</span> Power</h2>
+<p>When a real effect exists, your design needs to be sensitive enough to detect it, otherwise the test has little value. We’ve already seen that effects can vary in size. Now we add a second idea: study designs differ in their ability to reliably detect those effects. This sensitivity is called <strong>statistical power</strong>.</p>
+<p>Power rises when:</p>
+<ol type="1">
+<li><strong>Effect size is larger.</strong></li>
+<li><strong>Sample size (<span class="math inline">\(n\)</span>) is larger</strong> (smaller <span class="math inline">\(SE\)</span>).</li>
+<li><strong>The test is less conservative</strong> (larger <span class="math inline">\(\alpha\)</span>).</li>
+<li><strong>Measurement noise is lower</strong> (smaller <span class="math inline">\(SD\)</span>).</li>
+</ol>
+<blockquote class="blockquote">
+<p><strong>Question:</strong> “With <span class="math inline">\(\alpha = 0.05\)</span>, how large must <span class="math inline">\(n\)</span> be to achieve <span class="math inline">\(\ge 80%\)</span> power for the smallest effect that matters?”</p>
+</blockquote>
+<section id="simulation-walkthrough" class="level3" data-number="6.8.1">
+<h3 data-number="6.8.1" class="anchored" data-anchor-id="simulation-walkthrough"><span class="header-section-number">6.8.1</span> Simulation walkthrough</h3>
+<p>Let’s see how design choices affect power with a simple simulation. Suppose we have two groups, each with <span class="math inline">\(n=10\)</span>. Group A (control) is sampled from a normal distribution with mean = 10 and <span class="math inline">\(SD = 5\)</span>. Group B (treatment) has a mean = 12.5, a shift of 2.5 points (Cohen’s <span class="math inline">\(d=0.5\)</span>), considered a medium effect.</p>
+<p>If we simulate this experiment 1,000 times and run an independent-samples <span class="math inline">\(t\)</span>-test each time, how often do we reject <span class="math inline">\(H_0\)</span> at <span class="math inline">\(\alpha=0.05\)</span>?</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2025</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">1000</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">1000</span>){</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  A <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">5</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  B <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">10</span>, <span class="fl">12.5</span>, <span class="dv">5</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  p[i] <span class="ot">&lt;-</span> <span class="fu">t.test</span>(A,B,<span class="at">var.equal=</span><span class="cn">TRUE</span>)<span class="sc">$</span>p.value</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<pre><code>#&gt; [1] 0.207</code></pre>
+</div>
+<p>This proportion is the <strong>power</strong> of the design: the probability of detecting the true effect in repeated experiments. With <span class="math inline">\(n=10\)</span>, it’s only about 20%. Even though we know a medium-sized effect exists, the test usually fails to pick it up with such a small sample.</p>
+</section>
+<section id="how-power-changes" class="level3" data-number="6.8.2">
+<h3 data-number="6.8.2" class="anchored" data-anchor-id="how-power-changes"><span class="header-section-number">6.8.2</span> How power changes</h3>
+<ol type="1">
+<li><strong>Larger <span class="math inline">\(n\)</span>.</strong> Doubling to <span class="math inline">\(n=20\)</span> per group reduces sampling error and roughly doubles power:</li>
+</ol>
+<div class="cell">
+<pre><code>#&gt; [1] 0.328</code></pre>
+</div>
+<ol start="2" type="1">
+<li>*<strong>Smaller <span class="math inline">\(\alpha\)</span>.</strong> Making the test more conservative (e.g., <span class="math inline">\(\alpha=0.01\)</span>) lowers power, because fewer outcomes count as “significant”:</li>
+</ol>
+<div class="cell">
+<pre><code>#&gt; [1] 0.123</code></pre>
+</div>
+<ol start="3" type="1">
+<li><strong>Bigger effects are easier to detect.</strong> If the treatment produces a big shift (say 2 standard deviations), the same design has near-perfect power:</li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">1000</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">1000</span>){</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  A <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">20</span>, <span class="dv">10</span>, <span class="dv">5</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  B <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">20</span>, <span class="dv">20</span>, <span class="dv">5</span>)   <span class="co"># 2SD effect</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  p[i] <span class="ot">&lt;-</span> <span class="fu">t.test</span>(A,B,<span class="at">var.equal=</span><span class="cn">TRUE</span>)<span class="sc">$</span>p.value</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<pre><code>#&gt; [1] 1</code></pre>
+</div>
+</section>
+<section id="power-curves" class="level3" data-number="6.8.3">
+<h3 data-number="6.8.3" class="anchored" data-anchor-id="power-curves"><span class="header-section-number">6.8.3</span> Power curves</h3>
+<p>It’s best to think of power as a <strong>profile</strong>, not a single number. A power curve shows how sensitive a design is across a range of possible effects.</p>
+<p>In <a href="#fig-5.5powercurve" class="quarto-xref">Figure&nbsp;<span>6.15</span></a>, we fix the design to a two-sample <span class="math inline">\(t\)</span>-test with <span class="math inline">\(n=10\)</span> per group and <span class="math inline">\(\alpha=0.05\)</span>. Power is plotted on the y-axis, and the true effect size (Cohen’s <span class="math inline">\(d\)</span>) is on the x-axis.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5.5powercurve" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5.5powercurve-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5.5powercurve-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5.5powercurve-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.15: Power vs.&nbsp;effect size (Cohen’s <span class="math inline">\(d\)</span>) for a two-sample <span class="math inline">\(t\)</span>-test with <span class="math inline">\(n=10\)</span> per group and <span class="math inline">\(\alpha=0.05\)</span>.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Walkthrough.</strong></p>
+<ul>
+<li>With <span class="math inline">\(n=10\)</span>, the design only detects a medium effect (<span class="math inline">\(d=0.5\)</span>) about 20% of the time.</li>
+<li>A larger effect (<span class="math inline">\(d=0.8\)</span>) is caught about half the time.</li>
+<li>Very large effects (<span class="math inline">\(d=2\)</span>) are detected almost every time.</li>
+</ul>
+<p>This shows that small samples are only sensitive to big, obvious effects.</p>
+<p>Now suppose prior research suggests the effect size is small (<span class="math inline">\(d=0.2\)</span>). Instead of varying the effect, we can ask: <em>how many subjects per group do we need to have decent power?</em></p>
+<p><a href="#fig-5.5powercurveN" class="quarto-xref">Figure&nbsp;<span>6.16</span></a> plots power against sample size for detecting <span class="math inline">\(d=0.2\)</span>. The green line marks 80% power, a common planning target.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5.5powercurveN" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5.5powercurveN-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5.5powercurveN-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5.5powercurveN-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.16: Power vs.&nbsp;sample size for detecting <span class="math inline">\(d=0.2\)</span> with a two-sample <span class="math inline">\(t\)</span>-test at <span class="math inline">\(\alpha=0.05\)</span>; green line marks <span class="math inline">\(0.80\)</span> power.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Walkthrough.</strong></p>
+<ul>
+<li>At <span class="math inline">\(n=10\)</span> per group, power to detect <span class="math inline">\(d=0.2\)</span> is near zero.</li>
+<li>To reach 80% power, we need about <strong>380 per group</strong>.</li>
+<li>Even then, 20% of studies would still fail to reject <span class="math inline">\(H_0\)</span> just by chance.</li>
+</ul>
+<p><strong>Takeaway:</strong></p>
+<ul>
+<li>A power curve shows, for a fixed design, how power rises as the true effect grows.</li>
+<li>A power-vs-<span class="math inline">\(n\)</span> curve shows how many samples you need to hit a target power for a specific effect.</li>
+<li>Power analysis is mainly a <strong>planning tool</strong>, not a results-reporting tool. When you design a study, don’t just aim for “power = 0.8.” Always state the <strong>assumed effect size</strong> and the <strong>standard deviation</strong> you used for that calculation. Otherwise, “0.8” has no meaning—power depends entirely on those assumptions.</li>
+</ul>
+</section>
+<section id="planning-your-design" class="level3" data-number="6.8.4">
+<h3 data-number="6.8.4" class="anchored" data-anchor-id="planning-your-design"><span class="header-section-number">6.8.4</span> Planning your design</h3>
+<p>Our discussion of effect size and power highlight the importance of the understanding the statistical limitations of an experimental design. In particular, we have seen the relationship between:</p>
+<ul>
+<li><strong>Define a meaningful effect</strong> (environmentally or policy-relevant minimum).</li>
+<li><strong>Choose <span class="math inline">\(\alpha\)</span></strong> (often 0.05; justify if different).</li>
+<li><strong>Estimate variability</strong> (pilot data, literature, or historical monitoring).</li>
+<li><strong>Compute <span class="math inline">\(n\)</span></strong> for <span class="math inline">\(\ge 80%\)</span> power (or explain tradeoffs if you can’t reach it).</li>
+<li><strong>Pre-specify</strong> one- vs two-tailed before data collection.</li>
+</ul>
+<p>As a general rule of thumb, small-<span class="math inline">\(n\)</span> designs can only reliably detect very large effects, whereas large-<span class="math inline">\(n\)</span> designs can reliably detect much smaller effects. As a researcher, it is your responsibility to plan your design accordingly so that it is capable of reliably detecting the kinds of effects it is intended to measure.</p>
+</section>
+<section id="two-cautions-common-pitfalls" class="level3" data-number="6.8.5">
+<h3 data-number="6.8.5" class="anchored" data-anchor-id="two-cautions-common-pitfalls"><span class="header-section-number">6.8.5</span> Two cautions (common pitfalls)</h3>
+<ul>
+<li><p><strong>Low power inflates doubt, even when (p&lt;0.05).</strong> Underpowered studies rarely replicate. A design with only 30% power to detect an expected effect might, by luck, produce a “significant” result—but most replications will not. Worse, false positives from small samples tend to look exaggerated: if a spurious finding reaches significance, the estimated effect size is often large enough to seem convincing.</p></li>
+<li><p><strong>Huge <span class="math inline">\(n\)</span> finds tiny effects.</strong> With very large samples, trivial differences can register as statistically significant. For example, a billion-person trial might show a drug reduces pain by 0.01%. That effect is “real” but practically meaningless. This is why effect size and confidence intervals should be reported alongside <span class="math inline">\(p\)</span>-values: significance alone is not enough.</p></li>
+</ul>
+<p><a href="#fig-5.5effectsizeType1" class="quarto-xref">Figure&nbsp;<span>6.17</span></a> shows the first pitfall graphically. Even when the null hypothesis is true, 5% of tests are expected to fall below <span class="math inline">\(\alpha = 0.05\)</span>. In small samples, those false positives tend to be paired with large apparent effect sizes. This can give the illusion of a strong, replicable finding when in reality it is just sampling noise.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-5.5effectsizeType1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-5.5effectsizeType1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="06-Hypothesis_Testing_files/figure-html/fig-5.5effectsizeType1-1.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-5.5effectsizeType1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6.17: Effect size estimates among Type I errors (<span class="math inline">\(p&lt;0.05\)</span>) under the null, by sample size, for a one-sample <span class="math inline">\(t\)</span>-test. Small <span class="math inline">\(n\)</span> inflates apparent effects.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Takeaway:</strong> statistical significance does not guarantee scientific significance. Always interpret <span class="math inline">\(p\)</span> in the context of effect size, confidence intervals, and study design.</p>
+<p><strong>Key point</strong></p>
+<p>Power is not a fixed property of a test—it depends entirely on assumptions about <span class="math inline">\(n\)</span>, effect size, <span class="math inline">\(\alpha\)</span>, and variability. Think of it as a <strong>family of numbers</strong>, not a single value. That’s why power analysis is most useful <strong>before</strong> you collect data: it tells you whether your design is capable of detecting the kind of effect you care about</p>
+
+
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="ref-mallory_barnes" class="csl-entry" role="listitem">
+Barnes, Mallory L. 2023. <em>Statistics for Environmental Science</em>.
+</div>
+</div>
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./05-Foundation_Inference.html" class="pagination-link" aria-label="Foundations for inference">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Foundations for inference</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./07-ttests.html" class="pagination-link" aria-label="t-tests">
+        <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">t-tests</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/malloryb/statistics_E538/edit/master/06-Hypothesis_Testing.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li></ul></div></div></div></footer></body></html>
