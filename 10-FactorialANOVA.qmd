@@ -21,42 +21,32 @@ library(kableExtra)
 #library(data.table)
 ```
 
-```{r, include=FALSE}
-
+```{r setup-kable, include=FALSE}
 suppressPackageStartupMessages({
   library(knitr)
   library(kableExtra)
 })
+knitr::opts_knit$set(allow_html = TRUE)  # Allow HTML inside a PDF build (prevents early abort)
 
-# Allow HTML inside a PDF build (prevents early abort).
-knitr::opts_knit$set(allow_html = TRUE)
-
-# --- 1) Mask kable() so it auto-chooses format per target ---
-# This catches calls like kable(x, "html") and makes them LaTeX when knitting PDF.
+# 1) Mask kable() so it auto-chooses format per target
 kable <- function(x, format = NULL, ...) {
-  if (knitr::is_latex_output()) {
-    format <- "latex"
-  } else if (is.null(format)) {
-    format <- "html"
-  }
+  if (knitr::is_latex_output()) format <- "latex" else if (is.null(format)) format <- "html"
   knitr::kable(x, format = format, ...)
 }
 
-# --- 2) Make scroll_box() a no-op in PDF (keeps your pipes intact) ---
+# 2) Make scroll_box() a no-op in PDF
 scroll_box <- function(x, ...) {
-  if (knitr::is_latex_output()) {
-    return(x)  # do nothing in PDF builds
-  }
+  if (knitr::is_latex_output()) return(x)
   kableExtra::scroll_box(x, ...)
 }
 
-# Optional nicety: default to LaTeX in PDF, HTML in HTML for any plain kables
 if (knitr::is_latex_output()) {
   options(knitr.table.format = "latex")
 } else {
   options(knitr.table.format = "html")
 }
 ```
+
 
 # Factorial ANOVA
 
