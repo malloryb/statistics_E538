@@ -30,7 +30,7 @@ To make this concrete, we’ll use a simple environmental example throughout thi
 
 > **Irrigation method (drip vs. sprinkler)** × **Soil type (sandy vs. clayey)** predicting **crop yield**.
 
-This 2×2 design has two factors (irrigation and soil) and one dependent variable (yield). Each factor has two levels (drip & sprinkler ; sandy & clayey), hence "2x2". It’s simple enough to visualize but realistic for many environmental studies.
+This 2×2 design has two factors (irrigation and soil) and one dependent variable (yield). Each factor has two levels (drip & sprinkler ; sandy & clayey), hence "2×2". It’s simple enough to visualize but realistic for many environmental studies.
 
 ## Applied primer: what you test in a 2×2
 
@@ -89,14 +89,6 @@ We can represent the four combinations of conditions and their mean yields as:
   *(In symbols: $(\mu_{A1,B1}-\mu_{A2,B1})=(\mu_{A1,B2}-\mu_{A2,B2})$.)*
 * **Alternative:** The effect of A on [DV] differs across levels of B.
 
-### Template (for your project)
-
-If your variables differ, simply swap them in:
-
-* **Main effect of [Factor 1]:** “There is no effect of [Factor 1] on mean [DV].”
-* **Main effect of [Factor 2]:** “There is no effect of [Factor 2] on mean [DV].”
-* **[Factor 1] × [Factor 2] interaction:** “The effect of [Factor 1] on [DV] is the same across levels of [Factor 2].”
-
 ::: callout-note
 General form
 You’ll sometimes see this written in abstract terms, with “Factor A” and “Factor B.”
@@ -106,7 +98,7 @@ It’s the same logic: just replace A and B with your own variables.
 
 ## Reading patterns in a 2×2
 
-In any 2x2 ANOVA, there are eight general outcome patterns—different combinations of main effects and interactions. You don’t need to memorize all eight, but you should learn to **read them in a line plot**:
+In any 2×2 ANOVA, there are eight general outcome patterns; different combinations of main effects and interactions. You don’t need to memorize all eight, but you should learn to **read them in a line plot**:
 
 | Pattern | Main Effect: Irrigation | Main Effect: Soil | Interaction |
 |:-------:|:-----------------------:|:----------------:|:------------:|
@@ -189,8 +181,6 @@ p8 <- data.frame(
 
 all_22s <- rbind(p1, p2, p3, p4, p5, p6, p7, p8)
 
-library(ggtext)
-
 type <- c(
   rep("None", 4),
   rep("Irrigation", 4),
@@ -219,7 +209,7 @@ ggplot(all_22s, aes(x = Irrigation, y = means, group = Soil, fill = Soil)) +
   geom_bar(stat = "identity", position = "dodge") +
   theme_classic() +
   facet_wrap(~ type, nrow = 2) +
-  ylab("Yield")+
+  ylab("Mean yield")+
   theme(
     legend.position = "top",
     strip.text = element_text(size = 10)
@@ -244,6 +234,7 @@ ggplot(all_22s, aes(
   geom_line() +
   theme_classic() +
   facet_wrap(~ type, nrow = 2) +
+  ylab("Mean yield")+
   theme(legend.position = "top")
 ```
 
@@ -257,7 +248,7 @@ In the line graphs, interactions are easiest to see:
 **Order of interpretation.**
 When we conduct a two-way ANOVA, we always begin by testing the **interaction** term.
 
-* If the null hypothesis of *no interaction* is **rejected**, we **do not** interpret the main effects in isolation, because they are not consistent across conditions. Instead, we focus on the simple effects that describe how one factor behaves at each level of the other.
+* If the null hypothesis of *no interaction* is **rejected**, we **do not** interpret the main effects in isolation, because they are not consistent across conditions. Instead, we focus on the simple effects that describe how one factor behaves at each level of the other. IReport simple effects (A at each level of B, or vice versa) rather than standalone main effects.
 
 * If the interaction is **not significant**, we then examine the two main effects separately, interpreting each as an overall difference averaged across the other factor.
 
@@ -265,7 +256,7 @@ When we conduct a two-way ANOVA, we always begin by testing the **interaction** 
 
 Understanding main effects and interactions is essential for accurately interpreting research data, especially in complex fields like environmental science. Often, it is convenient to think of main effects as a consistent influence of one manipulation. However, the picture changes when we introduce an interaction. An interaction occurs when the effect of one IV depends on another IV. By definition, an interaction means that some main effect is **not** behaving consistently across different situations.
 
-**Why interactions matter.** An interaction means the effect of one factor depends on the level of another. In the irrigation × soil example (@fig-1123design), drip irrigation raises yield most in sandy soils and less in loamy or clayey soils. The irrigation effect is not constant across soils, so the average “main effect” of irrigation can mislead if read without context.
+**Why interactions matter.** An interaction means the effect of one factor depends on the level of another. In the irrigation × soil example (@fig-11lines22), drip irrigation raises yield most in sandy soils and less in clayey soils. The irrigation effect is not constant across soils, so the average “main effect” of irrigation can mislead if read without context.
 
 **How to read it.**
 
@@ -295,6 +286,7 @@ ggplot(p_consistent, aes(x = Soil, y = mean_yield, color = Irrigation, group = I
   geom_point() +
   geom_line() +
   theme_classic() +
+  ylab("Mean yield")+
   theme(legend.position = "top")
 ```
 
@@ -324,10 +316,11 @@ ggplot(p_inconsistent, aes(x = Soil, y = mean_yield, color = Irrigation, group =
   geom_point() +
   geom_line() +
   theme_classic() +
+  ylab("Mean yield")+
   theme(legend.position = "top")
 ```
 
-@fig-11mainintInc shows another 2x2 design. You should see an interaction here straight away. The difference between the Drip and Sprinkler irrigation in Sandy Soil is huge, and there is 0 difference between them in condition Clayey Soils. Is there an interaction? Yes!
+@fig-11mainintInc shows another 2×2 design. You should see an interaction here straight away. The difference between the Drip and Sprinkler irrigation in Sandy Soil is huge, and there is 0 difference between them in condition Clayey Soils. Is there an interaction? Yes!
 
 Are there any main effects here? With data like this, sometimes an ANOVA will suggest that you do have significant main effects. For example, what is the mean difference between level Drip and Sprinkler Irrigation? That is the average of the green points ( (10+5)/2 = 15/2= 7.5 ) compared to the average of the red points (5). There will be a difference of 2.5 for the main effect (7.5 vs. 5).
 
@@ -344,11 +337,11 @@ What is happening here is that a "main effect" is produced by the process of ave
 
 ## More complicated designs
 
-Up until now we have focused on the simplest case for factorial designs, the 2x2 design, with two IVs, each with 2 levels. It is worth spending some time looking at a few more complicated designs and how to interpret them.
+Up until now we have focused on the simplest case for factorial designs, the 2×2 design, with two IVs, each with 2 levels. It is worth spending some time looking at a few more complicated designs and how to interpret them.
 
 ### 3x2 design
 
-This design works exactly like the 2×2 you already know, it just adds one more level to one factor. The test structure (main effects and interaction) and hypotheses are the same; what changes is how easy it is to interpret the interaction.
+This design works exactly like the 2×2 you already know, it just adds one more level to one factor. This design works like the 2×2 you already know; it simply adds one more level to soil type. The test structure is the same (two main effects and one interaction). What changes is how easy it is to interpret the interaction.
 
 Let’s expand our irrigation example. Suppose we examine crop yield (DV) under two irrigation methods (drip vs. sprinkler) across **three soil types** (sandy, loamy, clayey).
 
@@ -356,7 +349,7 @@ Let’s expand our irrigation example. Suppose we examine crop yield (DV) under 
 * The **main effect of soil** tests whether mean yield differs among soil types.
 * The **interaction** tests whether the irrigation effect (drip − sprinkler) changes with soil type.
 
-In a 2×2 design, you can easily spot interactions by looking for non-parallel lines. In a 3×2, it’s still the same idea—but with three lines, patterns get trickier to read. The statistical test is identical, but interpretation requires more care.
+In a 2×2 design, you can easily spot interactions by looking for non-parallel lines. In a 3×2, it’s still the same idea; but with three lines, patterns get trickier to read. The statistical test is identical, but interpretation requires more care.
 
 You have three hypotheses in a 3×2 factorial design:
 
@@ -399,6 +392,7 @@ df <- data.frame(crop_yield, irrigation, soil_type)
 ggplot(df, aes(x = soil_type, y = crop_yield, color = irrigation, group = irrigation)) +
   geom_point() +
   geom_line() +
+  ylab("Mean yield")+
   theme_classic()
 
 ```
@@ -448,6 +442,7 @@ df <- data.frame(crop_yield, irrigation, soil_type)
 ggplot(df, aes(x = soil_type, y = crop_yield, color = irrigation, group = irrigation)) +
   geom_point() +
   geom_line() +
+  ylab("Mean yield")+
   theme_classic()
 ```
 
@@ -465,7 +460,7 @@ A 2×2×2 design includes **three independent variables**, each with two levels.
 * three **two-way interactions** (A×B, A×C, B×C)
 * one **three-way interaction** (A×B×C)
 
-You can think of it as two 2×2 plots side-by-side—one for each level of the third variable.
+You can think of it as two 2×2 plots side-by-side; one for each level of the third variable.
 
 A **three-way interaction** means that one of the two-way interactions changes across the third variable.
 For example, the irrigation × soil interaction might look different for corn than for wheat.
