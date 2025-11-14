@@ -9,8 +9,6 @@ source("global_stuff.R")
 knitr::opts_chunk$set(cache=FALSE)
 ```
 
-# Analysis of Covariance (ANCOVA)
-
 ```{r}
 # Libraries (top)
 library(tidyverse)
@@ -31,7 +29,11 @@ data <- tibble(
 
 ```
 
-ANCOVA uses the same linear model ideas from regression, with one continuous covariate and one categorical factor. We first test whether groups have different **slopes** with respect to the covariate, then, only if slopes are parallel, we test whether groups differ in **adjusted means**.
+# Analysis of Covariance (ANCOVA)
+
+\vspace{1cm}
+
+**ANCOVA** uses the same linear model ideas from regression, with one continuous covariate and one categorical factor. We first test whether groups have different **slopes** with respect to the covariate, then, only if slopes are parallel, we test whether groups differ in **adjusted means**.
 
 ## Linear Models (LMs)
 
@@ -112,18 +114,10 @@ This specific subsection of general linear models is known as **Analysis of Cova
 
 ------------------------------------------------------------------------
 
-### Understanding ANCOVA
+### Conceptual Background for ANCOVA
 
-With ANCOVA, if we identify a significant difference between two linear relationships, our model will represent two distinct lines.
-
-#### Conceptualizing the Transformation
-
-Consider the following equations:
-
--   `y = 2x + 3`
--   `y = 3x - 4`
-
-The question we pose is: What modifications are required to transform the first equation into the second? This involves determining the adjustments needed in terms of x (the slope) and the constant term. Understanding this transformation is key to grasping how ANCOVA allows us to compare different linear relationships within a single model framework.
+At its core, ANCOVA checks whether groups share the same line or whether each group needs its own slope and intercept.
+To represent those group-specific lines within a single linear model, we use indicator (dummy) variables. Indicators allow the model to “turn on” shifts in intercept or slope for each group, which is exactly the machinery ANCOVA relies on.
 
 ## Dummy (Indicator) Variables and How They Work
 
@@ -190,9 +184,9 @@ The R plots below demonstrate the change in the regression line when the indicat
 
 *Equation Modified:* `y = (2xl + 3) + (1xl - 7)`
 
-The plot on the left shows the regression line when the indicator variable is inactive. The equation simplifies, reflecting a scenario where the categorical variable does not influence the outcome.
+The left plot shows the line when the indicator is **off** ($x_c = 0$). The categorical variable has no influence here, so we see only the baseline slope and intercept.
 
-The plot on the right illustrates the regression line when the indicator variable is active. The equation now includes additional terms, showing how the presence of the categorical variable changes the relationship between `xl` and `y`.
+The right plot shows the line when the indicator is **on** ($x_c = 1$). The extra terms activate, and the categorical variable now changes both the slope and intercept, producing a different line for the second group.
 
 ```{r}
 # Graph for when xc = 0
@@ -313,11 +307,13 @@ Here are some key terms:
 
 -   **Covariate:** This is your continuous variable that varies along with the dependent variable (Y). In environmental studies, this could be something like temperature, rainfall, or pollution levels, which you suspect might influence your outcome of interest (like species distribution or plant growth).
 
-------------------------------------------------------------------------
+--------------------------------------------------------------------
 
-## So, What Exactly is ANCOVA?
+## What ANCOVA Is
 
-Analysis of Covariance (ANCOVA) is a statistical method that combines the principles of ANOVA and regression. It's designed to compare categorical independent variables---such as different treatments or groups---while controlling for the influence of continuous variables. These continuous variables, known as covariates, are typically not the primary focus but could affect the outcome.
+**Analysis of Covariance (ANCOVA)** extends ANOVA by adding a continuous predictor. It fits a linear model with both a categorical factor and a covariate, allowing us to compare groups **and** account for how the response changes with the continuous variable.
+
+The covariate may or may not be the main factor of interest. Sometimes we adjust for it, and sometimes we want to see whether its relationship with the response differs across groups.
 
 For ANCOVA, you need:
 
@@ -351,11 +347,11 @@ $y=\beta_0+\beta_1 x+\beta_2 g+\varepsilon .$
 
 **What the parameters mean.**
 
-* $\beta_1): common slope of (y) on (x) when slopes are parallel.
+* $\beta_1$: common slope of $y$ on $x$ when slopes are parallel.
 * $\beta_2$: difference in group means **after** adjusting for $x$ (tested only when $\beta_3=0$).
 * $\beta_3$: difference in slopes between groups.
 
-**Intercepts and centering.** Intercepts are evaluated at (x=0). Compare intercepts only if you center the covariate, for example (\tilde x=x-\bar x), so that the intercepts represent group means at the average covariate value.
+**Intercepts and centering.** Intercepts are evaluated at $x=0$. Compare intercepts only if you center the covariate, for example $\tilde x=x-\bar x$, so that the intercepts represent group means at the average covariate value.
 
 **What to report.**
 
