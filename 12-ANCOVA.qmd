@@ -364,12 +364,29 @@ $y=\beta_0+\beta_1 x+\beta_2 g+\varepsilon .$
 * Comparing raw intercepts when $x$ is not centered.
 * Treating adjusted means as meaningful when slopes are not parallel.
 
+### Conducting the Test
 
-### Testing the Null Hypothesis
+When we run an ANCOVA, the output includes an **omnibus F-test**—a single test of whether there are any differences in the adjusted group means after accounting for the covariate.
 
-**Conducting the Test**: When we perform ANCOVA, we examine the null hypothesis through an omnibus F-test. If we find sufficient evidence to reject the null hypothesis, we infer that significant differences exist among the adjusted means of the dependent variable across the categorical groups, even after considering the covariate.
+If this test is **significant**, we reject the overall null hypothesis that all adjusted means are equal.
 
-**Interpreting the Findings**: Rejecting the null hypothesis indicates that the categorical independent variable has a significant impact on the dependent variable, aside from the covariate's effect. It's crucial to remember, though, that statistical significance doesn't automatically translate to practical significance. We must always consider the results within the specific context and aims of the study.\
+**What happens next:**
+A significant omnibus test tells us that at least one group differs, but it doesn’t tell us *which* groups differ or *why*.
+
+To interpret the result, we must **decompose the omnibus effect** into its components:
+
+1. **Interaction (slope difference):** Are the slopes of the covariate–response relationship the same across groups?
+
+2. **Adjusted means (intercept difference):** If the slopes are equal, do the groups still differ in their adjusted means?
+
+This two-step logic—testing slope equality first, then adjusted means—is central to ANCOVA and parallels how we follow a significant ANOVA with post-hoc comparisons.
+
+**Interpreting the Findings:**
+
+Rejecting the omnibus null indicates that the categorical factor affects the dependent variable *after controlling for the covariate*.
+
+However, as always, statistical significance does not guarantee ecological or practical importance. The results should be interpreted in light of the study’s design, measurement precision, and the size of the observed effects.
+
 
 ::: callout-note
 **ANCOVA ASSUMPTIONS**
@@ -381,47 +398,57 @@ $y=\beta_0+\beta_1 x+\beta_2 g+\varepsilon .$
 -   Covariate measured without substantial error and not affected by treatment
 :::
 
-## Example
+## Full ANCOVA Example
 
 ### Question
 
-Imagine we're environmental scientists studying the impact of air pollution---a continuous variable---on bird species distribution, our dependent variable. We want to see if this relationship differs between urban and rural areas---our categorical variable. For this purpose, we've created a synthetic dataset to model the scenario.
+Imagine we’re environmental scientists studying the impact of **air pollution** (a continuous variable) on **bird species density** (our dependent variable).
+
+We want to know whether this relationship differs between **urban** and **rural** areas (our categorical variable).
+
+For this purpose, we’ve created a synthetic dataset to model the scenario.
 
 ### Model
 
-With our data in hand, we'd construct an ANCOVA model to discern whether location type influences bird distribution, beyond what can be explained by pollution levels alone. This would involve coding our categorical variable (urban vs. rural) into a dummy variable and including air pollution as a covariate in the model. I've done this for you already by creating the synthetic dataset.
+We’ll fit an ANCOVA model to test whether location type influences bird density **after accounting for** air pollution.
 
--   **Dataset Overview:** Our dataset comprises 200 observations, capturing bird species density in various urban and rural locations, along with corresponding levels of air pollution.
+The categorical variable (urban vs. rural) is represented as a dummy variable, and air pollution enters as a covariate.
+
+* **Dataset Overview:** 200 observations of bird density across urban and rural sites, each with a measured level of air pollution.
 
 ### Why We're Running the ANCOVA
 
--   **Research Question:** Does the effect of air pollution on bird species density differ between urban and rural areas?
+* **Research Question:** Does the effect of air pollution on bird density differ between urban and rural areas?
 
--   **Expectation:** We predict that air pollution will have a more pronounced negative effect on bird species density in urban areas than in rural areas.
+* **Expectation:** Air pollution will have a stronger negative effect in urban areas than in rural areas.
 
 ### Null and Alternative Hypotheses in our example ANCOVA
 
-
-1. **Omnibus (adjusted means) hypothesis**
+0. **Omnibus (adjusted means) hypothesis**
    After adjusting for air pollution, do urban and rural sites differ in mean bird density?
 
-   $H_0: \mu^*_{\text{Urban}} = \mu^**{\text{Rural}}$
-   $H_A: \mu^**{\text{Urban}} \neq \mu^*_{\text{Rural}}$
+   $H_{0}: \mu_{\text{Urban, adj}} = \mu_{\text{Rural, adj}}$
+   
+   $H_{A}: \mu_{\text{Urban, adj}}  \neq \mu_{\text{Rural, adj}}$
+   
+   Here, $\mu_{\text{Urban, adj}}$ and $\mu_{\text{Rural, adj}}$ are the *adjusted* group means once the covariate (air pollution) is accounted for.
 
-   Here, $\mu^*_{\text{Urban}}$ and $\mu^*_{\text{Rural}}$ are the adjusted group means once the covariate (air pollution) is accounted for.
-
-2. **Slope (interaction) hypothesis**
+1. **Slope (interaction) hypothesis**
+  
    Does air pollution affect bird density in the same way across urban and rural sites?
 
    $H_{0,1}: \beta_{\text{interaction}} = 0$
+   
    $H_{A,1}: \beta_{\text{interaction}} \neq 0$
 
-   A significant interaction means the slopes differ—air pollution’s relationship with bird density depends on area type.
+   A significant interaction means the slopes differ, and air pollution’s relationship with bird density depends on area type.
 
-3. **Intercept (baseline difference) hypothesis**
-   If the interaction is not significant (slopes are parallel), we can test whether the intercepts differ—i.e., whether the baseline bird density differs between urban and rural areas at zero (or mean-centered) pollution.
+2. **Intercept (baseline difference) hypothesis**
+
+   If slopes are parallel (interaction not significant), do the adjusted means differ?
 
    $H_{0,2}: \beta_{0,\text{Urban}} = \beta_{0,\text{Rural}}$
+   
    $H_{A,2}: \beta_{0,\text{Urban}} \neq \beta_{0,\text{Rural}}$
 
    Rejecting $H_{0,2}$ indicates an inherent group difference in bird density that is independent of pollution.
@@ -451,104 +478,212 @@ air_pollution <- rev(round(air_pollution, 1))
 
 # Combine into a data frame
 data <- data.frame(AreaType = area_type, AirPollution = air_pollution, BirdDensity = bird_density)
-
-# View the first few rows of the dataset
-head(data)
 ```
 
-Let's create a summary of our current dataset
+Before we look at the model results, it’s always good practice to **look at the data first**.
 
-```{r, echo=TRUE}
-summary(data)
-```
+Visual inspection helps us check for broad patterns and see whether the model output later “makes sense.”
 
-This will give us a quick statistical summary of our variables.
-
-Now, let's visualize the distribution of bird density in different areas.
+Let’s start with the response variable—**bird density**. This will give us a quick visual sense of whether urban and rural areas differ in their average values.
 
 ```{r, echo=TRUE}
 # Boxplot for bird density by area type
 ggplot(data, aes(AreaType, BirdDensity)) +
-  geom_boxplot() + theme_classic() +
+  geom_boxplot() + theme_classic(base_size=12) +
   labs(title = "Bird Density by Area Type", x = "Area Type", y = "Bird Density")
 
 ```
 
-And the same for air pollution:
+At first glance, bird density appears **higher in rural areas** than in urban ones, consistent with what we might expect ecologically.
+
+Next, check the **covariate**, air pollution.
+
+If the covariate differs sharply between groups, ANCOVA will “adjust” for that difference.
+
+If it doesn’t, group comparisons will look more like a simple ANOVA.
+
 
 ```{r, echo=TRUE}
 ggplot(data, aes(AreaType, AirPollution)) +
   geom_boxplot() + theme_classic() +
+  geom_boxplot() + theme_classic(base_size=12) +
   labs(title = "Air Pollution by Area Type", x = "Area Type", y = "Air Pollution")
 ```
 
+Air pollution looks fairly similar between urban and rural sites—there’s no obvious systematic difference.
+
+This isn’t diagnostic, but it helps us **anticipate what the model might show**: we may find that group differences in bird density aren’t explained by pollution alone.
+
 ### Results of the ANCOVA Model
 
-The anova results
+Now that we’ve explored the data visually, we can test our hypotheses formally using ANCOVA.
 
-```{r, echo=TRUE}
-ancova <- aov(BirdDensity ~ AirPollution*AreaType, data=data)
-summary(ancova)
+**Step 1: Fit the ANCOVA model**. 
+
+`ancova <- aov(BirdDensity ~ AirPollution * AreaType, data = data)`
+
+```{r}
+library(broom)
+
+ancova <- aov(BirdDensity ~ AirPollution * AreaType, data = data)
+ancova_tidy <- broom::tidy(ancova)
+
+knitr::kable(
+ancova_tidy[, c("term", "df", "sumsq", "meansq", "statistic", "p.value")],
+digits = c(0, 0, 2, 2, 2, 4),
+caption = "ANCOVA Table"
+)
 ```
 
-The linear model results
+**Step 2: Interpret each term in light of the hypotheses**
 
-```{r, echo=TRUE}
-ancova_lm <- lm(BirdDensity ~ AirPollution*AreaType, data=data)
-summary(ancova_lm)
+**0. Omnibus (adjusted means)** : 
+
+$H_{0}: \mu_{\text{Urban, adj}} = \mu_{\text{Rural, adj}}$
+
+The overall ANCOVA test examines whether adjusted means differ between groups after accounting for the covariate.
+
+Because we included an interaction term, this omnibus test is **decomposed** into two parts:
+
+* the **interaction** (slope difference), and
+
+* the **main effects** (covariate and group).
+
+So we interpret the omnibus test through these individual terms rather than as a separate $p$-value.
+
+
+**1. Interaction (slope difference)**: 
+
+$H_{0,1}: \beta_{\text{interaction}} = 0$
+
+The interaction between air pollution and area type is **significant** ($p = 0.0399$).
+
+Reject $H_{0,1}$ → our slopes are not parallel. Air pollution’s relationship with bird density depends on area type.
+
+**2. Covariate (main effect of Air Pollution)**
+
+Although not a formal ANCOVA hypothesis, this term tests whether air pollution predicts bird density *on average*, across both groups.
+
+It is **not significant** ($p = 0.7690$), so air pollution alone does not explain much variation.
+
+**3. Group (main effect of Area Type)** – $H_{0,2}: \mu_{\text{Urban, adj}} = \mu_{\text{Rural, adj}}$
+
+Area type is **significant** ($p < 0.001$), suggesting lower average bird density in urban areas.
+
+However, because the interaction is significant, this group difference changes with air pollution level, so it should be interpreted conditionally, not as a single overall difference.
+
+Reject $H_{0,2}$ with caution.
+
+**Step 3: Examine regression coefficients**
+
+We can also fit the same model using `lm()` to view the **regression coefficients** directly.
+
+This shows how each term contributes to predicting bird density and corresponds to the hypothesis tests we just discussed.
+
+`ancova_lm <- lm(BirdDensity ~ AirPollution * AreaType, data = data)`
+
+```{r}
+ancova_lm <- lm(BirdDensity ~ AirPollution * AreaType, data = data)
+lm_tidy <- broom::tidy(ancova_lm)
+
+knitr::kable(
+lm_tidy[, c("term", "estimate", "std.error", "statistic", "p.value")],
+digits = c(0, 3, 3, 2, 4),
+caption = "Linear Model Coefficients"
+)
 ```
 
-```{r, eval=FALSE, echo=TRUE}
-fit_full <- lm(BirdDensity ~ AirPollution * AreaType, data = data)
-anova(fit_full)         # tests interaction and main effects in the full model
-summary(fit_full)
+These coefficients give the *direction* and *magnitude* of each effect:
 
-# If interaction is NOT significant:
-fit_parallel <- lm(BirdDensity ~ AirPollution + AreaType, data = data)
-anova(fit_parallel)
-summary(fit_parallel)
-```
-#### Main Effects:
+* **(Intercept):** estimated mean bird density for rural sites (the reference group) when air pollution is zero.
+* **AirPollution:** slope of the relationship between pollution and bird density in rural sites.
+* **AreaTypeUrban:** difference in intercept between urban and rural areas.
+* **AirPollution:AreaTypeUrban:** difference in slope between urban and rural areas (the interaction).
 
--   **Air Pollution**: The ANCOVA model does not find a significant main effect of air pollution on bird density (p = 0.7690 from ANOVA), indicating no consistent impact across the areas. However, the linear model's marginal p-value (p = 0.081641) suggests a trend that might have been significant with a larger sample size or reduced variability.
+**Step 4: Visualize the interaction**
 
--   **Area Type**: There is a significant main effect of AreaType on bird density (p \< 0.001), indicating that there are considerable differences in bird density between rural and urban areas, with urban areas showing lower bird density.
+As always, plotting helps confirm what the model tells us.
 
-#### Interpreting the Beta Coefficients:
-
--   **Intercept**: Reflecting the expected bird density in rural areas at zero air pollution, the intercept is quite high, indicating a relatively healthy bird population in the absence of pollution.
-
--   **Area Type**: The beta coefficient for our area type factor is significantly different from zero (p \< 0.001), suggesting a distinct difference in bird density between urban and rural areas. However, this effect is captured more precisely in the interaction term.
-
--   **Interaction Term**: The significant beta for the interaction term confirms our hypothesis that air pollution's effect on bird density is not uniform across urban and rural areas.
-
-#### Visual Representation:
-
-The scatter plot with regression lines will demonstrate these relationships visually, showing the differing trends for urban and rural areas suggested by the significant interaction term.
+A scatter plot with fitted regression lines lets us see how air pollution relates to bird density for each area type.
 
 ```{r}
 # Scatter plot with regression lines
 ggplot(data, aes(AirPollution, BirdDensity, color = AreaType)) +
   geom_point(alpha = 0.6) +
   geom_smooth(method = "lm", se = FALSE) +
-  theme_classic() +
+  theme_classic(base_size=14) +
   labs(title = "Bird Density vs Air Pollution by Area Type",
        x = "Air Pollution", y = "Bird Density")
 ```
 
+Here, the slopes differ by area type, illustrating the **significant interaction** we detected statistically.
+
+You’ll also notice quite a bit of scatter around each line, which makes sense—our overall $R^2$ is only **0.116**.
+
+Remember, $R^2$ represents the **proportion of variance in bird density explained by the model**.
+
+So, about **12% of the variation** in bird density is explained by air pollution, area type, and their interaction.
+
+The remaining 88% reflects other factors, measurement noise, or natural ecological variability not captured by this simple model.
+
+**Step 5: Centering the covariate**
+
+Interpreting intercepts at $x = 0$ can be misleading when “zero pollution” isn’t meaningful.
+
+By centering the covariate (subtracting its mean), we make the intercept represent **average bird density at mean air pollution** instead.
+
 ```{r}
 data <- data |> mutate(AirPollution_c = AirPollution - mean(AirPollution))
 fit_centered <- lm(BirdDensity ~ AirPollution_c * AreaType, data = data)
-summary(fit_centered)   # intercepts now compare groups at mean AirPollution
+
+library(broom)
+tidy_centered <- broom::tidy(fit_centered)[, c("term", "estimate", "p.value")]
+
+knitr::kable(
+  tidy_centered,
+  digits = c(0, 3, 4),
+  caption = "Centered ANCOVA Model Coefficients"
+)
 ```
 
-#### Interpretation:
+This re-centering doesn’t change the slopes or $p$-values—it just shifts the intercepts, making them easier to interpret.
 
-The significant interaction means that air pollution’s effect on bird density depends on area type. The relationship differs between urban and rural sites. In urban areas, the slope is slightly positive (or less negative), suggesting that other urban factors may influence bird populations differently than in rural settings.
+**Interpreting the Centered Model**
 
-Because the main effect of air pollution is not significant on its own, this interaction points to a more complex ecological pattern: pollution alone doesn’t predict bird density without considering land context. Recognizing these interactions helps refine management strategies and better target conservation efforts for urban versus rural habitats.
+Centering does **not** change the slopes or their $p$-values.
+
+Notice that the coefficients for `AirPollution_c` (–0.04) and `AirPollution_c:AreaTypeUrban` (+0.07) are **identical** to the slopes we estimated before centering.
+
+Only the **intercept** and the **AreaTypeUrban** (group difference) term have changed — they are now interpreted at the *mean pollution level* instead of pollution = 0.
+
+* **Intercept (27.8):** Predicted bird density for **rural sites** at *average air pollution*.
+
+* **AreaTypeUrban (–5.8):** Urban sites have, on average, **about 6 fewer birds** than rural sites *at the same mean pollution level*.
+
+* **AirPollution_c (–0.04):** Slope for rural sites — bird density decreases slightly as pollution increases.
+
+* **Interaction (+0.07):** Difference in slopes between groups. The urban slope = –0.04 + 0.07 ≈ **+0.03**, meaning bird density increases slightly with pollution in urban areas.
+
+**Step 6: Summarize and Interpret**
+
+The significant interaction shows that **air pollution’s effect on bird density depends on area type**: in rural sites, bird density decreases slightly as pollution rises, while in urban sites, it increases slightly.
+
+Because the interaction is significant, we focus on these **different slopes**, not on adjusted mean differences.
+
+If the interaction had **not** been significant, we would instead drop the interaction term and interpret the **parallel slopes model**, comparing adjusted means between groups.
+
+Our results sentences might look something like this: 
+
+Results from the ANCOVA indicated that air pollution’s effect on bird density depended on area type, *F*(1, 196) = 4.28, *p* = .0399. Bird density declined with increasing pollution in rural sites but showed a slight increase in urban sites. These findings suggest that **urbanization modifies the pollution–bird density relationship** and may point toward the need for area-specific conservation strategies.
+
+**Key takeaways**
+
+1. Always **check for interaction first**
+2. If interaction is **significant**, interpret slope differences.
+3. If not, **fit the reduced model** (no interaction) and compare adjusted means.
+4. Center covariates when the intercept needs to represent a meaningful point.
 
 ## Chapter Summary
 
-In this chapter, we introduced **Analysis of Covariance (ANCOVA)** as an extension of ANOVA that incorporates continuous covariates. We began by framing ANOVA as a linear model, setting the groundwork for understanding how ANCOVA adds both continuous and categorical predictors. Using examples such as bird species density across environments, we practiced formulating and testing null and alternative hypotheses. ANCOVA’s key strength is its ability to adjust for additional variables, helping us isolate the effect of each factor more accurately. Through real-world examples and clear, step-by-step reasoning, we built intuition for how hypothesis testing in ANCOVA connects to the broader family of linear models in environmental science.
+In this chapter, we introduced **ANCOVA** as an extension of ANOVA that includes continuous covariates. We began by framing ANOVA within the linear modeling framework, showing how ANCOVA builds on it by combining categorical and continuous predictors. Using examples such as bird density across urban and rural environments, we developed and tested null and alternative hypotheses step by step. The main advantage of ANCOVA is its ability to adjust for continuous variables, allowing clearer interpretation of group effects.
 
