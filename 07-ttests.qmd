@@ -8,40 +8,37 @@ aliases: [redirects/t-tests.html]
 source("global_stuff.R")
 ```
 
-
 ```{r, echo=FALSE}
 library(ggplot2)
 ```
 
 # t-tests
 
-## Intro 
+## Intro
 
-In the early 1900s, William Sealy Gosset joined **Guinness**, then the world’s largest brewery. Guinness hired scientifically trained brewers and gave them latitude to pursue research that improved the product. As production scaled, quality control mattered: a pint should taste the same in Dublin as in Detroit. Until then, hop quality was judged mostly by appearance and smell, which was unreliable. Chemical assays could measure ingredients, but the core problem was statistical. Inference relied on the normal (Z) distribution, which works well when samples are large enough for a normal approximation. In practice, Guinness could not destroy large volumes of beer or ingredients just to test them.
+In the early 1900s, William Sealy Gosset joined **Guinness**, then the world's largest brewery. Guinness hired scientifically trained brewers and gave them latitude to pursue research that improved the product. As production scaled, quality control mattered: a pint should taste the same in Dublin as in Detroit. Until then, hop quality was judged mostly by appearance and smell, which was unreliable. Chemical assays could measure ingredients, but the core problem was statistical. Inference relied on the normal (Z) distribution, which works well when samples are large enough for a normal approximation. In practice, Guinness could not destroy large volumes of beer or ingredients just to test them.
 
-Gosset set out to quantify the extra uncertainty introduced by **small** samples. How much wider is the error around an estimate when $n=10$ instead of $n=1000$? He derived a new sampling distribution that accounts for small-sample variability, now known as the **Student’s (t) distribution**. Because Guinness restricted external publications, he published the 1908 paper under the pseudonym **“Student”** [@Student1908]. That is why we still say **Student’s $t$-test**. The core idea you will use today is the same: measure a signal, scale it by its standard error, and compare the resulting $t$ to the appropriate $t$ distribution for your $n-1$ degrees of freedom.
-
+Gosset set out to quantify the extra uncertainty introduced by **small** samples. How much wider is the error around an estimate when $n=10$ instead of $n=1000$? He derived a new sampling distribution that accounts for small-sample variability, now known as the **Student's (t) distribution**. Because Guinness restricted external publications, he published the 1908 paper under the pseudonym **"Student"** [@Student1908]. That is why we still say **Student's** $t$-test. The core idea you will use today is the same: measure a signal, scale it by its standard error, and compare the resulting $t$ to the appropriate $t$ distribution for your $n-1$ degrees of freedom.
 
 **Why this matters.** We often compare a sample mean to a reference (drinking-water standard, historical average) or compare two conditions (before/after, site A vs site B). A t-test asks whether the observed difference is larger than you would expect from sampling variation alone, given your $n$ and variability.
 
 **Three common t-tests you will use.**
 
-1. **One-sample t-test.** Compare a sample mean to a target ($\mu_0$).
-2. **Paired t-test.** Compare before/after (or matched) measurements on the same units by running a one-sample t on the *differences*.
-3. **Independent-samples t-test (also called two-sample t-test)** Compare means from two groups measured on different units. Use Welch’s test by default when variances differ.
+1.  **One-sample t-test.** Compare a sample mean to a target ($\mu_0$).
+2.  **Paired t-test.** Compare before/after (or matched) measurements on the same units by running a one-sample t on the *differences*.
+3.  **Independent-samples t-test (also called two-sample t-test)** Compare means from two groups measured on different units. Use Welch's test by default when variances differ.
 
-**What you will report.** 
+**What you will report.**
 
 Always report:
-* the effect size (mean difference)
-* a 95% CI, the test statistic with df
-* and the $p$-value. 
 
-Example: “Mean change was (-0.42) units (95% CI [-0.73,-0.11] ;t(11)=-2.92; p=0.014).”
+-   the effect size (mean difference)
+-   a 95% CI, the test statistic with df
+-   and the $p$-value.
 
+Example: "Mean change was (-0.42) units (95% CI \[-0.73,-0.11\] ;t(11)=-2.92; p=0.014)."
 
-## From mean & SD to “signal over noise”
-
+## From mean & SD to "signal over noise"
 
 A mean tells you where the center is; the SD tells you how spread out the data are. A mean of 50 could be very representative (if SD is tiny) or nearly meaningless (if SD is huge). You need both.
 
@@ -51,19 +48,19 @@ $$
 \frac{\text{mean}}{\text{SD}}
 $$
 
-* Big numerator, small denominator → big ratio (more confidence that the mean reflects the data). 
+-   Big numerator, small denominator → big ratio (more confidence that the mean reflects the data).
 
-* Small numerator or big denominator → small ratio (less confidence). 
+-   Small numerator or big denominator → small ratio (less confidence).
 
 For instance, mean = 50 with SD = 1 gives 50; mean = 50 with SD = 100 gives 0.5. Same mean, very different stories.
 
-This “signal over noise” pattern shows up everywhere in inference. In general,
+This "signal over noise" pattern shows up everywhere in inference. In general,
 
 $$
 \text{statistic}=\frac{\text{effect}}{\text{error}}.
 $$
 
-For $t$-tests, we won’t actually use SD in the denominator, we use the **standard error** $SE$, which is the SD of the sample mean. But the logic is the same: measure a signal, scale it by its uncertainty, and see whether the resulting ratio is unusually large or small under the right $t$ distribution.
+For $t$-tests, we won't actually use SD in the denominator, we use the **standard error** $SE$, which is the SD of the sample mean. But the logic is the same: measure a signal, scale it by its uncertainty, and see whether the resulting ratio is unusually large or small under the right $t$ distribution.
 
 $$
 t = \frac{\text{effect}}{\text{standard error}} = \frac{\bar{X} - \mu_0}{s / \sqrt{n}}
@@ -73,7 +70,7 @@ We now turn that ratio into a test statistic for a *single mean*.
 
 ## One-sample t-test
 
-Use a one-sample $t$ when you want to test whether a sample mean differs from a reference value ($\mu_0$). The question: is the observed difference bigger than you’d expect from sampling variability, given $n$ and your sample SD $s$?
+Use a one-sample $t$ when you want to test whether a sample mean differs from a reference value ($\mu_0$). The question: is the observed difference bigger than you'd expect from sampling variability, given $n$ and your sample SD $s$?
 
 $$
 t = \frac{\bar{X}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1
@@ -83,15 +80,13 @@ After calculating $t$ from our data, we compare the observed $t$ to a $t$ distri
 
 ### Comparing $z$ and $t$
 
-When the population SD is known (or we have a large enough sample to assume convergence), the ratio is called $z$; when it’s estimated from the data, it’s $t$.”
+When the population SD is known (or we have a large enough sample to assume convergence), the ratio is called $z$; when it's estimated from the data, it's $t$."
 
-Under a known population SD ($\sigma$), the standardized mean uses the **$z$** statistic:
-$$
+Under a known population SD ($\sigma$), the standardized mean uses the $z$ statistic: $$
 z = \frac{\bar{X}-\mu_0}{\sigma/\sqrt{n}}
 $$
 
-When $\sigma$ is **unknown** (the usual case), we estimate it with the sample SD ($s$) and use the **$t$** statistic:
-$$
+When $\sigma$ is **unknown** (the usual case), we estimate it with the sample SD ($s$) and use the $t$ statistic: $$
 t = \frac{\bar{X}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1
 $$
 
@@ -136,17 +131,14 @@ p_lin
 
 ```
 
-
 ::: callout-note
-**When is $z$ appropriate?**
-If the population SD $\sigma$ is known *and* the sampling distribution of the mean is (approximately) normal, use $z$.
-In practice, $\sigma$ is rarely known, so we use $t$ with $s$ and $df=n-1$.
+**When is** $z$ appropriate? If the population SD $\sigma$ is known *and* the sampling distribution of the mean is (approximately) normal, use $z$. In practice, $\sigma$ is rarely known, so we use $t$ with $s$ and $df=n-1$.
 :::
 
 **Rule of thumb.** For two-tailed tests at $\alpha=0.05$:
 
-* $z$ uses critical values $\pm 1.96$.
-* $t$ is a bit wider for small $n$ (e.g., $df=9 \Rightarrow \pm 2.262$; $df=29 \Rightarrow \pm 2.045$), and approaches $\pm 1.96$ as $n$ increases.
+-   $z$ uses critical values $\pm 1.96$.
+-   $t$ is a bit wider for small $n$ (e.g., $df=9 \Rightarrow \pm 2.262$; $df=29 \Rightarrow \pm 2.045$), and approaches $\pm 1.96$ as $n$ increases.
 
 ### What t represents
 
@@ -158,15 +150,14 @@ $$
 t = \frac{\bar{X}-\mu_0}{s/\sqrt{n}}
 $$
 
-$t$ can be positive or negative depending on direction. Under $H_0$, $t \sim t_{(df=n-1)}$.  
+$t$ can be positive or negative depending on direction. Under $H_0$, $t \sim t_{(df=n-1)}$.\
 **Rule of thumb:** at $\alpha=.05$ two-tailed, $|t|\gtrsim 2$ is uncommon when $df\approx 20$.
 
 ::: callout-note
-Remember, $s/\sqrt{n}$ is the **standard error (SE)**—the standard deviation of the sampling distribution of the mean.
+Remember, $s/\sqrt{n}$ is the **standard error (SE)**---the standard deviation of the sampling distribution of the mean.
 :::
 
-Let’s see how $t$ values behave when samples really come from the null hypothesis.
-Under the null hypothesis, $t$ follows a $t$ distribution with $df = n-1$.  
+Let's see how $t$ values behave when samples really come from the null hypothesis. Under the null hypothesis, $t$ follows a $t$ distribution with $df = n-1$.\
 Large $|t|$ values are rare; with $df \approx 20$, $|t| \gtrsim 2$ is uncommon at $\alpha = .05$ (two-tailed).
 
 ```{r}
@@ -184,13 +175,14 @@ hist(t_vals, breaks = 30, main = "", xlab = "t values")
 
 ### Calculating t from data
 
-Let’s calculate a one-sample $t$ statistic step by step using a short example.
-Ten students each took a 5-question true/false quiz (50% expected by chance). Their scores (percent correct) are:
+Let's calculate a one-sample $t$ statistic step by step using a short example. Ten students each took a 5-question true/false quiz (50% expected by chance). Their scores (percent correct) are:
+
+**Scores**: (50, 70, 60, 40, 80, 30, 90, 60, 70, 60)
 
 ```{r}
 #| label: ex-onesample-t
 #| fig-cap: 'One-sample $t$ on quiz scores versus chance level (50%).'
-#| echo: TRUE
+#| echo: FALSE
 
 scores <- c(50, 70, 60, 40, 80, 30, 90, 60, 70, 60)
 n  <- length(scores)
@@ -207,7 +199,6 @@ tt$parameter      # df
 tt$p.value        # p
 tt$conf.int       # 95% CI
 tt$estimate       # sample mean
-
 ci_lo <- round(tt$conf.int[[1]], 2)
 ci_hi <- round(tt$conf.int[[2]], 2)
 ```
@@ -230,23 +221,19 @@ $t$ is the difference between our sample mean (61), and our population mean (50,
 
 $\text{t} = \frac{\bar{X}-u}{S_{\bar{X}}} = \frac{\bar{X}-u}{SEM} = \frac{61-50}{5.67} = 1.94$
 
-**Interpretation:**
-The sample mean (61%) is higher than chance (50%), but the difference is not large enough to be statistically significant at $\alpha = 0.05$.
+**Interpretation:** The sample mean (61%) is higher than chance (50%), but the difference is not large enough to be statistically significant at $\alpha = 0.05$.
 
-**Assumptions check:**
-Observations are independent, and with $n=10$ the data are approximately normal—sufficient for a one-sample $t$ test.
+**Assumptions check:** Observations are independent, and with $n=10$ the data are approximately normal---sufficient for a one-sample $t$ test.
 
 ### How does t behave?
 
-Under the null hypothesis ($H_0$ true), $t$ follows a *t* distribution with degrees of freedom $df = n - 1$.
-Large $|t|$ values are rare—extreme sample means are unlikely if $H_0$ is true.
+Under the null hypothesis ($H_0$ true), $t$ follows a *t* distribution with degrees of freedom $df = n - 1$. Large $|t|$ values are rare---extreme sample means are unlikely if $H_0$ is true.
 
 For moderate sample sizes ($df \approx 20$), a simple rule of thumb is:
 
 > In a two-tailed test at $\alpha = .05$, $|t| \gtrsim 2$ is uncommon.
 
-This means values of $t$ beyond roughly $-2$ or $+2$ occur less than 5% of the time under the null.
-That’s the foundation of the decision rule for $t$ tests: if your observed $t$ lies in those rare tails, you reject $H_0$.
+This means values of $t$ beyond roughly $-2$ or $+2$ occur less than 5% of the time under the null. That's the foundation of the decision rule for $t$ tests: if your observed $t$ lies in those rare tails, you reject $H_0$.
 
 Remember, if we obtained a single $t$ from one sample we collected, we could consult the chance window in @fig-7-t-rejection below to find out whether the $t$ we obtained from the sample was likely or unlikely to occur by chance.
 
@@ -280,26 +267,21 @@ ggplot(t_tibble, aes(x, y, fill = tail)) +
 
 ```
 
-
-
 ## Paired t: before/after or matched
 
 When the **same units** are measured twice (before/after, matched pairs), the question is whether they **changed**. The natural data unit is the **within-unit difference**.
 
-**Design in this worked example.**
-Ecologists measured **soil moisture (%)** at 20 paired field plots before and after wetland restoration. Each plot was measured twice — once during the dry season before restoration work began, and again one year later. We care whether restoration **increased** soil moisture, which would support plant reestablishment and carbon sequestration.
+**Design in this worked example.** Ecologists measured **soil moisture (%)** at 20 paired field plots before and after wetland restoration. Each plot was measured twice --- once during the dry season before restoration work began, and again one year later. We care whether restoration **increased** soil moisture, which would support plant reestablishment and carbon sequestration.
 
-**Define differences and their meaning.**
-Choose an order and stick to it:
+**Define differences and their meaning.** Choose an order and stick to it:
 
-* $d_i = \text{After}_i - \text{Before}_i$
-* $d_i>0$: plot had **more** soil moisture after restoration (increase)
-* $d_i<0$: plot had **less** soil moisture after restoration (decrease)
+-   $d_i = \text{After}_i - \text{Before}_i$
+-   $d_i>0$: plot had **more** soil moisture after restoration (increase)
+-   $d_i<0$: plot had **less** soil moisture after restoration (decrease)
 
 This subtraction **cancels between-plot variability** (some plots are naturally wetter than others) and focuses on **within-plot change**.
 
-**Test on differences (paired (t)).**
-Compute one difference per plot, then run a **one-sample $t$** against 0:
+**Test on differences (paired (t)).** Compute one difference per plot, then run a **one-sample** $t$ against 0:
 
 $$
 \bar d=\frac{1}{n}\sum_{i=1}^n d_i, \quad
@@ -309,25 +291,19 @@ $$
 
 The **sign of (t)** matches (\bar d) and your difference direction.
 
-**Mini walk-through (first 5 plots).**
-Using five representative plots, suppose
-$\bar d = 2.8$ and $s_d = 3.35$. Then
-$$
+**Mini walk-through (first 5 plots).** Using five representative plots, suppose $\bar d = 2.8$ and $s_d = 3.35$. Then $$
 t=\frac{2.8}{3.35/\sqrt{5}} \approx 1.87,\qquad df=4,
-$$
-which (two-tailed) is **not** significant. That’s expected with $n=5$.
+$$ which (two-tailed) is **not** significant. That's expected with $n=5$.
 
-**Full sample effect.**
-With all 20 plots, $\bar d$ is similar but $s_d/\sqrt{n}$ gets smaller, so $t$ increases and the result becomes significant. This is the payoff of pairing: more power from the same number of plots.
+**Full sample effect.** With all 20 plots, $\bar d$ is similar but $s_d/\sqrt{n}$ gets smaller, so $t$ increases and the result becomes significant. This is the payoff of pairing: more power from the same number of plots.
 
-**What to report.**
-(\bar d) (the mean change), a 95% CI, (t(df)), and (p). Optionally add a standardized effect (Cohen’s (d=\bar d/s_d)).
+**What to report.** (\bar d) (the mean change), a 95% CI, (t(df)), and (p). Optionally add a standardized effect (Cohen's (d=\bar d/s_d)).
 
-**R pointers (you’ll do this in lab).**
+**R pointers (you'll do this in lab).**
 
-* Compute differences: `d <- after - before`
-* Paired $t$: `t.test(d, mu = 0)` or `t.test(after, before, paired = TRUE)`
-* CI for $\bar d$: from the `t.test` output
+-   Compute differences: `d <- after - before`
+-   Paired $t$: `t.test(d, mu = 0)` or `t.test(after, before, paired = TRUE)`
+-   CI for $\bar d$: from the `t.test` output
 
 ### Calculate t
 
@@ -376,7 +352,7 @@ t.test(differences, mu = 0)
 
 Here is a quick write up of our t-test results, t(4) = 1.87, p = .135.
 
-What does all of that tell us? There's a few things we haven't gotten into much yet. For example, the 4 represents degrees of freedom, which we discuss later. The important part, the $t$ value should start to be a little bit more meaningful. We got a modest t-value of 1.87. What can we tell from this value? First, it is positive, so we know the mean difference is positive — soil moisture increased after restoration on average. The sign of the $t$-value is always the same as the sign of the mean difference (ours was +2.8 percentage points). We can also see that the p-value was .135. We've seen p-values before. This tells us our $t$ value or larger would occur about 13.5% of the time by chance alone... Actually it means more than this. And, to understand it, we need to talk about the concept of two-tailed and one-tailed tests.
+What does all of that tell us? There's a few things we haven't gotten into much yet. For example, the 4 represents degrees of freedom, which we discuss later. The important part, the $t$ value should start to be a little bit more meaningful. We got a modest t-value of 1.87. What can we tell from this value? First, it is positive, so we know the mean difference is positive --- soil moisture increased after restoration on average. The sign of the $t$-value is always the same as the sign of the mean difference (ours was +2.8 percentage points). We can also see that the p-value was .135. We've seen p-values before. This tells us our $t$ value or larger would occur about 13.5% of the time by chance alone... Actually it means more than this. And, to understand it, we need to talk about the concept of two-tailed and one-tailed tests.
 
 ### Interpreting $t$s
 
@@ -756,7 +732,7 @@ There is a slightly different $t$ distribution for every degrees of freedom, and
 
 ## The paired samples t-test strikes back
 
-Don't worry, we're not starting over — we're just going to 1) remind you of the soil moisture restoration example, and 2) run the paired t-test on the full dataset of 20 plots and discuss what changes.
+Don't worry, we're not starting over --- we're just going to 1) remind you of the soil moisture restoration example, and 2) run the paired t-test on the full dataset of 20 plots and discuss what changes.
 
 Remember, we were asking whether soil moisture (%) increased after wetland restoration. We showed you data from 5 plots and walked through the computations for the $t$-test. As a reminder, it looked like this:
 
@@ -807,7 +783,7 @@ differences_full <- after_full - before_full
 t.test(differences_full, mu = 0)
 ```
 
-Now we get a very different answer. The degrees of freedom is 19, confirming $n = 20$ plots. We see a much smaller $p$-value. This is also a two-tailed test. In other words, the null distribution of no differences will produce the observed $t$-value very rarely. So, it is unlikely that the observed mean increase in soil moisture was due to chance alone. As a result, we can be reasonably confident that wetland restoration increased soil moisture at these sites — consistent with the ecological goal of restoring hydrological function.
+Now we get a very different answer. The degrees of freedom is 19, confirming $n = 20$ plots. We see a much smaller $p$-value. This is also a two-tailed test. In other words, the null distribution of no differences will produce the observed $t$-value very rarely. So, it is unlikely that the observed mean increase in soil moisture was due to chance alone. As a result, we can be reasonably confident that wetland restoration increased soil moisture at these sites --- consistent with the ecological goal of restoring hydrological function.
 
 ## Two independent groups
 
