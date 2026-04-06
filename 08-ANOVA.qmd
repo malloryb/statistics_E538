@@ -1,6 +1,7 @@
 ---
-author: 
+author:
   - Matthew J. C. Crump
+  - Mallory L. Barnes
 aliases: [redirects/anova.html]
 ---
 
@@ -262,11 +263,9 @@ As we keep saying, $F$ is a sample statistic. Can you guess what we do with samp
 
 Let's do that for $F$. This will help you understand what $F$ really is, and how it behaves. We are going to created the sampling distribution of $F$. Once we have that you will be able to see where the $p$-values come from. It's the same basic process that we followed for the $t$ tests, except we are measuring $F$ instead of $t$.
 
-Here is the set-up, we are going to run an experiment with three levels. In our imaginary experiment we are going to test whether a new magic pill can make you smarter. The independent variable is the number of magic pills you take: 1, 2, or 3. We will measure your smartness using a smartness test. We will assume the smartness test has some known properties, the mean score on the test is 100, with a standard deviation of 10 (and the distribution is normal).
+To build intuition for the F distribution, consider a simulated monitoring study with three site types (A, B, C). Each site type has 10 sampling plots, for 30 total. We measure species abundance at each plot. Critically, the **null scenario** applies: all 30 plots are drawn from the same distribution (mean = 100, SD = 10), so site type has no real effect on abundance. Any differences between group means arise from sampling error alone.
 
-The only catch is that our magic pill does NOTHING AT ALL. The fake people in our fake experiment will all take sugar pills that do absolutely nothing to their smartness. Why would we want to simulate such a bunch of nonsense? The answer is that this kind of simulation is critical for making inferences about chance if you were to conduct a real experiment.
-
-Here are some more details for the experiment. Each group will have 10 different subjects, so there will be a total of 30 subjects. We are going to run this experiment 10,000 times. Each time drawing numbers randomly from the very same normal distribution. We are going to calculate $F$ from our sample data every time, and then we are going to draw the histogram of $F$-values. @fig-8fnull shows the sampling distribution of $F$ for our situation.
+We run this simulation 10,000 times. Each time we compute F from the sample data. The histogram of those 10,000 F-values — shown in @fig-8fnull — is the null distribution of F for this design.
 
 ```{r}
 #| label: fig-8fnull
@@ -278,11 +277,11 @@ library(ggplot2)
 
 save_F <- length(10000)
 for (i in 1:10000) {
-  smartness   <- rnorm(30, 100, 10)
-  pill_group  <- as.factor(rep(1:3, each = 10))
+  abundance   <- rnorm(30, 100, 10)
+  site_type   <- as.factor(rep(1:3, each = 10))
   simulations <- rep(i, each = 30)
-  sample_df   <- data.frame(simulations, pill_group, smartness)
-  aov.out <- summary(aov(smartness ~ pill_group, sample_df))
+  sample_df   <- data.frame(simulations, site_type, abundance)
+  aov.out <- summary(aov(abundance ~ site_type, sample_df))
   save_F[i] <- aov.out[[1]]$`F value`[1]
 }
 
@@ -341,7 +340,7 @@ ggplot(plot_df, aes(x = save_F)) +
 
 Alright, now we can see that only 5% of all $F$-values from from this sampling distribution will be 3.35 or larger. We can use this information.
 
-How would we use it? Imagine we ran a real version of this experiment. And, we really used some pills that just might change smartness. If we ran the exact same design, with 30 people in total (10 in each group), we could set an $F$ criterion of 3.35 for determining whether any of our results reflected a causal change in smartness due to the pills, and not due to random chance. For example, if we found an $F$-value of 3.34, which happens, just less than 5% of the time, we might conclude that random sampling error did not produce the differences between our means. Instead, we might be more confident that the pills actually did something, after all an $F$-value of 3.34 doesn't happen very often, it is unlikely (only 5 times out of 100) to occur by chance.
+How would we use it? Imagine we ran a real version of this monitoring study. And, site type really did affect abundance. If we ran the exact same design, with 30 plots in total (10 per site type), we could set an $F$ criterion of 3.35 for determining whether any of our results reflected a real effect of site type on abundance, and not due to random chance. For example, if we found an $F$-value of 3.34, which happens, just less than 5% of the time, we might conclude that random sampling error did not produce the differences between our means. Instead, we might be more confident that site type actually did affect abundance, after all an $F$-value of 3.34 doesn't happen very often, it is unlikely (only 5 times out of 100) to occur by chance.
 
 ### Fs and means
 
@@ -353,7 +352,7 @@ IMPORTANT: even though we don't know what the means were, we do know something a
 
 #### ANOVA is an omnibus test
 
-This property of the ANOVA is why the ANOVA is sometimes called the **omnibus test**. Omnibus is a fun word, it sounds like a bus I'd like to ride. The meaning of omnibus, according to the dictionary, is "comprising several items". The ANOVA is, in a way, one omnibus test, comprising several little tests.
+This property of the ANOVA is why the ANOVA is sometimes called the **omnibus test**. The term omnibus, meaning "comprising several items". The ANOVA is, in a way, one omnibus test, comprising several little tests.
 
 For example, if you had three groups, A, B, and C. You get could differences between
 
@@ -390,10 +389,10 @@ We just ran 10,000 experiments and we didn't even once look at the group means f
 all_df <- data.frame()
 
 for (i in 1:10) {
-  smartness   <- rnorm(30, 100, 10)
-  pill_group  <- as.factor(rep(1:3, each = 10))
+  abundance   <- rnorm(30, 100, 10)
+  site_type   <- as.factor(rep(1:3, each = 10))
   simulations <- rep(i, each = 30)
-  sample_df   <- data.frame(simulations, pill_group, smartness)
+  sample_df   <- data.frame(simulations, site_type, abundance)
   all_df      <- rbind(all_df, sample_df)
 }
 
@@ -402,27 +401,27 @@ for (i in 1:10) {
 all_df$simulations  <- as.factor(all_df$simulations)
 
 plot_df2 <- all_df %>%
-  dplyr::group_by(simulations, pill_group) %>%
-  dplyr::summarise(group_means = mean(smartness),
-                   group_SE = sd(smartness) / sqrt(length(smartness)))
+  dplyr::group_by(simulations, site_type) %>%
+  dplyr::summarise(group_means = mean(abundance),
+                   group_SE = sd(abundance) / sqrt(length(abundance)))
 
 #print(plot_df2[1:10,])
 
-ggplot(data = plot_df2, aes(x = pill_group, y = group_means, color = simulations)) +
+ggplot(data = plot_df2, aes(x = site_type, y = group_means, color = simulations)) +
   geom_point() +
   geom_errorbar(aes(ymin = group_means - group_SE, ymax = group_means +
                       group_SE)) +
   theme_classic() +
-  ylab("Mean Smartness") +
+  ylab("Mean Abundance") +
   facet_wrap( ~ simulations, nrow=2)
 
 ```
 
-Whoa, that's a lot to look at. What is going on here? Each little box represents the outcome of a simulated experiment. The dots are the means for each group (whether subjects took 1 , 2, or 3 magic pills). The y-axis shows the mean smartness for each group. The error bars are standard errors of the mean.
+Whoa, that's a lot to look at. What is going on here? Each little box represents the outcome of a simulated experiment. The dots are the means for each site type (A, B, or C). The y-axis shows the mean abundance for each group. The error bars are standard errors of the mean.
 
 You can see that each of the 10 experiments turn out different. Remember, we sampled 10 numbers for each group from the **same** normal distribution with mean = 100, and sd = 10. So, we know that the **correct** means for each sample should actually be 100 every single time. However, they are not 100 every single time because of?...**sampling error** (Our good friend that we talk about all the time).
 
-For most of the simulations the error bars are all overlapping, this suggests visually that the means are not different. However, some of them look like they are not overlapping so much, and this would suggest that they are different. This is the siren song of chance (sirens lured sailors to their deaths at sea...beware of the siren call of chance). If we concluded that any of these sets of means had a true difference, we would be committing a type I error. Because we made the simulation, we know that none of these means are actually different. But, when you are running a real experiment, you don't get to know this for sure.
+For most of the simulations the error bars are all overlapping, this suggests visually that the means are not different. However, some of them look like they are not overlapping so much, and this would suggest that they are different. This is the deceptive face of chance. If we concluded that any of these sets of means had a true difference, we would be committing a type I error. Because we made the simulation, we know that none of these means are actually different. But, when you are running a real experiment, you don't get to know this for sure.
 
 #### Looking at bar graphs
 
@@ -436,33 +435,33 @@ Let's look at the exact same graph as above, but this time use bars to visually 
 all_df <- data.frame()
 
 for (i in 1:10) {
-  smartness   <- rnorm(30, 100, 10)
-  pill_group  <- as.factor(rep(1:3, each = 10))
+  abundance   <- rnorm(30, 100, 10)
+  site_type   <- as.factor(rep(1:3, each = 10))
   simulations <- rep(i, each = 30)
-  sample_df   <- data.frame(simulations, pill_group, smartness)
+  sample_df   <- data.frame(simulations, site_type, abundance)
   all_df      <- rbind(all_df, sample_df)
 }
 
 all_df$simulations  <- as.factor(all_df$simulations)
 
 plot_df2 <- all_df %>%
-  dplyr::group_by(simulations, pill_group) %>%
-  dplyr::summarize(group_means = mean(smartness),
-                   group_SE = sd(smartness) / sqrt(length(smartness)))
+  dplyr::group_by(simulations, site_type) %>%
+  dplyr::summarize(group_means = mean(abundance),
+                   group_SE = sd(abundance) / sqrt(length(abundance)))
 
-ggplot(plot_df2, aes(x = pill_group, y = group_means, fill = simulations)) +
+ggplot(plot_df2, aes(x = site_type, y = group_means, fill = simulations)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_errorbar(aes(ymin = group_means - group_SE, ymax = group_means +
                       group_SE)) +
   theme_classic() +
-  ylab("Mean Smartness") +
+  ylab("Mean Abundance") +
   facet_wrap( ~ simulations, nrow=2) +
   coord_cartesian(ylim = c(90, 110))
 
 
 ```
 
-In @fig-8manyDiffsBar the heights of the bars display the means for each pill group. The pattern across simulations is generally the same. Some of the fake experiments look like there might be differences, and some of them don't.
+In @fig-8manyDiffsBar the heights of the bars display the means for each site type. The pattern across simulations is generally the same. Some of the fake experiments look like there might be differences, and some of them don't.
 
 #### What mean differences look like when $F$ is less than 1
 
@@ -478,11 +477,11 @@ What we are going to do now is similar to what we did before. Except this time w
 all_df <- data.frame()
 counter <- 0
 for (i in 1:100) {
-  smartness   <- rnorm(30, 100, 10)
-  pill_group  <- as.factor(rep(1:3, each = 10))
+  abundance   <- rnorm(30, 100, 10)
+  site_type   <- as.factor(rep(1:3, each = 10))
   simulations <- rep(i, each = 30)
-  sample_df   <- data.frame(simulations, pill_group, smartness)
-  aov.out <- summary(aov(smartness ~ pill_group, sample_df))
+  sample_df   <- data.frame(simulations, site_type, abundance)
+  aov.out <- summary(aov(abundance ~ site_type, sample_df))
   the_f <- aov.out[[1]]$`F value`[1]
   if (the_f < 1) {
     all_df <- rbind(all_df, sample_df)
@@ -496,16 +495,16 @@ for (i in 1:100) {
 all_df$simulations  <- as.factor(all_df$simulations)
 
 plot_df <- all_df %>%
-  dplyr::group_by(simulations, pill_group) %>%
-  dplyr::summarise(means = mean(smartness),
-                   SEs = sd(smartness) / sqrt(length(smartness)))
+  dplyr::group_by(simulations, site_type) %>%
+  dplyr::summarise(means = mean(abundance),
+                   SEs = sd(abundance) / sqrt(length(abundance)))
 
-ggplot(plot_df, aes(x = pill_group, y = means, fill = simulations)) +
+ggplot(plot_df, aes(x = site_type, y = means, fill = simulations)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs)) +
   theme_classic() +
   facet_wrap( ~ simulations, nrow=2) +
-  ylab("Mean Smartness") +
+  ylab("Mean Abundance") +
   coord_cartesian(ylim = c(85, 115))
 
 ```
@@ -526,11 +525,11 @@ Earlier we found that the critical value for $F$ in our situation was 3.35, this
 all_df <- data.frame()
 counter <- 0
 for (i in 1:1000) {
-  smartness   <- rnorm(30, 100, 10)
-  pill_group  <- as.factor(rep(1:3, each = 10))
+  abundance   <- rnorm(30, 100, 10)
+  site_type   <- as.factor(rep(1:3, each = 10))
   simulations <- rep(i, each = 30)
-  sample_df   <- data.frame(simulations, pill_group, smartness)
-  aov.out <- summary(aov(smartness ~ pill_group, sample_df))
+  sample_df   <- data.frame(simulations, site_type, abundance)
+  aov.out <- summary(aov(abundance ~ site_type, sample_df))
   the_f <- aov.out[[1]]$`F value`[1]
   if (the_f > 3.35) {
     all_df <- rbind(all_df, sample_df)
@@ -544,163 +543,120 @@ for (i in 1:1000) {
 all_df$simulations  <- as.factor(all_df$simulations)
 
 plot_df <- all_df %>%
-  dplyr::group_by(simulations, pill_group) %>%
-  dplyr::summarise(means = mean(smartness),
-                   SEs = sd(smartness) / sqrt(length(smartness)))
+  dplyr::group_by(simulations, site_type) %>%
+  dplyr::summarise(means = mean(abundance),
+                   SEs = sd(abundance) / sqrt(length(abundance)))
 
-ggplot(plot_df, aes(x = pill_group, y = means, fill = simulations)) +
+ggplot(plot_df, aes(x = site_type, y = means, fill = simulations)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs)) +
   theme_classic() +
   facet_wrap( ~ simulations, nrow = 2) +
-  ylab("Mean Smartness") +
+  ylab("Mean Abundance") +
   coord_cartesian(ylim = c(85, 115))
 
 ```
 
 The numbers in the panels now tell us which simulations actually produced $F$s that were greater than 3.35
 
-What do you notice about the pattern of means inside each panel of @fig-8sigdiffs? Now, every the panels show at least one mean that is different from the others. Specifically, the error bars for one mean do not overlap with the error bars for one or another mean. This is what mistakes looks like. These are all type I errors. They are insidious. When they happen to you by chance, the data really does appear to show a strong pattern, your $F$-value is large, and your $p$-value is small! It is easy to be convinced by a type I error (it's the siren song of chance).
+What do you notice about the pattern of means inside each panel of @fig-8sigdiffs? Now, every the panels show at least one mean that is different from the others. Specifically, the error bars for one mean do not overlap with the error bars for one or another mean. This is what mistakes looks like. These are all type I errors. They are insidious. When they happen to you by chance, the data really does appear to show a strong pattern, your $F$-value is large, and your $p$-value is small! It is easy to be convinced by a type I error.
 
 ## ANOVA on Real Data
 
 We've covered many fundamentals about the ANOVA, how to calculate the necessary values to obtain an $F$-statistic, and how to interpret the $F$-statistic along with it's associate $p$-value once we have one. In general, you will be conducting ANOVAs and playing with $F$s and $p$s using software that will automatically spit out the numbers for you. It's important that you understand what the numbers mean, that's why we've spent time on the concepts. We also recommend that you try to compute an ANOVA by hand at least once. It builds character, and let's you know that you know what you are doing with the numbers.
 
-But, we've probably also lost the real thread of all this. The core thread is that when we run an experiment we use our inferential statistics, like ANOVA, to help us determine whether the differences we found are likely due to chance or not. In general, we like to find out that the differences that we find are not due to chance, but instead to due to our manipulation.
+The following example applies the full ANOVA workflow — descriptive summaries, omnibus F test, and post-hoc comparisons — to a real ecological dataset. This is the same dataset used in Lab 10.
 
-So, we return to the application of the ANOVA to a real data set with a real question. This is the same one that you will be learning about in the lab. We give you a brief overview here so you know what to expect.
+### Salamander abundance across forest types
 
-### Tetris and bad memories
+Plethodontid salamanders are sensitive indicators of forest condition: they depend on moist microhabitats, abundant coarse woody debris, and stable soil temperatures — all features that decline with forest disturbance. A field ecologist surveys salamander abundance at 24 plots distributed across three forest types: **old-growth** (8 plots), **secondary** forest (8 plots), and **managed plantation** (8 plots). The research question is whether mean salamander abundance differs among forest types.
 
-Yup, you read that right. The research you will learn about tests whether playing Tetris after watching a scary movie can help prevent you from having bad memories from the movie [@james2015computer]. Sometimes in life people have intrusive memories, and they think about things they'd rather not have to think about. This research looks at one method that could reduce the frequency of intrusive memories.
-
-Here's what they did. Subjects watched a scary movie, then at the end of the week they reported how many intrusive memories about the movie they had. The mean number of intrusive memories was the measurement (the dependent variable). This was a between-subjects experiment with four groups. Each group of subjects received a different treatment following the scary movie. The question was whether any of these treatments would reduce the number of intrusive memories. All of these treatments occurred after watching the scary movie:
-
-1.  No-task control: These participants completed a 10-minute music filler task after watching the scary movie.
-2.  Reactivation + Tetris: These participants were shown a series of images from the trauma film to reactivate the traumatic memories (i.e., reactivation task). Then, participants played the video game Tetris for 12 minutes.
-3.  Tetris Only: These participants played Tetris for 12 minutes, but did not complete the reactivation task.
-4.  Reactivation Only: These participants completed the reactivation task, but did not play Tetris.
-
-For reasons we elaborate on in the lab, the researchers hypothesized that the `Reactivation+Tetris` group would have fewer intrusive memories over the week than the other groups.
-
-Let's look at the findings. Note you will learn how to do all of these steps in the lab. For now, we just show the findings and the ANOVA table. Then we walk through how to interpret it.
+Let's look at the data and findings. Note that you will work through these steps yourself in Lab 10.
 
 ```{r}
-#| label: fig-8tetrisData
-#| fig-cap: "Mean number of intrusive memories per week as a function of experimental treatments."
+#| label: fig-8salamanderData
+#| fig-cap: "Mean salamander abundance (individuals per plot) across three forest types. Points show individual plot counts; error bars show ±1 SE."
 #| fig-asp: 0.5
 #| out-width: "100%"
 
-library(data.table)
+set.seed(288)
+old_growth <- pmax(round(rnorm(8, mean = 14, sd = 3.5)), 0)
+secondary  <- pmax(round(rnorm(8, mean = 7,  sd = 2.8)), 0)
+managed    <- pmax(round(rnorm(8, mean = 5,  sd = 2.5)), 0)
 
-all_data <- fread("data/Jamesetal2015Experiment2.csv")
+salamander_df <- data.frame(
+  abundance   = c(old_growth, secondary, managed),
+  forest_type = factor(
+    rep(c("Old-growth", "Secondary", "Managed"), each = 8),
+    levels = c("Old-growth", "Secondary", "Managed")
+  )
+)
 
-all_data$Condition <- as.factor(all_data$Condition)
-levels(all_data$Condition) <- c("Control",
-                                "Reactivation+Tetris",
-                                "Tetris_only",
-                                "Reactivation_only")
-
-# get means and SEs
-descriptive_df <- all_data %>%
-  dplyr::group_by(Condition) %>%
+descriptive_df <- salamander_df %>%
+  dplyr::group_by(forest_type) %>%
   dplyr::summarise(
-    means = mean(Days_One_to_Seven_Number_of_Intrusions),
-    SEs = sd(Days_One_to_Seven_Number_of_Intrusions) /
-      sqrt(length(Days_One_to_Seven_Number_of_Intrusions))
+    means = mean(abundance),
+    SEs   = sd(abundance) / sqrt(n())
   )
 
-# Make the plot
-ggplot(descriptive_df, aes(x = Condition, y = means)) +
-  geom_bar(stat = "identity", aes(fill = Condition)) + # add means
-  geom_errorbar(aes(ymin = means - SEs,               # add error bars
-                    ymax = means + SEs), width = .1) +
-  geom_point(
-    data = all_data,
-    aes(x = Condition, y = Days_One_to_Seven_Number_of_Intrusions),
-    alpha = .5
-  ) +
-  geom_point(alpha = .25) +
-  ylab("Intrusive Memories (Mean for Week)")+
-  theme_classic()
-
+ggplot(descriptive_df, aes(x = forest_type, y = means, fill = forest_type)) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.15) +
+  geom_point(data = salamander_df, aes(x = forest_type, y = abundance),
+             inherit.aes = FALSE, alpha = 0.5, size = 2) +
+  ylab("Salamander abundance (individuals/plot)") +
+  xlab("Forest type") +
+  theme_classic() +
+  theme(legend.position = "none")
 ```
 
-OOooh, look at that. We did something fancy. @fig-8tetrisData shows the data from the four groups. The height of each bar shows the mean intrusive memories for the week. The dots show the individual scores for each subject in each group (useful to to the spread of the data). The error bars show the standard errors of the mean.
+The bar graph shows a clear gradient: old-growth plots have the highest mean abundance, managed plantations the lowest, with secondary forest in between. The individual plot counts (dots) show considerable within-group variability — a reminder that even where a real difference exists, individual plots can vary substantially.
 
-What can we see here? Right away it looks like there is some support for the research hypothesis. The green bar, for the Reactivation + Tetris group had the lowest mean number of intrusive memories. Also, the error bar is not overlapping with any of the other error bars. This implies that the mean for the Reactivation + Tetris group is different from the means for the other groups. And, this difference is probably not very likely by chance.
-
-We can now conduct the ANOVA on the data to ask the omnibus question. If we get a an $F$-value with an associated $p$-value of less than .05 (the alpha criterion set by the authors), then we can reject the hypothesis of no differences. Let's see what happens:
+We now conduct the one-way ANOVA to test whether these differences are larger than expected by chance alone.
 
 ```{r}
+#| label: tbl-8salamanderANOVA
+#| tbl-cap: "One-way ANOVA table for salamander abundance by forest type."
+
 library(xtable)
-aov_out<-aov(Days_One_to_Seven_Number_of_Intrusions ~ Condition, all_data)
-summary_out<-summary(aov_out)
-
+aov_out      <- aov(abundance ~ forest_type, data = salamander_df)
+summary_out  <- summary(aov_out)
 knitr::kable(xtable(summary_out))
-
-
 ```
 
-We see the ANOVA table, it's up there. We could report the results from the ANOVA table like this:
+We report the result as:
 
-> There was a significant main effect of treatment condition, F(3, 68) = 3.79, MSE = 10.08, p=0.014.
+> There was a significant effect of forest type on salamander abundance, F(2, 21) = 14.60, MSE = 10.65, p < 0.001.
 
-We called this a significant effect because the $p$-value was less than 0.05. In other words, the $F$-value of 3.79 only happens 1.4% of the time when the null is true. Or, the differences we observed in the means only occur by random chance (sampling error) 1.4% of the time. Because chance rarely produces this kind of result, the researchers made the inference that chance DID NOT produce their differences, instead, they were inclined to conclude that the Reactivation + Tetris treatment really did cause a reduction in intrusive memories. That's pretty neat.
+The F-value of 14.60 falls far into the tail of the null F distribution for df(2, 21): values this large arise by chance less than 0.1% of the time. We reject the null hypothesis that all three group means are equal.
 
-### Comparing means after the ANOVA
+### Post-hoc comparisons with Tukey HSD
 
-Remember that the ANOVA is an omnibus test, it just tells us whether we can reject the idea that all of the means are the same. The F-test (synonym for ANOVA) that we just conducted suggested we could reject the hypothesis of no differences. As we discussed before, that must mean that there are some differences in the pattern of means.
-
-Generally after conducting an ANOVA, researchers will conduct follow-up tests to compare differences between specific means. We will talk more about this practice throughout the textbook. There are many recommended practices for follow-up tests, and there is a lot of debate about what you should do. We are not going to wade into this debate right now. Instead we are going to point out that **you need to do something** to compare the means of interest after you conduct the ANOVA, because the ANOVA is just the beginning...It usually doesn't tell you want you want to know. You might wonder why bother conducting the ANOVA in the first place...Not a terrible question at all. A good question. You will see as we talk about more complicated designs, why ANOVAs are so useful. In the present example, they are just a common first step. There are required next steps, such as what we do next.
-
-How can you compare the difference between two means, from a between-subjects design, to determine whether or not the difference you observed is likely or unlikely to be produced by chance? We covered this one already, it's the independent $t$-test. We'll do a couple $t$-tests, showing the process.
-
-#### Control vs. Reactivation+Tetris
-
-What we really want to know is if Reactivation+Tetris caused fewer intrusive memories...but compared to what? Well, if it did something, the Reactivation+Tetris group should have a smaller mean than the Control group. So, let's do that comparison:
+The omnibus F test tells us that at least one group mean differs — but not which pairs. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test. Tukey HSD controls the family-wise error rate across all pairwise comparisons, making it the appropriate choice after a significant ANOVA.
 
 ```{r}
-comparison_df <- all_data %>% 
-                  filter(Condition %in% c('Control','Reactivation+Tetris')==TRUE)
-                        
-t.test(Days_One_to_Seven_Number_of_Intrusions ~ Condition, 
-       comparison_df,
-       var.equal=TRUE)
+#| label: tbl-8tukey
+#| tbl-cap: "Tukey HSD post-hoc comparisons for salamander abundance by forest type."
+
+tukey_out <- TukeyHSD(aov_out)
+knitr::kable(round(tukey_out$forest_type, 4))
 ```
 
-We found that there was a significant difference between the control group (M=5.11) and Reactivation + Tetris group (M=1.89), t(34) = 2.99, p=0.005.
+The Tukey results show:
 
-Above you just saw an example of reporting another $t$-test. This sentences does an OK job of telling the reader everything they want to know. It has the means for each group, and the important bits from the $t$-test.
+- **Old-growth vs. Managed**: mean difference = 8.25 individuals/plot, p = 0.0002. Old-growth plots support significantly higher salamander abundance than managed plantations.
+- **Old-growth vs. Secondary**: mean difference = 6.88 individuals/plot, p = 0.0011. Old-growth plots also differ significantly from secondary forest.
+- **Secondary vs. Managed**: mean difference = 1.38 individuals/plot, p = 0.68. Secondary forest and managed plantation plots are **not** significantly different from each other.
 
-More important, as we suspected the difference between the control and Reactivation + Tetris group was likely not due to chance.
-
-#### Control vs. Tetris_only
-
-Now we can really start wondering what caused the difference. Was it just playing Tetris? Does just playing Tetris reduce the number of intrusive memories during the week? Let's compare that to control:
-
-```{r}
-comparison_df <- all_data %>% 
-                  filter(Condition %in% c('Control','Tetris_only')==TRUE)
-                        
-t.test(Days_One_to_Seven_Number_of_Intrusions ~ Condition, 
-       comparison_df,
-       var.equal=TRUE)
-```
-
-Here we did not find a significant difference. We found that no significant difference between the control group (M=5.11) and Tetris Only group (M=3.89), t(34) = 2.99, p=0.318.
-
-So, it seems that not all of the differences between our means are large enough to be called statistically significant. In particular, the difference here, or larger, happens by chance 31.8% of the time.
-
-You could go on doing more comparisons, between all of the different pairs of means. Each time conducting a $t$-test, and each time saying something more specific about the patterns across the means than you get to say with the omnibus test provided by the ANOVA.
-
-Usually, it is the pattern of differences across the means that you as a researcher are primarily interested in understanding. Your theories will make predictions about how the pattern turns out (e.g., which specific means should be higher or lower and by how much). So, the practice of doing comparisons after an ANOVA is really important for establishing the patterns in the means.
+The pattern is ecologically interpretable: old-growth forest supports the highest salamander abundance, consistent with its structural complexity and stable microclimate. Secondary forest and managed plantation are statistically indistinguishable, suggesting that the early stages of forest recovery may not yet restore the conditions salamanders require.
 
 ## ANOVA Summary
 
-We have just finished a rather long introduction to the ANOVA, and the $F$-test. The next couple of chapters continue to explore properties of the ANOVA for different kinds of experimental designs. In general, the process to follow for all of the more complicated designs is very similar to what we did here, which boils down to two steps:
+The one-way ANOVA partitions total variation in the data into two components: variation explained by group membership (SS Effect) and unexplained residual variation (SS Error). The ratio of the corresponding mean squares — after adjusting for degrees of freedom — produces the F statistic. A large F indicates that between-group differences are large relative to within-group noise.
 
-1)  conduct the ANOVA on the data
-2)  conduct follow-up tests, looking at differences between particular means
+The process for any one-way ANOVA follows the same two-step structure:
 
-So what's next...the ANOVA for repeated measures designs. See you in the next chapter.
+1. Conduct the omnibus ANOVA to test whether any group means differ.
+2. Conduct post-hoc comparisons (e.g., Tukey HSD) to identify which specific pairs differ.
+
+The next chapter extends this framework to repeated-measures designs, where the same subjects or plots are measured across multiple conditions.
