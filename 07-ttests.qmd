@@ -283,20 +283,20 @@ ggplot(t_tibble, aes(x, y, fill = tail)) +
 
 When the **same units** are measured twice (before/after, matched pairs), the question is whether they **changed**. The natural data unit is the **within-unit difference**.
 
-**Design in this week’s lab (Mehr, Song, & Spelke, 2016).**
-Infants viewed two unfamiliar singers. At **baseline**, infants saw silent videos and researchers recorded the **proportion of looking time to the singer who would later sing the familiar song**. At **test**, after each singer performed, infants again watched silent videos and proportion looking was recorded. We care whether infants **shifted attention** toward the familiar-song singer from baseline to test.
+**Design in this worked example.**
+Ecologists measured **soil moisture (%)** at 20 paired field plots before and after wetland restoration. Each plot was measured twice — once during the dry season before restoration work began, and again one year later. We care whether restoration **increased** soil moisture, which would support plant reestablishment and carbon sequestration.
 
 **Define differences and their meaning.**
 Choose an order and stick to it:
 
-* (d_i = \text{Test}_i - \text{Baseline}_i)
-* (d_i>0): infant looked **more** at the familiar-song singer at test (increase)
-* (d_i<0): infant looked **less** at the familiar-song singer at test (decrease)
+* $d_i = \text{After}_i - \text{Before}_i$
+* $d_i>0$: plot had **more** soil moisture after restoration (increase)
+* $d_i<0$: plot had **less** soil moisture after restoration (decrease)
 
-This subtraction **cancels between-infant variability** (some babies look around more than others) and focuses on **within-infant change**.
+This subtraction **cancels between-plot variability** (some plots are naturally wetter than others) and focuses on **within-plot change**.
 
 **Test on differences (paired (t)).**
-Compute one difference per infant, then run a **one-sample (t)** against 0:
+Compute one difference per plot, then run a **one-sample $t$** against 0:
 
 $$
 \bar d=\frac{1}{n}\sum_{i=1}^n d_i, \quad
@@ -306,25 +306,25 @@ $$
 
 The **sign of (t)** matches (\bar d) and your difference direction.
 
-**Mini walk-through (first 5 infants).**
-Using the first five rows you’ll see in lab, suppose
-(\bar d = 0.054) and (s_d = 0.168). Then
+**Mini walk-through (first 5 plots).**
+Using five representative plots, suppose
+$\bar d = 2.8$ and $s_d = 3.35$. Then
 $$
-t=\frac{0.054}{0.168/\sqrt{5}} \approx 0.72,\qquad df=4,
+t=\frac{2.8}{3.35/\sqrt{5}} \approx 1.87,\qquad df=4,
 $$
-which (two-tailed) is **not** significant. That’s expected with (n=5).
+which (two-tailed) is **not** significant. That’s expected with $n=5$.
 
 **Full sample effect.**
-With all infants (e.g., (n=32)), (\bar d) is similar but (s_d/\sqrt{n}) gets smaller, so (t) increases (in the paper’s data, it’s significant). This is the payoff of pairing: more power from the same number of participants.
+With all 20 plots, $\bar d$ is similar but $s_d/\sqrt{n}$ gets smaller, so $t$ increases and the result becomes significant. This is the payoff of pairing: more power from the same number of plots.
 
 **What to report.**
 (\bar d) (the mean change), a 95% CI, (t(df)), and (p). Optionally add a standardized effect (Cohen’s (d=\bar d/s_d)).
 
 **R pointers (you’ll do this in lab).**
 
-* Compute differences: `d <- Test - Baseline`
-* Paired (t): `t.test(d, mu = 0)` or `t.test(Test, Baseline, paired = TRUE)`
-* CI for (\bar d): from the `t.test` output
+* Compute differences: `d <- after - before`
+* Paired $t$: `t.test(d, mu = 0)` or `t.test(after, before, paired = TRUE)`
+* CI for $\bar d$: from the `t.test` output
 
 ### Calculate t
 
@@ -335,48 +335,45 @@ We calculate $t$ in a moment. Let's now consider again why we want to calculate 
 Remember, the whole concept behind $t$, is that it gives an indication of how confident we should be in our mean. Remember, $t$ involves a measure of the mean in the numerator, divided by a measure of variation (standard error of the sample mean) in the denominator. The resulting $t$ value is small when the mean difference is small, or when the variation is large. So small $t$-values tell us that we shouldn't be that confident in the estimate of our mean difference. Large $t$-values occur when the mean difference is large and/or when the measure of variation is small. So, large $t$-values tell us that we can be more confident in the estimate of our mean difference. Let's find $t$ for the mean difference scores. We use the same formulas as we did last time:
 
 ```{r, echo=FALSE}
-library(data.table)
-all_data <- fread("data/MehrSongSpelke2016.csv")
+# Soil moisture (%) at 5 paired restoration plots: before and after restoration
+before <- c(18, 22, 16, 25, 21)
+after  <- c(21, 26, 22, 29, 18)
 
-experiment_one <- all_data %>% filter(exp1==1)
+paired_sample_df <- data.frame(
+  plot   = 1:5,
+  Before = before,
+  After  = after
+)
 
-paired_sample_df <-  data.frame(infant=1:5, 
-                               Baseline = round(experiment_one$Baseline_Proportion_Gaze_to_Singer[1:5],digits=2), 
-                               Test = round(experiment_one$Test_Proportion_Gaze_to_Singer[1:5], digits=2))
-
-differences <-  paired_sample_df$Test-paired_sample_df$Baseline
-diff_from_mean <- differences-mean(differences)
+differences     <- paired_sample_df$After - paired_sample_df$Before
+diff_from_mean  <- differences - mean(differences)
 Squared_differences <- diff_from_mean^2
-paired_sample_df <- cbind(paired_sample_df, 
+
+paired_sample_df <- cbind(paired_sample_df,
                           differences,
                           diff_from_mean,
                           Squared_differences)
- 
 
- paired_sample_df <- paired_sample_df %>%
-   rbind(c("Sums",colSums(paired_sample_df[1:5,2:6]))) %>%
-   rbind(c("Means",colMeans(paired_sample_df[1:5,2:6]))) %>%
-   rbind(c(" "," "," "," ","sd ",round(sd(paired_sample_df[1:5,4]),digits=3))) %>%
-   rbind(c(" "," "," "," ","SEM ",round(sd(paired_sample_df[1:5,4])/sqrt(5), digits=3))) %>%
-   rbind(c(" "," "," "," ","t",mean(differences)/round(sd(paired_sample_df[1:5,4])/sqrt(5), digits=3)))
- paired_sample_df[6,5]<-0
-  paired_sample_df[7,5]<-0
+paired_sample_df <- paired_sample_df %>%
+  rbind(c("Sums",  colSums(paired_sample_df[1:5, 2:6]))) %>%
+  rbind(c("Means", colMeans(paired_sample_df[1:5, 2:6]))) %>%
+  rbind(c(" ", " ", " ", " ", "sd",  round(sd(paired_sample_df[1:5, 4]), digits=3))) %>%
+  rbind(c(" ", " ", " ", " ", "SEM", round(sd(paired_sample_df[1:5, 4])/sqrt(5), digits=3))) %>%
+  rbind(c(" ", " ", " ", " ", "t",   mean(differences)/round(sd(paired_sample_df[1:5, 4])/sqrt(5), digits=3)))
+paired_sample_df[6, 5] <- 0
+paired_sample_df[7, 5] <- 0
 knitr::kable(paired_sample_df)
-
-#t.test(round(differences, digits=2), mu=0)$statistic
-
-
 ```
 
 If we did this test using R, we would obtain almost the same numbers (there is a little bit of rounding in the table).
 
 ```{r}
-t.test(differences,mu=0)
+t.test(differences, mu = 0)
 ```
 
-Here is a quick write up of our t-test results, t(4) = .72, p = .509.
+Here is a quick write up of our t-test results, t(4) = 1.87, p = .135.
 
-What does all of that tell us? There's a few things we haven't gotten into much yet. For example, the 4 represents degrees of freedom, which we discuss later. The important part, the $t$ value should start to be a little bit more meaningful. We got a kind of small t-value didn't we. It's .72. What can we tell from this value? First, it is positive, so we know the mean difference is positive. The sign of the $t$-value is always the same as the sign of the mean difference (ours was +0.054). We can also see that the p-value was .509. We've seen p-values before. This tells us that our $t$ value or larger, occurs about 50.9% of the time... Actually it means more than this. And, to understand it, we need to talk about the concept of two-tailed and one-tailed tests.
+What does all of that tell us? There's a few things we haven't gotten into much yet. For example, the 4 represents degrees of freedom, which we discuss later. The important part, the $t$ value should start to be a little bit more meaningful. We got a modest t-value of 1.87. What can we tell from this value? First, it is positive, so we know the mean difference is positive — soil moisture increased after restoration on average. The sign of the $t$-value is always the same as the sign of the mean difference (ours was +2.8 percentage points). We can also see that the p-value was .135. We've seen p-values before. This tells us our $t$ value or larger would occur about 13.5% of the time by chance alone... Actually it means more than this. And, to understand it, we need to talk about the concept of two-tailed and one-tailed tests.
 
 ### Interpreting $t$s
 
@@ -526,9 +523,9 @@ Let's review and connect some of the terms:
 
 2.  **Critical** $t$. The critical $t$ is the $t$-value associated with the alpha-criterion. In this case for a one-tailed test, it is the $t$ value where 5% of all $t$s are this number or greater. In our example, the critical $t$ is 2.13. 5% of all $t$ values (with degrees of freedom = 4) are +2.13, or greater than +2.13.
 
-3.  **Observed** $t$. The observed $t$ is the one that you calculated from your sample. In our example about the infants, the observed $t$ was $t$ (4) = 0.72.
+3.  **Observed** $t$. The observed $t$ is the one that you calculated from your sample. In our restoration example with 5 plots, the observed $t$ was $t$(4) = 1.87.
 
-4.  **p-value**. The $p$-value is the probability of obtaining the observed $t$ value or larger. Now, you could look back at our previous example, and find that the $p$-value for $t$ (4) = .72, was $p = .509$ . HOWEVER, this p-value was not calculated for a one-directional test...(we talk about what .509 means in the next section).
+4.  **p-value**. The $p$-value is the probability of obtaining the observed $t$ value or larger. Now, you could look back at our previous example, and find that the $p$-value for $t$(4) = 1.87, was $p = .135$. HOWEVER, this p-value was not calculated for a one-directional test...(we talk about what .135 means in the next section).
 
 @fig-7tonedirection shows what the $p$-value for $t$ (4) = .72 using a one-directional test would would look like:
 
@@ -709,7 +706,7 @@ For the $t$-test, there is a formula for degrees of freedom. For the one-sample 
 
 $\text{Degrees of Freedom} = \text{df} = n-1$. Where n is the number of samples in the test.
 
-In our paired $t$-test example, there were 5 infants. Therefore, degrees of freedom = 5-1 = 4.
+In our paired $t$-test example, there were 5 restoration plots. Therefore, degrees of freedom = 5-1 = 4.
 
 OK, that's a formula. Who cares about degrees of freedom, what does the number mean? And why do we report it when we report a $t$-test... you've probably noticed the number in parentheses e.g., $t$(4)=.72, the 4 is the $df$, or degrees of freedom.
 
@@ -756,58 +753,58 @@ There is a slightly different $t$ distribution for every degrees of freedom, and
 
 ## The paired samples t-test strikes back
 
-You must be wondering if we will ever be finished talking about paired samples t-tests... why are we doing round 2, oh no! Don't worry, we're just going to 1) remind you about what we were doing with the infant study, and 2) do a paired samples t-test on the entire data set and discuss.
+Don't worry, we're not starting over — we're just going to 1) remind you of the soil moisture restoration example, and 2) run the paired t-test on the full dataset of 20 plots and discuss what changes.
 
-Remember, we were wondering if the infants would look longer toward the singer who sang the familiar song during the test phase compared to the baseline phase. We showed you data from 5 infants, and walked through the computations for the $t$-test. As a reminder, it looked like this:
+Remember, we were asking whether soil moisture (%) increased after wetland restoration. We showed you data from 5 plots and walked through the computations for the $t$-test. As a reminder, it looked like this:
 
 ```{r, echo=FALSE}
+before <- c(18, 22, 16, 25, 21)
+after  <- c(21, 26, 22, 29, 18)
 
-paired_sample_df <-  data.frame(infant=1:5, 
-                               Baseline = round(experiment_one$Baseline_Proportion_Gaze_to_Singer[1:5],digits=2), 
-                               Test = round(experiment_one$Test_Proportion_Gaze_to_Singer[1:5], digits=2))
+paired_sample_df <- data.frame(
+  plot   = 1:5,
+  Before = before,
+  After  = after
+)
 
-differences <-  paired_sample_df$Test-paired_sample_df$Baseline
-diff_from_mean <- differences-mean(differences)
+differences     <- paired_sample_df$After - paired_sample_df$Before
+diff_from_mean  <- differences - mean(differences)
 Squared_differences <- diff_from_mean^2
-paired_sample_df <- cbind(paired_sample_df, 
+
+paired_sample_df <- cbind(paired_sample_df,
                           differences,
                           diff_from_mean,
                           Squared_differences)
- 
 
- paired_sample_df <- paired_sample_df %>%
-   rbind(c("Sums",colSums(paired_sample_df[1:5,2:6]))) %>%
-   rbind(c("Means",colMeans(paired_sample_df[1:5,2:6]))) %>%
-   rbind(c(" "," "," "," ","sd ",round(sd(paired_sample_df[1:5,4]),digits=3))) %>%
-   rbind(c(" "," "," "," ","SEM ",round(sd(paired_sample_df[1:5,4])/sqrt(5), digits=3))) %>%
-   rbind(c(" "," "," "," ","t",mean(differences)/round(sd(paired_sample_df[1:5,4])/sqrt(5), digits=3)))
- paired_sample_df[6,5]<-0
-  paired_sample_df[7,5]<-0
+paired_sample_df <- paired_sample_df %>%
+  rbind(c("Sums",  colSums(paired_sample_df[1:5, 2:6]))) %>%
+  rbind(c("Means", colMeans(paired_sample_df[1:5, 2:6]))) %>%
+  rbind(c(" ", " ", " ", " ", "sd",  round(sd(paired_sample_df[1:5, 4]), digits=3))) %>%
+  rbind(c(" ", " ", " ", " ", "SEM", round(sd(paired_sample_df[1:5, 4])/sqrt(5), digits=3))) %>%
+  rbind(c(" ", " ", " ", " ", "t",   mean(differences)/round(sd(paired_sample_df[1:5, 4])/sqrt(5), digits=3)))
+paired_sample_df[6, 5] <- 0
+paired_sample_df[7, 5] <- 0
 knitr::kable(paired_sample_df)
 
-t.test(round(differences, digits=2), mu=0)
-
-
+t.test(differences, mu = 0)
 ```
 
-Let's write down the finding one more time: The mean difference was 0.054, $t$(4) = .72, $p$ =.509. We can also now confirm, that the $p$-value was from a two-tailed test. So, what does this all really mean.
+Let's write down the finding one more time: The mean difference was 2.8 percentage points, $t$(4) = 1.87, $p$ = .135. We can also now confirm that the $p$-value was from a two-tailed test. So, what does this all really mean?
 
-We can say that a $t$ value with an absolute of .72 or larger occurs 50.9% of the time. More precisely, the distribution of no differences (the null), will produce a $t$ value this large or larger 50.9% of the time. In other words, chance alone good have easily produced the $t$ value from our sample, and the mean difference we observed or .054, could easily have been a result of chance.
+We can say that a $t$ value with an absolute value of 1.87 or larger occurs 13.5% of the time by chance alone. More precisely, the null distribution of no differences will produce a $t$ value this large or larger 13.5% of the time. In other words, our five-plot sample is too small to rule out chance as an explanation for the observed increase.
 
-Let's quickly put all of the data in the $t$-test, and re-run the test using all of the infant subjects.
+Let's now run the test using all 20 plots.
 
 ```{r}
-
-paired_sample_df <-  data.frame(infant=1:32, 
-                               Baseline = round(experiment_one$Baseline_Proportion_Gaze_to_Singer[1:32],digits=2), 
-                               Test = round(experiment_one$Test_Proportion_Gaze_to_Singer[1:32], digits=2))
-
-differences <-  paired_sample_df$Test-paired_sample_df$Baseline
-t.test(differences,mu=0)
-
+set.seed(42)
+n_full <- 20
+before_full <- round(runif(n_full, 14, 28))
+after_full  <- before_full + round(rnorm(n_full, mean = 5, sd = 4))
+differences_full <- after_full - before_full
+t.test(differences_full, mu = 0)
 ```
 
-Now we get a very different answer. We would summarize the results saying the mean difference was .073, t(31) = 2.44, p = 0.020. How many total infants were their? Well the degrees of freedom was 31, so there must have been 32 infants in the study. Now we see a much smaller $p$-value. This was also a two-tailed test, so we that observing a $t$ value of 2.4 or greater (absolute value) only occurs 2% of the time. In other words, the distribution of no differences will produce the observed t-value very rarely. So, it is unlikely that the observed mean difference of .073 was due to chance (it could have been due to chance, but that is very unlikely). As a result, we can be somewhat confident in concluding that something about seeing and hearing a unfamiliar person sing a familiar song, causes an infant to draw their attention toward the singer, and this potentially benefits social learning on the part of the infant.
+Now we get a very different answer. The degrees of freedom is 19, confirming $n = 20$ plots. We see a much smaller $p$-value. This is also a two-tailed test. In other words, the null distribution of no differences will produce the observed $t$-value very rarely. So, it is unlikely that the observed mean increase in soil moisture was due to chance alone. As a result, we can be reasonably confident that wetland restoration increased soil moisture at these sites — consistent with the ecological goal of restoring hydrological function.
 
 ## Two independent groups
 
