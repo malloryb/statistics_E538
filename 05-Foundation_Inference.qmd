@@ -15,21 +15,21 @@ source("global_stuff.R")
 
 **Inferential statistics** is the branch of statistics concerned with drawing conclusions about populations or causal relationships from sample data. It provides the tools to answer questions like: did our manipulation actually cause a change, or could the pattern we observed have arisen by random chance alone?
 
-This chapter builds the conceptual foundations for inference using simulation — no formulas yet. The goal is to make the underlying logic explicit and visible before it gets formalized in later chapters.
+This chapter builds the conceptual foundations for inference using simulation --- no formulas yet. The goal is to make the underlying logic explicit and visible before it gets formalized in later chapters.
 
 ## Brief review of Experiments
 
 A controlled experiment is a structured method of data collection designed to support inferences about causality. In environmental science, experiments involve deliberately manipulating one condition while holding others constant, then measuring the response.
 
-Every experiment has two core components. The **independent variable** is the condition under experimental control — the manipulation. The **dependent variable** is what is measured. For example, a researcher studying the effects of wastewater discharge on stream health might compare dissolved oxygen levels at sites downstream of a discharge point against levels at unaffected reference sites. Distance from discharge (affected vs. reference) is the independent variable; dissolved oxygen is the dependent variable.
+Every experiment has two core components. The **independent variable** is the condition under experimental control --- the manipulation. The **dependent variable** is what is measured. For example, a researcher studying the effects of wastewater discharge on stream health might compare dissolved oxygen levels at sites downstream of a discharge point against levels at unaffected reference sites. Distance from discharge (affected vs. reference) is the independent variable; dissolved oxygen is the dependent variable.
 
 Causal forces produce detectable change. If the discharge is genuinely reducing dissolved oxygen, then measurements from affected sites should differ systematically from measurements at reference sites. The experiment is designed to detect that change.
 
-The central question becomes: how do we know if a measured difference between conditions reflects a real causal effect? The short answer is that data always contain variability — measurements fluctuate even when nothing has changed. To decide whether a difference is real, we need tools that can distinguish meaningful change from background noise.
+The central question becomes: how do we know if a measured difference between conditions reflects a real causal effect? The short answer is that data always contain variability --- measurements fluctuate even when nothing has changed. To decide whether a difference is real, we need tools that can distinguish meaningful change from background noise.
 
 ## The data came from a distribution
 
-Understanding where data come from is foundational to inference. This section returns to sampling and distributions from that perspective — not just to describe them, but to ask what they reveal about the process that generated our observations.
+Understanding where data come from is foundational to inference. This section returns to sampling and distributions from that perspective --- not just to describe them, but to ask what they reveal about the process that generated our observations.
 
 A **distribution** specifies what numbers are likely to occur and how often. It sets the constraints on what we can expect to see when we take measurements. Distributions are abstract, but they can be visualized directly with histograms.
 
@@ -59,7 +59,7 @@ ggplot(df,aes(x=a,y=b))+
 
 ```
 
-The y-axis shows probability (0 to 1) and the x-axis shows the values 1 through 10. The flat horizontal line indicates that every value from 1 to 10 has an equal probability of occurring: 1/10 = 0.1. This is the defining property of a uniform distribution — no value is more likely than any other.
+The y-axis shows probability (0 to 1) and the x-axis shows the values 1 through 10. The flat horizontal line indicates that every value from 1 to 10 has an equal probability of occurring: 1/10 = 0.1. This is the defining property of a uniform distribution --- no value is more likely than any other.
 
 Think of the uniform distribution as a number-generating process. If it generates numbers repeatedly, it produces each value with equal frequency: roughly 10% 1s, 10% 2s, and so on. @tbl-5100rand shows 100 numbers sampled from this distribution.
 
@@ -139,7 +139,7 @@ ggplot(df,aes(x=a))+
 
 ```
 
-Both samples came from the uniform distribution — yet neither histogram looks perfectly flat. This illustrates how sampling error can obscure the true distribution, especially at small sample sizes.
+Both samples came from the uniform distribution --- yet neither histogram looks perfectly flat. This illustrates how sampling error can obscure the true distribution, especially at small sample sizes.
 
 Can we improve things, and make it easier to see if a sample came from a uniform distribution? Yes, we can. All we need to do is increase the **sample-size**. We will often use the letter `n` to refer to sample-size. N is the number of observations in the sample.
 
@@ -250,7 +250,7 @@ ggplot(df,aes(x=a))+
 
 Now that we have increased N, we can see the pattern in each sample becomes more obvious. The histogram for sample 1 has bars near 100, not perfectly flat, but it resembles a uniform distribution. The histogram for sample 2 is not flat looking at all.
 
-By comparing the two histograms, we have already performed a basic statistical inference — we inferred that sample 2 did not come from a uniform distribution. This is the same logic underlying the formal tests covered in later chapters: arrange the data to make the source distribution visible, then judge whether the observed pattern is consistent with a hypothesized one.
+By comparing the two histograms, we have already performed a basic statistical inference --- we inferred that sample 2 did not come from a uniform distribution. This is the same logic underlying the formal tests covered in later chapters: arrange the data to make the source distribution visible, then judge whether the observed pattern is consistent with a hypothesized one.
 
 ```{=html}
 <!--
@@ -282,7 +282,7 @@ You can see the change in measurement between the conditions, it is as obvious a
 
 Random chance can produce apparent differences between groups even when no real difference exists. We have already seen this with sampling: two samples from the same distribution come out differently. The same principle applies when we compare group means. This is a fundamental problem for inference.
 
-To make this concrete, consider a scenario where we expect to find no real difference. A researcher samples pH at 10 randomly selected sites from a stream network. All 10 sites are drawn from the same population — there is no treatment, no environmental gradient, no systematic difference between them. The sites are arbitrarily divided into two groups of 5 (Group A and Group B). Even though there is no real difference, we might still observe a difference in mean pH between the two groups simply because of sampling error.
+To make this concrete, consider a scenario where we expect to find no real difference. A researcher samples pH at 10 randomly selected sites from a stream network. All 10 sites are drawn from the same population --- there is no treatment, no environmental gradient, no systematic difference between them. The sites are arbitrarily divided into two groups of 5 (Group A and Group B). Even though there is no real difference, we might still observe a difference in mean pH between the two groups simply because of sampling error.
 
 Here is data from one run of this scenario:
 
@@ -310,13 +310,13 @@ ggplot(mean_df, aes(x = group, y = ph)) +
 
 ```
 
-The bars are not the same height. Group A and Group B have different mean pH values. Does this mean there is a real environmental difference between the groups? No — both groups were drawn from the same population. The difference is an artifact of sampling error. This is the core inference problem: differences appear even when nothing real caused them. **How can we tell whether an observed difference is real or just the result of chance?**
+The bars are not the same height. Group A and Group B have different mean pH values. Does this mean there is a real environmental difference between the groups? No --- both groups were drawn from the same population. The difference is an artifact of sampling error. This is the core inference problem: differences appear even when nothing real caused them. **How can we tell whether an observed difference is real or just the result of chance?**
 
 ### Differences due to chance can be simulated
 
-Just as we showed that chance can produce spurious correlations with limited reach, we can characterize exactly what chance is capable of producing in a comparison of group means. Once we know what chance typically does — and what it cannot do — we have a basis for judging whether our observed difference falls within or outside its range.
+Just as we showed that chance can produce spurious correlations with limited reach, we can characterize exactly what chance is capable of producing in a comparison of group means. Once we know what chance typically does --- and what it cannot do --- we have a basis for judging whether our observed difference falls within or outside its range.
 
-The first step is to replicate the sampling scenario many times. @fig-5gumballsims shows bar graphs of mean pH for Group A and Group B across 10 replications of the same experiment — all 10 sites sampled from the same population, split 5+5, and means computed.
+The first step is to replicate the sampling scenario many times. @fig-5gumballsims shows bar graphs of mean pH for Group A and Group B across 10 replications of the same experiment --- all 10 sites sampled from the same population, split 5+5, and means computed.
 
 ```{r}
 #| label: fig-5gumballsims
@@ -336,7 +336,7 @@ ggplot(mean_df, aes(x = group, y = ph)) +
 
 ```
 
-These 10 replications show that chance produces different mean differences each time. Sometimes Group A is higher, sometimes Group B is higher, sometimes the means are nearly equal. All of this variation arises from sampling error alone — there is no real difference in the population.
+These 10 replications show that chance produces different mean differences each time. Sometimes Group A is higher, sometimes Group B is higher, sometimes the means are nearly equal. All of this variation arises from sampling error alone --- there is no real difference in the population.
 
 ## Chance makes some differences more likely than others
 
@@ -387,7 +387,7 @@ ggplot(dif_df, aes(y = differences, x = experiment)) +
   ylab("Difference in Mean pH (Group A - Group B)")
 ```
 
-The x-axis spans 100 experiments and is difficult to read, but the important information is on the y-axis. Many different difference sizes occur, but the range is bounded — very large differences (say, greater than 0.5 pH units in either direction) do not appear. This begins to define the window of what chance can produce.
+The x-axis spans 100 experiments and is difficult to read, but the important information is on the y-axis. Many different difference sizes occur, but the range is bounded --- very large differences (say, greater than 0.5 pH units in either direction) do not appear. This begins to define the window of what chance can produce.
 
 To get a clearer picture, we now run 10,000 replications and plot the distribution of difference scores as a histogram. This gives a precise view of which differences happen often and which are extremely rare.
 
@@ -407,9 +407,9 @@ differences <- mean_df[mean_df$group == "A", ]$ph -
 hist(differences, breaks = 50)
 ```
 
-This histogram is the **chance window** for this study design. It shows that chance most often produces a difference near zero — that is the tallest bar in the center. Larger differences in either direction occur less and less frequently. The distribution has a clear boundary: extreme differences are possible but very rare.
+This histogram is the **chance window** for this study design. It shows that chance most often produces a difference near zero --- that is the tallest bar in the center. Larger differences in either direction occur less and less frequently. The distribution has a clear boundary: extreme differences are possible but very rare.
 
-We can use this window to evaluate any observed difference. If a study found a mean pH difference of 0.1 between two groups, that falls well inside the chance window — differences of that size occur frequently by random sampling alone. If the study found a difference of 0.6, that would fall far outside the window; chance produced a difference that large 0 times out of 10,000. When an observed result almost never happens by chance, we have grounds to conclude that something other than chance produced it.
+We can use this window to evaluate any observed difference. If a study found a mean pH difference of 0.1 between two groups, that falls well inside the chance window --- differences of that size occur frequently by random sampling alone. If the study found a difference of 0.6, that would fall far outside the window; chance produced a difference that large 0 times out of 10,000. When an observed result almost never happens by chance, we have grounds to conclude that something other than chance produced it.
 
 ## Simulation-Based Inference
 
@@ -419,7 +419,7 @@ We are going to be doing a lot of inference throughout the rest of this course. 
 Statistics is not only about determining whether chance could have produced a pattern in the observed data. The same tools we are talking about here can be generalized to ask whether any kind of distribution could have produced the differences. This allows comparisons between different models of the data, to see which one was the most likely, rather than just rejecting the unlikely ones (e.g., chance). But, we'll leave those advanced topics for another textbook.
 :::
 
-The simulation-based approach introduced here answers the same question as every formal test in later chapters: **could chance alone have produced the observed difference?** The advantage of starting here is transparency — every step is explicit and the logic is visible before any formulas are introduced.
+The simulation-based approach introduced here answers the same question as every formal test in later chapters: **could chance alone have produced the observed difference?** The advantage of starting here is transparency --- every step is explicit and the logic is visible before any formulas are introduced.
 
 ### Intuitive methods
 
@@ -438,13 +438,13 @@ The approach in this section uses only simple arithmetic operations that you alr
 
 Would you go outside every day if you thought that you would be hit by lightning 1 out of 10 times? At those odds, a person going out daily would expect to be struck more than 30 times per month. 1 in 10 is a high-risk threshold by any practical standard.
 
-Would you go outside every day if you thought lightning would strike 1 out of every 100 days? At that rate, someone going out every day would expect roughly 3–4 strikes per year. Most people would sharply limit their outdoor exposure at 1-in-100 odds.
+Would you go outside every day if you thought lightning would strike 1 out of every 100 days? At that rate, someone going out every day would expect roughly 3--4 strikes per year. Most people would sharply limit their outdoor exposure at 1-in-100 odds.
 
 Would you go outside every day at 1-in-1000 odds? At that frequency, a person going outside daily would expect to be struck roughly once every 3 years. Risk accumulates meaningfully even at odds that initially seem small.
 
-What about 1 in 10,000 days? That translates to roughly one strike every 27 years. At 1-in-10,000 odds, risk accumulates slowly — a person would expect to be struck roughly 36 times per year at 1-in-10 odds, but only once across a lifetime at 1-in-10,000 odds. The practical consequences of different probability thresholds are very different.
+What about 1 in 10,000 days? That translates to roughly one strike every 27 years. At 1-in-10,000 odds, risk accumulates slowly --- a person would expect to be struck roughly 36 times per year at 1-in-10 odds, but only once across a lifetime at 1-in-10,000 odds. The practical consequences of different probability thresholds are very different.
 
-At 1 in 100,000 days — about 273 years — most people would not modify their behavior at all. The probability is so low as to be negligible for practical planning.
+At 1 in 100,000 days --- about 273 years --- most people would not modify their behavior at all. The probability is so low as to be negligible for practical planning.
 
 The point of considering these questions is to get a sense for yourself of what happens a lot, and what doesn't happen a lot, and how you would make important decisions based on what happens a lot and what doesn't.
 
@@ -514,7 +514,7 @@ We're about to move into part three, which involves drawing decision lines and t
 
 ### Part 3: Judgment and Decision-making
 
-We now use the simulated distribution to make a decision about whether the observed difference is consistent with what chance alone could produce. This decision-making structure — compare your result to the distribution of results that chance generates, and judge where your result falls — is the basis for every formal hypothesis test covered in this course.
+We now use the simulated distribution to make a decision about whether the observed difference is consistent with what chance alone could produce. This decision-making structure --- compare your result to the distribution of results that chance generates, and judge where your result falls --- is the basis for every formal hypothesis test covered in this course.
 
 The simulation gives us a concrete foundation for that judgment. We can see which differences chance produced often, which it produced rarely, and which it never produced at all.
 
@@ -586,9 +586,9 @@ ggplot(plot_df, aes(x = difference)) +
 
 ```
 
-We have just drawn some lines, and shaded some regions, and made one plan we could use to make decisions. How would the decisions work. Consider a mean difference between groups A and B of 25. Where is 25 in the figure? It's in the green part. The green region is labeled NOT CHANCE — chance never produced a difference of 25 in 10,000 simulations. If we found a difference of 25, we could confidently conclude that chance did not cause it, and have grounds to consider whether our experimental manipulation produced the effect.
+We have just drawn some lines, and shaded some regions, and made one plan we could use to make decisions. How would the decisions work. Consider a mean difference between groups A and B of 25. Where is 25 in the figure? It's in the green part. The green region is labeled NOT CHANCE --- chance never produced a difference of 25 in 10,000 simulations. If we found a difference of 25, we could confidently conclude that chance did not cause it, and have grounds to consider whether our experimental manipulation produced the effect.
 
-A difference of +10 falls within the red region — the window of what chance did produce in the simulation. Differences inside that window could plausibly have arisen from sampling error alone. A result of +10 does not provide strong grounds for concluding that the manipulation caused the difference.
+A difference of +10 falls within the red region --- the window of what chance did produce in the simulation. Differences inside that window could plausibly have arisen from sampling error alone. A result of +10 does not provide strong grounds for concluding that the manipulation caused the difference.
 
 This is the core logic of statistical inference: compare your observed result to the distribution of results chance could produce. If the observed result falls outside that distribution, chance is an unlikely explanation.
 
@@ -793,9 +793,9 @@ Regardless, there is another way to reduce type I and type II errors, and to inc
 
 ### Part 4: Experiment Design
 
-Study design directly controls the sensitivity of the analysis. It is often possible — and important — to choose a design that is sensitive to the size of effect you care about detecting.
+Study design directly controls the sensitivity of the analysis. It is often possible --- and important --- to choose a design that is sensitive to the size of effect you care about detecting.
 
-Two forces govern whether a study can detect a real effect: the size of the effect and the amount of noise in the data. The design choices you make — primarily sample size — determine how much noise obscures the signal.
+Two forces govern whether a study can detect a real effect: the size of the effect and the amount of noise in the data. The design choices you make --- primarily sample size --- determine how much noise obscures the signal.
 
 Recall what happens to the sampling distribution of the mean as sample size increases: the distribution narrows. The same is true for the distribution of mean differences. As N increases, the range of differences that chance produces shrinks. At very large N, chance produces only very small differences. This means that with a large enough sample, even small real effects can be reliably distinguished from noise.
 
@@ -850,7 +850,7 @@ The point is: **the design of the experiment determines the sizes of the effects
 
 ### Part 5: I have the power
 
-**Statistical power** is the probability that a study will detect a real effect when one exists. A well-powered study is designed so that the sampling distribution of the test statistic — under the assumption that the effect is real — falls reliably outside the null distribution. The key driver of power is sample size: larger samples narrow the null distribution, making real effects easier to distinguish from chance.
+**Statistical power** is the probability that a study will detect a real effect when one exists. A well-powered study is designed so that the sampling distribution of the test statistic --- under the assumption that the effect is real --- falls reliably outside the null distribution. The key driver of power is sample size: larger samples narrow the null distribution, making real effects easier to distinguish from chance.
 
 We have already seen this principle in action. The number of observations in the study changes the sensitivity of the design: more observations means the distribution of chance differences shrinks, which makes it possible to detect smaller real effects.
 
@@ -960,7 +960,7 @@ For example, the data would have come out a bit different if some of the sites f
 
 Practically speaking, it's not possible to run the experiment every possible way, that would take too long. But, we can nevertheless estimate how all of those experiments might have turned out using simulation.
 
-We take all 40 NO₂ readings from both groups and pool them together. Then we randomly assign 20 to a 'near' group and 20 to a 'far' group — as if the original assignment had been done differently. We compute the new group means and their difference. We repeat this process many times to build up a picture of what the difference could have been under random assignment.
+We take all 40 NO₂ readings from both groups and pool them together. Then we randomly assign 20 to a 'near' group and 20 to a 'far' group --- as if the original assignment had been done differently. We compute the new group means and their difference. We repeat this process many times to build up a picture of what the difference could have been under random assignment.
 
 #### Doing the randomization
 
