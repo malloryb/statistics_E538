@@ -1,0 +1,139 @@
+---
+author:
+  - Mallory Barnes
+aliases: [redirects/nonparametric.html]
+---
+
+```{r, include = FALSE}
+source("global_stuff.R")
+```
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(tidyverse)
+```
+
+# When Assumptions Fail: Nonparametric and Categorical Data
+
+## Intro
+
+Chapter 7 covered three flavors of the $t$-test --- one-sample, paired, and independent-groups --- all built on the same continuous-data logic, applied three times. Each of those tests leans on an assumption of (approximate) normality. This chapter covers what to do when that assumption is a stretch, or when your data aren't continuous at all.
+
+Two situations, two kinds of tools:
+
+-   **Nonparametric alternatives.** Your outcome is still continuous, but it's skewed, has outliers, or your sample is too small to trust normality. The **Wilcoxon signed-rank test** and **Mann-Whitney-Wilcoxon test** answer the same questions as the paired and independent $t$-tests, respectively, without assuming normality.
+-   **Categorical data.** Your outcome isn't a number at all --- a site either has an invasive species or it doesn't, a sample either exceeds a threshold or it doesn't. None of the tests above apply here; you need the **chi-square ($\chi^2$) tests**.
+
+One myth worth clearing up up front: nonparametric does **not** mean assumption-free. Each test trades the normality assumption for a different, usually milder one --- we'll state it explicitly for each test below, not just wave at it.
+
+## Nonparametric alternative: the Wilcoxon signed-rank test
+
+Recall the wetland restoration example from Chapter 7: soil moisture (%) measured at 20 paired plots before and after restoration, differences tested with a paired $t$-test. Suppose you looked at a histogram of those differences and weren't convinced they were approximately normal --- maybe there's a long tail, maybe you just don't trust it with only 20 plots. The **Wilcoxon signed-rank test** answers the same question as the paired $t$-test (is there a systematic shift in the differences?) without assuming normality.
+
+**How it works, conceptually.** Instead of using the actual sizes of the differences, the test **ranks** the *absolute* differences from smallest to largest, then checks whether the positive-signed ranks and negative-signed ranks are roughly balanced. If soil moisture really increased at most plots, the larger ranks should belong mostly to positive differences. Because it works with ranks rather than raw values, one wildly extreme plot can't dominate the result the way it could with a mean.
+
+**Its assumption.** The Wilcoxon signed-rank test does not require normality, but it isn't assumption-free: it assumes the differences come from a **symmetric distribution around their median**. That's a milder assumption than normality --- symmetric-but-not-normal distributions are common --- but it's still a real one. If your differences are strongly asymmetric, even this test starts to strain.
+
+```{r}
+set.seed(42)
+n_full <- 20
+before_full <- round(runif(n_full, 14, 28))
+after_full  <- before_full + round(rnorm(n_full, mean = 5, sd = 4))
+differences_full <- after_full - before_full
+
+wilcox.test(differences_full, mu = 0)
+```
+
+(R warns "cannot compute exact p-value with ties" here because our differences include repeated whole-number values --- it falls back to a very good normal approximation instead, which is standard practice and nothing to worry about.)
+
+Compare this to the paired $t$-test result from Chapter 7: $t(19) = 3.39$, $p = .003$. The Wilcoxon signed-rank test gives $V = 178$, $p = .007$ --- a different number, but the same conclusion: unlikely to be chance. That's what you'd hope to see when a parametric test's assumptions were actually fine to begin with --- the nonparametric alternative should largely agree with it, just with a bit less power (because it throws away the exact magnitudes and keeps only the ranks).
+
+**A note on the sign test.** There's an even simpler nonparametric option, the **sign test**, which looks only at whether each difference is positive or negative --- it discards the magnitude entirely and asks whether pluses outnumber minuses more than chance would suggest. It has essentially no distributional assumption beyond the universal one (not even symmetry), which makes it useful when even the Wilcoxon test's assumption feels shaky. That robustness comes at a real cost in power, though, so it's usually a last resort rather than a default choice.
+
+## Nonparametric alternative: the Mann-Whitney-Wilcoxon test
+
+Recall the independent-groups example from Chapter 7: two small fake samples, `a` and `b`, five observations each. The independent-samples $t$-test has its own normality assumption --- and with a sample that small, it's genuinely hard to tell whether that assumption is reasonable. The **Mann-Whitney-Wilcoxon test** (also called the Wilcoxon rank-sum test) is the nonparametric alternative for two independent groups.
+
+**How it works, conceptually.** Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups truly don't differ, ranks should be well mixed between them; if one group tends to have higher values, its ranks should be systematically higher too.
+
+**Its assumption.** This is the assumption worth stating carefully, because it's commonly misstated. The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the **same shape** --- it does *not* require normality, and the assumption is **not** "equal variance," even though same-shape distributions happen to have equal variance as a side effect. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as "the medians differ" becomes murkier --- it could be a difference in location, shape, or both.
+
+```{r}
+a <- c(1,2,3,4,5)
+b <- c(3,5,4,7,9)
+
+wilcox.test(a, b)
+```
+
+(Again, R warns about ties, since `a` and `b` are small integer sets --- it falls back to the normal approximation, same as before.)
+
+Compare to the independent $t$-test from Chapter 7: $t(8) = -2.02$, $p = .078$ --- not significant at $\alpha=.05$. The Mann-Whitney-Wilcoxon test gives $W = 4.5$, $p = .114$ --- also not significant, so the two approaches agree here too, even though the exact $p$-values differ somewhat (unsurprising with only five observations per group).
+
+## Categorical data: the chi-square tests
+
+Every test so far --- the $t$-tests in Chapter 7, and the Wilcoxon and Mann-Whitney-Wilcoxon tests above --- needs a **continuous** outcome variable. But a lot of environmental data isn't continuous at all: a site either has an invasive species or it doesn't; a stream sample either exceeds a safety threshold or it doesn't; a plot falls into one land-cover category, not a number line. For **categorical** data, none of the tests above apply --- you need a different tool entirely: the **chi-square ($\chi^2$) test**.
+
+Chapter 4 introduced the shape of the chi-square distribution --- always non-negative, right-skewed, naturally one-tailed, with its exact shape depending on degrees of freedom. Here's what that rejection region looks like in practice, using the goodness-of-fit example below, which has $df = 3$. The critical value at $\alpha = .05$ is `r round(qchisq(.95, 3), 2)` --- any statistic beyond that point (the shaded region) occurs less than 5% of the time by chance.
+
+```{r}
+#| label: fig-8chisq-crit
+#| fig-cap: "The chi-square distribution with df = 3. The shaded region marks the rejection region at alpha = .05 (critical value 7.81). Our goodness-of-fit statistic, X-squared = 5.4, falls short of it."
+
+crit <- qchisq(.95, 3)
+x3 <- seq(0.01, 16, length.out = 500)
+df3 <- tibble(x = x3, density = dchisq(x3, 3))
+
+ggplot(df3, aes(x, density)) +
+  geom_line(linewidth = 1) +
+  geom_area(data = filter(df3, x >= crit), fill = "red", alpha = 0.4) +
+  geom_vline(xintercept = crit, linetype = 2) +
+  geom_vline(xintercept = 5.4, color = "blue", linewidth = 1) +
+  annotate("text", x = crit, y = max(df3$density) * 0.9, label = "critical value\n7.81", hjust = -0.1) +
+  annotate("text", x = 5.4, y = max(df3$density) * 0.7, label = "observed\nX² = 5.4", color = "blue", hjust = 1.1) +
+  theme_classic(base_size = 13) +
+  labs(x = expression(chi^2*" (df = 3)"), y = "Density")
+```
+
+There are two versions of the chi-square test, depending on the question you're asking.
+
+### Chi-square goodness-of-fit: does one categorical variable match an expected pattern?
+
+A state wildlife agency has historically found fish evenly distributed across four zones of a lake --- 25% of fish in each zone. This year's survey of 200 fish gives a different picture:
+
+```{r}
+observed_gof <- c(A = 38, B = 61, C = 52, D = 49)
+observed_gof
+```
+
+**The question:** does this year's distribution across zones differ from the historical 25%-each pattern, or is this the kind of unevenness you'd expect from random sampling alone?
+
+```{r}
+chisq.test(observed_gof, p = rep(0.25, 4))
+```
+
+**Assumption.** The goodness-of-fit test's main requirement is about sample size relative to categories: **expected counts should generally be 5 or more** in each category (here, expected count is $200 \times 0.25 = 50$ per zone --- comfortably above that). When expected counts are too small, the chi-square approximation breaks down and a different method (like Fisher's exact test) is more appropriate.
+
+**Interpretation.** $\chi^2(3) = 5.4$, $p = .145$ --- not significant. This year's zone counts are consistent with the historical 25%-each pattern; the unevenness we see is within the range chance alone would produce.
+
+### Chi-square test of independence: are two categorical variables related?
+
+Now suppose researchers classify 150 stream sites by **land use** (Forested, Agricultural, Urban) and whether each site's *E. coli* level **exceeds** a recreational safety threshold:
+
+```{r}
+tab <- matrix(c(42, 8,
+                 25, 25,
+                 20, 30), nrow = 3, byrow = TRUE,
+              dimnames = list(LandUse = c("Forested","Agricultural","Urban"),
+                               Exceeds = c("No","Yes")))
+tab
+```
+
+**The question:** is *E. coli* exceedance **independent** of land use, or are they related? ($H_0$: land use and exceedance are independent; $H_A$: they are not.)
+
+```{r}
+chisq.test(tab)
+```
+
+**Assumption.** Same rule as goodness-of-fit --- expected counts should generally be 5 or more in every cell of the table. Here all six expected counts are between 21 and 29, well within range.
+
+**Interpretation.** $\chi^2(2) = 21.84$, $p < .001$ --- strongly significant. *E. coli* exceedance is not independent of land use: forested sites exceed the threshold far less often (8 of 50) than agricultural (25 of 50) or urban (30 of 50) sites. Note what this test does *not* tell you: it says the two variables are related, but --- just like correlation --- it doesn't by itself establish that land use *causes* the exceedance.
