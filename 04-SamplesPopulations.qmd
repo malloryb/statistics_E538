@@ -959,6 +959,32 @@ Once standardized, areas under the normal curve tell you how unusual a score is.
 
 Finally, z-scores are also called **standardized scores** because they express distance from the mean in SD units.
 
+## The chi-square distribution
+
+Not every named distribution is symmetric like the normal. The **chi-square ($\chi^2$) distribution** is another shape you'll see repeatedly once we get to hypothesis testing, particularly for categorical data, where the question isn't "how far is this mean from that one?" but "how far are these observed counts from what we'd expect?"
+
+```{r}
+#| label: fig-4chisq-shapes
+#| fig-cap: "Chi-square distributions for three degrees of freedom. Unlike the (symmetric) normal distribution, chi-square is always non-negative and right-skewed; as df increases, the distribution shifts right and becomes more symmetric."
+
+library(tidyverse)
+
+x <- seq(0.01, 20, length.out = 500)
+chisq_shapes <- expand.grid(x = x, df = c(2, 4, 8)) |>
+  mutate(density = dchisq(x, df), df = factor(df, labels = paste0("df = ", c(2, 4, 8))))
+
+ggplot(chisq_shapes, aes(x, density, color = df)) +
+  geom_line(linewidth = 1) +
+  theme_classic(base_size = 13) +
+  labs(x = expression(chi^2), y = "Density", color = NULL)
+```
+
+Two things make chi-square look different from the normal shapes above. First, a chi-square statistic is built from *squared* deviations between observed and expected counts, so it can never be negative: the distribution starts at 0 and has no left tail at all. Second, its exact shape depends on degrees of freedom: with few df it's sharply right-skewed (most of the probability mass sits near 0, with a long tail to the right), and as df grows it stretches rightward and becomes more symmetric.
+
+This also means chi-square tests are naturally **one-tailed**: because deviations in *either* direction from expected get squared before being added up, only large positive values of the statistic are ever "surprising." There's no equivalent of a negative $z$-value to worry about.
+
+You'll put this distribution to work later for the chi-square goodness-of-fit and test-of-independence, once you have the hypothesis-testing framework (Chapter 6) to build a decision around it.
+
 ## Estimating population parameters
 
 ### Why estimate? (two quick motivations)
@@ -1022,37 +1048,11 @@ knitr::include_graphics("imgs/navarro_img/estimation/biasSD-eps-converted-to.png
 
 ### Why variance needs a small correction
 
-The reason comes from how variance is defined. The sample variance is
+Chapter 2 walked through *why* this happens in detail, with worked examples, an 8,000-sample simulation, and the full intuition (see "Sample vs. Population Standard Deviation: Why n - 1?"). The short version: the sample mean $\bar X$ is built *from* the same points used to measure spread, which pulls those points artificially close to $\bar X$ and shrinks the naive variance estimate. Dividing by $N-1$ instead of $N$ corrects that shrinkage:
 
-$$s^2 = \frac{1}{N}\sum_{i=1}^N (X_i-\bar X)^2.$$
+$$s^2 = \frac{1}{N}\sum_{i=1}^N (X_i-\bar X)^2 \ \text{(biased small)} \qquad \hat\sigma^2 = \frac{1}{N-1}\sum_{i=1}^N (X_i-\bar X)^2 \ \text{(unbiased)}$$
 
-On average, this formula underestimates the true variance $\sigma^2$.
-
-The standard fix is simple: divide by $N-1$ instead of $N$.
-
-$$\hat\sigma^2 = \frac{1}{N-1}\sum_{i=1}^N (X_i-\bar X)^2.$$
-
-This $\hat\sigma^2$ is an unbiased estimator of $\sigma^2$. For standard deviation, we use
-
-$$\hat\sigma = \sqrt{\hat\sigma^2}.$$
-
-Strictly, $\hat\sigma$ is still slightly biased for $\sigma$, but it is conventional and practically preferred.
-
-Practice and terminology
-
--   Software defaults: Some functions divide by $N-1$, others by $N$. Always check.
-
-Terminology:
-
--   $s$ (divide by $N$): property of the sample, but biased for $\sigma$.
-
--   $\hat\sigma$ (divide by $N-1$): estimate of the population SD.
-
-In everyday analysis, most people report $\hat\sigma$ but casually call it the "sample SD." It's fine in practice, but conceptually it's worth keeping the distinction clear: $s$ describes what you observed, while $\hat\sigma$ is your best guess at the population's variability.
-
-::: callout-note
-The $N-1$ correction matters most for small samples. When $N$ is large, the difference between dividing by $N$ and $N-1$ becomes negligible, since $N$ and $N-1$ are nearly the same. In practice, the correction only noticeably affects estimates when sample sizes are small.
-:::
+As with Chapter 2, the correction matters most when $N$ is small and becomes negligible as $N$ grows.
 
 To summarize:
 
@@ -1067,6 +1067,8 @@ To summarize:
 > Statistics means never having to say you're certain -- Unknown origin
 
 So far, we've focused on using sample data to estimate population parameters, but every estimate comes with some uncertainty. A single number, like "the mean IQ is 115," doesn't capture how confident we are. What we want is a range that likely contains the true population mean. That range is called a **confidence interval (CI)**.
+
+You'll use this directly in Chapter 6, where a confidence interval becomes one of three equivalent ways to decide whether to reject $H_0$. For now, let's see where it comes from.
 
 **The Idea**
 
