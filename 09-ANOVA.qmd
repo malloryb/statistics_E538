@@ -14,6 +14,9 @@ source("global_stuff.R")
 ```{r}
 library(ggplot2)
 library(dplyr)
+library(broom)
+
+fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = "f"))
 ```
 
 A fun bit of stats history [@salsburg2001lady]. Sir Ronald Fisher invented the ANOVA, which we learn about in this section. He wanted to publish his new test in the journal Biometrika. The editor at the time was Karl Pearson (remember Pearson's $r$ for correlation?). Pearson and Fisher were apparently not on good terms, they didn't like each other. Pearson refused to publish Fisher's new test. So, Fisher eventually published his work in the Journal of Agricultural Science. Funnily enough, the feud continued onto the next generation. Years after Fisher published his ANOVA, Karl Pearson's son Egon Pearson, and Jersey Neyman revamped Fisher's ideas, and re-cast them into what is commonly known as null vs. alternative hypothesis testing. Fisher didn't like this very much.
@@ -630,9 +633,40 @@ We report the result as:
 
 The F-value of 14.60 falls far into the tail of the null F distribution for df(2, 21): values this large arise by chance less than 0.1% of the time. We reject the null hypothesis that all three group means are equal.
 
+### Checking ANOVA's assumptions
+
+Before trusting this result and moving on to post-hoc comparisons, it's worth pausing to check whether ANOVA's assumptions actually hold. (Recall from Chapter 7 that independence is the universal assumption that applies to every test we cover and won't be re-listed here; what follows are ANOVA's *test-specific* assumptions.)
+
+ANOVA has two: **homogeneity of variance** (the groups' spread around their own means should be roughly comparable) and **approximately normal residuals** (the leftover variation after accounting for group membership should be roughly bell-shaped). Both matter for the same underlying reason: the F-test pools information across groups into single numbers (a common error variance, a reference F-distribution), and that pooling is only trustworthy if the groups are behaving similarly enough to be pooled.
+
+```{r}
+library(car)
+levene_out <- leveneTest(abundance ~ forest_type, data = salamander_df)
+
+knitr::kable(
+  broom::tidy(levene_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)),
+  col.names = c("Statistic (F)", "p-value", "df", "df residual"),
+  caption = "Levene's test for homogeneity of variance"
+)
+```
+
+```{r}
+shapiro_out <- shapiro.test(residuals(aov_out))
+
+knitr::kable(
+  broom::tidy(shapiro_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)),
+  col.names = c("Statistic (W)", "p-value", "Method"),
+  caption = "Shapiro-Wilk test on ANOVA residuals"
+)
+```
+
+Levene's test gives $F(2,21) = 0.52$, $p = .60$: no evidence of unequal variance across forest types. The Shapiro-Wilk test on the model's residuals gives $W = 0.93$, $p = .078$: no strong evidence against normality either. Both checks are consistent with the boxplot and dot plot we already looked at in @fig-8salamanderData: similar spread across groups, no glaring outliers.
+
+**A word of caution about formal assumption tests.** It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." Resist that. These tests have an awkward property: with a small sample (exactly when a violated assumption matters most), they have low power and will often say "no problem" even when there is one; with a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." A formal test is one piece of evidence, not the whole verdict, so look at the diagnostic plots too and use judgment. In practice, one-way ANOVA is moderately robust to mild departures from these assumptions, especially with balanced group sizes like we have here (8 plots per forest type). The situation to genuinely worry about is the combination of small, unbalanced samples with visibly skewed data or wildly different spreads, and that's exactly when the nonparametric alternative below becomes the better choice.
+
 ### Post-hoc comparisons with Tukey HSD
 
-The omnibus F test tells us that at least one group mean differs --- but not which pairs. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test. Tukey HSD controls the family-wise error rate across all pairwise comparisons, making it the appropriate choice after a significant ANOVA.
+The omnibus F test tells us that at least one group mean differs, but not which pairs. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test. Tukey HSD controls the family-wise error rate across all pairwise comparisons, making it the appropriate choice after a significant ANOVA.
 
 ```{r}
 #| label: tbl-8tukey
@@ -649,6 +683,41 @@ The Tukey results show:
 -   **Secondary vs. Managed**: mean difference = 1.38 individuals/plot, p = 0.68. Secondary forest and managed plantation plots are **not** significantly different from each other.
 
 The pattern is ecologically interpretable: old-growth forest supports the highest salamander abundance, consistent with its structural complexity and stable microclimate. Secondary forest and managed plantation are statistically indistinguishable, suggesting that the early stages of forest recovery may not yet restore the conditions salamanders require.
+
+### Nonparametric alternative: the Kruskal-Wallis test
+
+Our assumption checks above came back clean, so the ANOVA result stands as-is. But suppose they hadn't: visibly unequal spread across groups, or clearly skewed residuals, especially with small or unbalanced samples. The **Kruskal-Wallis test** is the nonparametric alternative to one-way ANOVA, in exactly the same relationship that the Mann-Whitney-Wilcoxon test has to the independent-samples $t$-test (in fact, Kruskal-Wallis *is* the Mann-Whitney-Wilcoxon logic extended to more than two groups).
+
+**How it works, conceptually.** Rank every observation across all groups together, from smallest to largest, ignoring group membership. Then check whether the average rank differs more across groups than chance alone would produce. If forest type genuinely matters, one group's observations should occupy systematically higher or lower ranks than the others.
+
+**Its assumption.** Kruskal-Wallis does not require normality. Like the Mann-Whitney-Wilcoxon test, it's cleanest to interpret as a test of differences in **location** (median) when the groups' distributions have similar shape; if the shapes differ a lot, a significant result tells you the groups differ somehow, but not cleanly whether that's a difference in location, spread, or shape.
+
+```{r}
+kw_out <- kruskal.test(abundance ~ forest_type, data = salamander_df)
+
+knitr::kable(
+  broom::tidy(kw_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)),
+  col.names = c("Statistic (χ²)", "p-value", "df", "Method"),
+  caption = "Kruskal-Wallis test on salamander abundance by forest type"
+)
+```
+
+$\chi^2(2) = 13.09$, $p = .001$: significant, the same conclusion as the ANOVA ($F(2,21)=14.60$, $p<.001$). That agreement is exactly what you'd hope for when the parametric assumptions were actually fine to begin with, as ours were here.
+
+**Post-hoc comparisons.** Just as a significant ANOVA needs Tukey HSD to identify *which* groups differ, a significant Kruskal-Wallis result needs its own follow-up: pairwise rank-sum tests (Mann-Whitney-Wilcoxon, applied to each pair) with a correction for running multiple comparisons.
+
+```{r}
+pairwise_out <- pairwise.wilcox.test(salamander_df$abundance, salamander_df$forest_type,
+                                      p.adjust.method = "holm")
+
+knitr::kable(
+  broom::tidy(pairwise_out) |> mutate(p.value = fmt_p(p.value)),
+  col.names = c("Group 1", "Group 2", "p-value"),
+  caption = "Pairwise Mann-Whitney-Wilcoxon comparisons (Holm-adjusted)"
+)
+```
+
+The pattern matches Tukey HSD exactly: Old-growth differs significantly from both Secondary ($p=.011$) and Managed ($p=.004$), while Secondary and Managed do not differ from each other ($p=.49$). Two different sets of assumptions, two different sets of machinery, same ecological story: that's the point of having both tools available, not a coincidence to be suspicious of.
 
 ## ANOVA Summary
 
