@@ -10,6 +10,10 @@ source("global_stuff.R")
 
 ```{r, echo=FALSE}
 library(ggplot2)
+library(dplyr)
+library(broom)
+
+fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = "f"))
 ```
 
 # t-tests
@@ -80,7 +84,7 @@ After calculating $t$ from our data, we compare the observed $t$ to a $t$ distri
 
 ### Comparing $z$ and $t$
 
-When the population SD is known (or we have a large enough sample to assume convergence), the ratio is called $z$; when it's estimated from the data, it's $t$."
+When the population SD is known (or we have a large enough sample to assume convergence), the ratio is called $z$; when it's estimated from the data, it's $t$.
 
 Under a known population SD ($\sigma$), the standardized mean uses the $z$ statistic: $$
 z = \frac{\bar{X}-\mu_0}{\sigma/\sqrt{n}}
@@ -177,11 +181,10 @@ hist(t_vals, breaks = 30, main = "", xlab = "t values")
 
 Let's calculate a one-sample $t$ statistic step by step using a short example. Ten students each took a 5-question true/false quiz (50% expected by chance). Their scores (percent correct) are:
 
-**Scores**: (50, 70, 60, 40, 80, 30, 90, 60, 70, 60)
+**Scores**: 50, 70, 60, 40, 80, 30, 90, 60, 70, 60
 
 ```{r}
 #| label: ex-onesample-t
-#| fig-cap: 'One-sample $t$ on quiz scores versus chance level (50%).'
 #| echo: FALSE
 
 scores <- c(50, 70, 60, 40, 80, 30, 90, 60, 70, 60)
@@ -190,44 +193,46 @@ x  <- mean(scores)
 s  <- sd(scores)
 SE <- s / sqrt(n)
 
-x; s; SE
-
 tt <- t.test(scores, mu = 50)  # Welch one-sample t
-
-tt$statistic      # t
-tt$parameter      # df
-tt$p.value        # p
-tt$conf.int       # 95% CI
-tt$estimate       # sample mean
 ci_lo <- round(tt$conf.int[[1]], 2)
 ci_hi <- round(tt$conf.int[[2]], 2)
 ```
 
-**Results (R):** $t(9)=`r round(tt$statistic,2)`$, $p=`r signif(tt$p.value,3)`$; mean $=`r round(tt$estimate,2)`$ (95% CI`r paste0("(", ci_lo, ",", ci_hi, ")")`).
+By hand, the standard error of the mean is the sample SD divided by the square root of $n$:
 
-**Interpretation:** The mean (61%) is above chance (50%), but not statistically significant at $\alpha=.05$.
+$$
+\text{SEM} = \frac{s}{\sqrt{n}} = \frac{`r round(s,2)`}{\sqrt{`r n`}} = `r round(SE,2)`
+$$
 
-**Assumptions check:** Independence of observations; approximate normality of the outcome (with $n=10$, mild deviations are acceptable for a one-sample $t$).
+And $t$ is the difference between the sample mean (`r round(x,2)`) and the reference value (50, chance level), divided by that SEM:
 
-We can confirm this with a single R command:
+$$
+t = \frac{\bar{X}-\mu_0}{SEM} = \frac{`r round(x,2)`-50}{`r round(SE,2)`} = `r round(tt$statistic,2)`
+$$
 
-`t.test(scores, mu = 5`
+We can confirm this with a single R command, `t.test(scores, mu = 50)`:
 
-The standard error of the mean, is the standard deviation divided by the square root of $n$
+**Results:** $t(9)=`r round(tt$statistic,2)`$, $p=`r signif(tt$p.value,3)`$; mean $=`r round(tt$estimate,2)`$ (95% CI `r paste0("[", ci_lo, ", ", ci_hi, "]")`).
 
-$\text{SEM} = \frac{s}{\sqrt{n}} = \frac{17.92}{10} = 5.67$
+**Interpretation:** The mean (`r round(x,0)`%) is above chance (50%), but the difference is not statistically significant at $\alpha=.05$.
 
-$t$ is the difference between our sample mean (61), and our population mean (50, assuming chance), divided by the standard error of the mean.
+**Assumptions check:** Observations are independent, and with $n=10$ the data are approximately normal, sufficient for a one-sample $t$-test.
 
-$\text{t} = \frac{\bar{X}-u}{S_{\bar{X}}} = \frac{\bar{X}-u}{SEM} = \frac{61-50}{5.67} = 1.94$
+### Assumptions, and what to do when they don't hold
 
-**Interpretation:** The sample mean (61%) is higher than chance (50%), but the difference is not large enough to be statistically significant at $\alpha = 0.05$.
+Every test in this book rests on assumptions. Assumptions are conditions that need to be roughly true for the math behind the test to be trustworthy. There are two different kinds of assumptions.
 
-**Assumptions check:** Observations are independent, and with $n=10$ the data are approximately normal---sufficient for a one-sample $t$ test.
+**The universal assumption.** Every single test we cover in this class (one-sample $t$, paired $t$, independent $t$, ANOVA, regression) assumes your observations are **independent** and came from a **sound study design** (a fair sample, not one that systematically favors certain values). This assumption is so constant that from here on, we won't re-list it test by test. Keep it in the back of your mind, but if an exam or homework question asks you to "list the assumptions of this test," this isn't the answer they're looking for. 
+
+**Test-specific assumptions.** These come from how a particular test's math actually works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is **approximate normality** of the outcome itself (one-sample) or of the difference scores (paired). Why does this matter? The $t$-distribution we've been using to get $p$-values is *derived* assuming the sampling distribution of the mean is normal. If your data are badly skewed and your sample is small, that derivation is on shaky ground, and the $p$-value it hands you may not mean what it claims to mean.
+
+**How worried should you be?** It depends enormously on $n$. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the mean tends toward normal even when individual observations are skewed, so the $t$-test is fairly **robust** to non-normality once $n$ is reasonably large. A lot of environmental data, particularly field data, instead is from **small samples that are also skewed**. Examples include a handful of expensive water samples, a short list of monitoring wells, five plots you had time to visit before the storm rolled in. Small $n$ and non-normality reinforcing each other is when a $t$-test's answer becomes questionable.
+
+**What to do about it.** First, look at your data. A histogram or a QQ-plot will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. Treat it as one more piece of evidence rather than a strict gate though: with a small sample, exactly when a violation matters most, it has low power and will often say "no problem" even when there is one. If your data look like a stretch and your sample is small, you have another option: a **nonparametric test** that doesn't lean on the normality assumption at all. You'll meet these nonparametric alternatives in the next chapter, once we've covered all three t-test forms below.
 
 ### How does t behave?
 
-Under the null hypothesis ($H_0$ true), $t$ follows a *t* distribution with degrees of freedom $df = n - 1$. Large $|t|$ values are rare---extreme sample means are unlikely if $H_0$ is true.
+Under the null hypothesis ($H_0$ true), $t$ follows a *t* distribution with degrees of freedom $df = n - 1$. Large $|t|$ values are rare; extreme sample means are unlikely if $H_0$ is true.
 
 For moderate sample sizes ($df \approx 20$), a simple rule of thumb is:
 
@@ -267,6 +272,182 @@ ggplot(t_tibble, aes(x, y, fill = tail)) +
 
 ```
 
+### Interpreting $t$
+
+We're asking whether our sample could plausibly have come from the null distribution: the distribution of $t$-values we'd see across many samples of size 10, if the true mean were exactly 50 (chance level). @fig-7tnull shows what that distribution looks like, at $df=9$.
+
+```{r}
+#| label: fig-7tnull
+#| fig-cap: "A distribution of $t$-values that can occur by chance alone, when there is no difference between the sample and a population"
+
+
+range <- seq(-3, 3, .1)
+null_distribution <- dt(range, 9, log = FALSE)
+plot_df <- data.frame(range, null_distribution)
+
+ggplot(plot_df, aes(x = range, y = null_distribution)) +
+  geom_line() +
+  xlab("t-values") +
+  ylab("Probability") +
+  theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  scale_x_continuous(breaks = (seq(-3, 3, .5))) +
+  geom_label(data = data.frame(x = -.7, y = .1, label = "50% \n (-)"),
+             aes(x = x, y = y, label = label)) +
+  geom_label(data = data.frame(x = .7, y = .1, label = "50% \n (+)"), aes(x = x, y = y, label = label)) +
+  geom_vline(xintercept = 0)+
+  theme_classic(base_size = 20)
+
+
+```
+
+$t$ is most likely to land near zero, which makes sense: this is the distribution of *no* differences, so most of the time chance alone won't push it far from 0. Because the distribution is symmetric, a $t$-value from the null distribution is just as likely to be positive as negative.
+
+That symmetry gives us a few basic probabilities for free:
+
+1.  $t$ is always zero, positive, or negative, so $p(t=0 \text{ or } t>0 \text{ or } t<0) = 1$.
+2.  $p(t \geq 0) = .5$: half of all $t$-values are zero or greater.
+3.  $p(t \leq 0) = .5$: half are zero or smaller.
+
+We can get more precise than a 50/50 split. @fig-7percentregions divides the same distribution into ten regions, each containing 10% of the distribution. Notice the regions get wider out in the tails: since most $t$-values cluster near 0, it takes a wider interval out there to capture the same 10%.
+
+```{r}
+#| label: fig-7percentregions
+#| fig-cap: "Splitting the t distribution up into regions each containing 10% of the $t$-values. The width between the bars narrows as they approach the center of the distribution, where there are more $t$-values."
+#| out-width: "100%"
+
+range <- seq(-3, 3, .1)
+null_distribution <- dt(range, 9, log = FALSE)
+plot_df <- data.frame(range, null_distribution)
+
+t_ps <- qt(seq(.1, .9, .1), 9)
+
+ggplot(plot_df, aes(x = range, y = null_distribution)) +
+  geom_line() +
+  xlab("t-values") +
+  ylab("Probability") +
+  geom_vline(xintercept = t_ps) +
+  theme_classic(base_size = 15) +
+  theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  scale_x_continuous(breaks = round(t_ps, digits = 1)) +
+  geom_label(data = data.frame(x = -2, y = .2, label = "10%"), aes(x = x, y = y, label = label)) +
+  geom_label(data = data.frame(x = -1.13, y = .2, label = "10%"), aes(x = x, y = y, label = label)) +
+  geom_label(data = data.frame(x = 2, y = .2, label = "10%"), aes(x = x, y = y, label = label)) +
+  geom_label(data = data.frame(x = 1.13, y = .2, label = "10%"), aes(x = x, y = y, label = label))
+
+
+```
+
+For example:
+
+1.  $t \leq -1.38$: $p = 10\%$
+2.  $-1.38 \leq t \leq -0.88$: $p = 10\%$
+3.  $-0.88 \leq t \leq -0.54$: $p = 10\%$
+4.  $t \geq 1.38$: $p = 10\%$
+
+Each range captures the same 10% of the distribution, even though the ranges themselves are different widths.
+
+### Getting the p-values for $t$-values
+
+Where do values like these actually come from? Older textbooks put a table in the back of the book; this one doesn't need one, because software gives you exact $t$ and $p$ values directly. R, Excel, and [online calculators](http://www.socscistatistics.com/pvalues/tdistribution.aspx) all work; you'll get hands-on practice with this in lab, both with software and by simulation.
+
+Software does need a couple of things from you to compute a $p$-value correctly: the degrees of freedom, and whether the test is one-tailed or two-tailed. We haven't covered either yet, so that's next, starting with one-tailed tests, then two-tailed, then degrees of freedom.
+
+### One-tailed vs. two-tailed, applied
+
+Chapter 6 introduced the concept: a two-tailed test asks whether $\mu$ differs from $\mu_0$ in either direction, while a one-tailed test commits to one direction in advance, and is only justified when your theory already rules out the other direction. Here's how that choice plays out mechanically for a $t$-test: it changes the critical value, and therefore the $p$-value, for the exact same data.
+
+For our quiz-score example ($df=9$), a one-tailed test only needs to clear 5% of the distribution on one side. A two-tailed test has to clear 2.5% on each side, which pushes the critical value farther out:
+
+```{r}
+#| label: fig-7critT
+#| fig-cap: "One-tailed critical value at df=9: t-values of 1.83 or greater occur 5% of the time."
+
+range <- seq(-3, 3, .1)
+null_distribution <- dt(range, 9, log = FALSE)
+plot_df <- data.frame(range, null_distribution)
+
+ggplot(plot_df, aes(x = range, y = null_distribution)) +
+  geom_line() +
+  xlab("t-values") +
+  ylab("Probability") +
+  geom_vline(xintercept = qt(.95, 9, lower.tail = TRUE)) +
+  theme_classic(base_size = 12) +
+  theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  annotate("rect", xmin = qt(.95, 9, lower.tail = TRUE), xmax = 3, ymin = 0, ymax = Inf, alpha = 0.5, fill = "green") +
+  geom_label(data = data.frame(x = 2.4, y = .2, label = "5%"), aes(x = x, y = y, label = label)) +
+  geom_label(data = data.frame(x = qt(.95, 9, lower.tail = TRUE), y = .3,
+                               label = paste0("Critical t: ", round(qt(.95, 9, lower.tail = TRUE), 2))),
+             aes(x = x, y = y, label = label))
+```
+
+```{r}
+#| label: fig-7twotailedt
+#| fig-cap: "Two-tailed critical values at df=9: t-values beyond ±2.26 occur 5% of the time total, 2.5% in each tail."
+
+range <- seq(-4, 4, .1)
+null_distribution <- dt(range, 9, log = FALSE)
+plot_df <- data.frame(range, null_distribution)
+
+ggplot(plot_df, aes(x = range, y = null_distribution)) +
+  geom_line() +
+  xlab("t-values") +
+  ylab("Probability") +
+  geom_vline(xintercept = c(qt(.975, 9, lower.tail = TRUE), qt(.025, 9, lower.tail = TRUE))) +
+  theme_classic(base_size = 12) +
+  theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  annotate("rect", xmin = qt(.975, 9, lower.tail = TRUE), xmax = 4, ymin = 0, ymax = Inf, alpha = 0.5, fill = "green") +
+  annotate("rect", xmin = -4, xmax = qt(.025, 9, lower.tail = TRUE), ymin = 0, ymax = Inf, alpha = 0.5, fill = "green") +
+  geom_label(data = data.frame(x = 3.4, y = .2, label = "2.5%"), aes(x = x, y = y, label = label)) +
+  geom_label(data = data.frame(x = -3.4, y = .2, label = "2.5%"), aes(x = x, y = y, label = label)) +
+  geom_label(data = data.frame(x = qt(.975, 9, lower.tail = TRUE), y = .3, label = "2.26"), aes(x = x, y = y, label = label)) +
+  geom_label(data = data.frame(x = qt(.025, 9, lower.tail = TRUE), y = .3, label = "-2.26"), aes(x = x, y = y, label = label))
+```
+
+Applied to our actual result, $t(9) = 1.94$: the one-tailed $p$ is .042, the two-tailed $p$ is .084, exactly double, since a two-tailed test counts the matching extreme region on both sides instead of just one. Here the choice actually changes the decision: one-tailed, this result is significant at $\alpha=.05$; two-tailed, it isn't. That's exactly why a one-tailed test has to be justified by your theory *before* you see the data, not chosen afterward because it gives the answer you wanted.
+
+### Which one should you use?
+
+Use a one-tailed test only when your theory already rules out the opposite direction; default to two-tailed otherwise (Chapter 6's rule). There's a second reason two-tailed is the safer default: a one-tailed critical value is always closer to 0 than a two-tailed one, so routinely running one-tailed tests inflates your long-run Type I error rate above your stated $\alpha$ (recall from Chapter 6: a Type I error means rejecting $H_0$ when it's actually true). That's why most researchers default to two-tailed tests even when they do have a directional prediction, and why it's worth being able to justify your choice rather than picking whichever gives the smaller $p$-value.
+
+### Degrees of freedom
+
+You've probably noticed a number in parentheses every time we report a $t$-test, like $t(9) = 1.94$. That's the degrees of freedom, and it's worth understanding what it means, not just where to find it.
+
+For one-sample and paired $t$-tests, $df = n-1$. In our quiz example, $n=10$ students, so $df=9$.
+
+Degrees of freedom is both a concept and a correction. The concept: once you've estimated something from your data, like the mean, that estimate constrains how many of the numbers are still free to vary. Consider three numbers with a mean of 2: pick the first two freely, say 51 and $-3$, and the third number is no longer free. It has to be $-42$ for the mean to come out to 2. Two of the three numbers had freedom; the third didn't. That's $df=n-1=2$ for three numbers.
+
+The same logic applies to the sample standard deviation. Computing it requires the sample mean first, which uses up one degree of freedom, exactly why the sample SD divides by $n-1$ rather than $n$ (Chapter 2).
+
+#### Simulating how degrees of freedom affects the $t$ distribution
+
+We can see the effect of degrees of freedom directly by simulating the $t$ distribution at two different sample sizes. @fig-7dft compares $df=9$ (our quiz-score example) to $df=100$ (a much larger sample).
+
+```{r}
+#| label: fig-7dft
+#| fig-cap: "The width of the t distribution shrinks as sample size and degrees of freedom (from 9 to 100) increases."
+#| fig-asp: 0.5
+#| out-width: "100%"
+
+ts <- c(rt(10000, 9), rt(10000, 100))
+dfs <- as.factor(rep(c(9, 100), each = 10000))
+
+t_df <- data.frame(dfs, ts)
+t_df <- t_df[abs(t_df$ts) < 5, ]
+
+ggplot(t_df, aes(x = ts, group = dfs, color = dfs)) +
+  geom_histogram() +
+  theme_classic() +
+  facet_wrap( ~ dfs) +
+  theme_classic(base_size=15)
+
+
+```
+
+As degrees of freedom increase, the $t$ distribution gets taller in the middle and narrower in the tails, converging toward the standard normal. That's the same pattern from "Comparing $z$ and $t$" earlier: with more data, the sample SD becomes a more reliable estimate of the population SD, so $t$ behaves more like $z$.
+
+Why $n-1$ and not $n$? Because $t$ uses the sample SD to estimate the standard error, and that SD calculation already spent one degree of freedom estimating the mean, so the $t$-distribution is built assuming $n-1$ from the start.
+
 ## Paired t: before/after or matched
 
 When the **same units** are measured twice (before/after, matched pairs), the question is whether they **changed**. The natural data unit is the **within-unit difference**.
@@ -289,15 +470,15 @@ s_d=\text{SD}(d_1,\ldots,d_n), \quad
 t = \frac{\bar d - 0}{s_d/\sqrt{n}}, \quad df=n-1.
 $$
 
-The **sign of (t)** matches (\bar d) and your difference direction.
+The **sign of $t$** matches $\bar d$ and your difference direction.
 
-**Mini walk-through (first 5 plots).** Using five representative plots, suppose $\bar d = 2.8$ and $s_d = 3.35$. Then $$
-t=\frac{2.8}{3.35/\sqrt{5}} \approx 1.87,\qquad df=4,
+**Mini walk-through (first 5 plots).** Using the first five plots, $\bar d = 2.8$ and $s_d = 3.42$. Then $$
+t=\frac{2.8}{3.42/\sqrt{5}} \approx 1.83,\qquad df=4,
 $$ which (two-tailed) is **not** significant. That's expected with $n=5$.
 
 **Full sample effect.** With all 20 plots, $\bar d$ is similar but $s_d/\sqrt{n}$ gets smaller, so $t$ increases and the result becomes significant. This is the payoff of pairing: more power from the same number of plots.
 
-**What to report.** (\bar d) (the mean change), a 95% CI, (t(df)), and (p). Optionally add a standardized effect (Cohen's (d=\bar d/s_d)).
+**What to report.** $\bar d$ (the mean change), a 95% CI, $t(df)$, and $p$. Optionally add a standardized effect (Cohen's $d=\bar d/s_d$).
 
 **R pointers (you'll do this in lab).**
 
@@ -307,11 +488,9 @@ $$ which (two-tailed) is **not** significant. That's expected with $n=5$.
 
 ### Calculate t
 
-OK, so how do we calculate $t$ for a paired-samples $t$-test? Surprise, we use the one-sample t-test formula that you already learned about! Specifically, we use the one-sample $t$-test formula on the difference scores. We have one sample of difference scores (you can see they are in one column), so we can use the one-sample $t$-test on the difference scores. Specifically, we are interested in comparing whether the mean of our difference scores came from a distribution with mean difference = 0. This is a special distribution we refer to as the **null distribution**. It is the distribution no differences. Of course, this **null distribution** can produce differences due to to sampling error, but those differences are not caused by any experimental manipulation, they caused by the random sampling process.
+How do we calculate $t$ for a paired-samples $t$-test? We use the exact same one-sample $t$-test formula from the previous section, just applied to the difference scores instead of raw scores. The paired-samples $t$-test is really just a variation on the one-sample $t$-test: there's still only one group of numbers involved, the differences.
 
-We calculate $t$ in a moment. Let's now consider again why we want to calculate $t$? Why don't we just stick with the mean difference we already have?
-
-Remember, the whole concept behind $t$, is that it gives an indication of how confident we should be in our mean. Remember, $t$ involves a measure of the mean in the numerator, divided by a measure of variation (standard error of the sample mean) in the denominator. The resulting $t$ value is small when the mean difference is small, or when the variation is large. So small $t$-values tell us that we shouldn't be that confident in the estimate of our mean difference. Large $t$-values occur when the mean difference is large and/or when the measure of variation is small. So, large $t$-values tell us that we can be more confident in the estimate of our mean difference. Let's find $t$ for the mean difference scores. We use the same formulas as we did last time:
+Let's find $t$ for the mean difference scores:
 
 ```{r, echo=FALSE}
 # Soil moisture (%) at 5 paired restoration plots: before and after restoration
@@ -347,474 +526,73 @@ knitr::kable(paired_sample_df)
 If we did this test using R, we would obtain almost the same numbers (there is a little bit of rounding in the table).
 
 ```{r}
-t.test(differences, mu = 0)
+paired5_out <- t.test(differences, mu = 0)
+paired5_tidy <- broom::tidy(paired5_out) |>
+  mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value))
+
+knitr::kable(
+  paired5_tidy[, c("estimate", "statistic", "parameter", "p.value")],
+  col.names = c("Mean difference", "t", "df", "p-value"),
+  caption = "Paired t-test on 5 restoration plots"
+)
 ```
 
-Here is a quick write up of our t-test results, t(4) = 1.87, p = .135.
+Our t-test results are: t(4) = 1.83, p = .141.
 
-What does all of that tell us? There's a few things we haven't gotten into much yet. For example, the 4 represents degrees of freedom, which we discuss later. The important part, the $t$ value should start to be a little bit more meaningful. We got a modest t-value of 1.87. What can we tell from this value? First, it is positive, so we know the mean difference is positive --- soil moisture increased after restoration on average. The sign of the $t$-value is always the same as the sign of the mean difference (ours was +2.8 percentage points). We can also see that the p-value was .135. We've seen p-values before. This tells us our $t$ value or larger would occur about 13.5% of the time by chance alone... Actually it means more than this. And, to understand it, we need to talk about the concept of two-tailed and one-tailed tests.
+The sign of $t$ matches the sign of the mean difference (ours was $+2.8$ percentage points), so soil moisture increased on average, exactly what $\bar d$ already told us directly. Getting a $p$-value from this $t$, and choosing one-tailed vs. two-tailed, works exactly like it did for the one-sample case (see the One-sample $t$-test section above). Two-tailed, $p=.141$: not significant, this five-plot sample is too small to rule out chance.
 
-### Interpreting $t$s
+### Scaling to the full sample
 
-Remember what it is we are doing here. We are evaluating whether our sample data could have come from a particular kind of distribution. The null distribution of no differences. This is the distribution of $t$-values that would occur for samples of size 5, with a mean difference of 0, and a standard error of the sample mean of .075 (this is the SEM that we calculated from our sample). We can see what this particular null-distribution looks like in @fig-7tnull.
-
-```{r}
-#| label: fig-7tnull
-#| fig-cap: "A distribution of $t$-values that can occur by chance alone, when there is no difference between the sample and a population"
-
-
-range <- seq(-3, 3, .1)
-null_distribution <- dt(range, 4, log = FALSE)
-plot_df <- data.frame(range, null_distribution)
-
-ggplot(plot_df, aes(x = range, y = null_distribution)) +
-  geom_line() +
-  xlab("t-values") +
-  ylab("Probability") +
-  theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
-  scale_x_continuous(breaks = (seq(-3, 3, .5))) +
-  geom_label(data = data.frame(x = -.7, y = .1, label = "50% \n (-)"),
-             aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = .7, y = .1, label = "50% \n (+)"), aes(x = x, y = y, label = label)) +
-  geom_vline(xintercept = 0)+
-  theme_classic(base_size = 20)
-
-
-```
-
-The $t$-distribution above shows us the kinds of values $t$ will will take by chance alone, when we measure the mean differences for pairs of 5 samples (like our current). $t$ is most likely to be zero, which is good, because we are looking at the distribution of no-differences, which should most often be 0! But, sometimes, due to sampling error, we can get $t$s that are bigger than 0, either in the positive or negative direction. Notice the distribution is symmetrical, a $t$ from the null-distribution will be positive half of the time, and negative half of the time, that is what we would expect by chance.
-
-So, what kind of information do we want know when we find a particular $t$ value from our sample? We want to know how likely the $t$ value like the one we found occurs just by chance. This is actually a subtly nuanced kind of question. For example, any particular $t$ value doesn't have a specific probability of occurring. When we talk about probabilities, we are talking about ranges of probabilities. Let's consider some probabilities. We will use the letter $p$, to talk about the probabilities of particular $t$ values.
-
-1.  What is the probability that $t$ is zero or positive or negative? The answer is p=1, or 100%. We will always have a $t$ value that is zero or non-zero...Actually, if we can't compute the t-value, for example when the standard deviation is undefined, I guess then we would have a non-number. But, assuming we can calculate $t$, then it will always be 0 or positive or negative.
-
-2.  What is the probability of $t$ = 0 or greater than 0? The answer is p=.5, or 50%. 50% of $t$-values are 0 or greater.
-
-3.  What is the of $t$ = 0 or smaller than 0? The answer is p=.5, or 50%. 50% of $t$-values are 0 or smaller.
-
-We can answer all of those questions just by looking at our t-distribution, and dividing it into two equal regions, the left side (containing 50% of the $t$ values), and the right side containing 50% of the $t$-values).
-
-What if we wanted to take a more fine-grained approach, let's say we were interested in regions of 10%. What kinds of $t$s occur 10% of the time. We would apply lines like the following. Notice, the likelihood of bigger numbers (positive or negative) gets smaller, so we have to increase the width of the bars for each of the intervals between the bars to contain 10% of the $t$-values, it looks like @fig-7percentregions.
-
-```{r}
-#| label: fig-7percentregions
-#| fig-cap: "Splitting the t distribution up into regions each containing 10% of the $t$-values. The width between the bars narrows as they approach the center of the distribution, where there are more $t$-values."
-#| out-width: "100%"
-
-range <- seq(-3, 3, .1)
-null_distribution <- dt(range, 4, log = FALSE)
-plot_df <- data.frame(range, null_distribution)
-
-t_ps <- qt(seq(.1, .9, .1), 4)
-
-ggplot(plot_df, aes(x = range, y = null_distribution)) +
-  geom_line() +
-  xlab("t-values") +
-  ylab("Probability") +
-  geom_vline(xintercept = t_ps) +
-  theme_classic(base_size = 15) +
-  theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
-  scale_x_continuous(breaks = round(t_ps, digits = 1)) +
-  geom_label(data = data.frame(x = -2.5, y = .2, label = "10%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = -1.3, y = .2, label = "10%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = 2.5, y = .2, label = "10%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = 1.3, y = .2, label = "10%"), aes(x = x, y = y, label = label))
-
-
-```
-
-Consider the probabilities ($p$) of $t$ for the different ranges.
-
-1.  $t$ \<= -1.5 ($t$ is less than or equal to -1.5), $p$ = 10%
-2.  -1.5 \>= $t$ \<= -0.9 ($t$ is equal to or between -1.5 and -.9), $p$ = 10%
-3.  -.9 \>= $t$ \<= -0.6 ($t$ is equal to or between -.9 and -.6), $p$ = 10%
-4.  $t$ \>= 1.5 ($t$ is greater than or equal to 1.5), $p$ = 10%
-
-Notice, that the $p$s are always 10%. $t$s occur in these ranges with 10% probability.
-
-### Getting the p-values for $t$-values
-
-You might be wondering where I am getting some of these values from. For example, how do I know that 10% of $t$ values (for this null distribution) have a value of approximately 1.5 or greater than 1.5? The answer is I used R to tell me.
-
-In most statistics textbooks the answer would be: there is a table at the back of the book where you can look these things up...This textbook has no such table. We could make one for you. And, we might do that. But, we didn't do that yet...
-
-So, where do these values come from, how can you figure out what they are? The complicated answer is that we are not going to explain the math behind finding these values because, 1) the authors (some of us) admittedly don't know the math well enough to explain it, and 2) it would sidetrack us to much, 3) you will learn how to get these numbers in the lab with software, 4) you will learn how to get these numbers in lab without the math, just by doing a simulation, and 5) you can do it in R, or excel, or you can use an [online calculator](http://www.socscistatistics.com/pvalues/tdistribution.aspx).
-
-This is all to say that you can find the $t$s and their associated $p$s using software. But, the software won't tell you what these values mean. That's we are doing here. You will also see that software wants to know a few more things from you, such as the degrees of freedom for the test, and whether the test is one-tailed or two tailed. We haven't explained any of these things yet. That's what we are going to do now. Note, we explain degrees of freedom last. First, we start with a one-tailed test.
-
-### One-tailed tests
-
-A **one-tailed test** is sometimes also called a directional test. It is called a directional test, because a researcher might have a hypothesis in mind suggesting that the difference they observe in their means is going to have a particular direction, either a positive difference, or a negative difference.
-
-Typically, a researcher would set an **alpha criterion**. The alpha criterion describes a line in the sand for the researcher. Often, the alpha criterion is set at $p = .05$. What does this mean? @fig-7critT shows the $t$-distribution and the alpha criterion.
-
-```{r}
-#| label: fig-7critT
-#| fig.cap: "The critical value of t for an alpha criterion of 0.05. 5% of all ts are at this value or larger"
-
-
-range <- seq(-3, 3, .1)
-null_distribution <- dt(range, 4, log = FALSE)
-plot_df <- data.frame(range, null_distribution)
-
-t_ps <- qt(seq(.1, .9, .1), 4)
-
-ggplot(plot_df, aes(x = range, y = null_distribution)) +
-  geom_line() +
-  xlab("t-values") +
-  ylab("Probability") +
-  geom_vline(xintercept = qt(.95, 4, lower.tail = TRUE)) +
-  ggtitle("Critical t for one-tailed test") +
-  theme_classic(base_size = 10) +
-  theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
-  annotate(
-    "rect",
-    xmin = qt(.95, 4, lower.tail = TRUE),
-    xmax = 3,
-    ymin = 0,
-    ymax = Inf,
-    alpha = 0.5,
-    fill = "green"
-  ) +
-  geom_label(data = data.frame(x = 2.5, y = .2, label = "5%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(
-    x = qt(.95, 4, lower.tail = TRUE),
-    y = .3,
-    label = "Critical t"
-  ),
-  aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(
-    x = qt(.95, 4, lower.tail = TRUE),
-    y = .25,
-    label = round(qt(.95, 4, lower.tail = TRUE), digits =
-                    2)
-  ),
-  aes(x = x, y = y, label = label))
-
-
-```
-
-The figure shows that $t$ values of +2.13 or greater occur 5% of the time. Because the t-distribution is symmetrical, we also know that $t$ values of -2.13 or smaller also occur 5% of the time. Both of these properties are true under the null distribution of no differences. This means, that when there really are no differences, a researcher can expect to find $t$ values of 2.13 or larger 5% of the time.
-
-Let's review and connect some of the terms:
-
-1.  **alpha criterion**: the criterion set by the researcher to make decisions about whether they believe chance did or did not cause the difference. The alpha criterion here is set to $p = .05$.
-
-2.  **Critical** $t$. The critical $t$ is the $t$-value associated with the alpha-criterion. In this case for a one-tailed test, it is the $t$ value where 5% of all $t$s are this number or greater. In our example, the critical $t$ is 2.13. 5% of all $t$ values (with degrees of freedom = 4) are +2.13, or greater than +2.13.
-
-3.  **Observed** $t$. The observed $t$ is the one that you calculated from your sample. In our restoration example with 5 plots, the observed $t$ was $t$(4) = 1.87.
-
-4.  **p-value**. The $p$-value is the probability of obtaining the observed $t$ value or larger. Now, you could look back at our previous example, and find that the $p$-value for $t$(4) = 1.87, was $p = .135$. HOWEVER, this p-value was not calculated for a one-directional test...(we talk about what .135 means in the next section).
-
-@fig-7tonedirection shows what the $p$-value for $t$ (4) = .72 using a one-directional test would would look like:
-
-```{r}
-#| label: fig-7tonedirection
-#| fig-cap: "A case where the observed value of t is much less than the critical value for a one-directional t-test."
-
-
-range <- seq(-3, 3, .1)
-null_distribution <- dt(range, 4, log = FALSE)
-plot_df <- data.frame(range, null_distribution)
-
-t_ps <- qt(seq(.1, .9, .1), 4)
-
-ggplot(plot_df, aes(x = range, y = null_distribution)) +
-  geom_line() +
-  xlab("t-values") +
-  ylab("Probability") +
-  geom_vline(xintercept = .72) +
-  geom_vline(xintercept = qt(.95, 4, lower.tail = TRUE)) +
-  ggtitle("t value and p-range for one-directional test") +
-  theme_classic(base_size = 10) +
-  theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
-  annotate(
-    "rect",
-    xmin = .72,
-    xmax = 3,
-    ymin = 0,
-    ymax = Inf,
-    alpha = 0.5,
-    fill = "grey"
-  ) +
-  annotate(
-    "rect",
-    xmin = qt(.95, 4, lower.tail = TRUE),
-    xmax = 3,
-    ymin = 0,
-    ymax = .25,
-    alpha = 0.5,
-    fill = "green"
-  ) +
-  geom_label(data = data.frame(x = 2.5, y = .2, label = "5%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(
-    x = qt(.95, 4, lower.tail = TRUE),
-    y = .3,
-    label = "Critical t"
-  ),
-  aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(
-    x = qt(.95, 4, lower.tail = TRUE),
-    y = .25,
-    label = round(qt(.95, 4, lower.tail = TRUE), digits =
-                    2)
-  ),
-  aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = .72, y = .1,
-                               label = "Observed t"),
-             aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = .72, y = .05,
-                               label = ".72, p="),
-             aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(
-    x = 1.5,
-    y = .05,
-    label = round(pt(.72, 4, lower.tail = FALSE), digits =
-                    3)
-  ),
-  aes(x = x, y = y, label = label))
-
-
-```
-
-Let's take this one step at a time. We have located the observed $t$ of .72 on the graph. We shaded the right region all grey. What we see is that the grey region represents .256 or 25.6% of all $t$ values. In other words, 25.6% of $t$ values are .72 or larger than .72. You could expect, by chance alone, to a find a $t$ value of .72 or larger, 25.6% of the time. That's fairly often. We did find a $t$ value of .72. Now that you know this kind of $t$ value or larger occurs 25.6% of the time, would you be confident that the mean difference was not due to chance? Probably not, given that chance can produce this difference fairly often.
-
-Following the "standard" decision making procedure, we would claim that our $t$ value was **not statistically significant**, because it was not large enough. If our observed value was larger than the critical $t$ (larger than 2.13), defined by our alpha criterion, then we would claim that our $t$ value was **statistically significant**. This would be equivalent to saying that we believe it is unlikely that the difference we observed was due to chance. In general, for any observed $t$ value, the associated $p$-value tells you how likely a $t$ of the observed size or larger would be observed. The $p$-value **always** refers to a **range** of $t$-values, never to a single $t$-value. Researchers use the alpha criterion of .05, as a matter of convenience and convention. There are other ways to interpret these values that do not rely on a strict (significant versus not) dichotomy.
-
-### Two-tailed tests
-
-OK, so that was one-tailed tests... What are two tailed tests? The $p$-value that we originally calculated from our paired-samples $t$-test was for a 2-tailed test. Often, the default is that the $p$-value is for a two-tailed test.
-
-The two-tailed test, is asking a more general question about whether a difference is likely to have been produced by chance. The question is: what is probability of any difference. It is also called a **non-directional** test, because here we don't care about the direction or sign of the difference (positive or negative), we just care if there is any kind of difference.
-
-The same basic things as before are involved. We define an alpha criterion ($\alpha = 0.05$). And, we say that any observed $t$ value that has a probability of $p$ \<.05 ($p$ is less than .05) will be called **statistically significant**, and ones that are more likely ($p$ \>.05, $p$ is greater than .05) will be called null-results, or not statistically significant. The only difference is how we draw the alpha range. Before it was on the right side of the $t$ distribution (we were conducting a one-sided test remember, so we were only interested in one side).
-
-@fig-7twotailedt shows what the most extreme 5% of the $t$-values are when we ignore their sign (whether they are positive or negative).
-
-```{r}
-#| label: fig-7twotailedt
-#| fig.cap: "Critical values for a two-tailed test. Each line represents the location where 2.5% of all $t$s are larger or smaller than critical value. The total for both tails is 5%"
-
-
-range <- seq(-4, 4, .1)
-null_distribution <- dt(range, 4, log = FALSE)
-plot_df <- data.frame(range, null_distribution)
-
-t_ps <- qt(seq(.1, .9, .1), 4)
-
-ggplot(plot_df, aes(x = range, y = null_distribution)) +
-  geom_line() +
-  xlab("t-values") +
-  ylab("Probability") +
-  geom_vline(xintercept = qt(.975, 4, lower.tail = TRUE)) +
-  geom_vline(xintercept = qt(.025, 4, lower.tail = TRUE)) +
-  ggtitle("Critical ts for two-tailed test") +
-  theme_classic(base_size = 10) +
-  theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
-  annotate(
-    "rect",
-    xmin = qt(.975, 4, lower.tail = TRUE),
-    xmax = 4,
-    ymin = 0,
-    ymax = Inf,
-    alpha = 0.5,
-    fill = "green"
-  ) +
-  geom_label(data = data.frame(x = 3.5, y = .2, label = "2.5%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(
-    x = qt(.975, 4, lower.tail = TRUE),
-    y = .3,
-    label = "Critical t"
-  ),
-  aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(
-    x = qt(.975, 4, lower.tail = TRUE),
-    y = .25,
-    label = round(qt(.975, 4, lower.tail = TRUE), digits =
-                    2)
-  ),
-  aes(x = x, y = y, label = label)) +
-  annotate(
-    "rect",
-    xmin = -4,
-    xmax = qt(.025, 4, lower.tail = TRUE),
-    ymin = 0,
-    ymax = Inf,
-    alpha = 0.5,
-    fill = "green"
-  ) +
-  geom_label(data = data.frame(x = -3.5, y = .2, label = "2.5%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(
-    x = qt(.025, 4, lower.tail = TRUE),
-    y = .3,
-    label = "Critical t"
-  ),
-  aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(
-    x = qt(.025, 4, lower.tail = TRUE),
-    y = .25,
-    label = round(qt(.025, 4, lower.tail = TRUE), digits =
-                    2)
-  ),
-  aes(x = x, y = y, label = label))
-
-
-```
-
-Here is what we are seeing. A distribution of no differences (the null, which is what we are looking at), will produce $t$s that are 2.78 or greater 2.5% of the time, and $t$s that are -2.78 or smaller 2.5% of the time. 2.5% + 2.5% is a total of 5% of the time. We could also say that $t$s larger than +/- 2.78 occur 5% of the time.
-
-As a result, the critical $t$ value is (+/-) 2.78 for a two-tailed test. As you can see, the two-tailed test is blind to the direction or sign of the difference. Because of this, the critical $t$ value is also higher for a two-tailed test, than for the one-tailed test that we did earlier. Hopefully, now you can see why it is called a two-tailed test. There are two tails of the distribution, one on the left and right, both shaded in green.
-
-### One or two tailed, which one?
-
-Now that you know there are two kinds of tests, one-tailed, and two-tailed, which one should you use? There is some conventional wisdom on this, but also some debate. In the end, it is up to you to be able to justify your choice and why it is appropriate for you data. That is the real answer.
-
-The conventional answer is that you use a one-tailed test when you have a theory or hypothesis that is making a directional prediction (the theory predicts that the difference will be positive, or negative). Similarly, use a two-tailed test when you are looking for any difference, and you don't have a theory that makes a directional prediction (it just makes the prediction that there will be a difference, either positive or negative).
-
-Also, people appear to choose one or two-tailed tests based on how risky they are as researchers. If you always ran one-tailed tests, your critical $t$ values for your set alpha criterion would always be smaller than the critical $t$s for a two-tailed test. Over the long run, you would make more type I errors, because the criterion to detect an effect is a lower bar for one than two tailed tests.
-
-> Remember type 1 errors occur when you reject the idea that chance could have caused your difference. You often never know when you make this error. It happens anytime that sampling error was the actual cause of the difference, but a researcher dismisses that possibility and concludes that their manipulation caused the difference.
-
-Similarly, if you always ran two-tailed tests, even when you had a directional prediction, you would make fewer type I errors over the long run, because the $t$ for a two-tailed test is higher than the $t$ for a one-tailed test. It seems quite common for researchers to use a more conservative two-tailed test, even when they are making a directional prediction based on theory. In practice, researchers tend to adopt a standard for reporting that is common in their field. Whether or not the practice is justifiable can sometimes be an open question. The important task for any researcher, or student learning statistics, is to be able to justify their choice of test.
-
-### Degrees of freedom
-
-Before we finish up with paired-samples $t$-tests, we should talk about degrees of freedom. Our sense is that students don't really understand degrees of freedom very well. If you are reading this textbook, you are probably still wondering what is degrees of freedom, seeing as we haven't really talked about it all.
-
-For the $t$-test, there is a formula for degrees of freedom. For the one-sample and paired sample $t$-tests, the formula is:
-
-$\text{Degrees of Freedom} = \text{df} = n-1$. Where n is the number of samples in the test.
-
-In our paired $t$-test example, there were 5 restoration plots. Therefore, degrees of freedom = 5-1 = 4.
-
-OK, that's a formula. Who cares about degrees of freedom, what does the number mean? And why do we report it when we report a $t$-test... you've probably noticed the number in parentheses e.g., $t$(4)=.72, the 4 is the $df$, or degrees of freedom.
-
-Degrees of freedom is both a concept, and a correction. The concept is that if you estimate a property of the numbers, and you use this estimate, you will be forcing some constraints on your numbers.
-
-Consider the numbers: 1, 2, 3. The mean of these numbers is 2. Now, let's say I told you that the mean of three numbers is 2. Then, how many of these three numbers have freedom? Funny question right. What we mean is, how many of the three numbers could be any number, or have the freedom to be any number.
-
-The first two numbers could be any number. But, once those two numbers are set, the final number (the third number), MUST be a particular number that makes the mean 2. The first two numbers have freedom. The third number has no freedom.
-
-To illustrate. Let's freely pick two numbers: 51 and -3. I used my personal freedom to pick those two numbers. Now, if our three numbers are 51, -3, and x, and the mean of these three numbers is 2. There is only one solution, x has to be -42, otherwise the mean won't be 2. This is one way to think about degrees of freedom. The degrees of freedom for these three numbers is n-1 = 3-1= 2, because 2 of the numbers can be free, but the last number has no freedom, it becomes fixed after the first two are decided.
-
-Now, statisticians often apply degrees of freedom to their calculations, especially when a second calculation relies on an estimated value. For example, when we calculate the standard deviation of a sample, we first calculate the mean of the sample right! By estimating the mean, we are fixing an aspect of our sample, and so, our sample now has n-1 degrees of freedom when we calculate the standard deviation (remember for the sample standard deviation, we divide by n-1...there's that n-1 again.)
-
-#### Simulating how degrees of freedom affects the $t$ distribution
-
-There are at least two ways to think the degrees of freedom for a $t$-test. For example, if you want to use math to compute aspects of the $t$ distribution, then you need the degrees of freedom to plug in to the formula... If you want to see the formulas I'm talking about, scroll down on the [$t$-test wikipedia page](https://en.wikipedia.org/wiki/Student%27s_t-distribution) and look for the probability density or cumulative distribution functions...We think that is quite scary for most people, and one reason why degrees of freedom are not well-understood.
-
-If we wanted to simulate the $t$ distribution we could more easily see what influence degrees of freedom has on the shape of the distribution. Remember, $t$ is a sample statistic, it is something we measure from the sample. So, we could simulate the process of measuring $t$ from many different samples, then plot the histogram of $t$ to show us the simulated $t$ distribution.
-
-```{r}
-#| label: fig-7dft
-#| fig-cap: "The width of the t distribution shrinks as sample size and degrees of freedom (from 4 to 100) increases."
-#| fig-asp: 0.5
-#| out-width: "100%"
-
-ts <- c(rt(10000, 4), rt(10000, 100))
-dfs <- as.factor(rep(c(4, 100), each = 10000))
-
-t_df <- data.frame(dfs, ts)
-t_df <- t_df[abs(t_df$ts) < 5, ]
-
-ggplot(t_df, aes(x = ts, group = dfs, color = dfs)) +
-  geom_histogram() +
-  theme_classic() +
-  facet_wrap( ~ dfs) +
-  theme_classic(base_size=15)
-
-
-```
-
-In @fig-7dft notice that the red distribution for $df = 4$, is a little bit shorter, and a little bit wider than the bluey-green distribution for $df = 100$. As degrees of freedom increase the $t$ distribution gets taller (in the middle), and narrower in the range. It get's more peaky. Can you guess the reason for this? Remember, we are estimating a sample statistic, and degrees of freedom is really just a number that refers to the number of subjects (well minus one). And, we already know that as we increase $n$, our sample statistics become better estimates (less variance) of the distributional parameters they are estimating. So, $t$ becomes a better estimate of it's "true" value as sample size increase, resulting in a more narrow distribution of $t$s.
-
-There is a slightly different $t$ distribution for every degrees of freedom, and the critical regions associated with 5% of the extreme values are thus slightly different every time. This is why we report the degrees of freedom for each t-test, they define the distribution of $t$ values for the sample-size in question. Why do we use n-1 and not n? Well, we calculate $t$ using the sample standard deviation to estimate the standard error or the mean, that estimate uses n-1 in the denominator, so our $t$ distribution is built assuming n-1. That's enough for degrees of freedom...
-
-## The paired samples t-test strikes back
-
-Don't worry, we're not starting over --- we're just going to 1) remind you of the soil moisture restoration example, and 2) run the paired t-test on the full dataset of 20 plots and discuss what changes.
-
-Remember, we were asking whether soil moisture (%) increased after wetland restoration. We showed you data from 5 plots and walked through the computations for the $t$-test. As a reminder, it looked like this:
+The five plots above are a subset of the full restoration study, which measured all **20** paired plots. With only $n=5$, $t(4)=1.83$ wasn't enough to distinguish the observed increase from chance ($p=.141$). Here's what changes with the full sample.
 
 ```{r, echo=FALSE}
-before <- c(18, 22, 16, 25, 21)
-after  <- c(21, 26, 22, 29, 18)
+before_full <- c(18, 22, 16, 25, 21, 27, 26, 23, 28, 23, 19, 19, 20, 25, 15, 24, 23, 16, 18, 21)
+after_full  <- c(21, 26, 22, 29, 18, 31, 31, 29, 29, 28, 16, 19, 20, 19, 18, 28, 25, 21, 18, 19)
 
-paired_sample_df <- data.frame(
-  plot   = 1:5,
-  Before = before,
-  After  = after
+full20_out <- t.test(after_full, before_full, paired = TRUE)
+full20_tidy <- broom::tidy(full20_out) |>
+  mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value))
+
+knitr::kable(
+  full20_tidy[, c("estimate", "statistic", "parameter", "p.value")],
+  col.names = c("Mean difference", "t", "df", "p-value"),
+  caption = "Paired t-test on all 20 restoration plots"
 )
-
-differences     <- paired_sample_df$After - paired_sample_df$Before
-diff_from_mean  <- differences - mean(differences)
-Squared_differences <- diff_from_mean^2
-
-paired_sample_df <- cbind(paired_sample_df,
-                          differences,
-                          diff_from_mean,
-                          Squared_differences)
-
-paired_sample_df <- paired_sample_df %>%
-  rbind(c("Sums",  colSums(paired_sample_df[1:5, 2:6]))) %>%
-  rbind(c("Means", colMeans(paired_sample_df[1:5, 2:6]))) %>%
-  rbind(c(" ", " ", " ", " ", "sd",  round(sd(paired_sample_df[1:5, 4]), digits=3))) %>%
-  rbind(c(" ", " ", " ", " ", "SEM", round(sd(paired_sample_df[1:5, 4])/sqrt(5), digits=3))) %>%
-  rbind(c(" ", " ", " ", " ", "t",   mean(differences)/round(sd(paired_sample_df[1:5, 4])/sqrt(5), digits=3)))
-paired_sample_df[6, 5] <- 0
-paired_sample_df[7, 5] <- 0
-knitr::kable(paired_sample_df)
-
-t.test(differences, mu = 0)
 ```
 
-Let's write down the finding one more time: The mean difference was 2.8 percentage points, $t$(4) = 1.87, $p$ = .135. We can also now confirm that the $p$-value was from a two-tailed test. So, what does this all really mean?
-
-We can say that a $t$ value with an absolute value of 1.87 or larger occurs 13.5% of the time by chance alone. More precisely, the null distribution of no differences will produce a $t$ value this large or larger 13.5% of the time. In other words, our five-plot sample is too small to rule out chance as an explanation for the observed increase.
-
-Let's now run the test using all 20 plots.
-
-```{r}
-set.seed(42)
-n_full <- 20
-before_full <- round(runif(n_full, 14, 28))
-after_full  <- before_full + round(rnorm(n_full, mean = 5, sd = 4))
-differences_full <- after_full - before_full
-t.test(differences_full, mu = 0)
-```
-
-Now we get a very different answer. The degrees of freedom is 19, confirming $n = 20$ plots. We see a much smaller $p$-value. This is also a two-tailed test. In other words, the null distribution of no differences will produce the observed $t$-value very rarely. So, it is unlikely that the observed mean increase in soil moisture was due to chance alone. As a result, we can be reasonably confident that wetland restoration increased soil moisture at these sites --- consistent with the ecological goal of restoring hydrological function.
+At $n=20$, $t(19) = `r round(full20_out$statistic, 2)`$, $p = `r fmt_p(full20_out$p.value)`$: significant. The mean difference (`r round(full20_out$estimate, 1)` percentage points) is in the same range as what the 5-plot subset already suggested; what changed is the standard error, which shrank enough with the larger sample to rule out chance. This is the payoff of pairing: same design, more plots, more power to detect a real effect.
 
 ## Two independent groups
 
-If you've been following the Star Wars references, we are on last movie (of the original trilogy)... the independent t-test. This is were basically the same story plays out as before, only slightly different.
+The independent-samples $t$-test is the third and last design in this chapter. The logic is the same as the one-sample and paired cases: a mean difference divided by an estimate of its variability. What changes is the research design.
 
-Remember there are different $t$-tests for different kinds of research designs. When your design is a **between-subjects** design, you use an **independent samples t-test**. Between-subjects design involve different people or subjects in each experimental condition. If there are two conditions, and 10 people in each, then there are 20 total people. And, there are no paired scores, because every single person is measured once, not twice, no repeated measures. Because there are no repeated measures we can't look at the difference scores between conditions one and two. The scores are not paired in any meaningful way, to it doesn't make sense to subtract them. So what do we do?
+Use an independent-samples $t$-test for a **between-subjects** design: different people or units in each condition, each measured once. With two groups of 10, that's 20 people total, none of them paired. Without repeated measures on the same unit, there's no meaningful way to subtract scores between conditions the way the paired $t$-test does.
 
-The logic of the independent samples t-test is the very same as the other $t$-tests. We calculated the means for each group, then we find the difference. That goes into the numerator of the t formula. Then we get an estimate of the variation for the denominator. We divide the mean difference by the estimate of the variation, and we get $t$. It's the same as before.
+The numerator works the same way it always has: the mean difference between groups. The denominator is where independent groups differ from the paired case, since now we need a single estimate of variability built from two separate samples instead of one.
 
-The only wrinkle here is what goes into the denominator? How should we calculate the estimate of the variance? It would be nice if we could do something very straightforward like this, say for an experiment with two groups A and B:
+A natural first guess is to average the two groups' standard errors:
 
-$t = \frac{\bar{A}-\bar{B}}{(\frac{SEM_A+SEM_B}{2})}$
+$$
+t = \frac{\bar{A}-\bar{B}}{\left(\dfrac{SEM_A+SEM_B}{2}\right)}
+$$
 
-In plain language, this is just:
+That average, however, is a biased estimator of the variability under the null. Instead, the independent-samples $t$-test **pools** the two groups' variances, weighted by their degrees of freedom, into a single estimate for the denominator:
 
-1.  Find the mean difference for the top part
-2.  Compute the SEM (standard error of the mean) for each group, and average them together to make a single estimate, pooling over both samples.
+$$
+t = \frac{\bar{X}_A-\bar{X}_B}{s_p\sqrt{\dfrac{1}{n_A}+\dfrac{1}{n_B}}}
+$$
 
-This would be nice, but unfortunately, it turns out that finding the average of two standard errors of the mean is not the best way to do it. This would create a biased estimator of the variation for the hypothesized distribution of no differences. We won't go into the math here, but instead of the above formula, we an use a different one that gives as an **unbiased estimate of the pooled standard error of the sample mean**. Our new and improved $t$ formula would look like this:
+where the pooled standard deviation $s_p$ is (note $s_A^2$ and $s_B^2$ here are variances, not standard deviations):
 
-$t = \frac{\bar{X_A}-\bar{X_B}}{s_p * \sqrt{\frac{1}{n_A} + \frac{1}{n_B}}}$
+$$
+s_p = \sqrt{\frac{(n_A-1)s_A^2 + (n_B-1)s_B^2}{n_A+n_B-2}}
+$$
 
-and, $s_p$, which is the pooled sample standard deviation is defined as, note the \$s\$es in the formula are variances:
-
-$s_p = \sqrt{\frac{(n_A-1)s_A^2 + (n_B-1)s^2_B}{n_A +n_B -2}}$
-
-Believe you me, that is so much more formula than I wanted to type out. Shall we do one independent $t$-test example by hand, just to see the computations? Let's do it...but in a slightly different way than you expect. I show the steps using R. I made some fake scores for groups A and B. Then, I followed all of the steps from the formula, but made R do each of the calculations. This shows you the needed steps by following the code. At the end, I print the $t$-test values I computed "by hand", and then the $t$-test value that the R software outputs using the $t$-test function. You should be able to get the same values for $t$, if you were brave enough to compute $t$ by hand.
+The example below computes $t$ for two small groups by following that formula step by step in R, then checks it against `t.test()`.
 
 ```{r, echo=TRUE }
 
-## By "hand" using R r code
+## By "hand" using R
 a <- c(1,2,3,4,5)
 b <- c(3,5,4,7,9)
 
@@ -830,7 +608,7 @@ sp_denominator <- 5+5-2
 sp <- sqrt(sp_numerator/sp_denominator) # compute sp
 
 
-# compute t following formulat
+# compute t following the formula
 
 t <- mean_difference / ( sp * sqrt( (1/5) +(1/5) ) )
 
@@ -889,26 +667,13 @@ hist(save_ts)
 hist(save_ps)
 ```
 
-Neat. We see both a $t$ distribution, that looks like $t$ distribution as it should. And we see the $p$ distribution. This shows us how often we get $t$ values of particular sizes. You may find it interesting that the $p$-distribution is flat under the null, which we are simulating here. This means that you have the same chances of a getting a $t$ with a p-value between 0 and 0.05, as you would for getting a $t$ with a p-value between .90 and .95. Those ranges are both ranges of 5%, so there are an equal amount of $t$ values in them by definition.
+The simulated $t$ distribution looks like a $t$ distribution should, and it shows us how often we get $t$ values of particular sizes. The $p$-distribution is flat under the null, which we are simulating here. This means you have the same chance of getting a $t$ with a p-value between 0 and 0.05 as you would of getting one between .90 and .95. Those ranges are both ranges of 5%, so there are an equal amount of $t$ values in them by definition.
 
-Here's another way to do the same simulation in R, using the replicate function, instead a for loop:
+You can write the same simulation more compactly with `replicate()` instead of a `for` loop; it produces the same two distributions above:
 
-```{r}
-#| label: fig-7simtsRep
-#| fig-cap: "Simulating $t$s in R."
-
-simulated_ts <- replicate(1000,
-                          t.test(rnorm(30, 50, 25), mu = 50)$statistic)
-hist(simulated_ts)
-```
-
-```{r}
-#| label: fig-7simpsRep
-#| fig-cap: "Simulating $p$s in R."
-
-simulated_ps <- replicate(1000,
-                          t.test(rnorm(30, 50, 25), mu = 50)$p.value)
-hist(simulated_ps)
+```{r, echo=TRUE, eval=FALSE}
+simulated_ts <- replicate(1000, t.test(rnorm(30, 50, 25), mu = 50)$statistic)
+simulated_ps <- replicate(1000, t.test(rnorm(30, 50, 25), mu = 50)$p.value)
 ```
 
 ### Simulating a paired samples t-test
@@ -931,20 +696,20 @@ for ( i in 1:1000 ){
 ```
 
 ```{r}
-#| label: fig-7simps1000
+#| label: fig-7simts1000
 #| fig-cap: "1000 simulated ts from the null distribution"
 hist(save_ts)
 
 ```
 
 ```{r}
-#| label: fig-7simts1000
+#| label: fig-7simps1000
 #| fig-cap: "1000 simulated ps from the null distribution"
 hist(save_ps)
 
 ```
 
-According to the simulation. When there are no differences between the conditions, and the samples are being pulled from the very same distribution, you get these two distributions for $t$ and $p$. These again show how the null distribution of no differences behaves.
+According to the simulation, when there are no differences between the conditions, and the samples are being pulled from the very same distribution, you get these two distributions for $t$ and $p$. These again show how the null distribution of no differences behaves.
 
 For any of these simulations, if you rejected the null-hypothesis (that your difference was only due to chance), you would be making a type I error. If you set your alpha criteria to $\alpha = .05$, we can ask how many type I errors were made in these 1000 simulations. The answer is:
 
@@ -953,7 +718,7 @@ length(save_ps[save_ps<.05])
 length(save_ps[save_ps<.05])/1000
 ```
 
-We happened to make `r length(save_ps[save_ps<.05])`. The expectation over the long run is 5% type I error rates (if your alpha is .05).
+We happened to make `r length(save_ps[save_ps<.05])` type I errors. The expectation over the long run is a 5% type I error rate (if your alpha is .05).
 
 What happens if there actually is a difference in the simulated data, let's set one condition to have a larger mean than the other:
 
@@ -973,13 +738,6 @@ for ( i in 1:1000 ){
 ```
 
 ```{r}
-#| label: fig-7simtruets
-#| fig-cap: "1000 ts when there is a true difference"
-hist(save_ts)
-
-```
-
-```{r}
 #| label: fig-7simtrueps
 #| fig-cap: "1000 ps when there is a true difference"
 hist(save_ps)
@@ -994,7 +752,7 @@ length(save_ps[save_ps<.05])
 length(save_ps[save_ps<.05])/1000
 ```
 
-We happened to get `r length(save_ps[save_ps<.05])` simulations where p was less than .05, that's only `r length(save_ps[save_ps<.05])/1000` experiments. If you were the researcher, would you want to run an experiment that would be successful only `r length(save_ps[save_ps<.05])/1000` of the time? I wouldn't. I would run a better experiment.
+We happened to get `r length(save_ps[save_ps<.05])` simulations where p was less than .05, that's only `r length(save_ps[save_ps<.05])/1000` of experiments. If you were the researcher, would you want to run an experiment that would be successful only `r length(save_ps[save_ps<.05])/1000` of the time? Probably not, that's the case for designing a better experiment.
 
 How would you run a better simulated experiment? Well, you could increase $n$, the number of subjects in the experiment. Let's increase $n$ from 10 to 100, and see what happens to the number of "significant" simulated experiments.
 
@@ -1014,13 +772,6 @@ for ( i in 1:1000 ){
 ```
 
 ```{r}
-#| label: fig-7simtsB
-#| fig-cap: "1000 ts for n =100, when there is a true effect"
-hist(save_ts)
-
-```
-
-```{r}
 #| label: fig-7simpsB
 #| fig-cap: "1000 ps for n =100, when there is a true effect"
 hist(save_ps)
@@ -1030,11 +781,11 @@ length(save_ps[save_ps<.05])
 length(save_ps[save_ps<.05])/1000
 ```
 
-Cool, now almost all of the experiments show a $p$-value of less than .05 (using a two-tailed test, that's the default in R). See, you could use this simulation process to determine how many subjects you need to reliably find your effect.
+Now almost all of the experiments show a $p$-value of less than .05 (using a two-tailed test, the default in R). You can use this simulation process to determine how many subjects you need to reliably detect your effect.
 
-### Simulating an independent samples t.test
+### Simulating an independent samples t-test
 
-Just change the t.test function like so... this is for the null, assuming no difference between groups.
+The setup is the same, you just change what goes into `t.test()`. Here's the null case, assuming no difference between two independent groups of $n=10$:
 
 ```{r, echo=TRUE}
 
@@ -1051,21 +802,16 @@ for ( i in 1:1000 ){
 ```
 
 ```{r}
-#| label: fig-7simtsC
-#| fig-cap: "1000 ts for n =100, when there is a true effect"
-hist(save_ts)
-
-```
-
-```{r}
 #| label: fig-7simpsC
-#| fig-cap: "1000 ps for n =100, when there is a true effect"
+#| fig-cap: "1000 ps for the independent-samples null, n=10 per group"
 hist(save_ps)
 
 
 length(save_ps[save_ps<.05])
 length(save_ps[save_ps<.05])/1000
 ```
+
+Same story as before: about 5% of these simulated experiments come out "significant" by chance alone. And the same two levers we saw for the paired test still apply here, giving `group_A` and `group_B` different means will pull power up, and so will increasing $n$. Try editing the code above to see it for yourself.
 
 ## Videos
 
