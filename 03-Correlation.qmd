@@ -10,8 +10,8 @@ library(tidyverse)
 
 # Correlation {#Correlation}
 
-> Correlation does not equal causation .\*\
-> -- Every Statistics Instructor Ever
+> Correlation does not equal causation.\*\
+> Every Statistics Instructor Ever
 
 In the last chapter, we worked with data that felt overwhelming at first. We used plots and histograms to make the data visible, and descriptive statistics to summarize their central tendency and variability.
 
@@ -21,15 +21,15 @@ In Chapter 2, we imagined collecting self-reports of happiness from a group of p
 
 We also saw that numbers are imperfect reflections of experience. A rating from 0 to 100 is just one way of measuring happiness. It may not capture the full construct, but for now we will treat it as meaningful enough to work with.
 
-This sets up the next step: moving from description to explanation. Rather than just asking how much happiness people report, we might ask what predicts differences in happiness? For example, does happiness vary with weather, income, or education? With social connections or cultural factors? Or with something lighter, like access to chocolate? Questions like these push us beyond describing data toward identifying relationships — the core of correlation analysis.
+This sets up the next step: moving from description to explanation. Rather than just asking how much happiness people report, we might ask what predicts differences in happiness: weather, income, education, social connections, cultural factors, or something lighter, like access to chocolate. Questions like these push us beyond describing data toward identifying relationships, the core of correlation analysis.
 
-## If something caused something else to change, what would that look like?
+## What data look like when one thing changes another
 
-To use data for explanation, we need tools for recognizing when two things move together. Sometimes that reflects a real cause-and-effect relationship, and sometimes it doesn't. The challenge is learning to tell the difference. In this chapter we’ll build intuition for what data look like when two variables are unrelated, when they move together, and when the pattern might mislead us.
+To use data for explanation, we need tools for recognizing when two things move together. Sometimes that reflects a real cause-and-effect relationship, and sometimes it doesn't. The challenge is learning to tell the difference. In this chapter we'll build intuition for what data look like when two variables are unrelated, when they move together, and when the pattern might mislead us.
 
 ### More Chocolate = More Happiness?
 
-Let's imagine that a person's supply of chocolate has a causal influence on their level of happiness. Let's further imagine that the more chocolate you have the more happy you will be, and the less chocolate you have, the less happy you will be. Finally, because we suspect happiness is caused by lots of other things in a person's life, we anticipate that the relationship between chocolate supply and happiness won't be perfect. What do these assumptions mean for how the data should look?
+Suppose a person's chocolate supply has a causal influence on their happiness: more chocolate means more happiness, less chocolate means less. Because happiness is also caused by plenty of other things in a person's life, we'd expect the relationship between chocolate and happiness to be real but imperfect, not a perfect one-to-one match.
 
 Our first step is to collect some imaginary data from 100 people. We walk around and ask the first 100 people we meet to answer two questions:
 
@@ -75,7 +75,7 @@ Each dot has two coordinates, an x-coordinate for chocolate, and a y-coordinate 
 
 ### Positive, Negative, and No-Correlation
 
-Let's imagine some more data. What do you imagine the scatter plot would look like if the relationship was reversed, and larger chocolate supplies decreased happiness? Or, what if there's no relationship, and the amount of chocolate that you have doesn't do anything to your happiness? take a look at @fig-3posnegrand:
+Two other patterns are worth seeing: a reversed relationship, where more chocolate means less happiness, and no relationship at all, where chocolate supply has nothing to do with happiness. @fig-3posnegrand shows all three side by side:
 
 ```{r}
 #| label: fig-3posnegrand
@@ -113,15 +113,13 @@ ggplot(all_data,aes(x=chocolate_x,y=happiness_x))+
 
 ```
 
-The first panel shows a **negative correlation**. Happiness goes down as chocolate supply increases. Negative correlation occurs when one thing goes up and the other thing goes down; or, when more of X is less of Y, and vice-versa. The second panel shows a **positive correlation**. Happiness goes up as chocolate as chocolate supply increases. Positive correlation occurs when both things go up together, and go down together: more of X is more of Y, and vice-versa. The third panel shows **no correlation**. Here, there doesn't appear to be any obvious relationship between chocolate supply and happiness.
+The first panel shows a **negative correlation**: happiness goes down as chocolate supply increases, more of X means less of Y. The second panel shows a **positive correlation**: happiness goes up as chocolate supply increases, more of X means more of Y. The third panel shows **no correlation**: there's no obvious relationship between chocolate supply and happiness, changes in X don't relate to changes in Y.
 
 ::: callout-note
 **Always plot first.** If the scatter shows a U-shape or other curve, a single straight-line correlation will mislead. Fit a curved model (e.g., add a quadratic term) or transform variables instead of reporting *r* alone.
 :::
 
-Zero correlation occurs when one thing is not related in any way to another things: changes in X do not relate to any changes in Y, and vice-versa.
-
-You've examined your scatter plots, and now you might be wondering how to quantify what you see. We've already covered how to generate descriptive statistics for individual variables through means, standard deviations, etc. But what if you want to summarize how two variables move together in a single descriptive statistic? The path to that statistic (Pearson’s r) starts with understanding covariance.
+We've already covered how to generate descriptive statistics for individual variables through means, standard deviations, etc. But to summarize how two variables move together in a single descriptive statistic, we need a new one: Pearson's $r$. The path there starts with understanding covariance.
 
 ## Covariance
 
@@ -137,7 +135,7 @@ Covariance is important because it underlies correlation, regression, and many o
 
 ### Turning the numbers into a measure of Covariance
 
-If Covariance is just another word for correlation or relationship between two measures,then, we need some way to measure that. Consider our chocolate and happiness scores.
+To turn "chocolate and happiness vary together" into an actual number, we need a way to measure that relationship directly. Consider our chocolate and happiness scores.
 
 ```{r 3chochappyCOV,echo=F}
 the_df_temp <- data.frame(subject,chocolate,happiness,Chocolate_X_Happiness=chocolate*happiness)
@@ -161,7 +159,7 @@ Now extend this idea from pairs to the whole dataset. If chocolate and happiness
 
 Suppose we have two variables, $X$ and $Y$. If $X$ and $Y$ go up together (both small at the same time, both large at the same time), their products will also be large when summed across the dataset. If one goes up while the other goes down (large pairs with small), the summed products will be much smaller.
 
-Here’s are two tables to illustrate:
+Here are two tables to illustrate:
 
 ::::: columns
 ::: {.column width="50%"}
@@ -220,7 +218,7 @@ ggplot(sim_df, aes(x = sims, y = simulated_sums)) +
   theme_classic()
 ```
 
-So what does this mean? The **sum of the products** tells us about the direction of the relationship:
+The **sum of the products** tells us about the direction of the relationship:
 
 -   Close to 385 → strong positive relationship.
 -   Close to 220 → strong negative relationship.
@@ -266,7 +264,7 @@ knitr::kable(the_df_short)
 
 Deviations from the mean for chocolate (column `C_d`), deviations from the mean for happiness (column `H_d`), and their products. The mean of those products (in the bottom right corner of the table) is the official **covariance**.
 
-Covariance is a powerful idea, but it has a major drawback: its magnitude is hard to interpret. Just as variance is tied to squared units, covariance is tied to the scales of both variables. Is our covariance of 3.22 large? What if it's 100? The raw number doesn’t tell us. All we can tell is its sign (positive or negative), not its size, which means we can't say how strong the correlation is. To compare strength across variables with different units or scales, we need to normalize covariance, which leads to Pearson’s $r$.
+Covariance is a powerful idea, but it has a major drawback: its magnitude is hard to interpret. Just as variance is tied to squared units, covariance is tied to the scales of both variables, so a covariance of 3.22 isn't inherently "large" or "small" the way a correlation is. All we can read directly from it is the sign, not the strength. To compare strength across variables with different units or scales, we need to normalize covariance, which leads to Pearson's $r$.
 
 ### Pearson's r
 
@@ -282,17 +280,13 @@ Let's take a look at a formula for Pearson's $r$:
 
 $r = \frac{cov(X,Y)}{\sigma_{X}\sigma_{Y}} = \frac{cov(X,Y)}{SD_{X}SD_{Y}}$
 
-In this forumal we see the symbol $\sigma$, which indicates the standard deviation (SD). In words, $r$ is the Covariance of X and Y divided by the product of their standard deviations. Dividing by the standard deviations **normalizes** the Covariance, constraining $r$ to fall between between -1 to 1. This makes correlation values comparable across variables measured in different units or on different scales.
+Here, $\sigma$ is the standard deviation (SD), so $r$ is the covariance of X and Y divided by the product of their standard deviations. Dividing by the standard deviations **normalizes** the covariance, constraining $r$ to fall between -1 and 1, which makes correlation values comparable across variables measured in different units or on different scales.
 
 ::: callout-note
-**Computing *r*.** You’ll see algebraically equivalent formulas for Pearson’s *r*. They produce the same result; we’ll typically rely on software and focus on interpretation.
+**Computing *r*.** You'll see several algebraically equivalent formulas for Pearson's *r*, some easier for hand calculation, others more compact. They all produce the same result. Since we rely on software for calculations, our focus is on what $r$ means and how to interpret it, not manual computation, you'll run the calculation in R during lab.
 :::
 
-::: {callout-note}
-There are several equivalent formulas for computing Pearson’s $r$. Some are written to simplify hand calculations, others are more compact algebraically. They all yield the same result. Since we rely on software for calculations, our focus will be on what $r$ means and how to interpret it, rather than practicing manual computation. You’ll see how to run the calculation in R during lab.
-:::
-
-Does Pearson's $r$ really stay between -1 and 1 no matter what? It's true, take a look at the following simulation. Here I randomly ordered the numbers 1 to 10 for an X measure, and did the same for a Y measure. Then, I computed Pearson's $r$, and repeated this process 1000 times. As you can see from @fig-3onethousandr all of the dots are between -1 and 1.
+To confirm $r$ really does stay between -1 and 1, @fig-3onethousandr shows a simulation: we randomly ordered the numbers 1 to 10 for both an X measure and a Y measure, computed Pearson's $r$ between them, and repeated the process 1000 times. Every dot falls between -1 and 1.
 
 ```{r}
 #| label: fig-3onethousandr
@@ -318,9 +312,9 @@ ggplot(sim_df, aes(x = sims, y = simulated_sums))+
 
 ## Regression: A mini intro
 
-We're going to spend the next little bit adding one more thing to our understanding of correlation. It's called **linear regression**. Just an introduction to the basic concepts.
+This section adds one more piece to our understanding of correlation: **linear regression**, at an introductory level.
 
-First, let's look at a linear regression. This way we can see what we're trying to learn about. @fig-3regression shows the same scatter plots as before with something new: lines!
+@fig-3regression shows the same three scatter plots as before, now with a fitted line added to each.
 
 ```{r}
 #| label: fig-3regression
@@ -361,15 +355,15 @@ ggplot(all_data,aes(x=chocolate_x,y=happiness_x))+
 
 Notice the blue lines in these panels. Each is a **best fit** line: the single straight line that best summarizes the overall pattern of dots.
 
-With one variable, we use hte mean to describe central tendency in one dimension. With two variables plotted together, we need a two-dimensional equivalent. A line serves that purpose, capturing the average relationship across the could of points.
+With one variable, we use the mean to describe central tendency in one dimension. With two variables plotted together, we need a two-dimensional equivalent. A line serves that purpose, capturing the average relationship across the cloud of points.
 
-Of course, many possible lines could be drawn. Most would miss the pattern. The useful lines would go through the data following the general shape of the dots. Which one is the best? How can we find out, and what do we mean by that? In short, the best fit line is the one that has the least error.
+Many lines could be drawn through a scatter of points, but most would miss the pattern. The best fit line is the one with the least error, defined precisely below.
 
-Check out this plot: a line runs through the dots, and short vertical lines drop from each dot to the line. These are **residuals**:the vertical differences between the observed data and the fitted line. Residuals show the error, or how far off the line’s prediction is for each point. Since not all dots fall exactly on the line, some error is inevitable. The best-fit line is the one that minimizes these errors overall.
+@fig-3regressionResiduals shows what that error looks like: a line runs through the dots, and short vertical lines drop from each dot to the line. These are **residuals**, the vertical differences between the observed data and the fitted line, showing how far off the line's prediction is for each point. Since not all dots fall exactly on the line, some error is inevitable; the best-fit line is the one that minimizes it overall.
 
 ```{r}
 #| label: fig-3regressionResiduals
-#| fig-cap: "Black dots represent data points. The blue line is the best fit regression line. The white dots are repesent the predicted location of each black dot. The red lines show the error between each black dot and the regression line. The blue line is the best fit line because it minimizes the error shown by the red lines.R code for residual visualziation adapted from Simon Jackson: <https://drsimonj.svbtle.com/visualising-residuals>"
+#| fig-cap: "Black dots represent data points. The blue line is the best fit regression line. The white dots represent the predicted location of each black dot. The red lines show the error between each black dot and the regression line. The blue line is the best fit line because it minimizes the error shown by the red lines. R code for residual visualization adapted from Simon Jackson: <https://drsimonj.svbtle.com/visualising-residuals>"
 
 d <- mtcars
 fit <- lm(mpg ~ hp, data = d)
@@ -391,11 +385,11 @@ ggplot(d, aes(x = hp, y = mpg)) +
 
 ```
 
-There's a lot going on in @fig-3regressionResiduals. his is a scatter plot of two variables $X$ and $Y$. Each black dot represents the observed data. The blue line is the regression line, and the white dots show the predicted values from that line. The red lines are **residuals**: they drop vertically from each observed value to its predicted value on the line. Because most of the black dots are not exactly on the line, each residual shows how far the prediction differs from the observed value.
+@fig-3regressionResiduals shows a scatter plot of two variables $X$ and $Y$. Each black dot represents observed data; the blue line is the regression line, and the white dots show its predicted values. The red lines are **residuals**: they drop vertically from each observed value to its predicted value on the line, showing how far the prediction differs from what was actually observed.
 
-The key point is that the regression line is chosen to minimize the total size of these residuals. In practice, we compute the **sum of squared deviations**: squaring each residual, then adding them together. The blue line is the one that produces the smallest possible total squared error. Any other line would yield a larger total error.
+The regression line is chosen to minimize the total size of these residuals. In practice, we compute the **sum of squared deviations**: square each residual, then add them together. The blue line produces the smallest possible total squared error; any other line would yield a larger one.
 
-@fig-3regressionGIF is an animation to see this in action. The animations compares the best fit line in blue, to some other possible lines in black. The black line moves up and down. The red lines show the error between the black line and the data points. As the black line moves toward the best fit line, the total error, depicted visually by the grey area shrinks to its minimum value. The total error expands as the black line moves away from the best fit line.
+@fig-3regressionGIF animates this directly, comparing the best fit line (blue) to other possible lines (black) as the black line moves up and down. The red lines show the error between the black line and the data points at each position, and the shaded grey area shrinks to its minimum exactly when the black line reaches the best fit line, then expands again as it moves away.
 
 ::: {.content-visible when-format="html"}
 ```{r}
@@ -407,9 +401,9 @@ knitr::include_graphics(path="imgs/gifs/regression-1.gif")
 ```
 :::
 
-Whenever the black line does not overlap with the blue line, it fits the data less well. The blue regression line is the one that minimizes the overall error — not too high, not too low, but the line with the least total deviation.
+Whenever the black line does not overlap with the blue line, it fits the data less well: the blue regression line is the one that minimizes the overall error, not too high, not too low, but the line with the least total deviation.
 
-@fig-3minimizeSS shows how the sum of squared deviations (the sum of the squared lengths of the red lines) behaves as we move the line up and down. What's going on here is that we are computing a measure of the total error as the black line moves through the best fit line. This represents the sum of the squared deviations. In other words, we square the length of each red line from the above animation, then we add up all of the squared red lines, and get the total error (the total sum of the squared deviations). The graph below shows what the total error looks like as the black line approaches then moves away from the best fit line. Notice, the dots in this graph start high on the left side, then they swoop down to a minimum at the bottom middle of the graph. When they reach their minimum point, we have found a line that minimizes the total error. This is the best fit regression line.
+@fig-3minimizeSS makes that error concrete: for each position of the black line, we square the length of every red line from the animation above and add them up, giving the total sum of squared deviations at that position. The dots start high on the left, swoop down to a minimum in the middle, and rise again on the right. That minimum point is the best fit regression line.
 
 ```{r}
 #| label: fig-3minimizeSS
@@ -444,7 +438,7 @@ ggplot(df,aes(x=move_line,y=total_error))+
 
 ```
 
-OK, so we haven't talked about the y-intercept yet. But, what this graph shows us is how the total error behaves as we move the line up and down. The y-intercept here is the thing we change that makes our line move up and down. As you can see the dots go up when we move the line down from 0 to -5, and the dots go up when we move the line up from 0 to +5. The best line, that minimizes the error occurs right in the middle, when we don't move the blue regression line at all.
+This graph shows how the total error behaves as the line's y-intercept moves up and down: the error rises whether we shift the line down (0 to -5) or up (0 to +5), and is smallest right in the middle, at the original best fit line.
 
 ### Computing the best fit line
 
@@ -480,13 +474,13 @@ knitr::kable(all_df)
 
 ```
 
-We see 7 sets of scores for the x and y variable. We calculated $x^2$ by squaring each value of x, and putting it in a column. We calculated $y^2$ by squaring each value of y, and putting it in a column. Then we calculated $xy$, by multiplying each $x$ score with each $y$ score, and put that in a column. Then we added all the columns up, and put the sums at the bottom. These are all the number we need for the formulas to find the best fit line. Here's what the formulas look like when we put numbers in them:
+The table has 7 pairs of $x$ and $y$ scores, plus columns for $x^2$, $y^2$, and $xy$ (each $x$ score times its matching $y$ score), with column sums at the bottom. These sums are everything the formulas need. Here's what they look like with numbers plugged in:
 
 $intercept = b = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2} = \frac{39 * 200 - 34*231}{7*200-34^2} = -.221$
 
 $slope = m = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2} = \frac{7*231-34*39}{7*275-34^2} = 1.19$
 
-Great, now we can check our work, let's plot the scores in a scatter plot and draw a line through it with slope = 1.19, and a y-intercept of -.221. As shown in @fig-3corwithLine, the line should go through the middle of the dots.
+To check the work, plot the scores and draw a line through them with slope = 1.19 and y-intercept = -.221. As shown in @fig-3corwithLine, the line runs through the middle of the dots, as it should.
 
 ```{r}
 #| label: fig-3corwithLine
@@ -533,13 +527,13 @@ knitr::kable(the_df_balls)
 
 In this one case, if we computed Pearson's $r$, we would find that $r =$ `r cor(North_pole,South_pole)`. But, we already know that this value does not tell us anything about the relationship between the balls chosen in the north and south pole. We know that relationship should be completely random, because that is how we set up the game.
 
-The better question here is to ask what can random chance do? For example, if we ran our game over and over again thousands of times, each time choosing new balls, and each time computing the correlation, what would we find?First, we will find fluctuation. The r value will sometimes be positive, sometimes be negative, sometimes be big and sometimes be small. Second, we will see what the fluctuation looks like. This will give us a window into the kinds of correlations that chance alone can produce. Let's see what happens.
+The better question is what random chance alone can do: if we ran this game thousands of times, each time drawing new balls and computing the correlation, the $r$ value would fluctuate, sometimes positive, sometimes negative, sometimes large, sometimes small. Looking at the shape of that fluctuation gives us a window into the kinds of correlations chance alone can produce.
 
 #### Monte-carlo: what chance produces
 
 We can use a computer to repeat the lottery game as many times as we like. This process, repeated random sampling to explore possible outcomes, is called a **Monte Carlo simulation**.
 
-I've coded a loop to run the game 1,000 times. Each time, both the North Pole and South Pole participants generate 10 random numbers. We then compute the correlation between their two sets. The result is 1,000 different values of Pearson’s $r$, each produced under conditions where we know no real relationship exists.
+Running the game 1,000 times, each time generating 10 random numbers for both the North Pole and South Pole participants and computing the correlation between them, gives 1,000 different values of Pearson's $r$, each produced under conditions where we know no real relationship exists.
 
 ```{r}
 #| label: fig-3anotherthousand
@@ -619,7 +613,7 @@ hist(simulated_correlations,breaks=seq(-1,1,.1))
 
 @fig-3histrandcor shows that most chance correlations cluster near zero. Moderate correlations (around $\pm 0.5$) occur less frequently, and near-perfect correlations ($\pm 0.95$) are almost absent. This distribution defines a “window of chance.” When we compute a correlation in real data, we can ask: is our observed $r$ consistent with what chance alone could plausibly generate?
 
-or example, if you observed $r=0.1$, the histogram shows that such values are common in random data, so chance could easily explain it. An observed $r=0.5$ is less common but still possible by chance. An observed $r=0.95$, however, falls outside what chance typically produces, suggesting that something more systematic is driving the relationship.
+For example, if you observed $r=0.1$, the histogram shows that such values are common in random data, so chance could easily explain it. An observed $r=0.5$ is less common but still possible by chance. An observed $r=0.95$, however, falls outside what chance typically produces, suggesting that something more systematic is driving the relationship.
 
 ### Sample size and stability
 
@@ -732,8 +726,6 @@ knitr::include_graphics(path="imgs/gifs/corNormFourNs-1.gif")
 ```
 :::
 
-What do things look like when there actually is a correlation between variables?
-
 **When there is a true correlation**
 
 In @fig-3realcorFour, the simulation is repeated with a real positive correlation built into the data. Again, we vary the sample size from 10 to 1000.
@@ -754,11 +746,9 @@ Both the histograms and the animations show that **small samples make correlatio
 
 ### Nonlinearity: when r misses real relationships
 
-Consider, a snake plant. Like most plants, snake plants need water to stay alive. But, they also need *the right amount* of water. Imagine we grow 1000 snake plants, each receiving a different amount of water per day. The amount of water ranges from *no water* to *extreme overwatering* (say 1000 teaspoons of water per day). We then measure weekly snake plant growth. Water is clearly causally related to plant growth, so we expect to see a correlation.
+Consider a snake plant. Like most plants, it needs water to stay alive, but also needs *the right amount* of water. Imagine we grow 1000 snake plants, each receiving a different amount of water per day, ranging from *no water* to *extreme overwatering* (say 1000 teaspoons a day), and measure their weekly growth. Water is clearly causally related to plant growth, so we'd expect to see a correlation.
 
-What would the scatter plot look like?
-
-Plants given no water at all will eventually die, showing little or no weekly growth. With only a few teaspoons per day, plants may survive but grow only modestly. In a scatter plot, those cases would appear near the bottom left (low water, low growth) and rise upward as water increases. Growth continues to improve until a threshold is reached—beyond that point, excess water harms the plants. Severely overwatered plants also fail to grow and eventually die, just as those given no water do.
+Plants given no water at all will eventually die, showing little or no weekly growth. With only a few teaspoons per day, plants may survive but grow only modestly. In a scatter plot, those cases would appear near the bottom left (low water, low growth) and rise upward as water increases. Growth continues to improve until a threshold is reached, beyond which excess water harms the plants. Severely overwatered plants also fail to grow and eventually die, just as those given no water do.
 
 The scatter plot would form an inverted U or V: as water increases, growth rises to a peak and then declines with overwatering. A relationship like this can produce a Pearson's $r$ close to zero, even though water clearly affects growth. @fig-3snakeplant illustrates this pattern.
 
@@ -794,9 +784,9 @@ This example shows why correlations can be tricky to interpret. Water is clearly
 
 ### Confounding variables (third-variable problem)
 
-Correlations can arise because of a third variable—something not directly measured that influences both variables of interest. Returning to the snake plant example: imagine we measure water and plant growth, but ignore sunlight. If plants in sunnier windows both receive more water and grow faster, we might attribute the effect to water alone, when in fact sunlight is doing much of the work.
+Correlations can arise because of a third variable: something not directly measured that influences both variables of interest. Returning to the snake plant example: imagine we measure water and plant growth, but ignore sunlight. If plants in sunnier windows both receive more water and grow faster, we might attribute the effect to water alone, when in fact sunlight is doing much of the work.
 
-The same issue appears in human data. Suppose we find that income and happiness are positively correlated. Is money itself the cause? Possibly, but other factors -- such as housing quality, healthcare access, or social opportunities -- may be the true drivers. Income is correlated with these factors, which in turn influence happiness.
+The same issue appears in human data. Suppose we find that income and happiness are positively correlated. Money itself might be the cause, but other factors, such as housing quality, healthcare access, or social opportunities, may be the true drivers, correlated with income and independently influencing happiness.
 
 ## Summary
 
@@ -819,7 +809,7 @@ The same issue appears in human data. Suppose we find that income and happiness 
 
 1.  Plot the scatter; look for linearness, curvature, and outliers.\
 2.  Report *r* with **sample size** (*n*) and, when possible, a **confidence interval**.
-3.  Avoid causal language—say “associated with,” not “caused by.”\
+3.  Avoid causal language: say “associated with,” not “caused by.”\
 4.  If the pattern is curved, don’t stop at *r*; fit a suitable model (e.g., add a quadratic term) or transform.\
 5.  If results hinge on a small sample, say so and treat conclusions as tentative.
 
