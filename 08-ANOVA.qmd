@@ -25,51 +25,94 @@ We present the ANOVA in the Fisherian sense, and at the end describe the Neyman-
 
 ## ANOVA is Analysis of Variance
 
-ANOVA stands for Analysis Of Variance. It is a widely used technique for assessing the likelihood that differences found between means in sample data could be produced by chance. You might be thinking, well don't we have $t$-tests for that? Why do we need the ANOVA, what do we get that's new that we didn't have before?
+ANOVA stands for Analysis Of Variance. It tests whether differences among several group means are larger than we'd expect from chance alone.
 
-What's new with the ANOVA, is the ability to test a wider range of means beyond just two. In all of the $t$-test examples we were always comparing two things. For example, we might ask whether the difference between two sample means could have been produced by chance. What if our experiment had more than two conditions or groups? We would have more than 2 means. We would have one mean for each group or condition. That could be a lot depending on the experiment. How would we compare all of those means? What should we do, run a lot of $t$-tests, comparing every possible combination of means? Actually, you could do that. Or, you could do an ANOVA.
+With two groups, a $t$-test already answers that question. ANOVA extends the same logic to **three or more** groups, which comes up constantly in environmental science: multiple sites, multiple treatments, multiple time periods.
 
-In practice, we will combine both the ANOVA test and $t$-tests when analyzing data with many sample means (from more than two groups or conditions). Just like the $t$-test, there are different kinds of ANOVAs for different research designs. There is one for between-subjects designs, and a slightly different one for repeated measures designs. We talk about both, beginning with the ANOVA for between-subjects designs.
+### Why not just run multiple t-tests?
+
+Suppose we're comparing three restoration treatments for vegetation cover: **compost**, **mulch**, and a bare-soil **control**. With three groups, there are three possible pairwise comparisons: compost vs. mulch, compost vs. control, and mulch vs. control.
+
+We could run a separate $t$-test for each. The problem is that every test carries its own 5% chance of a false positive, and those chances accumulate across tests. If we run $m$ independent tests at $\alpha=.05$, the probability of at least one false positive across all of them is
+
+$$
+P(\text{at least one false positive}) = 1-(1-\alpha)^m.
+$$
+
+With three groups, that's three tests and a familywise error rate of 14%, not 5%:
+
+$$
+1-(1-.05)^3 = .14.
+$$
+
+| Number of groups ($k$) | Pairwise tests ($m$) | Familywise error rate |
+|---|---|---|
+| 3 | 3 | $1-.95^3=.14$ |
+| 4 | 6 | $1-.95^6=.26$ |
+| 5 | 10 | $1-.95^{10}=.40$ |
+
+Even with only five groups, there's a 40% chance of turning up at least one "significant" difference somewhere purely by chance, even if every population mean is identical. @fig-9multiplet shows this inflation directly: as the number of independent $t$-tests grows, so does the chance that at least one is a false positive.
+
+```{r}
+#| label: fig-9multiplet
+#| fig-cap: "Familywise Type I error rate as the number of independent t-tests increases, at alpha = .05 per test."
+#| out-width: "80%"
+
+m <- 1:10
+familywise <- 1 - (1 - .05)^m
+
+ggplot(data.frame(m, familywise), aes(x = m, y = familywise)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(labels = scales::percent) +
+  xlab("Number of independent t-tests") +
+  ylab("Familywise Type I error rate") +
+  theme_classic(base_size = 12)
+```
+
+ANOVA solves this by replacing many separate $t$-tests with **one** test that controls the overall error rate. It asks a single question:
+
+$$
+H_0: \mu_1=\mu_2=\mu_3 \qquad H_a: \text{at least one mean differs}
+$$
+
+Just like the $t$-test, different research designs call for different kinds of ANOVA: a one-factor (between-subjects) ANOVA when every unit is measured once, and a repeated-measures ANOVA when the same units are measured under multiple conditions. We start with the one-factor case.
 
 ## One-factor ANOVA
 
-The one-factor ANOVA is sometimes also called a between-subjects ANOVA, an independent factor ANOVA, or a one-way ANOVA (which is a bit of a misnomer as we discuss later). The critical ingredient for a one-factor, between-subjects ANOVA, is that you have one independent variable, with at least two-levels. When you have one IV with two levels, you can run a $t$-test. You can also run an ANOVA. Interestingly, they give you almost the exact same results. You will get a $p$-value from both tests that is identical (they are really doing the same thing under the hood). The $t$-test gives a $t$-value as the important sample statistic. The ANOVA gives you the $F$-value (for Fisher, the inventor of the test) as the important sample statistic. It turns out that $t^2$ equals $F$, when there are only two groups in the design. They are the same test. Side-note, it turns out they are all related to Pearson's r too (but we haven't written about this relationship yet in this textbook).
+The one-factor ANOVA (also called a between-subjects, independent-factor, or one-way ANOVA) is the simplest version of the test: one independent variable with two or more levels, and every unit measured once.
 
-Remember that $t$ is computed directly from the data. It's like a mean and standard error that we measure from the sample. In fact it's the mean difference divided by the standard error of the sample. It's just another descriptive statistic isn't it.
+With exactly two groups, a $t$-test and a one-factor ANOVA give the same answer: $t^2=F$. Both compare the size of an effect to the amount of variation you'd expect from sampling error alone; the $t$-test expresses that comparison as $t$, and the ANOVA expresses the same underlying ratio as $F$ (named for Fisher, its inventor).
 
-The same thing is true about $F$. $F$ is computed directly from the data. In fact, the idea behind $F$ is the same basic idea that goes into making $t$. Here is the general idea behind the formula, it is again a ratio of the effect we are measuring (in the numerator), and the variation associated with the effect (in the denominator).
+$$
+F = \frac{\text{measure of effect}}{\text{measure of error}}
+$$
 
-$\text{name of statistic} = \frac{\text{measure of effect}}{\text{measure of error}}$
+The difference is that $F$ uses **variances** for both the numerator and the denominator, so $F$ is a ratio of two variances: the variance you can explain (differences between group means) over the variance you can't (leftover noise within each group).
 
-$\text{F} = \frac{\text{measure of effect}}{\text{measure of error}}$
+$$
+F = \frac{\text{Can explain}}{\text{Can't explain}}
+$$
 
-The difference with $F$, is that we use variances to describe both the measure of the effect and the measure of error. So, $F$ is a ratio of two variances.
-
-Remember what we said about how these ratios work. When the variance associated with the effect is the same size as the variance associated with sampling error, we will get two of the same numbers, this will result in an $F$-value of 1. When the variance due to the effect is larger than the variance associated with sampling error, then $F$ will be greater than 1. When the variance associated with the effect is smaller than the variance associated with sampling error, $F$ will be less than one.
-
-Let's rewrite in plainer English. We are talking about two concepts that we would like to measure from our data. 1) A measure of what we can explain, and 2) a measure of error, or stuff about our data we can't explain. So, the $F$ formula looks like this:
-
-$\text{F} = \frac{\text{Can Explain}}{\text{Can't Explain}}$
-
-When we can explain as much as we can't explain, $F$ = 1. This isn't that great of a situation for us to be in. It means we have a lot of uncertainty. When we can explain much more than we can't we are doing a good job, $F$ will be greater than 1. When we can explain less than what we can't, we really can't explain very much, $F$ will be less than 1. That's the concept behind making $F$.
-
-If you saw an $F$ in the wild, and it was .6. Then you would automatically know the researchers couldn't explain much of their data. If you saw an $F$ of 5, then you would know the researchers could explain 5 times more than the couldn't, that's pretty good. And the point of this is to give you an intuition about the meaning of an $F$-value, even before you know how to compute it.
+When the two are about the same size, $F\approx 1$: group differences are no bigger than ordinary sampling noise. When explained variance is much larger than unexplained variance, $F$ climbs well above 1, evidence that the groups really differ; when it's smaller, $F$ drops below 1. An $F$ of 5, for example, means the groups explain five times more variance than they leave unexplained, a substantial effect; an $F$ of 0.6 means the opposite, mostly unexplained noise.
 
 ### Computing the $F$-value
 
-Fisher's ANOVA is very elegant in my opinion. It starts us off with a big problem we always have with data. We have a lot of numbers, and there is a lot of variation in the numbers, what to do? Wouldn't it be nice to split up the variation into to kinds, or sources. If we could know what parts of the variation were being caused by our experimental manipulation, and what parts were being caused by sampling error, we would be making really good progress. We would be able to know if our experimental manipulation was causing more change in the data than sampling error, or chance alone. If we could measure those two parts of the total variation, we could make a ratio, and then we would have an $F$ value. This is what the ANOVA does. It splits the total variation in the data into two parts. The formula is:
+ANOVA splits the total variation in the data into two sources: variation caused by group membership (the manipulation), and variation left over as sampling error. If we can measure those two parts separately, we can turn them into a ratio and get an $F$-value.
 
-Total Variation = Variation due to Manipulation + Variation due to sampling error
+$$
+\text{Total variation} = \text{Variation between groups} + \text{Variation within groups}
+$$
 
-This is a nice idea, but it is also vague. We haven't specified our measure of variation. What should we use?
+To make that precise we need an actual measure of variation. As in Chapter 1, that's the **sums of squares**:
 
-Remember the sums of squares that we used to make the variance and the standard deviation? That's what we'll use. Let's take another look at the formula, using sums of squares for the measure of variation:
-
-$SS_\text{total} = SS_\text{Effect} + SS_\text{Error}$
+$$
+SS_\text{Total} = SS_\text{Between} + SS_\text{Within}
+$$
 
 ### SS Total
 
-The total sums of squares, or $SS\text{Total}$ is a way of thinking about all of the variation in a set of data. It's pretty straightforward to measure. No tricky business. All we do is find the difference between each score and the grand mean, then we square the differences and add them all up.
+$SS_\text{Total}$ captures all of the variation in a dataset: the difference between each score and the grand mean, squared and summed.
 
 Let's imagine we had some data in three groups, A, B, and C. For example, we might have 3 scores in each group. The data could look like this:
 
@@ -90,35 +133,23 @@ knitr::kable(df)
 
 ```
 
-The data is organized in long format, so that each row is a single score. There are three scores for the A, B, and C groups. The mean of all of the scores is called the **Grand Mean**. It's calculated in the table, the Grand Mean = 7.
+The data are in long format, so each row is a single score. The mean of all of the scores is the **Grand Mean**, calculated in the table as 7.
 
-We also calculated all of the difference scores **from the Grand Mean**. The difference scores are in the column titled `diff`. Next, we squared the difference scores, and those are in the next column called `diff_squared`.
+The `diff` column holds every score's distance from the grand mean; `diff_squared` squares those distances. Squaring matters because the raw differences sum to zero (the mean is the balancing point of the data), so working with them directly wouldn't tell us anything. Squaring turns every deviation positive and, as a side effect, weights larger deviations more heavily.
 
-Remember, the difference scores are a way of measuring variation. They represent how far each number is from the Grand Mean. If the Grand Mean represents our best guess at summarizing the data, the difference scores represent the error between the guess and each actual data point. The only problem with the difference scores is that they sum to zero (because the mean is the balancing point in the data). So, it is convenient to square the difference scores, this turns all of them into positive numbers. The size of the squared difference scores still represents error between the mean and each score. And, the squaring operation exacerbates the differences as the error grows larger (squaring a big number makes a really big number, squaring a small number still makes a smallish number).
+Adding up all of the squared deviations gives the sums of squares, which is where the name comes from. That's the first piece of our answer:
 
-OK fine! We have the squared deviations from the grand mean, we know that they represent the error between the grand mean and each score. What next? SUM THEM UP!
+$$
+SS_\text{Total} = SS_\text{Between} + SS_\text{Within}, \qquad 302 = SS_\text{Between} + SS_\text{Within}.
+$$
 
-When you add up all of the individual squared deviations (difference scores) you get the sums of squares. That's why it's called the sums of squares (SS).
+We only need to compute one of the two remaining pieces directly; the other follows by subtraction.
 
-Now, we have the first part of our answer:
+### SS Between
 
-$SS_\text{total} = SS_\text{Effect} + SS_\text{Error}$
+$SS_\text{Total}$ captured all of the variation in the data. $SS_\text{Between}$ isolates the piece of that variation caused by group membership: how far each group's mean sits from the grand mean.
 
-$SS_\text{total} = 302$ and
-
-$302 = SS_\text{Effect} + SS_\text{Error}$
-
-What next? If you think back to what you learned about algebra, and solving for X, you might notice that we don't really need to find the answers to both missing parts of the equation. We only need one, and we can solve for the other. For example, if we found $SS_\text{Effect}$, then we could solve for $SS_\text{Error}$.
-
-### SS Effect
-
-$SS_\text{Total}$ gave us a number representing all of the change in our data, how all the scores are different from the grand mean.
-
-What we want to do next is estimate how much of the total change in the data might be due to the experimental manipulation. For example, if we ran an experiment that causes causes change in the measurement, then the means for each group will be different from other. As a result, the manipulation forces change onto the numbers, and this will naturally mean that some part of the total variation in the numbers is caused by the manipulation.
-
-The way to isolate the variation due to the manipulation (also called effect) is to look at the means in each group, and calculate the difference scores between each group mean and the grand mean, and then sum the squared deviations to find $SS_\text{Effect}$.
-
-Consider this table, showing the calculations for $SS_\text{Effect}$.
+To find it, replace every score with its own group's mean, then square and sum each group mean's distance from the grand mean.
 
 ```{r}
 library(dplyr)
@@ -138,31 +169,23 @@ knitr::kable(df)
 
 ```
 
-Notice we created a new column called `means`. For example, the mean for group A was 11. You can see there are three 11s, one for each observation in row A. The means for group B and C happen to both be 5. So, the rest of the numbers in the means column are 5s.
+Notice the new `means` column: the mean for group A was 11, so there are three 11s, one per observation in row A; groups B and C both average to 5, so the rest of the column is 5s.
 
-What we are doing here is thinking of each score in the data from the viewpoint of the group means. The group means are our best attempt to summarize the data in those groups. From the point of view of the mean, all of the numbers are treated as the same. The mean doesn't know how far off it is from each score, it just knows that all of the scores are centered on the mean.
+Each score has been replaced by its own group's mean. From the mean's point of view, every score in the group looks identical: a mean has no memory of how far off it was from any individual data point, only that everything in the group is centered on it.
 
-> Let's pretend you are the mean for group A. That means you are an 11. Someone asks you "hey, what's the score for the first data point in group A?". Because you are the mean, you say, I know that, it's 11. "What about the second score?"...it's 11... they're all 11, so far as I can tell..."Am I missing something...", asked the mean.
+Finding the differences between each of those group-mean values and the grand mean, squaring them, and summing gives $SS_\text{Between} = 72$: the amount of variation caused by differences between the group means, i.e., the variation we can explain by group membership.
 
-Now that we have converted each score to it's mean value we can find the differences between each mean score and the grand mean, then square them, then sum them up. We did that, and found that the $SS_\text{Effect} = 72$.
+$SS_\text{Between}$ can never be larger than $SS_\text{Total}$, and indeed 72 is smaller than 302.
 
-$SS_\text{Effect}$ represents the amount of variation that is caused by differences between the means. I also refer to this as the amount of variation that the researcher can explain (by the means, which represent differences between groups or conditions that were manipulated by the researcher).
+### SS Within
 
-Notice also that $SS_\text{Effect} = 72$, and that 72 is smaller than $SS_\text{total} = 302$. That is very important. $SS_\text{Effect}$ by definition can never be larger than $SS_\text{total}$.
+We already have $SS_\text{Total} = 302$ and $SS_\text{Between} = 72$, so we can solve for $SS_\text{Within}$ by subtraction:
 
-### SS Error
+$$
+SS_\text{Within} = SS_\text{Total} - SS_\text{Between} = 302 - 72 = 230.
+$$
 
-Great, we made it to SS Error. We already found SS Total, and SS Effect, so now we can solve for SS Error just like this:
-
-$SS_\text{total} = SS_\text{Effect} + SS_\text{Error}$
-
-switching around:
-
-\$ SS\_\text{Error} = SS\_\text{total} - SS\_\text{Effect} \$
-
-\$ SS\_\text{Error} = 302 - 72 = 230 \$
-
-We could stop here and show you the rest of the ANOVA, we're almost there. But, the next step might not make sense unless we show you how to calculate $SS_\text{Error}$ directly from the data, rather than just solving for it. We should do this just to double-check our work anyway.
+It's worth calculating $SS_\text{Within}$ directly from the data too, both to see where it comes from and to double-check that the subtraction was right.
 
 ```{r}
 scores <- c(20, 11, 2, 6, 2, 7, 2, 11, 2)
@@ -181,71 +204,43 @@ knitr::kable(df)
 
 ```
 
-Alright, we did almost the same thing as we did to find $SS_\text{Effect}$. Can you spot the difference? This time for each score we first found the group mean, then we found the error in the group mean estimate for each score. In other words, the values in the $diff$ column are the differences between each score and it's group mean. The values in the `diff_squared` column are the squared deviations. When we sum up the squared deviations, we get another Sums of Squares, this time it's the $SS_\text{Error}$. This is an appropriate name, because these deviations are the ones that the group means can't explain!
+This time, for each score we found the group mean first, then found the leftover error in that estimate: the `diff` column is the difference between each score and its own group mean, and `diff_squared` squares those differences. Summing them gives another sum of squares, $SS_\text{Within}$: the deviations the group means can't explain.
 
 ### Degrees of freedom
 
-Degrees of freedom come into play again with ANOVA. This time, their purpose is a little bit more clear. $Df$s can be fairly simple when we are doing a relatively simple ANOVA like this one, but they can become complicated when designs get more complicated.
+Degrees of freedom work the same way here as for the $t$-test: every time we estimate something from the data, we use up a degree of freedom.
 
-Let's talk about the degrees of freedom for the $SS_\text{Effect}$ and $SS_\text{Error}$.
+$df_\text{Between} = \text{groups}-1$. With 3 groups, $df_\text{Between}=3-1=2$: once we fix the grand mean, two of the three group means are free to be anything, but the third is determined by the other two.
 
-The formula for the degrees of freedom for $SS_\text{Effect}$ is
+$df_\text{Within} = \text{scores}-\text{groups}$. With 9 scores and 3 groups, $df_\text{Within}=9-3=6$: estimating each of the 3 group means uses up 3 degrees of freedom, so only 6 of the 9 individual deviations are free to vary.
 
-$df_\text{Effect} = \text{Groups} -1$, where Groups is the number of groups in the design.
+### Mean Squares
 
-In our example, there are 3 groups, so the df is 3-1 = 2. You can think of the df for the effect this way. When we estimate the grand mean (the overall mean), we are taking away a degree of freedom for the group means. Two of the group means can be anything they want (they have complete freedom), but in order for all three to be consistent with the Grand Mean, the last group mean has to be fixed.
+We're building toward $F=\dfrac{\text{measure of effect}}{\text{measure of error}}$, and it's tempting to just divide $SS_\text{Between}$ by $SS_\text{Within}$ directly. The trouble is that $SS_\text{Within}$ sums over all 9 individual scores while $SS_\text{Between}$ sums over only 3 group means, so $SS_\text{Within}$ is almost always the much larger number, and the raw ratio wouldn't be interpretable the way $t$ or $z$ are.
 
-The formula for the degrees of freedom for $SS_\text{Error}$ is
+The fix is to convert each sum of squares into an average, or **mean square**, by dividing by its degrees of freedom (rather than its raw count, since these are estimated quantities):
 
-$df_\text{Error} = \text{scores} - \text{groups}$, or the number of scores minus the number of groups. We have 9 scores and 3 groups, so our $df$ for the error term is 9-3 = 6. Remember, when we computed the difference score between each score and its group mean, we had to compute three means (one for each group) to do that. So, that reduces the degrees of freedom by 3. 6 of the difference scores could be anything they want, but the last 3 have to be fixed to match the means from the groups.
+$$
+MS_\text{Between} = \frac{SS_\text{Between}}{df_\text{Between}} = \frac{72}{2} = 36
+$$
 
-### Mean Squared Error
+$$
+MS_\text{Within} = \frac{SS_\text{Within}}{df_\text{Within}} = \frac{230}{6} = 38.33
+$$
 
-OK, so we have the degrees of freedom. What's next? There are two steps left. First we divide the $SS$es by their respective degrees of freedom to create something new called Mean Squared Error. Let's talk about why we do this.
-
-First of all, remember we are trying to accomplish this goal:
-
-$\text{F} = \frac{\text{measure of effect}}{\text{measure of error}}$
-
-We want to build a ratio that divides a measure of an effect by a measure of error. Perhaps you noticed that we already have a measure of an effect and error! How about the $SS_\text{Effect}$ and $SS_\text{Error}$. They both represent the variation due to the effect, and the leftover variation that is unexplained. Why don't we just do this?
-
-$\frac{SS_\text{Effect}}{SS_\text{Error}}$
-
-Well, of course you could do that. What would happen is you can get some really big and small numbers for your inferential statistic. And, the kind of number you would get wouldn't be readily interpretable like a $t$ value or a $z$ score.
-
-The solution is to **normalize** the $SS$ terms. Don't worry, normalize is just a fancy word for taking the average, or finding the mean. Remember, the SS terms are all sums. And, each sum represents a different number of underlying properties.
-
-For example, the SS\_\text{Effect} represents the sum of variation for three means in our study. We might ask the question, well, what is the average amount of variation for each mean...You might think to divide SS\_\text{Effect} by 3, because there are three means, but because we are estimating this property, we divide by the degrees of freedom instead (# groups - 1 = 3-1 = 2). Now we have created something new, it's called the $MSE_\text{Effect}$.
-
-$MSE_\text{Effect} = \frac{SS_\text{Effect}}{df_\text{Effect}}$
-
-$MSE_\text{Effect} = \frac{72}{2} = 36$
-
-This might look alien and seem a bit complicated. But, it's just another mean. It's the mean of the sums of squares for the effect. If this reminds you of the formula for the variance, good memory. The $SME_\text{Effect}$ is a measure variance for the change in the data due to changes in the means (which are tied to the experimental conditions).
-
-The $SS_\text{Error}$ represents the sum of variation for nine scores in our study. That's a lot more scores, so the $SS_\text{Error}$ is often way bigger than than $SS_\text{Effect}$. If we left our SSes this way and divided them, we would almost always get numbers less than one, because the $SS_\text{Error}$ is so big. What we need to do is bring it down to the average size. So, we might want to divide our $SS_\text{Error}$ by 9, after all there were nine scores. However, because we are estimating this property, we divide by the degrees of freedom instead (scores-groups) = 9-3 = 6). Now we have created something new, it's called the $MSE_\text{Error}$.
-
-$MSE_\text{Error} = \frac{SS_\text{Error}}{df_\text{Error}}$
-
-$MSE_\text{Error} = \frac{230}{6} = 38.33$
+Both are variances: $MS_\text{Between}$ measures how much the group means vary, and $MS_\text{Within}$ measures how much individual scores vary around their own group's mean.
 
 ### Calculate F
 
-Now that we have done all of the hard work, calculating $F$ is easy:
+With $MS_\text{Between}$ and $MS_\text{Within}$ in hand, $F$ is their ratio:
 
-$\text{F} = \frac{\text{measure of effect}}{\text{measure of error}}$
+$$
+F = \frac{MS_\text{Between}}{MS_\text{Within}} = \frac{36}{38.33} = 0.94
+$$
 
-$\text{F} = \frac{MSE_\text{Effect}}{MSE_\text{Error}}$
+### The ANOVA table
 
-$\text{F} = \frac{36}{38.33} = .939$
-
-Done!
-
-### The ANOVA TABLE
-
-You might suspect we aren't totally done here. We've walked through the steps of computing $F$. Remember, $F$ is a sample statistic, we computed $F$ directly from the data. There were a whole bunch of pieces we needed, the dfs, the SSes, the MSEs, and then finally the F.
-
-All of these little pieces are conveniently organized by ANOVA tables. ANOVA tables look like this:
+All of these pieces, the $df$s, $SS$es, $MS$es, and finally $F$, are conveniently organized into an **ANOVA table**:
 
 ```{r}
 library(xtable)
@@ -256,22 +251,20 @@ knitr::kable(xtable(summary_out))
 
 ```
 
-You are looking at the print-out of an ANOVA summary table from R. Notice, it had columns for $Df$, $SS$ (Sum Sq), $MSE$ (Mean Sq), $F$, and a $p$-value. There are two rows. The `groups` row is for the Effect (what our means can explain). The `Residuals` row is for the Error (what our means can't explain). Different programs give slightly different labels, but they are all attempting to present the same information in the ANOVA table. There isn't anything special about the ANOVA table, it's just a way of organizing all the pieces. Notice, the MSE for the effect (36) is placed above the MSE for the error (38.333), and this seems natural because we divide 36/38.33 in or to get the $F$-value!
+R labels the two rows `groups` (the between-groups row: what the means can explain) and `Residuals` (the within-groups row: what they can't). Other software uses slightly different labels for the same two rows. The table doesn't add new information beyond what we already computed; it just organizes it, with $MS_\text{Between}$ (36) divided by $MS_\text{Within}$ (38.33) giving the $F$-value.
 
 ## What does F mean?
 
-We've just noted that the ANOVA has a bunch of numbers that we calculated straight from the data. All except one, the $p$-value. We did not calculate the $p$-value from the data. Where did it come from, what does it mean? How do we use this for statistical inference. Just so you don't get too worried, the $p$-value for the ANOVA has the very same general meaning as the $p$-value for the $t$-test, or the $p$-value for any sample statistic. It tells us that the probability that we would observe our test statistic or larger, under the distribution of no differences (the null).
+Every number in the ANOVA table so far was computed directly from the data, except one: the $p$-value. Its meaning is the same as for any other test we've covered: the probability of observing an $F$ this large or larger if the null hypothesis (no real group differences) were true.
 
-As we keep saying, $F$ is a sample statistic. Can you guess what we do with sample statistics in this textbook? We did it for the Crump Test, the Randomization Test, and the $t$-test... We make fake data, we simulate it, we compute the sample statistic we are interested in, then we see how it behaves over many replications or simulations.
-
-Let's do that for $F$. This will help you understand what $F$ really is, and how it behaves. We are going to created the sampling distribution of $F$. Once we have that you will be able to see where the $p$-values come from. It's the same basic process that we followed for the $t$ tests, except we are measuring $F$ instead of $t$.
+Since $F$ is a sample statistic, we can find out how it behaves the same way we found out how $t$ behaves: simulate it many times under the null and look at the resulting distribution.
 
 To build intuition for the F distribution, consider a simulated monitoring study with three site types (A, B, C). Each site type has 10 sampling plots, for 30 total. We measure species abundance at each plot. Critically, the **null scenario** applies: all 30 plots are drawn from the same distribution (mean = 100, SD = 10), so site type has no real effect on abundance. Any differences between group means arise from sampling error alone.
 
-We run this simulation 10,000 times. Each time we compute F from the sample data. The histogram of those 10,000 F-values --- shown in @fig-8fnull --- is the null distribution of F for this design.
+We run this simulation 10,000 times. Each time we compute F from the sample data. The histogram of those 10,000 F-values --- shown in @fig-9fnull --- is the null distribution of F for this design.
 
 ```{r}
-#| label: fig-8fnull
+#| label: fig-9fnull
 #| fig.cap: "A simulation of 10,000 experiments from a null distribution where there is no differences. The histogram shows 10,000 $F$-values, one for each simulation. These are values that F can take in this situation. All of these $F$-values were produced by random sampling error."
 #| fig-asp: 0.5
 #| out-width: "100%"
@@ -297,23 +290,21 @@ ggplot(plot_df, aes(x = save_F)) +
 
 ```
 
-Let's note a couple things about the $F$ distribution. 1) The smallest value is 0, and there are no negative values. Does this make sense? $F$ can never be negative because it is the ratio of two variances, and variances are always positive because of the squaring operation. So, yes, it makes sense that the sampling distribution of $F$ is always 0 or greater. 2) it does not look normal. No it does not. $F$ can have many different looking shapes, depending on the degrees of freedom in the numerator and denominator. However, these aspects are too important for now.
+A couple of things are worth noting about this $F$ distribution. First, it never goes below 0: $F$ is a ratio of two variances, and variances can't be negative, so neither can $F$. Second, it isn't normal or symmetric; it's right-skewed, and its exact shape depends on the numerator and denominator degrees of freedom.
 
-Remember, before we talked about some intuitive ideas for understanding $F$, based on the idea that $F$ is a ratio of what we can explain (variance due to mean differences), divided by what we can't explain (the error variance). When the error variance is higher than the effect variance, then we will always get an $F$-value less than one. You can see that we often got $F$-values less than one in the simulation. This is sensible, after all we were simulating samples coming from the very same distribution. On average there should be no differences between the means. So, on average the part of the total variance that is explained by the means should be less than one, or around one, because it should be roughly the same as the amount of error variance (remember, we are simulating no differences).
+Most simulated $F$-values here cluster below 1, which makes sense: all 30 plots were drawn from the same distribution, so on average the explained and unexplained variance should be about the same size. A smaller number of $F$-values reach up toward 5, an $F$ that large would mean the groups explain five times more variance than they leave unexplained, which is a lot, and the histogram shows that values that large are rare. Every $F$ in this histogram was produced purely by random sampling error, since we built the simulation with no real group differences at all.
 
-At the same time, we do see that some $F$-values are larger than 1. There are little bars that we can see going all the way up to about 5. If you were to get an $F$-value of 5, you might automatically think, that's a pretty big $F$-value. Indeed it kind of is, it means that you can explain 5 times more of variance than you can't explain. That seems like a lot. You can also see that larger $F$-values don't occur very often. As a final reminder, what you are looking at is how the $F$-statistic (measured from each of 10,000 simulated experiments) behaves when the only thing that can cause differences in the means is random sampling error. Just by chance sometimes the means will be different. You are looking at another chance window. These are the $F$s that chance can produce.
+### Making decisions
 
-### Making Decisions
-
-We can use the sampling distribution of $F$ (for the null) to make decisions about the role of chance in a real experiment. For example, we could do the following.
+We can use this null distribution of $F$ to decide when a real experiment's result is too large to be explained by chance:
 
 1.  Set an alpha criterion of $p$ = 0.05
-2.  Find out the critical value for $F$, for our particular situation (with our $df$s for the numerator and denominator).
+2.  Find the critical value of $F$ for our design's numerator and denominator $df$s.
 
-Let's do that. I've drawn the line for the critical value onto the histogram in @fig-8criticalF:
+@fig-9criticalF marks that critical value on the histogram:
 
 ```{r}
-#| label: fig-8criticalF
+#| label: fig-9criticalF
 #| fig-cap: "The critical value for $F$ where 5% of all $F$-values lie beyond this point"
 #| out-width: "100%"
 #| fig-asp: 0.5
@@ -341,48 +332,36 @@ ggplot(plot_df, aes(x = save_F)) +
 
 ```
 
-Alright, now we can see that only 5% of all $F$-values from from this sampling distribution will be 3.35 or larger. We can use this information.
+Only 5% of $F$-values from this null distribution are 3.35 or larger. That gives us a decision rule: if we ran the same design for real (30 plots, 10 per site type) and site type genuinely affected abundance, we could treat $F\geq3.35$ as evidence the differences aren't just chance. An observed $F$ of 3.4, for instance, would occur less than 5% of the time under the null, so seeing it would give us reasonably good grounds to conclude that site type actually mattered.
 
-How would we use it? Imagine we ran a real version of this monitoring study. And, site type really did affect abundance. If we ran the exact same design, with 30 plots in total (10 per site type), we could set an $F$ criterion of 3.35 for determining whether any of our results reflected a real effect of site type on abundance, and not due to random chance. For example, if we found an $F$-value of 3.34, which happens, just less than 5% of the time, we might conclude that random sampling error did not produce the differences between our means. Instead, we might be more confident that site type actually did affect abundance, after all an $F$-value of 3.34 doesn't happen very often, it is unlikely (only 5 times out of 100) to occur by chance.
+### F and the means
 
-### Fs and means
+An $F$-value and its $p$-value don't, by themselves, tell us what the group means actually were. If a study reports $F(2,27)=6.0$, $p=.001$, we know only that an $F$ this large would happen by chance about 0.1% of the time, strong evidence against the null. We still don't know which means differed, or by how much, without looking at the group means directly (the ANOVA table itself doesn't report them).
 
-Up to here we have been building your intuition for understanding $F$. We went through the calculation of $F$ from sample data. We went through the process of simulating thousands of $F$s to show you the null distribution. We have not talked so much about what researchers really care about...The MEANS! The actual results from the experiment. Were the means different? that's often what people want to know. So, now we will talk about the means, and $F$, together.
-
-Notice, if I told you I ran an experiment with three groups, testing whether some manipulation changes the behavior of the groups, and I told you that I found a big $F$!, say an $F$ of 6!. And, that the $F$ of 6 had a $p$-value of .001. What would you know based on that information alone? You would only know that Fs of 6 don't happen very often by chance. In fact they only happen 0.1% of the time, that's hardly at all. If someone told me those values, I would believe that the results they found in their experiment were not likely due to chance. However, I still would not know what the results of the experiment were! Nobody told us what the means were in the different groups, we don't know what happened!
-
-IMPORTANT: even though we don't know what the means were, we do know something about them, whenever we get $F$-values and $p$-values like that (big $F$s, and very small associated $p$s)... Can you guess what we know? I'll tell you. We automatically know that there **must have been some differences between the means**. If there was no differences between the means, then the variance explained by the means (the numerator for $F$) would not be very large. So, we know that there must be some differences, we just don't know what they are. Of course, if we had the data, all we would need to do is look at the means for the groups (the ANOVA table doesn't report this, we need to do it as a separate step).
+That said, a large $F$ with a small $p$-value does tell us one thing for certain: the group means **must** differ somewhere. If they didn't, the variance explained by group membership (the numerator of $F$) wouldn't be large enough to produce that result. We know a difference exists; identifying it requires a separate step.
 
 #### ANOVA is an omnibus test
 
-This property of the ANOVA is why the ANOVA is sometimes called the **omnibus test**. The term omnibus, meaning "comprising several items". The ANOVA is, in a way, one omnibus test, comprising several little tests.
+This is why ANOVA is called an **omnibus test**: omnibus meaning "comprising several items." It answers one overall question that stands in for several pairwise ones at once.
 
-For example, if you had three groups, A, B, and C. You get could differences between
+With three groups A, B, and C, there are three possible pairwise differences: A vs. B, B vs. C, and A vs. C. We could test each with a separate $t$-test, or ask the more general omnibus question with a single ANOVA:
 
-1.  A and B
-2.  B and C
-3.  A and C
-
-That's three possible differences you could get. You could run separate $t$-tests, to test whether each of those differences you might have found could have been produced by chance. Or, you could run an ANOVA, like what we have been doing, to ask one more general question about the differences. Here is one way to think about what the omnibus test is testing:
-
-Hypothesis of no differences anywhere: \$ A = B = C \$
+Hypothesis of no differences anywhere: $A=B=C$
 
 Any differences anywhere:
 
-a.  \$ A \neq B = C \$
-b.  \$ A = B \neq C \$
-c.  \$ A \neq C = B \$
+a.  $A\neq B=C$
+b.  $A=B\neq C$
+c.  $A\neq C=B$
 
-The $\neq$ symbol means "does not equal", it's an equal sign with a cross through it (no equals allowed!).
+A small $F$ with a large $p$-value means we don't reject the hypothesis of no differences: we have no evidence the three group means differ, and whatever gaps exist could easily be chance. A large $F$ with a small $p$-value (below our alpha criterion) means we reject that hypothesis and conclude at least one group mean differs from the others. That's the omnibus test: it tells us *whether* the means differ, not yet *which* ones.
 
-How do we put all of this together. Generally, when we get a small $F$-value, with a large $p$-value, we will not reject the hypothesis of no differences. We will say that we do not have evidence that the means of the three groups are in any way different, and the differences that are there could easily have been produced by chance. When we get a large F with a small $p$-value (one that is below our alpha criterion), we will generally reject the hypothesis of no differences. We would then assume that at least one group mean is not equal to one of the others. That is the omnibus test. Rejecting the null in this way is rejecting the idea there are no differences. But, the $F$ test still does not tell you which of the possible group differences are the ones that are different.
+#### Looking at group means directly
 
-#### Looking at a bunch of group means
-
-We just ran 10,000 experiments and we didn't even once look at the group means for any of the experiments. Different patterns of group means under the null are shown in @fig-8manyDiffs for a subset of 10 random simulations.
+The 10,000 simulated experiments above never once showed us the actual group means behind each $F$-value. @fig-9manyDiffs shows the group means (with standard-error bars) from 10 of those null simulations.
 
 ```{r}
-#| label: fig-8manyDiffs
+#| label: fig-9manyDiffs
 #| fig-cap: "Different patterns of group means under the null (all scores for each group sampled from the same distribution)."
 #| out-width: "100%"
 
@@ -420,60 +399,16 @@ ggplot(data = plot_df2, aes(x = site_type, y = group_means, color = simulations)
 
 ```
 
-Whoa, that's a lot to look at. What is going on here? Each little box represents the outcome of a simulated experiment. The dots are the means for each site type (A, B, or C). The y-axis shows the mean abundance for each group. The error bars are standard errors of the mean.
+Each panel is one simulated experiment; the dots are the group means for site types A, B, and C, with error bars showing standard error. All 30 plots in every panel were drawn from the same distribution (mean = 100, sd = 10), so the group means are only ever different because of sampling error, not any real effect of site type.
 
-You can see that each of the 10 experiments turn out different. Remember, we sampled 10 numbers for each group from the **same** normal distribution with mean = 100, and sd = 10. So, we know that the **correct** means for each sample should actually be 100 every single time. However, they are not 100 every single time because of?...**sampling error** (Our good friend that we talk about all the time).
+In most panels, the error bars overlap heavily, visually suggesting no real difference. In a few, they overlap less, which would suggest a difference that isn't actually there. Concluding a real effect from one of those panels would be a Type I error: we know there's no true difference here because we built the simulation that way, but in a real study you don't get to know that in advance.
 
-For most of the simulations the error bars are all overlapping, this suggests visually that the means are not different. However, some of them look like they are not overlapping so much, and this would suggest that they are different. This is the deceptive face of chance. If we concluded that any of these sets of means had a true difference, we would be committing a type I error. Because we made the simulation, we know that none of these means are actually different. But, when you are running a real experiment, you don't get to know this for sure.
+#### What group means look like when F is less than 1
 
-#### Looking at bar graphs
-
-Let's look at the exact same graph as above, but this time use bars to visually illustrate the means, instead of dots. We'll re-do our simulation of 10 experiments, so the pattern will be a little bit different:
+@fig-9flessthanone shows 10 simulated experiments, this time filtered to only the ones where $F<1$, the cases where we'd clearly fail to reject the null.
 
 ```{r}
-#| label: fig-8manyDiffsBar
-#| fig-cap: "Different patterns of group means under the null (all scores for each group sampled from the same distribution)."
-#| out-width: "100%"
-
-all_df <- data.frame()
-
-for (i in 1:10) {
-  abundance   <- rnorm(30, 100, 10)
-  site_type   <- as.factor(rep(1:3, each = 10))
-  simulations <- rep(i, each = 30)
-  sample_df   <- data.frame(simulations, site_type, abundance)
-  all_df      <- rbind(all_df, sample_df)
-}
-
-all_df$simulations  <- as.factor(all_df$simulations)
-
-plot_df2 <- all_df %>%
-  dplyr::group_by(simulations, site_type) %>%
-  dplyr::summarize(group_means = mean(abundance),
-                   group_SE = sd(abundance) / sqrt(length(abundance)))
-
-ggplot(plot_df2, aes(x = site_type, y = group_means, fill = simulations)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  geom_errorbar(aes(ymin = group_means - group_SE, ymax = group_means +
-                      group_SE)) +
-  theme_classic() +
-  ylab("Mean Abundance") +
-  facet_wrap( ~ simulations, nrow=2) +
-  coord_cartesian(ylim = c(90, 110))
-
-
-```
-
-In @fig-8manyDiffsBar the heights of the bars display the means for each site type. The pattern across simulations is generally the same. Some of the fake experiments look like there might be differences, and some of them don't.
-
-#### What mean differences look like when $F$ is less than 1
-
-We are now giving you some visual experience looking at what means look like from a particular experiment. This is for your stats intuition. We're trying to improve your data senses.
-
-What we are going to do now is similar to what we did before. Except this time we are going to look at 10 simulated experiments, where all of the $F$-values were less than 1. All of these $F$-values would also be associated with fairly large $p$-values. When F is less than one, we would not reject the hypothesis of no differences. So, when we look at patterns of means when F is less than 1, we should see mostly the same means, and no big differences.
-
-```{r}
-#| label: fig-8flesshthanone
+#| label: fig-9flessthanone
 #| fig-cap: "Different patterns of group means under the null (sampled from same distribution) when F is less than 1."
 #| out-width: "100%"
 
@@ -512,16 +447,14 @@ ggplot(plot_df, aes(x = site_type, y = means, fill = simulations)) +
 
 ```
 
-In @fig-8flesshthanone the numbers in the panels now tell us which simulations actually produced $F$s of less than 1.
+The panel numbers show which simulations actually produced $F<1$. The bars aren't perfectly flat, but what matters is that within each panel, the error bars for all three means overlap heavily: our estimate of the mean is about the same across groups, and we wouldn't be making a Type I error here.
 
-We see here that all the bars aren't perfectly flat, that's OK. What's more important is that for each panel, the error bars for each mean are totally overlapping with all the other error bars. We can see visually that our estimate of the mean for each sample is about the same for all of the bars. That's good, we wouldn't make any type I errors here.
+#### What group means look like when F exceeds the critical value
 
-#### What mean differences look like when F \> 3.35
-
-Earlier we found that the critical value for $F$ in our situation was 3.35, this was the location on the $F$ distribution where only 5% of $F$s were 3.35 or greater. We would reject the hypothesis of no differences whenever $F$ was greater than 3.35. In this case, whenever we did that, we would be making a type I error. That is because we are simulating the distribution of no differences (remember all of our sample means are coming from the exact same distribution). So, now we can take a look at what type I errors look like. In other words, we can run some simulations and look at the pattern in the means, only when $F$ happens to be 3.35 or greater (this only happens 5% of the time, so we might have to let the computer simulate for a while). Let's see what that looks like:
+Earlier we found a critical value of 3.35: only 5% of $F$-values from this null distribution exceed it. @fig-9sigdiffs shows 10 simulations filtered to exactly that rare case, $F>3.35$, even though every one of them is still drawn from the same null distribution with no real group differences. Rejecting the null whenever $F$ clears 3.35 is the right long-run decision rule, but every one of these particular simulations would be a Type I error if we did.
 
 ```{r}
-#| label: fig-8sigdiffs
+#| label: fig-9sigdiffs
 #| fig-cap: "Different patterns of group means under the null when F is above critical value (these are all type I Errors)."
 #| out-width: "100%"
 
@@ -560,13 +493,11 @@ ggplot(plot_df, aes(x = site_type, y = means, fill = simulations)) +
 
 ```
 
-The numbers in the panels now tell us which simulations actually produced $F$s that were greater than 3.35
-
-What do you notice about the pattern of means inside each panel of @fig-8sigdiffs? Now, every the panels show at least one mean that is different from the others. Specifically, the error bars for one mean do not overlap with the error bars for one or another mean. This is what mistakes looks like. These are all type I errors. They are insidious. When they happen to you by chance, the data really does appear to show a strong pattern, your $F$-value is large, and your $p$-value is small! It is easy to be convinced by a type I error.
+Every panel of @fig-9sigdiffs now shows at least one group mean whose error bars don't overlap with another's: a visually convincing "real" difference. All ten are Type I errors. That's the deceptive part: when this happens by chance, the data really does look like it shows a pattern, the $F$-value really is large, and the $p$-value really is small. A genuine Type I error looks exactly like a genuine effect, which is exactly why it's easy to be convinced by one.
 
 ## ANOVA on Real Data
 
-We've covered many fundamentals about the ANOVA, how to calculate the necessary values to obtain an $F$-statistic, and how to interpret the $F$-statistic along with it's associate $p$-value once we have one. In general, you will be conducting ANOVAs and playing with $F$s and $p$s using software that will automatically spit out the numbers for you. It's important that you understand what the numbers mean, that's why we've spent time on the concepts. We also recommend that you try to compute an ANOVA by hand at least once. It builds character, and let's you know that you know what you are doing with the numbers.
+We've covered the fundamentals of ANOVA: how to compute an $F$-statistic from the data, and how to interpret it along with its $p$-value. In practice, software handles these calculations for you, but understanding what the numbers mean is what lets you interpret them correctly. Computing at least one ANOVA by hand, as we just did, is worth the effort: it's the fastest way to build real intuition for what the software is doing under the hood.
 
 The following example applies the full ANOVA workflow --- descriptive summaries, omnibus F test, and post-hoc comparisons --- to a real ecological dataset. This is the same dataset used in Lab 10.
 
@@ -577,7 +508,7 @@ Plethodontid salamanders are sensitive indicators of forest condition: they depe
 Let's look at the data and findings. Note that you will work through these steps yourself in Lab 10.
 
 ```{r}
-#| label: fig-8salamanderData
+#| label: fig-9salamanderData
 #| fig-cap: "Mean salamander abundance (individuals per plot) across three forest types. Points show individual plot counts; error bars show ±1 SE."
 #| fig-asp: 0.5
 #| out-width: "100%"
@@ -618,7 +549,7 @@ The bar graph shows a clear gradient: old-growth plots have the highest mean abu
 We now conduct the one-way ANOVA to test whether these differences are larger than expected by chance alone.
 
 ```{r}
-#| label: tbl-8salamanderANOVA
+#| label: tbl-9salamanderANOVA
 #| tbl-cap: "One-way ANOVA table for salamander abundance by forest type."
 
 library(xtable)
@@ -635,7 +566,7 @@ The F-value of 14.60 falls far into the tail of the null F distribution for df(2
 
 ### Checking ANOVA's assumptions
 
-Before trusting this result and moving on to post-hoc comparisons, it's worth pausing to check whether ANOVA's assumptions actually hold. (Recall from Chapter 7 that independence is the universal assumption that applies to every test we cover and won't be re-listed here; what follows are ANOVA's *test-specific* assumptions.)
+Before trusting this result and moving on to post-hoc comparisons, it's worth pausing to check whether ANOVA's assumptions actually hold. (Recall from Chapter 6 that independence is the universal assumption that applies to every test we cover and won't be re-listed here; what follows are ANOVA's *test-specific* assumptions.)
 
 ANOVA has two: **homogeneity of variance** (the groups' spread around their own means should be roughly comparable) and **approximately normal residuals** (the leftover variation after accounting for group membership should be roughly bell-shaped). Both matter for the same underlying reason: the F-test pools information across groups into single numbers (a common error variance, a reference F-distribution), and that pooling is only trustworthy if the groups are behaving similarly enough to be pooled.
 
@@ -660,7 +591,7 @@ knitr::kable(
 )
 ```
 
-Levene's test gives $F(2,21) = 0.52$, $p = .60$: no evidence of unequal variance across forest types. The Shapiro-Wilk test on the model's residuals gives $W = 0.93$, $p = .078$: no strong evidence against normality either. Both checks are consistent with the boxplot and dot plot we already looked at in @fig-8salamanderData: similar spread across groups, no glaring outliers.
+Levene's test gives $F(2,21) = 0.52$, $p = .60$: no evidence of unequal variance across forest types. The Shapiro-Wilk test on the model's residuals gives $W = 0.93$, $p = .078$: no strong evidence against normality either. Both checks are consistent with the boxplot and dot plot we already looked at in @fig-9salamanderData: similar spread across groups, no glaring outliers.
 
 **A word of caution about formal assumption tests.** It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." Resist that. These tests have an awkward property: with a small sample (exactly when a violated assumption matters most), they have low power and will often say "no problem" even when there is one; with a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." A formal test is one piece of evidence, not the whole verdict, so look at the diagnostic plots too and use judgment. In practice, one-way ANOVA is moderately robust to mild departures from these assumptions, especially with balanced group sizes like we have here (8 plots per forest type). The situation to genuinely worry about is the combination of small, unbalanced samples with visibly skewed data or wildly different spreads, and that's exactly when the nonparametric alternative below becomes the better choice.
 
@@ -669,7 +600,7 @@ Levene's test gives $F(2,21) = 0.52$, $p = .60$: no evidence of unequal variance
 The omnibus F test tells us that at least one group mean differs, but not which pairs. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test. Tukey HSD controls the family-wise error rate across all pairwise comparisons, making it the appropriate choice after a significant ANOVA.
 
 ```{r}
-#| label: tbl-8tukey
+#| label: tbl-9tukey
 #| tbl-cap: "Tukey HSD post-hoc comparisons for salamander abundance by forest type."
 
 tukey_out <- TukeyHSD(aov_out)
@@ -721,7 +652,7 @@ The pattern matches Tukey HSD exactly: Old-growth differs significantly from bot
 
 ## ANOVA Summary
 
-The one-way ANOVA partitions total variation in the data into two components: variation explained by group membership (SS Effect) and unexplained residual variation (SS Error). The ratio of the corresponding mean squares --- after adjusting for degrees of freedom --- produces the F statistic. A large F indicates that between-group differences are large relative to within-group noise.
+The one-way ANOVA partitions total variation in the data into two components: variation explained by group membership ($SS_\text{Between}$) and unexplained residual variation ($SS_\text{Within}$). The ratio of the corresponding mean squares, after adjusting for degrees of freedom, produces the F statistic. A large F indicates that between-group differences are large relative to within-group noise.
 
 The process for any one-way ANOVA follows the same two-step structure:
 

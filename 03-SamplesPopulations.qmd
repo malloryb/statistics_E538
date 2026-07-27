@@ -983,7 +983,7 @@ Two things make chi-square look different from the normal shapes above. First, a
 
 This also means chi-square tests are naturally **one-tailed**: because deviations in *either* direction from expected get squared before being added up, only large positive values of the statistic are ever "surprising." There's no equivalent of a negative $z$-value to worry about.
 
-You'll put this distribution to work later for the chi-square goodness-of-fit and test-of-independence, once you have the hypothesis-testing framework (Chapter 6) to build a decision around it.
+You'll put this distribution to work later for the chi-square goodness-of-fit and test-of-independence, once you have the hypothesis-testing framework (Chapter 5) to build a decision around it.
 
 ## Estimating population parameters
 
@@ -1009,7 +1009,7 @@ Estimating the population mean was straightforward: the sample mean $\bar X$ is 
 
 Here we encounter **bias**. An estimator is biased if its expected value systematically differs from the true population parameter. The sample standard deviation $sd$ is such a case: it tends to underestimate $\sigma$, especially when $N$ is small.
 
-That is why back in Chapter 2 we saw two formulas for the standard deviation, one dividing by $N$ and one by $N-1$. We can now explain why.
+That is why back in Chapter 1 we saw two formulas for the standard deviation, one dividing by $N$ and one by $N-1$. We can now explain why.
 
 ### Simulating bias
 
@@ -1048,11 +1048,229 @@ knitr::include_graphics("imgs/navarro_img/estimation/biasSD-eps-converted-to.png
 
 ### Why variance needs a small correction
 
-Chapter 2 walked through *why* this happens in detail, with worked examples, an 8,000-sample simulation, and the full intuition (see "Sample vs. Population Standard Deviation: Why n - 1?"). The short version: the sample mean $\bar X$ is built *from* the same points used to measure spread, which pulls those points artificially close to $\bar X$ and shrinks the naive variance estimate. Dividing by $N-1$ instead of $N$ corrects that shrinkage:
+We just saw *that* the sample standard deviation is biased. Here is *why*, and why the fix takes the particular form it does.
 
-$$s^2 = \frac{1}{N}\sum_{i=1}^N (X_i-\bar X)^2 \ \text{(biased small)} \qquad \hat\sigma^2 = \frac{1}{N-1}\sum_{i=1}^N (X_i-\bar X)^2 \ \text{(unbiased)}$$
+#### Why does this happen?
 
-As with Chapter 2, the correction matters most when $N$ is small and becomes negligible as $N$ grows.
+Picture a tiny sample of $n=3$ values. The sample mean $\bar{x}$ might land close to the true population mean $\mu$, or it might land far away—we don’t know in advance. But $\bar{x}$ is always computed **from** those three sample points, which pulls it toward the middle of *those specific* points. As a result, distances from the sample points to $\bar{x}$ tend to be a little **shorter**, on average, than distances from those same points to the true $\mu$ would be.
+
+Since variance and SD are built from squared distances to the mean, this shrinkage carries through: the sample variance computed the “obvious” way (divide by $n$) is biased **small**, and the sample SD inherits that bias.
+
+The fix is to divide by $n-1$ instead of $n$. Writing it out, the naive sample variance is
+
+$$s_n^2 = \frac{1}{n}\sum_{i=1}^n (x_i - \bar{x})^2,$$
+
+and it systematically underestimates $\sigma^2$, the population variance. The corrected version divides by $n - 1$ instead:
+
+$$s_{n-1}^2 = \frac{1}{n-1}\sum_{i=1}^n (x_i - \bar{x})^2.$$
+
+This $s_{n-1}^2$ is an **unbiased** estimator of $\sigma^2$—averaged across many samples, it lands right on the true population variance. Take the square root of either formula to get back to an SD. One small wrinkle: because square roots aren’t linear, even the corrected $s_{n-1}$ is *technically* still very slightly biased for $\sigma$. In practice that residual bias is tiny and shrinks as $n$ grows, which is why $s_{n-1}$ is the standard choice for a sample SD.
+
+#### Seeing the bias
+
+Let’s make this concrete. Suppose our full population is every even number from 80 to 120, with true mean $\mu = 100$, marked in red in @fig-sdbias-population.
+
+```{r, echo=F}
+#| label: fig-sdbias-population
+#| fig-cap: "Our imaginary population: every even number from 80 to 120."
+#| fig-width: 7
+#| fig-height: 1.5
+
+library(tidyverse)
+
+pop_vals <- seq(80, 120, by = 2)
+mu <- 100
+
+ggplot() +
+  geom_segment(aes(x = 80, xend = 120, y = 0, yend = 0), linewidth = 0.6) +
+  geom_point(aes(x = pop_vals, y = 0),
+             shape = 21, size = 2.4, stroke = 0.6,
+             fill = NA, colour = "red") +
+  geom_point(aes(x = mu, y = 0),
+             shape = 21, size = 3.2, stroke = 0.8,
+             fill = "red", colour = "red") +
+  geom_text(aes(x = mu, y = 0.25, label = "mu"), parse = TRUE, colour = "red") +
+  scale_x_continuous(breaks = seq(80, 120, by = 10)) +
+  coord_cartesian(xlim = c(79, 121), ylim = c(-0.3, 0.4), expand = FALSE) +
+  theme_void(base_size = 11) +
+  theme(
+    axis.line.x   = element_line(),
+    axis.ticks.x  = element_line(),
+    axis.text.x   = element_text(size = 9, margin = margin(t = 2)))
+```
+
+Now let’s draw three separate samples of $n=3$ from that population, each on its own number line. The light blue point is the sample mean $\bar{x}$; the three filled blue points are the sampled values. On the right of each panel:
+
+-   **uncorrected $s$** (divide by $n$): the naive sample SD,
+-   **corrected $s$** (divide by $n-1$): the conventional sample SD,
+-   $\sigma$: the true population SD, about 12.1.
+
+```{r, echo=F}
+#| label: fig-sdbias-scenario-a
+#| fig-cap: "Example A: close sample mean, small spread."
+plot_scenario <- function(points, title,
+                          mu = 100, xmin = 80, xmax = 120,
+                          pop_vals = seq(80,120,2)) {
+  xbar  <- mean(points)
+  sd_n  <- sqrt(mean((points - xbar)^2))
+  sd_n1 <- sd(points)
+  pop_sd <- sqrt(mean((pop_vals - mean(pop_vals))^2))
+
+  df_stats <- tibble::tibble(
+    label = c(
+      paste0("plain('uncorrected s')~'='~", round(sd_n, 2)),
+      paste0("plain('corrected s (n-1)')~'='~", round(sd_n1, 2)),
+      paste0("sigma~'='~", round(pop_sd, 2))
+    ),
+    x = xmax - 2,
+    y = c(0.24, 0.16, 0.08)
+  )
+
+  df_pop    <- tibble::tibble(x = pop_vals, y = 0)
+  df_sample <- tibble::tibble(x = points,   y = 0)
+
+  ggplot() +
+    geom_segment(aes(x = xmin, xend = xmax, y = 0, yend = 0), linewidth = 0.6) +
+    geom_point(data = df_pop, aes(x, y), shape = 21, size = 2.6, stroke = 0.7,
+               fill = NA, colour = "red") +
+    geom_point(data = df_sample, aes(x, y), shape = 21, size = 3.1, stroke = 0.7,
+               fill = "blue", colour = "red") +
+    geom_point(aes(x = xbar, y = 0), shape = 21, size = 3.6, stroke = 0.9,
+               fill = "lightblue", colour = "blue") +
+    geom_text(aes(x = xbar, y = -0.14, label = paste0("bar(x)==", round(xbar, 1))),
+              parse = TRUE, colour = "blue") +
+    geom_point(aes(x = mu, y = 0), shape = 21, size = 3.4, stroke = 0.8,
+               fill = "red", colour = "red") +
+    geom_text(aes(x = mu, y = 0.14, label = "mu==100"),
+              parse = TRUE, colour = "red") +
+    geom_text(data = df_stats, aes(x = x, y = y, label = label),
+              parse = TRUE, hjust = 1, size = 3.2) +
+    scale_x_continuous(limits = c(xmin - 1, xmax + 1), breaks = NULL, minor_breaks = NULL) +
+    coord_cartesian(ylim = c(-0.4, 0.35), expand = FALSE) +
+    theme_void(base_size = 11) +
+    labs(title = title) +
+    theme(
+      axis.line.x   = element_line(),
+      axis.ticks.x  = element_line(),
+      axis.text.x   = element_text(size = 9, margin = margin(t = 2))
+    )
+}
+plot_scenario(c(98,104,106), "A. Close means, small spread (SD too small)")
+```
+
+In Example A, the sample mean lands close to $\mu$, but the three points sit close together. $\sigma$ is about 12.1, uncorrected $s$ is 3.4, corrected $s$ is 4.2—both versions undershoot $\sigma$ badly, but the correction helps.
+
+```{r, echo=F}
+#| label: fig-sdbias-scenario-b
+#| fig-cap: "Example B: sample mean far from mu, points tight together."
+plot_scenario(c(86,90,92), "B. Sample mean far, points tight (SD too small)")
+```
+
+In Example B, the sample mean lands farther from $\mu$, but the points are still tight together. $\sigma$ is about 12.1, uncorrected $s$ is 2.5, corrected $s$ is 3.1—same story.
+
+```{r, echo=F}
+#| label: fig-sdbias-scenario-c
+#| fig-cap: "Example C: close sample mean, points spread wide."
+plot_scenario(c(80,102,114), "C. Sample mean near, points wide (SD too big)")
+```
+
+In Example C, the sample mean lands close to $\mu$ again, but this time the three points happen to be spread wide. $\sigma$ is about 12.1, uncorrected $s$ is 14.1, corrected $s$ is 17.2—here $s$ *overshoots* $\sigma$ instead.
+
+So sometimes $s$ undershoots, and sometimes it overshoots—why do we call it “biased small,” then? Because outcomes like A and B (tight, unrepresentative samples) happen more often than outcomes like C. Average over enough samples, and the sample SD comes in low more often than it comes in high. Let’s check that directly by simulating 8,000 samples, shown in @fig-sdbias-simulation.
+
+```{r, echo=F}
+#| label: fig-sdbias-simulation
+#| fig-cap: "Sample SD bias, simulation results for n = 3 vs. n = 30."
+#| fig-width: 7
+#| fig-height: 5
+
+library(tidyverse)
+
+set.seed(123)
+
+mu     <- 100
+sigma  <- 12.11
+n_sims <- 8000
+ns     <- c(3, 30)
+
+sd_biased <- function(x) {
+  m <- mean(x)
+  sqrt(mean((x - m)^2))
+}
+
+sim_one_n <- function(n) {
+  tibble(id = 1:n_sims) |>
+    mutate(sample = map(id, ~ rnorm(n, mean = mu, sd = sigma)),
+           sd_n   = map_dbl(sample, sd_biased),
+           sd_n1  = map_dbl(sample, sd))
+}
+
+sims_all <- map_dfr(ns, sim_one_n) |>
+  mutate(n = rep(ns, each = n_sims))
+
+plot_data <- bind_rows(
+  sims_all |> transmute(stat = "divide by n",   value = sd_n,  n),
+  sims_all |> transmute(stat = "divide by n−1", value = sd_n1, n)
+) |>
+  mutate(
+    stat = factor(stat, levels = c("divide by n", "divide by n−1")),
+    n    = factor(n, levels = c(3, 30), labels = c("n = 3", "n = 30"))
+  )
+
+avg_lines <- plot_data |>
+  group_by(stat, n) |>
+  summarise(avg = mean(value), .groups = "drop")
+
+corner_labels <- avg_lines |>
+  mutate(
+    sigma_label = paste0("sigma==", round(sigma, 2)),
+    s_label     = paste0("plain('mean s')~'='~", round(avg, 2))
+  )
+
+ggplot(plot_data, aes(x = value)) +
+  geom_histogram(bins = 40, linewidth = 0.2, fill = "grey50") +
+  geom_vline(xintercept = sigma, linetype = "dashed", colour = "red", linewidth = 0.8) +
+  geom_vline(data = avg_lines, aes(xintercept = avg), colour = "blue", linewidth = 0.8) +
+  geom_text(data = corner_labels,
+            aes(x = Inf, y = Inf, label = sigma_label),
+            parse = TRUE, hjust = 1.1, vjust = 2, colour = "red",
+            inherit.aes = FALSE, size = 3.3) +
+  geom_text(data = corner_labels,
+            aes(x = Inf, y = Inf, label = s_label),
+            parse = TRUE, hjust = 1.1, vjust = 4, colour = "blue",
+            inherit.aes = FALSE, size = 3.3) +
+  facet_grid(rows = vars(stat), cols = vars(n), scales = "free_x") +
+  labs(x = NULL, y = NULL) +
+  theme_classic(base_size = 11) +
+  theme(
+    panel.grid = element_blank(),
+    strip.text = element_text(face = "bold"),
+    panel.spacing = grid::unit(10, "pt"),
+    panel.border  = element_rect(colour = "black", fill = NA, linewidth = 0.6)
+  )
+```
+
+Each panel is a histogram of 8,000 sample SDs. The red dashed line marks the true $\sigma = 12.11$; the blue solid line marks the average sample SD across all 8,000 simulations.
+
+Two things to notice. First, compare the top row (divide by $n$) to the bottom row (divide by $n-1$)—the blue line sits closer to the red line in the bottom row, confirming the correction helps. Second, compare the columns: at $n=30$ the bias is much smaller than at $n=3$, in both rows. The $n-1$ correction matters most for small samples, and becomes negligible as sample size grows—exactly the pattern we'd expect if bigger samples give us better estimates.
+
+#### Key points to remember
+
+-   The sample mean is unbiased for $\mu$—no correction needed.
+-   The naive sample SD (divide by $n$) tends to underestimate $\sigma$.
+-   Dividing by $n-1$ instead corrects this bias, and is the standard choice for sample data.
+-   The correction matters most for small $n$, and fades as $n$ grows.
+-   On an exam, if you’re asked for “the sample standard deviation,” use the $n-1$ version unless told otherwise. R’s `sd()` function already does this for you.
+
+::: callout-note
+## Connecting back to the law of large numbers
+
+Earlier in this chapter we met the **law of large numbers** and the **central limit theorem**. Both connect directly to what we just saw:
+
+-   **Law of large numbers:** as $n$ grows, both $\bar{x}$ and $s_{n-1}$ converge toward their true population values. That is exactly the pattern in @fig-sdbias-simulation: bigger samples, tighter histograms, less bias.
+-   **Central limit theorem:** the CLT describes the sampling distribution of the **mean**, not the standard deviation. So we cannot assume the distribution of sample SDs is normal no matter how large $n$ gets, even though the histograms above happen to look reasonably bell-shaped.
+:::
+
 
 To summarize:
 
@@ -1068,7 +1286,7 @@ To summarize:
 
 So far, we've focused on using sample data to estimate population parameters, but every estimate comes with some uncertainty. A single number, like "the mean IQ is 115," doesn't capture how confident we are. What we want is a range that likely contains the true population mean. That range is called a **confidence interval (CI)**.
 
-You'll use this directly in Chapter 6, where a confidence interval becomes one of three equivalent ways to decide whether to reject $H_0$. For now, let's see where it comes from.
+You'll use this directly in Chapter 5, where a confidence interval becomes one of three equivalent ways to decide whether to reject $H_0$. For now, let's see where it comes from.
 
 **The Idea**
 

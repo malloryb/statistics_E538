@@ -20,7 +20,7 @@ fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = 
 
 ## Parametric vs. nonparametric tests
 
-Chapter 7 covered three flavors of the $t$-test (one-sample, paired, and independent-samples, also called two-sample). All three need continuous, roughly normal data; the independent-samples test additionally assumes similar variance across the two groups. This chapter covers what to do when those assumptions aren't met. We'll also cover what to do if your data aren't continuous at all.
+Chapter 6 covered three flavors of the $t$-test (one-sample, paired, and independent-samples, also called two-sample). All three need continuous, roughly normal data; the independent-samples test additionally assumes similar variance across the two groups. This chapter covers what to do when those assumptions aren't met. We'll also cover what to do if your data aren't continuous at all.
 
 So far, we've been looking at **parametric** tests, without calling them that. A test is parametric when we can only know the sampling distribution of its test statistic, the shape we compare our result against to get a $p$-value, because we assumed something specific about the shape of the **population** the data came from. For the $t$-test, that assumption is normality: the $t$-distribution isn't the shape of your raw data, it's the shape the $t$-statistic takes across repeated samples, and we can only derive that shape because we assumed the population itself was normal (or leaned on the Central Limit Theorem to get there for a large enough sample). Nonparametric tests, as you'll see below, still end up with a known distribution for their own test statistics; they just don't need to assume anything about the parent population's shape to get there.
 
@@ -42,7 +42,7 @@ We'll state the assumptions explicitly for each test as we go through them.
 
 ## Nonparametric alternative to one-sample & paired t-test: the Wilcoxon signed-rank test
 
-Chapter 7 built the paired $t$-test around this same idea, wetland restoration and soil moisture, with a full 20-plot dataset. Let's run a smaller version of that same design, and this time actually check whether we should trust the result before reporting it.
+Chapter 6 built the paired $t$-test around this same idea, wetland restoration and soil moisture, with a full 20-plot dataset. Let's run a smaller version of that same design, and this time actually check whether we should trust the result before reporting it.
 
 ```{r}
 before <- c(20, 15, 22, 18, 16, 24, 19, 14, 21, 17, 25, 20)
@@ -55,7 +55,7 @@ knitr::kable(
 )
 ```
 
-**Step 1: run the paired $t$-test, the way Chapter 7 taught it.**
+**Step 1: run the paired $t$-test, the way Chapter 6 taught it.**
 
 ```{r}
 t_out <- t.test(differences, mu = 0)
@@ -116,7 +116,7 @@ knitr::kable(
 )
 ```
 
-"Two.sided" in the Tails column just means we tested for a shift in either direction, the same one-vs-two-tailed distinction from Chapter 7.
+"Two.sided" in the Tails column just means we tested for a shift in either direction, the same one-vs-two-tailed distinction from Chapter 6.
 
 R falls back to a normal approximation twice over here: once for the tied differences (two plots at $+6$, three at $-1$), and once because three plots showed *no* change at all. Zero differences can't be ranked as positive or negative, so the Wilcoxon test quietly drops them and runs on the remaining 9 plots instead of all 12. That's worth thinking about: the rank test isn't just less sensitive to magnitude than the $t$-test, it can end up with less data entirely.
 
@@ -180,7 +180,7 @@ Our observed $V=39$ isn't just close to the critical value; it *is* the critical
 
 **So far: $t$-test $p=.026$ (significant), Wilcoxon $p=.057$ (not quite).** Same 12 plots, two different verdicts, because the $t$-test's numerator and denominator both used the exact magnitudes the Wilcoxon test deliberately ignores.
 
-**The sign test.** There's an even simpler nonparametric option, the **sign test**, which looks only at whether each difference is positive or negative. It discards the magnitude entirely and asks whether pluses outnumber minuses more than chance would suggest. It has essentially no distributional assumption beyond the universal one (independence of observations, from a sound study design; see Chapter 7), not even symmetry. That's genuinely useful here: we already flagged the symmetry assumption as shaky for this data (the positive side stretching to 8, the negative side barely reaching -1), so the sign test sidesteps the one assumption the Wilcoxon test still needed. That robustness comes at a big cost in power, though, so it's usually a last resort.
+**The sign test.** There's an even simpler nonparametric option, the **sign test**, which looks only at whether each difference is positive or negative. It discards the magnitude entirely and asks whether pluses outnumber minuses more than chance would suggest. It has essentially no distributional assumption beyond the universal one (independence of observations, from a sound study design; see Chapter 6), not even symmetry. That's genuinely useful here: we already flagged the symmetry assumption as shaky for this data (the positive side stretching to 8, the negative side barely reaching -1), so the sign test sidesteps the one assumption the Wilcoxon test still needed. That robustness comes at a big cost in power, though, so it's usually a last resort.
 
 ```{r}
 n_pos <- sum(differences > 0)
@@ -214,7 +214,7 @@ knitr::kable(
 )
 ```
 
-**Step 1: run the $t$-test, the way Chapter 7 taught it.**
+**Step 1: run the $t$-test, the way Chapter 6 taught it.**
 
 ```{r}
 t_out <- t.test(restored, unrestored, var.equal = TRUE)
@@ -230,7 +230,7 @@ knitr::kable(
 
 $t(14) = 2.54$, $p = .024$. Significant! Restoration looks like it increased richness.
 
-**Step 2: wait, did we check assumptions first?** We didn't, and Chapter 7 was explicit that you're supposed to. Let's actually look at the data before trusting that $p$-value.
+**Step 2: wait, did we check assumptions first?** We didn't, and Chapter 6 was explicit that you're supposed to. Let's actually look at the data before trusting that $p$-value.
 
 ```{r}
 #| label: fig-8richness-boxplot
@@ -350,9 +350,9 @@ Our observed $U=50$ lands just inside the critical value of $50.5$, matching R's
 
 ## Categorical data: the chi-square tests
 
-Every test so far (the $t$-tests in Chapter 7, and the Wilcoxon and Mann-Whitney-Wilcoxon tests above) needs a **continuous** outcome variable. But a lot of environmental data isn't continuous at all: a site either has an invasive species or it doesn't; a stream sample either exceeds a safety threshold or it doesn't; a plot falls into one land-cover category, not a number line. For **categorical** data, none of the tests above apply: you need a different tool entirely, the **chi-square ($\chi^2$) test**.
+Every test so far (the $t$-tests in Chapter 6, and the Wilcoxon and Mann-Whitney-Wilcoxon tests above) needs a **continuous** outcome variable. But a lot of environmental data isn't continuous at all: a site either has an invasive species or it doesn't; a stream sample either exceeds a safety threshold or it doesn't; a plot falls into one land-cover category, not a number line. For **categorical** data, none of the tests above apply: you need a different tool entirely, the **chi-square ($\chi^2$) test**.
 
-Chapter 4 introduced the shape of the chi-square distribution: always non-negative, right-skewed, naturally one-tailed, with its exact shape depending on degrees of freedom. Here's what that rejection region looks like in practice, using the goodness-of-fit example below (one of the two chi-square tests you'll meet in this section; more on what "goodness-of-fit" means right before we run it), which has $df = 3$. The critical value at $\alpha = .05$ is `r round(qchisq(.95, 3), 2)`; any statistic beyond that point (the shaded region) occurs less than 5% of the time by chance.
+Chapter 3 introduced the shape of the chi-square distribution: always non-negative, right-skewed, naturally one-tailed, with its exact shape depending on degrees of freedom. Here's what that rejection region looks like in practice, using the goodness-of-fit example below (one of the two chi-square tests you'll meet in this section; more on what "goodness-of-fit" means right before we run it), which has $df = 3$. The critical value at $\alpha = .05$ is `r round(qchisq(.95, 3), 2)`; any statistic beyond that point (the shaded region) occurs less than 5% of the time by chance.
 
 If you're wondering how a "nonparametric" test can still have its own named distribution, that's worth clearing up. "Nonparametric" is an assumption about your **data**, not the test statistic: you don't need to assume the data came from a specific family like the normal distribution. Every test still needs a known reference distribution for its **test statistic** to produce a $p$-value; what differs is how that reference distribution gets built. The chi-square distribution here, like the Wilcoxon and Mann-Whitney-Wilcoxon distributions earlier in this chapter, is built without any assumption about the data's shape: chi-square from squared deviations under $H_0$, the rank tests from all possible rank arrangements. That's what "distribution-free" actually means: the statistic's distribution is known, but building it never required assuming anything about the data.
 
@@ -485,6 +485,6 @@ Summing all six cells: $5.83+8.05+0.55+0.76+2.79+3.86 = 21.84$, matching R's sta
 
 This chapter covered what to do when a $t$-test's assumptions don't hold, or when your data aren't continuous to begin with. The **Wilcoxon signed-rank test** and **Mann-Whitney-Wilcoxon test** ask the same questions as the paired and independent-samples $t$-tests, just built on ranks instead of raw magnitudes, which trades away some power for a milder distributional assumption. The **sign test** pushes that trade-off further still, using only the direction of each difference, which is why it detected the same restoration effect but far less convincingly than the Wilcoxon test or the paired $t$-test. 
 
-For **categorical** data, the **chi-square tests** either 1) check whether one variable's observed counts match an expected pattern (goodness-of-fit) or 2) whether two categorical variables are related (test of independence). These use the chi-square distribution introduced back in Chapter 4.
+For **categorical** data, the **chi-square tests** either 1) check whether one variable's observed counts match an expected pattern (goodness-of-fit) or 2) whether two categorical variables are related (test of independence). These use the chi-square distribution introduced back in Chapter 3.
 
-Across every test in this chapter, the testing logic is the same from Chapter 7: state $H_0$ and $H_A$, compute a statistic, and ask how surprising that statistic would be if $H_0$ were true. 
+Across every test in this chapter, the testing logic is the same from Chapter 6: state $H_0$ and $H_A$, compute a statistic, and ask how surprising that statistic would be if $H_0$ were true. 
