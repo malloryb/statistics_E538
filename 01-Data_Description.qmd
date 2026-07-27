@@ -1,0 +1,1095 @@
+---
+author: Mallory L. Barnes
+abstract-title: Chapter notes
+abstract: Adapted to environmental science by Mallory Barnes. Portions adapted from Chapters 1 and 2 in Navarro, D. J. "Learning Statistics with R." <https://compcogscisydney.org/learning-statistics-with-r/>
+aliases: [redirects/why-statistics.html, redirects/DescribingData.html]
+---
+
+```{r, include = FALSE}
+source("global_stuff.R")
+```
+
+# Why Statistics? Describing Data
+
+> To call in statisticians after the experiment is done may be no more than asking them to perform a post-mortem examination: They may be able to say what the experiment died of.
+> -- Sir Ronald Fisher
+
+## The Role of Statistics in Environmental Science
+
+Many students come into statistics classes with a mix of nerves and low expectations. It is not always the most eagerly anticipated part of an environmental science degree. But statistics is one of the most important tools we have for understanding complex systems. Environmental data are messy: ecosystems shift, climate varies, and our judgments are often biased. Without statistical methods we risk telling convenient stories. With them, we can detect real patterns, test competing explanations, and make stronger arguments for environmental decisions.
+
+### Why Numbers Matter
+
+Common sense is useful, but it is prone to bias. When we already believe something to be true, we are more likely to interpret new evidence as supporting it, even if it does not. This tendency can lead us astray.
+
+For example, if you're convinced that industrial farming is the main driver of bee declines, you might see every new drop in bee abundance as confirmation of that belief. Maybe you're right, but maybe disease or weather are stronger contributors. Statistics gives us tools to test these ideas systematically. It helps us separate patterns from noise, avoid being misled by our own expectations, and draw conclusions that are more likely to hold up under scrutiny. It's not magic, but it makes our conclusions far more reliable.
+
+Another challenge is that the same data can tell very different stories depending on how they are aggregated. **Simpson’s paradox** occurs when a trend seen in combined data reverses after you split the data into meaningful groups.
+
+Here's a recent example. During the COVID-19 pandemic, early data showed that Italy’s overall case fatality rate was higher than China’s. But, once researchers *disaggregated by age group,* the trend flipped: within every age group, the fatality rate was actually higher in China. The apparent contradiction was explained by differences in the age distribution of cases [@vonkügelgen2021].
+
+Using case fatality rate (CFR), here are some illustrative numbers (made up for teaching).
+
+```{r}
+#| label: fig-simpson-covid-overall
+#| fig-cap: "Crude case fatality rates. Italy appears to have a higher fatality rate than China when all cases are combined."
+library(ggplot2)
+library(tibble)
+library(tidyverse)
+
+age_levels <- c("0–9","10–19","20–29","30–39","40–49","50–59","60–69","70–79","80+")
+
+dat <- tibble::tribble(
+  ~Country, ~Age,     ~Cases, ~Deaths,  ~CFR_band_pct,
+  "Italy",  "0–9",       500,   0.05,     0.01,
+  "Italy",  "10–19",     500,   0.10,     0.02,
+  "Italy",  "20–29",     800,   0.32,     0.04,
+  "Italy",  "30–39",    1000,   1.50,     0.15,
+  "Italy",  "40–49",    2000,   8.00,     0.40,
+  "Italy",  "50–59",    2000,  20.00,     1.00,
+  "Italy",  "60–69",    1500,  37.50,     2.50,
+  "Italy",  "70–79",    1200,  72.00,     6.00,
+  "Italy",  "80+",      1500, 225.00,    15.00,
+
+  "China",  "0–9",      8000,   1.60,     0.02,
+  "China",  "10–19",    8000,   2.40,     0.03,
+  "China",  "20–29",    8000,   4.00,     0.05,
+  "China",  "30–39",    7000,  14.00,     0.20,
+  "China",  "40–49",    7000,  42.00,     0.60,
+  "China",  "50–59",    3000,  45.00,     1.50,
+  "China",  "60–69",    1000,  35.00,     3.50,
+  "China",  "70–79",     700,  56.00,     8.00,
+  "China",  "80+",       300,  54.00,    18.00
+) %>%
+  mutate(
+    Age = factor(Age, levels = age_levels),
+    CFR_band_calc = 100 * Deaths / Cases  # sanity check, should match CFR_band_pct
+  )
+
+# Quick checks
+dat %>% group_by(Country) %>% summarise(Total_cases = sum(Cases), Total_deaths = sum(Deaths),
+                                        CFR_crude_pct = 100*Total_deaths/Total_cases) %>%
+  invisible()
+# Italy ~ 3.31%, China ~ 0.59%
+
+fig1_df <- dat %>%
+  group_by(Country) %>%
+  summarise(
+    Cases = sum(Cases),
+    Deaths = sum(Deaths),
+    CFR_crude_pct = 100 * Deaths / Cases
+  ) %>%
+  invisible()
+
+ggplot(fig1_df, aes(x = Country, y = CFR_crude_pct, fill = Country)) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = sprintf("%.1f%%", CFR_crude_pct)),
+            vjust = -0.4, size = 4.2) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  labs(title = "Crude fatality rate (all ages combined)",
+       y = "Fatality rate (%)", x = NULL) +
+  theme_classic(base_size = 13) +
+  theme(legend.position = "none")
+```
+
+At face value, Italy looks worse. But what happens when we stratify by age group? Because age strongly affects COVID fatality, splitting cases into 10-year bands reveals a different picture. When we do, China’s fatality rate is higher in every band.
+
+```{r}
+#| label: fig-simpson-by-age-group
+#| fig-cap: "Fatality rates by age group (same made-up numbers). Within each age band, China's CFR exceeds Italy's."
+
+fig2_df <- dat %>%
+  select(Country, Age, CFR_band_pct)
+
+ggplot(fig2_df, aes(x = Age, y = CFR_band_pct, fill = Country)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+  labs(title = "Within every age band, China’s fatality rate is higher",
+       x = "Age band", y = "Fatality rate (%)", fill = NULL) +
+  theme_classic(base_size = 13) +
+  theme(legend.position = "top")
+```
+
+Why the reversal? Italy’s population skews older while China’s skews younger. Baseline risk rises steeply with age. It's not that people in China fared better than people in Italy, it's that Italy simply had a greater proportion of older folks getting sick. The differing age distributions weight the overall averages in opposite ways (it pulls China's average CFR down, and pulls Italy's CFR up). Aggregating without adjusting for age hid the within-group pattern.
+
+```{r}
+#| label: fig-age-distributions
+#| fig-cap: "Case age distribution by country. Italy’s cases are older on average; China’s are younger."
+
+fig3_df <- dat %>%
+  group_by(Country, Age) %>%
+  summarise(Cases = sum(Cases), .groups = "drop") %>%
+  group_by(Country) %>%
+  mutate(Prop = Cases / sum(Cases))
+
+
+ggplot(fig3_df, aes(x = Age, y = Prop, fill = Country, group=Country)) +
+  geom_col(position = position_dodge(width = 0.4), width = 0.7) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  facet_wrap(~Country)+
+  labs(title = "Case age mix: Italy skewed older, China skewed younger",
+       x = "Age band", y = "Share of cases", fill = NULL) +
+  theme_classic(base_size = 13) +
+  theme(legend.position = "top", panel.border = element_rect(size = 1, fill=NA), axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+::: {.callout-note title="Takeaway"}
+Statistics will not answer every scientific question, but it gives us a disciplined way to sort signal from bias so our inferences age well.
+:::
+
+### What Statistics Add
+
+Environmental science produces a *lot* of data. Every day satellites measure surface temperature, field stations log rainfall, and sensors track air quality. A single study can generate thousands of rows of numbers. Without statistical tools, these numbers would be overwhelming. With them, we can summarize, compare, and test ideas systematically.
+
+Statistics matters here because environmental systems are messy. River flow changes by the hour, forests grow unevenly, and human actions layer on additional variability. Patterns are rarely obvious by eye. Statistics helps us sort signal from noise and ask: is this apparent change real, or just random variation?
+
+You might think, “can’t a statistician just handle the math?” But knowing the basics yourself is essential for three reasons:
+
+1.  **Design and analysis go together.** A good study starts long before you run a statistical test. If you want to study how fertilizer affects crop yields, your sampling plan and your analysis are inseparable. Poor design, like measuring only in unusually wet fields, can’t be rescued by sophisticated analysis.
+
+2.  **Understanding the Science:** Scientific papers on climate change, biodiversity, or pollution are built on statistical results. To interpret them, you need to know what the numbers mean.
+
+3.  **Practicality:** Hiring a specialist for every question isn’t realistic. A working knowledge of statistics makes you more self-sufficient as a scientist.
+
+> *"We are drowning in information, but we are starved for knowledge"*
+>
+> -- Various authors, original probably John Naisbitt
+
+Finally, statistics is not only for researchers. Weather forecasts, air quality alerts, and wildlife population trends are all communicated through numbers. A basic knowledge of statistics helps you tell whether those numbers support the claims being made, or whether someone is stretching the truth. In that sense, statistics is part of being an informed citizen in a data-saturated world.
+
+## Introduction to measurements
+
+Every dataset begins with measurement. Measurement means assigning numbers, labels, or categories to aspects of the world so they can be recorded and analyzed.
+
+**Why measurement matters**
+
+Environmental science often deals with broad ideas that need to be defined before they can be studied. For example, *soil health* or *forest change* are meaningful, but vague. To analyze them, we have to decide exactly what we mean and how to capture it. That process is called **operationalization**: turning a general concept into something measurable.
+
+Before moving on, let’s clarify how operationalization fits with three related terms:
+
+-   **Operationalization**: the step where you define exactly how a broad idea will be captured with a measure
+-   **Measure**: the tool or method used to make observations
+-   **Variable**: the actual values you record once the measure is applied. Variables are the actual data that end up in our dataset.
+
+**Examples:**
+
+-   Concept of interest: *Soil carbon sequestration*
+    -   **Operationalization:** concentration of organic carbon in the top 30 cm
+    -   **Measure:** laboratory analysis of soil samples
+    -   **Variable:** recorded carbon concentration values for each plot
+-   Concept of interest: *Deforestation*
+    -   **Operationalization**: change in forest cover between the current year and five years ago
+    -   **Measure:** aerial image classification
+    -   **Variable:** change in forest cover (%) per unit area
+
+Operationalization is rarely straightforward, and there is no single correct way to do it. The best choice depends on the question you are asking and how the data will be used. In many fields, scientists have developed common practices, but every project still requires case-by-case judgment. Even so, some principles of good operationalization apply across studies: be precise about what you mean, how you will measure it, and what values are possible.
+
+## Scales of measurement
+
+As the previous section indicates, the outcome of a measurement is called a **variable**. Not all variables are the same type, and knowing the type matters because it determines which statistical tools make sense. The four classic scales are **nominal, ordinal, interval,** and **ratio**.
+
+### Nominal scale
+
+A **nominal scale** variable (also referred to as a **categorical** variable) is one in which the values are just names. They do not have an inherent order, and it makes no sense to average them.
+
+*Example:* eye color. Eyes can be blue, green, or brown, but none is “greater” than another, and there’s no such thing as an “average eye color.”
+
+### Ordinal scale
+
+**Ordinal scale** variables have a meaningful order, but the spacing between values is not defined mathematically. You can rank the values, but you can’t assume equal steps between them, nor calculate a meaningful average.
+
+*Example:* finishing position in a race. First place comes before second, and second before third, but you don’t know how much faster one runner was than another. Saying the “average place” of the group is 2.3 doesn’t mean anything.
+
+### Interval scale
+
+Interval variables have equal intervals between values, so differences are meaningful. However, zero is arbitrary, so multiplication and division are not valid.
+
+*Example:* temperature in degrees Celsius. A difference of 3$^\circ$ means the same regardless of whether it is 7 → 10 or 15 → 18. But 0$^\circ$ does not mean “no temperature.” That zero is defined by the freezing point of water. So while you can say today is 3$^\circ$ warmer than yesterday, you cannot say 20$^\circ$ is “twice as hot” as 10$^\circ$.
+
+(Alternate example: latitude. A difference of 10° latitude is meaningful, but zero latitude—the equator—doesn’t mean “no latitude.” Twice 45° is 90°, but that doesn’t mean one place has “twice as much latitude” as another.)In contrast to nominal and ordinal scale variables, **interval scale** and ratio scale variables are variables for which the numerical value is genuinely meaningful. In the case of interval scale variables, the *differences* between the numbers are interpretable, but the variable doesn't have a "natural" zero value. You can add and subtract, but ratios don’t make sense.
+
+### Ratio scale
+
+Ratio scale variables have all the properties of interval variables, plus a true zero. This makes multiplication and division valid, as well as addition and subtraction.
+
+*Example:* age in years. Zero means no age at all, and someone who is 20 years old really is twice as old as someone who is 10. Differences (20 – 10 = 10 years) and ratios (20 ÷ 10 = 2) are both meaningful.
+
+|          | can rank | can subtract/add | can multiply/divide | example          |
+|---------------|:-------------:|:-------------:|:-------------:|---------------|
+| nominal  |          |                  |                     | eye color        |
+| ordinal  |    x     |                  |                     | race position    |
+| interval |    x     |        x         |                     | temperature (°C) |
+| ratio    |    x     |        x         |          x          | age              |
+
+### Continuous versus discrete variables
+
+Another useful distinction is whether a variable can take on values in between others.
+
+-   A **continuous variable** can, in principle, take on any value within a range. For example, consider height. If you are 72 inches tall and your friend Cameron is 71 inches tall, Alan could be 71.4 inches and David 71.49 inches. Because we can always imagine a new value in between two others, height is continuous.
+
+-   A **discrete variable** is, in effect, a variable that isn't continuous. Discrete variables have separate, distinct values with nothing in between. Nominal variables are always discrete: there is no eye color that falls “between” green and blue in the same way that 71.4 falls between 71 and 72. Ordinal variables are also discrete: although second place falls between first and third, nothing can logically fall between first and second.
+
+Interval and ratio variables can be either. Height (a ratio variable) is continuous. But the number of people living in a household (a ratio variable) is discrete: you cannot have 4.2 people. Temperature in degrees Celsius (an interval variable) is also continuous. But the year you started college (an interval variable) is discrete: there is no year between 2022 and 2023.
+
+The table below shows how the scales of measurement relate to this distinction. Cells with an “x” mark what is possible.
+
+|          | continuous | discrete |
+|----------|:----------:|:--------:|
+| nominal  |            |    x     |
+| ordinal  |            |    x     |
+| interval |     x      |    x     |
+| ratio    |     x      |    x     |
+
+### A note on real data
+
+These categories are guides, not hard rules. For example, survey responses on a 1–5 “strongly disagree” to “strongly agree” scale are technically **ordinal**, but researchers often treat them as “quasi-interval” because the spacing is assumed to be roughly equal.
+
+## The role of variables: predictors and outcomes
+
+One last piece of terminology before we leave variables behind. In most studies we have many variables, but when we analyze them, we usually split them into two roles: the **thing we’re trying to explain** and the **thing doing the explaining**. To keep it straight, we use $Y$ for the variable being explained, and a $X_1$, $X_2$, etc. for the variables used to explain it.
+
+Traditionally, $X$ is called the **indepdendent variable (IV)** and $Y$ is the **dependent variable (DV).** The logic is that if there's a relationship, $Y$ depends on $X$. These terms can be clunky and can be confusing because: (a) IVs are rarely actually "independent of everything else" and (b) if there's no relationship, then the DV doesn't actually "depend" on the IV at all.
+
+Alternative terminology is often clearer. In experiments, IVs are **manipulations**, and DVs are **measurements:**
+
+| role of the variable         | classical name            | alternative  |
+|:-----------------------------|:--------------------------|:-------------|
+| "to be explained" ($Y$)      | dependent variable (DV)   | measurement  |
+| "to do the explaining" ($X$) | independent variable (IV) | manipulation |
+
+Another useful pair is **predictors** and **outcomes**. The idea here is that what we use $X$ to make predict or guess about $Y$:
+
+| role of the variable         | classical name            | alternative |
+|:-----------------------------|:--------------------------|:------------|
+| "to be explained" ($Y$)      | dependent variable (DV)   | outcome     |
+| "to do the explaining" ($X$) | independent variable (IV) | predictor   |
+
+## Experimental and non-experimental research
+
+A central distinction in research is between experimental and non-experimental studies. What matters here is the degree of control the researcher has.
+
+In **experimental research**, the researcher deliberately manipulates something (the predictor/IV) and measures its effect on outcomes (the outcome/DV). The goal is to isolate causal effects. To avoid the problem of “something else” influencing the outcome, researchers try to hold other factors constant. In practice, it’s almost impossible to identify *everything* that might matter, much less keep it constant. The standard solution is **randomization**. Randomization doesn’t eliminate confounds, but it makes them less likely to systematically bias results.
+
+For instance, suppose we wanted to know if smoking causes lung cancer. Observing smokers and non-smokers can only get us so far, because those groups differ in many ways besides smoking, like occupation, income, and diet. A true experiment would require randomly assigning people to smoke or not. You can see how that would be deeply unethical. The same problem comes up in medicine: we know surprisingly little about how certain drugs or exposures affect pregnant people, precisely because we cannot ethically assign them to risky conditions.
+
+In **environmental science**, the limitation isn’t usually ethics but feasibility: there’s no “control planet” we can set aside as a baseline. Nor can researchers manipulate fundamental drivers like precipitation or temperature. As a result, much of the field relies on **non-experimental research** — quasi-experiments, long-term time series, or detailed case studies that allow scientists to tease out effects in complex systems.
+
+Much environmental science fits a **quasi-experimental design**. For example, researchers may wish to study the effects of industrial pollution on a river system but cannot directly control the pollutants emitted. Instead, they observe existing conditions and make careful comparisons, often using statistical tools to account for confounding variables.
+
+Another important quasi-experimental tool is **time series analysis**, since many environmental processes unfold over decades or centuries. Tracking changes in global temperature or sea level requires years of consistent data, and statistical methods help isolate signals from the noise of natural variability.
+
+Environmental science also makes extensive use of **case studies**, which provide in-depth insights into specific events or locations. A case study might explore the aftermath of a natural disaster, the ecology of a threatened habitat, or the consequences of an environmental policy. While a single case is tied to a particular context, well-designed studies can uncover mechanisms that apply more broadly. For example, a drought in one forest might reveal how water potential and transpiration respond to stress, helping researchers anticipate plant responses in other ecosystems.
+
+## From measurement to description
+
+The first half of this chapter was about what data *are*: how a broad concept gets operationalized into a variable, what scale that variable lives on, and what kind of study produced it. The rest of the chapter is about what to do with a dataset once you have one.
+
+> Far better an approximate answer to the right question, which is often vague, than an exact answer to the wrong question, which can always be made precise.\
+> John W. Tukey
+
+Statistics often begins with the problem of **too much data**. Modern environmental science generates vast amounts of information: rainfall at hundreds of stations, thousands of tree measurements in a forest survey, millions of satellite pixels. Looking at raw numbers alone is overwhelming and uninformative. We need tools to compress, summarize, and visualize. These are **descriptive statistics**.
+
+Keep in mind:
+
+1.  There is more than one useful way to describe data.
+2.  You choose a description depending on what helps reveal the pattern you care about.
+3.  All methods were invented for that reason. They are helpful shortcuts.
+
+Imagine running a survey of 500 people’s happiness levels. The full dataset is just a long list of values. Staring at hundreds of numbers tells us little. How happy are most people? How unhappy are the unhappiest? Raw data alone can't answer, we need to **summarize.**
+
+## Looking at the data
+
+### Scatter of raw values
+
+One first step is simply to **plot every value** instead of listing them.
+
+```{r}
+#| label: fig-happyPlot
+#| fig-cap: "Pretend happiness ratings from 500 people"
+#| fig-alt: "Scatter plot mapping each individual's index (x-axis) to their happiness rating (y-axis), summarizing the distribution and central tendency of 500 participants' happiness scores" 
+happiness<-rnorm(500,100,500)
+plot(happiness)
+```
+
+@fig-happyPlot shows 500 measurements of happiness. The horizontal axis is an index of participants (1–500), and the vertical axis shows their reported happiness. Each dot represents one person’s score.
+
+The way we choose to plot data makes some patterns easier to see and others harder. What do we notice here? There are indeed 500 dots, spread across a wide range: some values climb as high as about 1500, others fall below –1500. Most points cluster somewhere near zero, with fewer at the extremes.
+
+**Take-home:** plotting all the values at once is already much more useful than staring at a raw table of numbers.
+
+Still, the scatter doesn’t make it easy to answer questions like “are most people generally happy or unhappy?” For that, we need a different view, a **histogram**.
+
+### Histograms
+
+Making a histogram summarizes data by grouping numbers rather than looking at individual data points. @fig-happyHist displays 500 happiness scores grouped into bins. Each bar shows how many people's responses fall within a range. The bar between 0 and 500 indicates about 150 people in that range. The y-axis shows the frequency count of each bar.
+
+```{r}
+#| label: fig-happyHist
+#| fig-cap: "A histogram of the happiness ratings"
+#| fig-alt: "Histogram displaying happiness ratings in vertical bars, height signifying frequency, grouped into 500-point bins to convey the distribution and range of the data."
+
+hist(happiness)
+```
+
+The histogram makes patterns clearer than the scatterplot. Most of the responses fall between –500 and +500, with only a few extreme highs or lows. We can also see the overall spread of the data: roughly –1500 to +1500.
+
+When making histograms, the width of the bins matters. If the bins are wide, the plot looks smooth but may hide detail. If they are narrow, the plot shows more variation but can appear noisy. @fig-manyhistbin compares the same data with different bin widths.
+
+```{r}
+#| label: fig-manyhistbin
+#| fig-cap: "Four histograms of the same data using different bin widths"
+#| fig-alt: "Four histograms, each showing happiness ratings with vertical bars indicating frequency. The bars are grouped into varying bin sizes, demonstrating the effects of bin size on data interpretation" 
+
+library(ggplot2)
+library(ggpubr)
+
+g1 <- qplot(x=happiness, fill=I("#0097c3"), color=I("white"), bins=5)+
+  theme_classic(base_size=12)+
+  theme(legend.position="none")
+
+g2 <- qplot(x=happiness, fill=I("#0097c3"), color=I("white"),bins=10)+
+  theme_classic(base_size=12)+
+  theme(legend.position="none")
+
+g3 <- qplot(x=happiness, fill=I("#0097c3"), color=I("white"), bins=20)+
+  theme_classic(base_size=12)+
+  theme(legend.position="none")
+
+g4 <- qplot(x=happiness, fill=I("#0097c3"), color=I("white"), bins=50)+
+  theme_classic(base_size=12)+
+  theme(legend.position="none")
+
+ggarrange(g1, g2, g3, g4, ncol=2, nrow=2)
+
+```
+
+All of the histograms show the same general shape: few values at the extremes and many near zero. Narrow bins make the bars jump up and down, adding noise. Wider bins smooth the pattern, but if they’re too wide, important variation gets lost.
+
+**Take-home:** histograms summarize individual values into a distribution, revealing both the typical range and how the data are spread. Bin width is a choice you make, and it affects what you see.
+
+## Important Ideas: Distribution, Central Tendency, and Variance
+
+Three terms will keep coming up: **distribution, central tendency, and variance.** Their everyday meanings aren’t far from the statistical ones.
+
+-   **Distribution**: how values are spread across their range. A histogram is one way of showing a distribution. The shape of the distribution tells us where values are concentrated, where they’re rare, and how far the extremes reach. Later we’ll see that distributions don’t just describe data, we also use them to **generate theoretical data**, which is the basis for sampling distributions and tools like *t*-tests.
+
+-   **Central tendency** is about *sameness*: where values cluster. In the happiness histogram, most responses are near zero, so we say the data have a central tendency around zero. Central tendency doesn’t mean “everything is the same”, just that many values gather in a common area. Some datasets even have more than one cluster, and therefore more than one central tendency.
+
+-   **Variance** is about *differentness*: how spread out the values are. If all responses were nearly identical, variance would be low. In our happiness example, values range widely from strongly negative to strongly positive, so variance is high. In practice, variance is a family of measures we use to quantify differences, and we’ll introduce those next.
+
+## Measures of Central Tendency (Sameness)
+
+Plots and histograms show where values fall, but lack precision. We can summarize data with a single number representing its "center" - these **measures of central tendency** show what values are generally like.
+
+### Mode
+
+The **mode** is the most frequently occurring value in a dataset: count how many times each value appears, and whichever occurs most often is the mode.
+
+> Example: 1 1 1 2 3 4 5 6
+
+The mode is 1, since it appears three times.
+
+If two or more values tie for most frequent, the dataset has multiple modes:
+
+> Example: 1 1 1 2 2 2 3 4 5 6
+
+Here, 1 and 2 both occur three times each. So, there are two modes, and they are 1 and 2.
+
+Whether the mode is a good measure of central tendency depends on the data. It's useful when a dataset has clear repeating values, but it doesn't always capture what's "typical." For example:
+
+> 1 1 2 3 4 5 6 7 8 9
+
+Here, the mode is 1, but most numbers are larger. Like any statistical tool, consider if the mode suits your dataset and justify that choice.
+
+### Median
+
+The **median** is the exact middle of the data once they are ordered from smallest to largest. For example:
+
+> 1 5 4 3 6 7 9
+
+Before we can compute the median, we need to order the numbers from smallest to largest. Ordered:
+
+> 1 3 4 **5** 6 7 9
+
+The median is 5, with three numbers on each side.
+
+With an even number of values, the median is the midpoint between the two in the center:
+
+> 1 2 3 4 5 6
+
+Here we have six numbers, so there isn’t a single middle value. Instead, the median is the midpoint between the two central numbers, 3 and 4, which gives 3.5.
+
+The median is often a useful measure of central tendency because it stays put even if some values are extreme. For example:
+
+> 1 2 3 4 4 4 **5** 6 6 6 7 7 1000
+
+Most of these numbers are modest, but 1000 is far from the rest. The median is still 5, which reflects the bulk of the data despite that extreme value. This shows why the median often does a good job of representing a dataset even when one or two values are very different.
+
+In this case, 1000 would be considered an **outlier**: a value much farther from the others. Outliers can strongly affect some summaries (like the mean) but leave the median unchanged. How to handle outliers is a topic we return to later in the course.
+
+### Mean
+
+The **mean**, also called the average, is the sum of a set of numbers divided by how many numbers there are.
+
+**Here's the formula:**
+
+$Mean = \bar{X} = \frac{\sum_{i=1}^{n} x_{i}}{N}$
+
+-   The $\sum$ symbol is called **sigma**, and it stands for the operation of summing.
+
+-   The "i" and "n" refer to all numbers in the set, from first to last.
+
+-   The $x_{i}$ refers to individual numbers in the set.
+
+-   $\bar{X}$ refers to the mean
+
+-   We sum them all, then divide by $N$, the total count.
+
+**In simpler terms:**
+
+$mean = \frac{\text{Sum of my numbers}}{\text{Count of my numbers}}$
+
+Let's compute the mean for these five numbers:
+
+> 3 7 9 2 6
+
+Add them:
+
+> 3+7+9+2+6 = 27
+
+Count them:
+
+> $i_{1}$ = 3, $i_{2}$ = 7, $i_{3}$ = 9, $i_{4}$ = 2, $i_{5}$ = 6; N=5, because $i$ went from 1 to 5
+
+Divide:
+
+> mean = 27 / 5 = 5.4
+
+Or, putting everything in the formula:
+
+$Mean = \bar{X} = \frac{\sum_{i=1}^{n} x_{i}}{N} = \frac{3+7+9+2+6}{5} = \frac{27}{5} = 5.4$
+
+That's how to compute the mean. Whether it's a good measure of central tendency, like the mode, depends on the data.
+
+### What does the mean mean?
+
+It’s not enough to know how to calculate a mean, you also need to understand what it represents. The formula divides the sum of all values by the number of values, but what does that operation actually do?
+
+Think about division. If we compute
+
+$\frac{12}{3} = 4$
+
+we’re splitting 12 into three equal parts. Each part is 4. Division equalizes the numerator into identical pieces.
+
+The same logic applies to the mean. Suppose you add up all 500 happiness ratings into one large total. If that total were redistributed equally across every person, each would get the same value. That value is the mean. Some individuals were originally higher or lower, but the mean is the balance point created by spreading the total evenly.
+
+This is why the mean is more than just arithmetic. It is the one number that can replace every observation so that, when all those replacements are added together, you get back the original total.
+
+::: {.callout-note title="Takeaway"}
+The mean is unique: it is the only single value that can replace every observation so that the total stays the same.
+:::
+
+### Comparing the mean, median, and mode
+
+@fig-meanmodemed shows a histogram of simulated data with three vertical lines: the mode (blue, ≈ 1), the median (green, ≈ 6), and the mean (red, ≈ 8).
+
+Notice that these three measures of central tendency do not agree. The **mean** is pulled to the right because of a few very large values in the tail. The **median** is more stable, landing near the middle of the bulk of the data. The **mode** marks the most common single value, which here is close to zero.
+
+```{r}
+#| label: fig-meanmodemed
+#| fig-cap: "A histogram with the mean (red), the median (green), and the mode (blue)"
+#| fig.alt: "Histogram of 'exp_num' (0-60) on x-axis against frequency on y-axis. Data clusters near zero with a long right tail. Mode (around 1), median (around 6), and mean (around 8) illustrate the disparity among measures of central tendency"  
+ 
+my_mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+exp_num<-round(rexp(1000,.15),digits=1)
+
+qplot(exp_num, col=I("grey"), fill=I("white"))+
+  geom_vline(xintercept=mean(exp_num), color="red", size=1.5)+
+  geom_vline(xintercept=median(exp_num), color="green", size=1.5)+
+  geom_vline(xintercept=my_mode(exp_num), color="blue", size=1.5)+
+  theme_classic(base_size=16)+
+  xlab(element_blank())
+
+```
+
+::: {.callout-note title="Takeaway"}
+When data are skewed—as they are here with a long right tail—the mean, median, and mode can give very different answers. Understanding how each behaves is essential for choosing the right summary.
+:::
+
+## Measures of Variation (Different*ness*)
+
+Central tendency tells us what values have in common. Measures of **variation** tell us how they differ. Any dataset with more than one value will show some variation, and summarizing that spread is as important as finding the center.
+
+### The Range
+
+Consider these 10 ordered numbers:
+
+> 1 3 4 5 5 6 7 8 9 24
+
+The smallest is 1, the largest is 24. Together they define the **range**. The range quickly shows the boundaries of the data and can flag possible outliers. For instance, if you expected values between 1 and 7 but found one at 340,500, you’d know something unusual happened and might investigate.
+
+### Difference Scores
+
+It would be nice to summarize the amount of different*ness* in the data. Think about these 10 ordered numbers:
+
+> 1 3 4 5 5 6 7 8 9 24
+
+We can compute the differences between each pair of numbers and put them in a matrix:
+
+```{r 2diffscores}
+numbers<-c(1, 3, 4, 5, 5, 6, 7, 8, 9, 24)
+mat<-matrix(rep(numbers,10),ncol=10)
+differences<-t(mat)-numbers
+row.names(differences)<-numbers
+colnames(differences)<-numbers
+knitr::kable(differences,row.names=T)
+
+```
+
+In the top left, the difference between 1 and itself is 0. One column over, 3–1 = 2, and so on. With 10 numbers this produces 100 differences. With 500 numbers, you’d have 250,000—too many to be useful.
+
+If all the numbers were the same, every difference would be 0, making the lack of variation obvious. But with different numbers, we end up with a large table. How can we summarize it? One idea is to apply what we learned about central tendency and take the **average difference**.
+
+Let's try it with three numbers:
+
+> 1 2 3
+
+```{r 2diffscoreSmall,echo=F}
+numbers<-c(1, 2,3)
+mat<-matrix(rep(numbers,3),ncol=3)
+differences<-t(mat)-numbers
+row.names(differences)<-numbers
+colnames(differences)<-numbers
+knitr::kable(differences, row.names=T)
+```
+
+The mean of these nine difference scores is:
+
+$\text{mean of difference scores} = \frac{0+1+2-1+0+1-2-1+0}{9} = \frac{0}{9} = 0$
+
+This will always happen: the positives and negatives cancel. So the mean of raw difference scores is not a useful measure of variation.
+
+Notice also that the matrix is redundant: the diagonal is always zero, and values above and below the diagonal are the same except for sign.
+
+These problems motivate why we compute **variance** and **standard deviation**. They solve the cancellation issue and give us a practical summary of spread.
+
+### The Variance
+
+We’ve used the words variability, variation, and variance a lot. They all point to the same big idea: numbers differ. When numbers are different, they have variance.
+
+The word *variance* is used in two ways. First, it can mean the general idea of differences between numbers—when values vary, there is variance. Second, it refers to a specific summary statistic: the **mean of the squared deviations from the mean**.
+
+To calculate it, we take each score, subtract the mean to find its **difference score**, then square those differences, then average them. Squaring is the mathematical “trick” that keeps positive and negative deviations from canceling each other out. Finally, we average the squared deviations. In short:
+
+$variance = \frac{\text{Sum of squared difference scores}}{\text{Number of Scores}}$
+
+A little further on we’ll distinguish between dividing by $N$ (when you have the entire population) and $n-1$ (when you only have a sample, which is almost always the case). For now, just use $N$.
+
+#### Deviations from the mean
+
+Earlier we compared every number to every other number, which quickly became unmanageable. A simpler approach is to compare each score to the mean.
+
+-   Step 1: Find the mean.
+
+-   Step 2: Subtract the mean from each score.
+
+This tells us:
+
+1.  How well the mean represents the data
+
+2.  How much spread there is around that mean.
+
+Here's an example:
+
+```{r 2deviations,echo=F, message=F,warning=F}
+library(dplyr)
+scores<-1:6
+values<-c(1,6,4,2,6,8)
+mean_scores<-mean(values)
+Difference_from_Mean<-values-mean_scores
+the_df<-data.frame(scores,values,mean=rep(mean_scores,6),Difference_from_Mean)
+
+the_df <- the_df %>%
+  rbind(c("Sums",colSums(the_df[1:6,2:4]))) %>%
+  rbind(c("Means",colMeans(the_df[1:6,2:4])))
+knitr::kable(the_df)
+
+```
+
+The mean is $4.5$:
+
+$\frac{1+6+4+2+6+8}{6} = \frac{27}{6} = 4.5$.
+
+The third column simply repeats this mean for each row. That looks odd, but it shows the important property noted earlier: the mean distributes the total equally across all points. Six copies of 4.5 add back to the total of 27.
+
+The fourth column shows the **deviation from the mean:** $X_{i}-\bar{X}$. For example, 1, is -3.5 from the mean, 6, is +1.5, and so on.
+
+Now notice the problem: the deviations add up to zero. The positive and negative differences cancel, which makes it seem like there’s no variation. Clearly that isn’t true, so we’ll need another step, squaring the deviations, to solve it. But first let's investigate *why* this happens.
+
+#### Mean as the Balancing Point
+
+The mean is the balancing point of the data. Imagine laying a ruler across your finger. The place where it balances is the point where the weight on each side is equal. Data works the same way: if we treat each value like a weight, the mean is where the total “mass” to the left and right cancel out.
+
+This balancing property explains why the deviations always sum to zero. The values below the mean contribute negative deviations, the values above contribute positive ones, and together they cancel:
+
+$-x + x = 0$
+
+To see this more concretely, consider the numbers
+
+$X = (1,2,6,7,9)$
+
+```{r}
+#| label: fig-number-line
+#| fig-cap: "Values on a number line."
+#| fig-alt: "Horizontal number line with dots at 1, 2, 6, 7, and 9, each labeled above."
+
+library(tidyverse)
+
+values <- c(1, 2, 6, 7, 9)
+rng <- range(values)
+pad <- diff(rng) * 0.12
+xmin <- rng[1] - pad
+xmax <- rng[2] + pad
+
+tibble(values = values) %>%
+  ggplot(aes(x = values, y = 0)) +
+  # the number line (horizontal at y = 0)
+  geom_segment(aes(x = xmin, xend = xmax, y = 0, yend = 0),
+               linewidth = 1, color = "grey65") +
+  # small end caps (optional)
+  geom_point(data = tibble(xs = c(xmin, xmax), ys = 0),
+             aes(x = xs, y = ys),
+             shape = 22, size = 5, fill = "black", color = "grey50") +
+  # points (the values)
+  geom_point(size = 3, color = "#3B82F6") +
+  # labels above each dot
+  geom_text(aes(y = 0.02, label = values),
+            vjust = 0, size = 6, color = "grey20") +
+  # tidy canvas
+  scale_y_continuous(NULL, breaks = NULL, limits = c(-0.15, 0.25)) +
+  coord_cartesian(xlim = c(xmin, xmax), expand = FALSE) +
+  labs(x = NULL, y = NULL) +
+  theme_classic(base_size = 12) +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.line  = element_blank(),
+    plot.margin = margin(0, 0, 0, 0)
+  )
+```
+
+Now imagine the number line as a teeter-totter. Only when the fulcrum is placed at 5 does the board balance:
+
+```{r}
+#| label: fig-mean-balance-panels
+#| fig-cap: "Mean as the unique balancing point. Only at the mean do signed deviations cancel."
+#| fig-alt: "Three panels with a horizontal number line and a triangular fulcrum; the board tilts left/right when the fulcrum is not at the mean, and is level at the mean."
+
+library(tidyverse)
+library(patchwork)   # or ggpubr/cowplot if you prefer
+
+# ---- Helper to draw one board given a candidate fulcrum 'a' ----
+balance_board <- function(x, a, title = NULL) {
+  rng <- range(x)
+  pad <- diff(rng) * 0.12
+  xmin <- rng[1] - pad; xmax <- rng[2] + pad
+  
+  # Tilt proportional to (mean - a): zero tilt at a = mean(x)
+  tilt <- (mean(x) - a) / diff(rng) * 0.25
+  
+  fulcrum_drop <- 0.1
+  
+  tibble(x = x) %>%
+    ggplot(aes(x = x)) +
+    # the board
+    geom_segment(aes(x = xmin, xend = xmax,
+                     y = -tilt*(xmin - a), yend = -tilt*(xmax - a)),
+                 linewidth = 1, color = "grey65") +
+    # supports as light squares (purely decorative)
+    geom_point(data = tibble(xs = c(xmin, xmax),
+                             ys = c(-tilt*(xmin - a), -tilt*(xmax - a))),
+               aes(x = xs, y = ys),
+               shape = 22, size = 4, fill = "black", color = "grey50") +
+    # dots (the "weights")
+    geom_point(aes(y = -tilt*(x - a)), size = 3, color = "#3B82F6") +
+    # labels above dots
+    geom_text(aes(y = -tilt*(x - a) + 0.08, label = x),
+              vjust = 0, size = 6, color = "grey20") +
+    # fulcrum (triangle)
+    geom_point(aes(x = a, y = -fulcrum_drop), shape = 24, size = 8,
+               fill = "#F97316", color = "#F97316") +
+    annotate("text", x = a, y = -0.3,
+             label = format(a, trim = TRUE), size = 7) +
+    coord_cartesian(ylim = c(-0.4, 0.35), xlim = c(xmin, xmax), expand = FALSE) +
+    labs(title = NULL, x = NULL, y = NULL) +
+    theme_classic(base_size = 14) +
+    theme(axis.ticks = element_blank(),
+          axis.line = element_blank(),
+          axis.text = element_blank(),
+          plot.title = element_blank())
+}
+
+# ---- Example vector and candidate fulcrums ----
+x <- c(1, 2, 6, 7, 9)
+mu <- mean(x)
+
+p_left  <- balance_board(x, a = 3)
+p_right <- balance_board(x, a = 7)
+p_mean  <- balance_board(x, a = mu)
+
+top <- (p_left| plot_spacer()) +
+  plot_layout(widths = c(3, 2))
+middle <- (plot_spacer() | p_right) +
+  plot_layout(widths = c(2, 3)) 
+bottom <- (plot_spacer() | p_mean | plot_spacer()) +
+  plot_layout(widths = c(1, 3, 1))   # << apply to bottom row only
+
+top / middle/ bottom
+```
+
+Formally, this means the signed distances from the mean always cancel out:
+
+$(1−5)+(2−5)+(6−5)+(7−5)+(9−5)=0$
+
+This makes the mean unique. It is the **only value** for which the sum of deviations equals zero:
+
+$\sum_{i=1}^{n}x_{{i}-a} = 0 \quad \Rightarrow \quad a = \bar{x}$
+
+The mean is not just a “typical” value, it is the one point where the data balance. And that balancing property is exactly why the raw deviations always sum to zero. To summarize variation, we need a way around this problem.
+
+#### The squared deviations
+
+The standard trick is to square the deviations. Squaring converts negatives to positives:
+
+$2^2 = 4$
+
+$-2^2 = 4$.\
+\
+Since a squared number is always non-negative, the deviations no longer cancel. We call these **squared deviations**: differences from the mean that have been squared.
+
+Let’s revisit our table, this time adding a column for squared deviations:
+
+```{r 2deviationssquared,echo=F}
+scores<-1:6
+values<-c(1,6,4,2,6,8)
+mean_scores<-mean(values)
+Difference_from_Mean<-values-mean_scores
+Squared_Deviations <- Difference_from_Mean^2
+the_df<-data.frame(scores,values,mean=rep(mean_scores,6),Difference_from_Mean,Squared_Deviations)
+
+the_df <- the_df %>%
+  rbind(c("Sums",colSums(the_df[1:6,2:5]))) %>%
+  rbind(c("Means",colMeans(the_df[1:6,2:5])))
+knitr::kable(the_df)
+
+```
+
+For example, the first score is 1, which is 3.5 below the mean. Its deviation is $−3.5$, and its squared deviation is $(−3.5)^2=12.25$.
+
+Now that all deviations are positive, we can add them up. The result is the **sum of squares (SS)**, the sum of squared deviations from the mean. You’ll see this quantity again in the ANOVA chapter, but the idea is simple: it’s just the total of those squared deviations, nothing more.
+
+#### Finally, the variance
+
+We've actually already computed the variance, one step at a time, without naming it yet.
+
+The goal: a single number that summarizes how spread out the data are. Deviations from the mean show those differences, but there are as many deviations as data points. To simplify, we want the *average* squared deviation.
+
+Look back at the table. We added up the squared deviations (the *sum of squares*, SS), and then we divided by the number of observations. That's **the variance**. The variance is the mean of the sum of the squared deviations:
+
+$variance = \frac{SS}{N}$
+
+where SS is the sum of squared deviations, and N is the number of observations.
+
+For our data, this came out to 5.916 (repeating).
+
+On its own, that number isn't very interpretable. It's on the *squared* scale, since we squared the deviations before averaging, so the variance is no longer in the same units as the original data.
+
+The fix is straightforward: take the square root. For our example,
+
+$\sqrt{5.916} ≈2.43$
+
+### The Standard Deviation
+
+We've already computed the **standard deviation (SD)** too, one step back, without naming it. The standard deviation is just the square root of the variance:
+
+$\text{standard deviation} = \sqrt{Variance} = \sqrt{\frac{SS}{N}}$.
+
+or, written out fully,
+
+$\text{standard deviation} = \sqrt{\frac{\sum_{i}^{n}({x_{i}-\bar{x})^2}}{N}}$
+
+Those square root signs simply “unsquare” the variance, bringing the measure of spread back to the original scale of the data. Let's look at our table again:
+
+```{r,echo=F}
+scores<-1:6
+values<-c(1,6,4,2,6,8)
+mean_scores<-mean(values)
+Difference_from_Mean<-values-mean_scores
+Squared_Deviations <- Difference_from_Mean^2
+the_df<-data.frame(scores,values,mean=rep(mean_scores,6),Difference_from_Mean,Squared_Deviations)
+
+the_df <- the_df %>%
+  rbind(c("Sums",colSums(the_df[1:6,2:5]))) %>%
+  rbind(c("Means",colMeans(the_df[1:6,2:5])))
+knitr::kable(the_df)
+
+```
+
+We calculated our standard deviation as:
+
+$\sqrt{5.916} ≈2.43$
+
+This value makes much more sense than the variance. A variance of 5.916 feels too large for this dataset, because it’s on the squared scale. But a standard deviation of 2.43 lines up with the actual differences from the mean—most scores are within about ±2.4 of 4.5.
+
+So if someone told you their dataset had a mean of 4.5 and a standard deviation of 2.4, you’d already have a good sense of it: the numbers cluster around 4.5, but not exactly at 4.5, and the typical spread is about 2 to 3 units in either direction.
+
+That’s the power of the standard deviation: it gives you a single number that describes the *typical deviation* from the mean, while staying on the same scale as the original data.
+
+### Sample versus population: a note on $n - 1$
+
+One detail we glossed over: is $N$ the size of the whole population, or just the size of our sample? For the mean it does not matter. The sample mean $\bar{x}$ is **unbiased**, meaning that averaged across many samples it lands right on the true population mean.
+
+The standard deviation is not so well behaved. A sample standard deviation computed by dividing by $N$ comes out systematically **too small**. The reason is that $\bar{x}$ is calculated *from* the same points used to measure spread, which pulls those points artificially close to it, so the distances we are averaging are shorter than they should be.
+
+The fix is to divide by $n-1$ instead of $n$:
+
+$$s_{n-1}^2 = \frac{1}{n-1}\sum_{i=1}^n (x_i - \bar{x})^2$$
+
+This is what R's `sd()` function already does, and it is what "the sample standard deviation" means unless you are told otherwise. Chapter 3 returns to this and shows the bias directly with a simulation, once we have the vocabulary of populations, samples, and estimation to explain *why* the correction is the right size.
+
+### Mean Absolute Deviation
+
+So far we’ve handled the “differences cancel out” problem by squaring deviations. But there’s another simple option: take the **absolute value** of each deviation from the mean. That way, every difference becomes positive, and when we add them up we don’t end up at zero.
+
+Here’s what that looks like for our data:
+
+```{r 2absolute,echo=F}
+scores<-1:6
+values<-c(1,6,4,2,6,8)
+mean_scores<-mean(values)
+Difference_from_Mean<-values-mean_scores
+Absolute_Deviations <- abs(Difference_from_Mean)
+the_df<-data.frame(scores,values,mean=rep(mean_scores,6),Difference_from_Mean,Absolute_Deviations)
+
+the_df <- the_df %>%
+  rbind(c("Sums",colSums(the_df[1:6,2:5]))) %>%
+  rbind(c("Means",colMeans(the_df[1:6,2:5])))
+knitr::kable(the_df)
+
+```
+
+The last column shows absolute deviations. If we take their mean, we get the mean absolute deviation (MAD). Notice this acts a lot like the standard deviation: it’s the average size of a deviation from the mean, only without squaring.Both approaches—squaring or taking absolute values—solve the same problem in slightly different ways. Squaring is more common because it leads to nice mathematical properties (like in regression and ANOVA), but the MAD can be more intuitive to interpret.
+
+## Remember to look at your data
+
+Descriptive statistics are useful, but they are also compressed summaries. They reduce a dataset to a few numbers, which means they always lose detail. That’s fine if the summary captures the important features, but sometimes it doesn’t.
+
+The safest habit is to **always combine descriptive statistics with graphs**. Graphs show you the shape of the data and reveal patterns summaries can hide.
+
+### Anscombe's Quartet
+
+Francis Anscombe (@Anscombe1973) made this point with a famous example, now called *Anscombe’s Quartet*. Each panel in Figure @fig-anscombe shows pairs of $x$ and $y$ values as a scatterplot.
+
+Visually, the four panels are very different: one looks linear, one curved, one is mostly linear except for an outlier, and one forms a near-vertical line except for one point.
+
+```{r}
+#| label: fig-anscombe
+#| fig-cap: "Anscombe's Quartet"
+#| fig-alt: "Anscombe's Quartet, a set of four scatter plots each with a different pattern, despite having identical descriptive statistics. This illustrates the importance of graphing data to understand underlying relationships beyond basic statistical measures" 
+
+library(data.table)
+ac <- fread("data/anscombe.txt")
+ac<-as.data.frame(ac)
+
+ac_long<-data.frame(x=c(ac[,1],
+                        ac[,3],
+                        ac[,5],
+                        ac[,7]),
+                    y=c(ac[,2],
+                        ac[,4],
+                        ac[,6],
+                        ac[,8]),
+                    quartet = as.factor(rep(1:4,each=11))
+                        )
+
+ggplot(ac_long, aes(x=x, y=y, color=quartet))+
+  geom_point(size=1.5)+
+  geom_smooth(se=FALSE)+
+  theme_classic(base_size=16)+
+  facet_wrap(~quartet)
+
+```
+
+Yet if we summarize each quartet with just its descriptive statistics:
+
+```{r}
+library(dplyr)
+
+ac_long_summary <- ac_long %>%
+                    dplyr::group_by(quartet) %>%
+                    dplyr::summarise(mean_x = mean(x),
+                              var_x = var(x),
+                              mean_y = mean(y),
+                              var_y = var(y))
+
+knitr::kable(ac_long_summary)
+
+```
+
+All four datasets have the **exact same descriptive statistics**:
+
+same mean and variance for $x$
+
+same mean and variance for $y$
+
+same correlation between $x$ and $y$
+
+Yet the scatterplots could not look more different.
+
+::: {.callout-note title="Takeaway"}
+Descriptive statistics alone can be misleading. Always look at the graph. Numbers may be identical, but patterns can be radically different.
+:::
+
+### Datasaurus Dozen
+
+The [Datasaurus Dozen](https://www.autodeskresearch.com/publications/samestats) [@matejka2017same] takes Anscombe's point further: 13 datasets with nearly identical means, variances, and correlations, but when plotted, the points form shapes like a star, a circle, or even a dinosaur. A reminder that your numbers might look like a dinosaur if you don't plot them.
+## Putting it together: a real dataset
+
+Everything so far has used small made-up numbers so the arithmetic stayed visible. Real environmental data is messier, and it is worth seeing the same tools applied to it before you meet them in lab.
+
+R ships with `airquality`, a record of daily air-quality measurements in New York from May through September 1973. Each row is one day, with ozone concentration (parts per billion), solar radiation, wind speed, and maximum temperature.
+
+```{r}
+#| label: tbl-1airquality-head
+#| tbl-cap: "First six days of the airquality dataset."
+
+knitr::kable(head(airquality))
+```
+
+Notice the `NA` values in the first column. Ozone was not recorded on every day, and real environmental datasets almost always have gaps like this. That has an immediate practical consequence:
+
+```{r 1aq-na-demo, echo = TRUE}
+mean(airquality$Ozone)
+```
+
+R returns `NA` rather than a number, because it cannot know what the missing days would have been. You have to tell it explicitly to set those days aside:
+
+```{r 1aq-narm-demo, echo = TRUE}
+mean(airquality$Ozone, na.rm = TRUE)
+```
+
+With that handled, we can describe both variables:
+
+```{r}
+#| label: tbl-1airquality-desc
+#| tbl-cap: "Central tendency and spread for two variables in the airquality dataset."
+
+aq_desc <- data.frame(
+  Variable = c("Ozone (ppb)", "Temperature (°F)"),
+  Mean     = c(mean(airquality$Ozone, na.rm = TRUE), mean(airquality$Temp)),
+  Median   = c(median(airquality$Ozone, na.rm = TRUE), median(airquality$Temp)),
+  SD       = c(sd(airquality$Ozone, na.rm = TRUE), sd(airquality$Temp)),
+  Min      = c(min(airquality$Ozone, na.rm = TRUE), min(airquality$Temp)),
+  Max      = c(max(airquality$Ozone, na.rm = TRUE), max(airquality$Temp))
+)
+
+knitr::kable(aq_desc, digits = 1)
+```
+
+The two variables behave very differently, and the summaries say so before we plot anything.
+
+For **temperature**, the mean (`r round(mean(airquality$Temp), 1)`°F) and median (`r median(airquality$Temp)`°F) are close together. That is what you expect when a distribution is roughly symmetric.
+
+For **ozone**, the mean (`r round(mean(airquality$Ozone, na.rm = TRUE), 1)` ppb) sits well above the median (`r median(airquality$Ozone, na.rm = TRUE)` ppb). Recall from earlier in this chapter that this is the signature of a right skew: a handful of very high values pull the mean upward while leaving the median where the bulk of the data sits. The range confirms it, running from `r min(airquality$Ozone, na.rm = TRUE)` up to `r max(airquality$Ozone, na.rm = TRUE)` ppb.
+
+The histograms show exactly that:
+
+```{r}
+#| label: fig-1airquality-hist
+#| fig-cap: "Daily maximum temperature is roughly symmetric; ozone concentration is right-skewed, with a long tail of high-ozone days."
+#| fig-alt: "Two histograms side by side. Temperature forms a roughly symmetric distribution centered near 79 degrees. Ozone is strongly right-skewed, with most days below 50 ppb and a thin tail extending past 150 ppb."
+#| out-width: "100%"
+#| fig-asp: 0.45
+
+library(ggplot2)
+library(tidyr)
+
+aq_long <- airquality |>
+  dplyr::select(Ozone, Temp) |>
+  tidyr::pivot_longer(everything(), names_to = "Variable", values_to = "Value") |>
+  dplyr::filter(!is.na(Value)) |>
+  dplyr::mutate(Variable = dplyr::recode(Variable,
+                                         Ozone = "Ozone (ppb)",
+                                         Temp  = "Temperature (°F)"))
+
+ggplot(aq_long, aes(x = Value)) +
+  geom_histogram(bins = 20, fill = "#0097c3", color = "white") +
+  facet_wrap(~Variable, scales = "free_x") +
+  theme_classic(base_size = 13) +
+  theme(panel.border = element_rect(color = "grey40", fill = NA)) +
+  labs(x = NULL, y = "Number of days")
+```
+
+This is the habit worth carrying forward: compute the summaries, then look at the picture, and check that the two tell the same story. Here they do. If they had not, the picture would win.
+
+## Summary
+
+This chapter covered two connected things: where data come from, and how to describe them once you have them.
+
+On measurement and study design:
+
+-   **Why statistics matters.** It will not answer every scientific question, but it provides a disciplined way to separate signal from bias, and to avoid being fooled by aggregated data, as Simpson's paradox shows.
+
+-   **Operationalization and measurement.** Turning a broad concept like *soil health* into something recordable is a decision you have to make and justify, not something the data hands you.
+
+-   **Scales of measurement.** Nominal, ordinal, interval, and ratio, plus the continuous-versus-discrete distinction. These determine which statistical tools are available to you, which is why we return to them all semester.
+
+-   **Predictors and outcomes.** The roles variables play in an analysis, and the several vocabularies used to describe them.
+
+-   **Experimental and non-experimental research.** Environmental science rarely permits full experimental control, so the field leans on quasi-experiments, long-term time series, and case studies.
+
+On describing data:
+
+-   **Plot first.** Scatter plots and histograms show the shape of a distribution, and bin width is a choice that changes what you see.
+
+-   **Central tendency.** The mode, median, and mean each summarize the "middle" differently, and they diverge when data are skewed.
+
+-   **Variation.** The range, then deviations from the mean, then squared deviations, the sum of squares, the variance, and finally the standard deviation, which returns the measure of spread to the original units.
+
+-   **Always look at the graph.** Anscombe's Quartet and the Datasaurus Dozen make the point that identical summary statistics can describe radically different data.
+
+------------------------------------------------------------------------
+
+## Videos
+
+### Terms of Statistics
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/HgtnpOtk350" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+
+</iframe>
+### Measures of center: Mode
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/hQ2p-QQpGso" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+
+</iframe>
+
+### Measures of center: Median and Mean
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/BopmCXCjq08" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+
+</iframe>
+
+### Standard deviation part I
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/8Yguf93s5dI" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+
+</iframe>
+
+### Standard deviation part II
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/KodmsOXScBc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+
+</iframe>

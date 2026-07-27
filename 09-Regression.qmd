@@ -1,0 +1,184 @@
+---
+author:
+  - Mallory L. Barnes
+aliases: [redirects/simple-linear-regression.html]
+---
+
+```{r, include = FALSE}
+source("global_stuff.R")
+fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = "f"))
+```
+
+# Simple Linear Regression
+
+```{r}
+library(tidyverse)
+library(broom)
+library(knitr)
+```
+
+Back in the correlation chapter, we fit a best-fit line through a scatterplot of chocolate and happiness, and learned how to compute its slope and intercept from the data. That was a description: given this sample, here is the line that summarizes it. What we could not yet do was ask the inference question that every other test in this book has asked. Is the slope we found in this sample close to what we'd expect from a real population relationship, or is it the kind of thing chance alone could produce? Now that we have hypothesis testing, sampling distributions, and the logic of comparing an observed statistic to a null distribution, we can put the regression line through the same machinery.
+
+## From description to inference
+
+A sample slope is a statistic, and like any statistic, it varies from sample to sample. If we drew a new sample from the same population and fit a new line, we would get a slightly different slope, just by chance. Simple linear regression asks whether the slope we observed is large enough, relative to that sampling variability, to conclude that a real linear relationship exists in the population, rather than one produced by chance alone.
+
+**Example: stream temperature and dissolved oxygen.** Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO) to decline as stream temperature rises. This matters for stream health: low DO can stress or kill fish and invertebrates. Suppose we sample 30 stream sites, measuring water temperature (°C) and dissolved oxygen (mg/L) at each.
+
+```{r}
+#| label: fig-10regscatter
+#| fig-cap: "Stream temperature and dissolved oxygen at 30 sample sites, with the fitted regression line."
+
+set.seed(538)
+n <- 30
+stream_temp <- round(runif(n, 10, 24), 1)
+DO <- round(13.5 - 0.28 * stream_temp + rnorm(n, 0, 0.9), 2)
+stream_df <- data.frame(stream_temp, DO)
+
+ggplot(stream_df, aes(x = stream_temp, y = DO)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic() +
+  xlab("Stream temperature (°C)") +
+  ylab("Dissolved oxygen (mg/L)")
+```
+
+The scatterplot in @fig-10regscatter shows a clear downward trend. The question this chapter answers: is that trend real, or could a sample of 30 sites show a downward-sloping line like this even if temperature and DO were unrelated in the population?
+
+## The regression model
+
+We model dissolved oxygen as a linear function of stream temperature, plus error:
+
+$$DO = \beta_0 + \beta_1(\text{Temperature}) + \varepsilon$$
+
+Here $\beta_0$ is the population intercept, $\beta_1$ is the population slope, and $\varepsilon$ is the error, the part of DO that temperature alone doesn't explain. We don't know $\beta_0$ and $\beta_1$; we estimate them from the sample as $b_0$ and $b_1$, using the same least-squares logic from the correlation chapter (the line that minimizes the sum of squared residuals).
+
+In R, this is a single line:
+
+```{r 10fitshow, echo = TRUE, eval = FALSE}
+fit <- lm(DO ~ stream_temp, data = stream_df)
+```
+
+```{r 10fit}
+fit <- lm(DO ~ stream_temp, data = stream_df)
+fit_tidy <- tidy(fit, conf.int = TRUE)
+fit_glance <- glance(fit)
+
+kable(
+  fit_tidy %>%
+    mutate(across(c(estimate, std.error, statistic, conf.low, conf.high), ~round(., 3)),
+           p.value = fmt_p(p.value)) %>%
+    rename(Term = term, Estimate = estimate, `Std. Error` = std.error,
+           `t` = statistic, `p` = p.value, `CI low` = conf.low, `CI high` = conf.high),
+  caption = "Coefficient table for DO ~ stream temperature"
+)
+```
+
+Reading the table: the fitted line is $\widehat{DO} = `r round(coef(fit)[1], 2)` `r ifelse(coef(fit)[2] >= 0, "+", "-")` `r abs(round(coef(fit)[2], 2))` \times \text{Temperature}$. The intercept ($b_0 = `r round(coef(fit)[1], 2)`$) is the model's predicted DO at 0°C, technically part of the model but outside the range of temperatures we actually sampled (10 to 24°C), so we won't lean on it for interpretation. The slope ($b_1 = `r round(coef(fit)[2], 2)`$) is the part we care about: for every 1°C increase in stream temperature, predicted dissolved oxygen drops by about `r abs(round(coef(fit)[2], 2))` mg/L.
+
+## Testing the slope
+
+The slope $b_1$ is a sample estimate. The hypothesis test asks whether the population slope $\beta_1$ could plausibly be zero, that is, whether temperature and DO are linearly unrelated.
+
+- $H_0: \beta_1 = 0$ (no linear relationship between stream temperature and dissolved oxygen)
+- $H_A: \beta_1 \neq 0$ (there is a linear relationship)
+
+The test statistic compares the estimated slope to its standard error:
+
+$$t = \frac{b_1}{SE(b_1)} = \frac{`r round(coef(fit)[2],3)`}{`r round(fit_tidy$std.error[2],3)`} = `r round(fit_tidy$statistic[2],2)`$$
+
+with $df = n - 2 = `r nrow(stream_df) - 2`$ (one degree of freedom spent estimating the intercept, one for the slope). From the coefficient table above, $t = `r round(fit_tidy$statistic[2],2)`$, $p `r fmt_p(fit_tidy$p.value[2])`$. This crosses the conventional $\alpha = .05$ threshold, so we reject $H_0$: stream temperature is linearly related to dissolved oxygen.
+
+The 95% confidence interval for the slope, also in the table, runs from `r round(fit_tidy$conf.low[2],3)` to `r round(fit_tidy$conf.high[2],3)` mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will.
+
+::: callout-note
+This is the same test as the correlation test from Chapter 2, just written differently. Testing $H_0: \beta_1 = 0$ for the slope and testing $H_0: \rho = 0$ for the correlation coefficient give the identical $t$-statistic and identical $p$-value. Regression and correlation are two views of the same underlying relationship: correlation asks how strongly two variables move together, and regression additionally lets us write down an equation and make predictions.
+:::
+
+## R-squared: variance explained
+
+Just as one-way ANOVA in the last chapter partitioned total variability into a between-groups piece and a within-groups piece, regression partitions the total variability in $Y$ into a piece explained by the line and a piece left over as residual error:
+
+$$SS_{Total} = SS_{Regression} + SS_{Residual}$$
+
+$R^2$ is the proportion of that total variability the line accounts for:
+
+$$R^2 = \frac{SS_{Regression}}{SS_{Total}}$$
+
+```{r}
+kable(
+  data.frame(
+    `R-squared` = round(fit_glance$r.squared, 3),
+    `F` = round(fit_glance$statistic, 2),
+    `df1` = fit_glance$df,
+    `df2` = fit_glance$df.residual,
+    `p` = fmt_p(fit_glance$p.value),
+    check.names = FALSE
+  ),
+  caption = "Model fit for DO ~ stream temperature"
+)
+```
+
+Here $R^2 = `r round(fit_glance$r.squared, 2)`$: stream temperature accounts for about `r round(fit_glance$r.squared*100)`% of the variation we observed in dissolved oxygen across sites. The remaining variation comes from everything else the model doesn't capture (discharge, shading, groundwater input, and so on), folded into $\varepsilon$.
+
+$R^2$ is regression's effect size. A relationship can be tested (is $\beta_1$ significantly different from 0?) and separately sized (how much of the variation does it actually explain?), the same distinction Chapter 5 introduced for Cohen's $d$ and that eta-squared makes for ANOVA. A small sample can produce a significant slope that explains very little variance; $R^2$ is what tells you whether the relationship is worth acting on, not just whether it's real.
+
+## Checking assumptions
+
+Simple linear regression assumes:
+
+- **Linearity**: the true relationship between $X$ and $Y$ is a straight line.
+- **Independence**: observations don't influence each other (the universal assumption from Chapter 6, still not something you list when asked to enumerate a test's specific assumptions, but always worth checking your study design against).
+- **Constant variance (homoscedasticity)**: the spread of residuals is roughly the same across the whole range of $X$.
+- **Normality of residuals**: the residuals are approximately normally distributed.
+
+The most useful diagnostic is a residuals-versus-fitted plot:
+
+```{r}
+#| label: fig-10regresid
+#| fig-cap: "Residuals versus fitted values for the stream temperature model. A random scatter around zero, with no funnel shape or curve, supports linearity and constant variance."
+
+stream_df$fitted <- fitted(fit)
+stream_df$resid <- resid(fit)
+
+ggplot(stream_df, aes(x = fitted, y = resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_classic() +
+  xlab("Fitted values") +
+  ylab("Residuals")
+```
+
+@fig-10regresid shows what we want to see: residuals scattered evenly above and below zero, with no curve (which would suggest the true relationship isn't linear) and no funnel shape (which would suggest variance changes across the range of $X$). For normality, we check the residuals directly:
+
+```{r}
+sh_out <- shapiro.test(resid(fit))
+kable(
+  data.frame(Statistic = round(unname(sh_out$statistic), 2),
+             `p-value` = fmt_p(sh_out$p.value), check.names = FALSE),
+  caption = "Shapiro-Wilk test on the regression residuals"
+)
+```
+
+The residuals don't depart from normality here ($p `r fmt_p(sh_out$p.value)`$). As with any formal normality test, treat this as one piece of evidence alongside the residual plot, not a strict gate. Shapiro-Wilk has the least power to detect real departures exactly when the sample is small, which is exactly when a visual check matters most.
+
+## Using the model: prediction
+
+Once we've confirmed a real linear relationship, the fitted equation lets us predict DO at any stream temperature. For example, at 20°C:
+
+```{r}
+newd <- data.frame(stream_temp = 20)
+pred_out <- predict(fit, newd, interval = "confidence")
+kable(
+  data.frame(`Stream temperature` = 20, Predicted = round(pred_out[1],2),
+             `CI low` = round(pred_out[2],2), `CI high` = round(pred_out[3],2),
+             check.names = FALSE),
+  caption = "Predicted dissolved oxygen at 20°C, with 95% confidence interval"
+)
+```
+
+At 20°C, the model predicts DO of `r round(pred_out[1],2)` mg/L, with a 95% confidence interval from `r round(pred_out[2],2)` to `r round(pred_out[3],2)`. Notice that 20°C falls inside our sampled range of 10 to 24°C, this is interpolation, and it's what regression is good for. Predicting DO at, say, 35°C would be extrapolation: nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction.
+
+## Chapter Summary
+
+Simple linear regression takes the descriptive best-fit line from Chapter 2 and adds the machinery of inference. The slope becomes a testable hypothesis ($H_0: \beta_1 = 0$), with a $t$-test, a $p$-value, and a confidence interval, mechanically identical to testing a correlation coefficient. $R^2$ partitions variance the same way ANOVA does, and gives regression its effect size. Checking assumptions (linearity, independence, constant variance, normality of residuals) is not optional bookkeeping, it's what tells you whether the line, the test, and the predictions built on it can be trusted. With a covariate and a categorical group at the same time, this same model extends directly into ANCOVA, the subject of two chapters from now.
