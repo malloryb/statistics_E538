@@ -111,7 +111,7 @@ You might notice right away that none of the histograms are the same. Even thoug
 ::: {.content-visible when-format="html"}
 ```{r}
 #| label: fig-5expectedUnif
-#| fig-cap: "Animation of histograms for different samples of 20 from Uniform distribution (numbers 1 to 10). The black lines shows the expected number of times each number from 1 to 10 should occur. The fact that each number does not occur 2 times each illustrates the error associated with sampling"
+#| fig-cap: "Animated histograms of repeated samples of 20 from a uniform distribution. The black line marks the expected count of 2 per number; the bars rarely match it."
 
 knitr::include_graphics(path="imgs/gifs/sampleUnifExpected-1.gif")
 ```
@@ -296,7 +296,7 @@ It is easier to see the comparison in a bar graph (@fig-5gumballA), which shows 
 
 ```{r}
 #| label: fig-5gumballA
-#| fig-cap: "Mean pH for Group A and Group B sampled randomly from the same stream population. The y-axis is zoomed in (it doesn't start at 0) so the difference between bars is visible; pH itself doesn't range down to 0 in a real stream."
+#| fig-cap: "Mean pH for two groups drawn from the same stream population. Note the zoomed y-axis, which does not start at 0."
 
 mean_df <- aggregate(ph ~ group, df, mean)
 ggplot(mean_df, aes(x = group, y = ph)) +
@@ -319,7 +319,7 @@ The first step is to replicate the sampling scenario many times. (ah I see, this
 
 ```{r}
 #| label: fig-5gumballsims
-#| fig-cap: "10 simulated replications of sampling pH at 10 stream sites and splitting them arbitrarily into two groups of 5. Each replication gives a slightly different answer. Any difference between the bars is due to chance, not to a real environmental difference."
+#| fig-cap: "Ten replications of sampling pH at 10 stream sites and splitting them arbitrarily into two groups of 5. Every difference here is chance alone."
 #| out-width: "100%"
 
 group <- rep(rep(c("A", "B"), each = 5), 10)
@@ -415,7 +415,7 @@ We can use this window to evaluate any observed difference. If a study found a m
 Most of the inference done throughout the rest of this course comes down to one question: did chance produce the difference in the data? In an experiment, we want to know if our manipulation caused a difference in our measurement. But everything we measure has natural variability, so we'll always find *some* difference between conditions, whether the manipulation matters or not. What we want to know is whether that difference could plausibly have been produced by chance alone. If chance is a very unlikely explanation, we infer that something about the manipulation, not chance, produced the difference.
 
 ::: callout-note
-Statistics is not only about determining whether chance could have produced a pattern in the observed data. The same tools we are talking about here can be generalized to ask whether any kind of distribution could have produced the differences. This allows comparisons between different models of the data, to see which one was the most likely, rather than just rejecting the unlikely ones (e.g., chance). But, we'll leave those advanced topics for another textbook.
+**Beyond ruling out chance.** Statistics is not only about determining whether chance could have produced a pattern in the observed data. The same tools we are talking about here can be generalized to ask whether any kind of distribution could have produced the differences. This allows comparisons between different models of the data, to see which one was the most likely, rather than just rejecting the unlikely ones (e.g., chance). But, we'll leave those advanced topics for another textbook.
 :::
 
 The simulation-based approach introduced here answers the same question as every formal test in later chapters: **could chance alone have produced the observed difference?** The advantage of starting here is transparency: every step is explicit, and the logic is visible before any formulas are introduced.
@@ -649,7 +649,7 @@ When we do our randomization test we will measure the mean difference in NO₂ b
 ::: {.content-visible when-format="html"}
 ```{r}
 #| label: fig-5randtest
-#| fig-cap: "Animation of a randomization test. The purple dots represent the location of the original sample means in each condition. The yellow dots represent the means of each randomized sample. The blue and red dots show how the original scores are shuffled across each randomization."
+#| fig-cap: "Animation of a randomization test. Purple dots are the original condition means, yellow dots the means after each reshuffle, and blue and red dots track how individual scores move."
 
 knitr::include_graphics(path="imgs/gifs/randomizationTest-1.gif")
 ```
@@ -785,13 +785,18 @@ ggplot(rand_df, aes(x = mean_differences)) +
 
 Look at the blue line in @fig-5randquestion, a mean difference of 10 ppb. It sits inside the chance window: differences that size do happen sometimes by chance. You might lean toward "probably not chance" since it's near the edge, but with some real skepticism. The red line, a difference of +5 ppb, sits well inside the chance window, and differences that size happen fairly often, so it would take more evidence before concluding highway proximity was driving it.
 
-### Take homes so far
+## Chapter Summary
 
-The simulation-based approach developed in this chapter illustrates the core logic of all the formal tests covered later in this course.
+**Why it matters.** This chapter is the conceptual hinge of the course. Every formal test that follows is a shortcut for what we did here by hand: work out what chance alone could produce, then check whether your result sits inside that range.
 
-Inferential statistics is an attempt to solve the problem: **where did my data come from?** In the randomization test example, our question was: **where did the differences between the means in my data come from?** We know that the differences could be produced by chance alone. We simulated what chance can do using randomization. Then we plotted what chance can do using a histogram. Then, we used that picture to help us make an inference. Did our observed difference come from the chance distribution, or not? When the observed difference is clearly inside the chance distribution, then we can infer that our difference **could have been produced by chance**. When the observed difference is not clearly inside the chance distribution, then we can infer that our difference was **probably not produced by chance**.
+**Core ideas**
 
-These pictures do real work: they summarize a pile of complicated numbers into a single inference, without even needing a summary number, just look at whether the observed difference falls inside or outside the chance window. Going forward, we'll formalize this process into "standard" inferential statistics, replacing the picture with a summary number: the probability that the observed difference could have been produced by chance. A 95% probability would leave little confidence that the environmental condition was causing the difference; a 1% probability would give much more confidence that **chance did not** produce it, and that the variable of interest (highway proximity, pollution source, land use type) actually matters. Getting to that number is what the next few chapters build toward.
+-   **The question inference actually asks.** Not "is there a difference," but "where did this difference come from?" Chance alone produces differences between groups all the time, so the real question is whether chance is a sufficient explanation for yours.
+-   **Simulate what chance can do.** Randomly reshuffling your data breaks any real relationship while keeping everything else intact. Doing that many times builds a picture of the differences chance alone can generate for a dataset your size.
+-   **Then compare.** If your observed difference sits comfortably inside that chance window, chance remains a plausible explanation. If it sits far outside, chance becomes hard to defend as the whole story.
+-   **The grey zone is real.** Results near the edge of the chance window are genuinely ambiguous, and where you draw the line is a judgment call rather than a fact. The next chapter adopts a convention ($\alpha = .05$) so researchers aren't each inventing their own boundary.
+-   **Design determines what you can detect.** Sample size is the main lever, but repeated measurements and a stronger contrast between conditions matter too. A study can fail to find a real effect simply because it was never built to see one.
+-   **The picture becomes a number.** From here on we replace the histogram with a single summary, the probability that chance could have produced your result. That number is the $p$-value, and the next few chapters build toward it.
 
 ## Videos
 

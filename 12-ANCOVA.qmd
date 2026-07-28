@@ -11,7 +11,6 @@ knitr::opts_chunk$set(cache=FALSE)
 
 # Analysis of Covariance (ANCOVA)
 
-
 ```{r}
 # Libraries
 library(tidyverse)
@@ -37,7 +36,7 @@ data <- tibble(
 **ANCOVA** uses the same linear model ideas from regression, with one continuous covariate and one categorical factor. We first test whether groups have different **slopes** with respect to the covariate, then, only if slopes are parallel, we test whether groups differ in **adjusted means**.
 
 ::: callout-note
-**Going deeper.** T-tests, ANOVA, regression, and ANCOVA are all special cases of one underlying framework, the **general linear model**. Seeing that unification --- and the indicator (dummy) variable mechanics that make it work --- is genuinely useful, but it's a level of abstraction that belongs in a second statistics course, not a first one. If you want to go there, see the out-of-sequence chapter *"The Linear Model Framework: Dummy Variables and Interactions"* in this book's repository.
+**Going deeper.** T-tests, ANOVA, regression, and ANCOVA are all special cases of one underlying framework, the **general linear model**. Seeing that unification, along with the indicator (dummy) variable mechanics that make it work, is genuinely useful, but it's a level of abstraction that belongs in a second statistics course, not a first one. If you want to go there, see the out-of-sequence chapter *"The Linear Model Framework: Dummy Variables and Interactions"* in this book's repository.
 :::
 
 ## Moving Beyond Regression and ANOVA to ANCOVA
@@ -56,7 +55,7 @@ This specific subsection of general linear models is known as **Analysis of Cova
 
 ### Conceptual Background for ANCOVA
 
-At its core, ANCOVA checks whether groups share the same line, or whether each group needs its own slope and intercept. That's exactly what the interaction test below is doing --- so keep the picture of "one shared line vs. two separate lines" in mind as we go.
+At its core, ANCOVA checks whether groups share the same line, or whether each group needs its own slope and intercept. That's exactly what the interaction test below is doing, so keep the picture of "one shared line vs. two separate lines" in mind as we go.
 
 ### Terminology in LMs
 
@@ -72,7 +71,7 @@ A few key terms help clarify how variables play different roles in linear models
 
 -   **Covariate:** A continuous variable that changes alongside the response variable and helps explain part of its variation.
 
-    In environmental studies, common covariates include temperature, rainfall, soil moisture, or pollution concentration---factors that may influence the outcome but are not the main treatment of interest.
+    In environmental studies, common covariates include temperature, rainfall, soil moisture, or pollution concentration, all factors that may influence the outcome but are not the main treatment of interest.
 
     The purpose of including a covariate is to **adjust for its influence**, allowing a clearer test of the categorical effects once that continuous background variation is accounted for.
 
@@ -83,10 +82,10 @@ A few key terms help clarify how variables play different roles in linear models
 The covariate may or may not be the main factor of interest. Sometimes we adjust for it, and sometimes we want to see whether its relationship with the response differs across groups.
 
 ::: callout-tip
-**Two reasons people reach for ANCOVA.** If you look this test up elsewhere, you'll often see it introduced differently than we're introducing it here --- worth knowing both versions exist:
+**Two reasons people reach for ANCOVA.** If you look this test up elsewhere, you'll often see it introduced differently than we're introducing it here, so it's worth knowing both versions exist:
 
--   **The classic motivation (covariate as a nuisance):** you want to compare groups, but you know a continuous variable is quietly influencing the outcome and could confound the comparison if you ignore it. You add the covariate to *control for* it, so the group comparison is fairer. Most "which test should I use" flowcharts are built around this version, which is why ANCOVA usually doesn't get its own branch on them --- it's treated as an add-on decision, not a starting point.
--   **The version we're emphasizing (covariate as the question):** you actually want to know whether a continuous relationship --- like a trend over time --- looks different across groups. Here the interaction *is* the finding, not a nuisance to control away. This is closer to how ANCOVA gets used in a lot of real environmental research (including, often, your own project), which is why this course leads with it.
+-   **The classic motivation (covariate as a nuisance):** you want to compare groups, but you know a continuous variable is quietly influencing the outcome and could confound the comparison if you ignore it. You add the covariate to *control for* it, so the group comparison is fairer. Most "which test should I use" flowcharts are built around this version, which is why ANCOVA usually doesn't get its own branch on them. It's treated as an add-on decision, not a starting point.
+-   **The version we're emphasizing (covariate as the question):** you actually want to know whether a continuous relationship, like a trend over time, looks different across groups. Here the interaction *is* the finding, not a nuisance to control away. This is closer to how ANCOVA gets used in a lot of real environmental research (including, often, your own project), which is why this course leads with it.
 
 Both are the same test, mechanically. The difference is which term you actually came to interpret.
 :::
@@ -140,7 +139,7 @@ $y=\beta_0+\beta_1 x+\beta_2 g+\varepsilon .$
 
 ### Conducting the Test
 
-When we run an ANCOVA, the output includes an **omnibus F-test**---a single test of whether there are any differences in the adjusted group means after accounting for the covariate.
+When we run an ANCOVA, the output includes an **omnibus F-test**, a single test of whether there are any differences in the adjusted group means after accounting for the covariate.
 
 If this test is **significant**, we reject the overall null hypothesis that all adjusted means are equal.
 
@@ -152,7 +151,7 @@ To interpret the result, we must **decompose the omnibus effect** into its compo
 
 2.  **Adjusted means (intercept difference):** If the slopes are equal, do the groups still differ in their adjusted means?
 
-This two-step logic---testing slope equality first, then adjusted means---is central to ANCOVA and parallels how we follow a significant ANOVA with post-hoc comparisons.
+This two-step logic, testing slope equality first and then adjusted means, is central to ANCOVA and parallels how we follow a significant ANOVA with post-hoc comparisons.
 
 **Interpreting the Findings:**
 
@@ -255,14 +254,17 @@ Before we look at the model results, it's always good practice to **look at the 
 
 Visual inspection helps us check for broad patterns and see whether the model output later "makes sense."
 
-Let's start with the response variable---**bird density**. This will give us a quick visual sense of whether urban and rural areas differ in their average values.
+Let's start with the response variable, **bird density**, in @fig-12birddensity. This gives us a quick visual sense of whether urban and rural areas differ in their average values.
 
-```{r, echo=TRUE}
-# Boxplot for bird density by area type
+```{r}
+#| label: fig-12birddensity
+#| fig-cap: "Bird density by area type. Rural sites sit higher than urban ones."
+#| fig-alt: "Boxplot of bird density for rural and urban area types. The rural box is centered higher than the urban box, with overlapping ranges."
+#| echo: true
+
 ggplot(data, aes(AreaType, BirdDensity)) +
-  geom_boxplot() + theme_classic(base_size=12) +
-  labs(title = "Bird Density by Area Type", x = "Area Type", y = "Bird Density")
-
+  geom_boxplot() + theme_classic(base_size = 12) +
+  labs(x = "Area Type", y = "Bird Density")
 ```
 
 At first glance, bird density appears **higher in rural areas** than in urban ones, consistent with what we might expect ecologically.
@@ -273,14 +275,18 @@ If the covariate differs sharply between groups, ANCOVA will "adjust" for that d
 
 If it doesn't, group comparisons will look more like a simple ANOVA.
 
-```{r, echo=TRUE}
+```{r}
+#| label: fig-12airpollution
+#| fig-cap: "Air pollution by area type. The two groups look broadly similar, so there is no large covariate imbalance for the model to adjust away."
+#| fig-alt: "Boxplot of air pollution for rural and urban area types. The two boxes overlap substantially with similar centers."
+#| echo: true
+
 ggplot(data, aes(AreaType, AirPollution)) +
-  geom_boxplot() + theme_classic() +
-  geom_boxplot() + theme_classic(base_size=12) +
-  labs(title = "Air Pollution by Area Type", x = "Area Type", y = "Air Pollution")
+  geom_boxplot() + theme_classic(base_size = 12) +
+  labs(x = "Area Type", y = "Air Pollution")
 ```
 
-Air pollution looks fairly similar between urban and rural sites---there's no obvious systematic difference.
+Air pollution looks fairly similar between urban and rural sites, with no obvious systematic difference.
 
 This isn't diagnostic, but it helps us **anticipate what the model might show**: we may find that group differences in bird density aren't explained by pollution alone.
 
@@ -362,7 +368,7 @@ caption = "Linear Model Coefficients"
 )
 ```
 
-R automatically converts the categorical `AreaType` variable into a 0/1 indicator behind the scenes --- it picks one level (here, "Rural," alphabetically first) as the **reference**, and every coefficient involving `AreaType` is interpreted relative to that reference. That's why you see a coefficient called `AreaTypeUrban` but no separate `AreaTypeRural` term.
+R automatically converts the categorical `AreaType` variable into a 0/1 indicator behind the scenes. It picks one level (here, "Rural," alphabetically first) as the **reference**, and every coefficient involving `AreaType` is interpreted relative to that reference. That's why you see a coefficient called `AreaTypeUrban` but no separate `AreaTypeRural` term.
 
 These coefficients give the *direction* and *magnitude* of each effect:
 
@@ -375,10 +381,13 @@ These coefficients give the *direction* and *magnitude* of each effect:
 
 As always, plotting helps confirm what the model tells us.
 
-A scatter plot with fitted regression lines lets us see how air pollution relates to bird density for each area type.
+A scatter plot with fitted regression lines (@fig-12ancovalines) lets us see how air pollution relates to bird density for each area type.
 
 ```{r}
-# Scatter plot with regression lines
+#| label: fig-12ancovalines
+#| fig-cap: "Bird density against air pollution, with a separate fitted line for each area type. The slopes run in opposite directions, which is what the interaction term tests."
+#| fig-alt: "Scatter plot of bird density against air pollution, colored by area type, with separate straight fitted lines for rural and urban sites running in opposite directions."
+
 ggplot(data, aes(AirPollution, BirdDensity, color = AreaType)) +
   geom_point(alpha = 0.6) +
   geom_smooth(method = "lm", se = FALSE) +
@@ -389,7 +398,7 @@ ggplot(data, aes(AirPollution, BirdDensity, color = AreaType)) +
 
 Here, the slopes differ by area type, illustrating the **significant interaction** we detected statistically.
 
-You'll also notice quite a bit of scatter around each line, which makes sense---our overall $R^2$ is only **0.116**.
+You'll also notice quite a bit of scatter around each line, which makes sense, since our overall $R^2$ is only **0.116**.
 
 Remember, $R^2$ represents the **proportion of variance in bird density explained by the model**.
 
@@ -417,7 +426,7 @@ knitr::kable(
 )
 ```
 
-This re-centering doesn't change the slopes or $p$-values---it just shifts the intercepts, making them easier to interpret.
+This re-centering doesn't change the slopes or $p$-values. It just shifts the intercepts, making them easier to interpret.
 
 **Interpreting the Centered Model**
 
@@ -425,13 +434,13 @@ Centering does **not** change the slopes or their $p$-values.
 
 Notice that the coefficients for `AirPollution_c` (--0.04) and `AirPollution_c:AreaTypeUrban` (+0.07) are **identical** to the slopes we estimated before centering.
 
-Only the **intercept** and the **AreaTypeUrban** (group difference) term have changed --- they are now interpreted at the *mean pollution level* instead of pollution = 0.
+Only the **intercept** and the **AreaTypeUrban** (group difference) term have changed. They are now interpreted at the *mean pollution level* instead of pollution = 0.
 
 -   **Intercept (27.8):** Predicted bird density for **rural sites** at *average air pollution*.
 
 -   **AreaTypeUrban (--5.8):** Urban sites have, on average, **about 6 fewer birds** than rural sites *at the same mean pollution level*.
 
--   **AirPollution_c (--0.04):** Slope for rural sites --- bird density decreases slightly as pollution increases.
+-   **AirPollution_c (-0.04):** Slope for rural sites, where bird density decreases slightly as pollution increases.
 
 -   **Interaction (+0.07):** Difference in slopes between groups. The urban slope = --0.04 + 0.07 ≈ **+0.03**, meaning bird density increases slightly with pollution in urban areas.
 

@@ -261,7 +261,7 @@ Since $F$ is a sample statistic, we can find out how it behaves the same way we 
 
 To build intuition for the F distribution, consider a simulated monitoring study with three site types (A, B, C). Each site type has 10 sampling plots, for 30 total. We measure species abundance at each plot. Critically, the **null scenario** applies: all 30 plots are drawn from the same distribution (mean = 100, SD = 10), so site type has no real effect on abundance. Any differences between group means arise from sampling error alone.
 
-We run this simulation 10,000 times. Each time we compute F from the sample data. The histogram of those 10,000 F-values --- shown in @fig-9fnull --- is the null distribution of F for this design.
+We run this simulation 10,000 times. Each time we compute F from the sample data. The histogram of those 10,000 F-values, shown in @fig-9fnull, is the null distribution of F for this design.
 
 ```{r}
 #| label: fig-9fnull
@@ -499,11 +499,11 @@ Every panel of @fig-9sigdiffs now shows at least one group mean whose error bars
 
 We've covered the fundamentals of ANOVA: how to compute an $F$-statistic from the data, and how to interpret it along with its $p$-value. In practice, software handles these calculations for you, but understanding what the numbers mean is what lets you interpret them correctly. Computing at least one ANOVA by hand, as we just did, is worth the effort: it's the fastest way to build real intuition for what the software is doing under the hood.
 
-The following example applies the full ANOVA workflow --- descriptive summaries, omnibus F test, and post-hoc comparisons --- to a real ecological dataset. This is the same dataset used in Lab 10.
+The following example applies the full ANOVA workflow, from descriptive summaries through the omnibus F test to post-hoc comparisons, to a real ecological dataset. This is the same dataset used in Lab 10.
 
 ### Salamander abundance across forest types
 
-Plethodontid salamanders are sensitive indicators of forest condition: they depend on moist microhabitats, abundant coarse woody debris, and stable soil temperatures --- all features that decline with forest disturbance. A field ecologist surveys salamander abundance at 24 plots distributed across three forest types: **old-growth** (8 plots), **secondary** forest (8 plots), and **managed plantation** (8 plots). The research question is whether mean salamander abundance differs among forest types.
+Plethodontid salamanders are sensitive indicators of forest condition: they depend on moist microhabitats, abundant coarse woody debris, and stable soil temperatures, all features that decline with forest disturbance. A field ecologist surveys salamander abundance at 24 plots distributed across three forest types: **old-growth** (8 plots), **secondary** forest (8 plots), and **managed plantation** (8 plots). The research question is whether mean salamander abundance differs among forest types.
 
 Let's look at the data and findings. Note that you will work through these steps yourself in Lab 10.
 
@@ -544,7 +544,7 @@ ggplot(descriptive_df, aes(x = forest_type, y = means, fill = forest_type)) +
   theme(legend.position = "none")
 ```
 
-The bar graph shows a clear gradient: old-growth plots have the highest mean abundance, managed plantations the lowest, with secondary forest in between. The individual plot counts (dots) show considerable within-group variability --- a reminder that even where a real difference exists, individual plots can vary substantially.
+The bar graph shows a clear gradient: old-growth plots have the highest mean abundance, managed plantations the lowest, with secondary forest in between. The individual plot counts (dots) show considerable within-group variability, a reminder that even where a real difference exists, individual plots can vary substantially.
 
 We now conduct the one-way ANOVA to test whether these differences are larger than expected by chance alone.
 
@@ -650,13 +650,16 @@ knitr::kable(
 
 The pattern matches Tukey HSD exactly: Old-growth differs significantly from both Secondary ($p=.011$) and Managed ($p=.004$), while Secondary and Managed do not differ from each other ($p=.49$). Two different sets of assumptions, two different sets of machinery, same ecological story: that's the point of having both tools available, not a coincidence to be suspicious of.
 
-## ANOVA Summary
+## Chapter Summary
 
-The one-way ANOVA partitions total variation in the data into two components: variation explained by group membership ($SS_\text{Between}$) and unexplained residual variation ($SS_\text{Within}$). The ratio of the corresponding mean squares, after adjusting for degrees of freedom, produces the F statistic. A large F indicates that between-group differences are large relative to within-group noise.
+**Why it matters.** Comparing more than two groups with a stack of $t$-tests inflates your false-positive rate fast. ANOVA solves that by asking one omnibus question first, and its variance-partitioning logic is the same idea that reappears in regression, factorial designs, and ANCOVA.
 
-The process for any one-way ANOVA follows the same two-step structure:
+**Core ideas**
 
-1.  Conduct the omnibus ANOVA to test whether any group means differ.
-2.  Conduct post-hoc comparisons (e.g., Tukey HSD) to identify which specific pairs differ.
+-   **Why not just run more $t$-tests.** Each comparison carries its own chance of a false positive, and they accumulate: with $m$ comparisons the familywise error rate is $1-(1-\alpha)^m$, which is already 14% for three groups.
+-   **Partition the variation.** Total variation splits into a piece explained by group membership ($SS_\text{Between}$) and unexplained residual variation ($SS_\text{Within}$). That split is the whole idea.
+-   **$F$ is a ratio of the two.** After adjusting each sum of squares for its degrees of freedom, $F = MS_\text{Between} / MS_\text{Within}$. A large $F$ means between-group differences are large relative to within-group noise.
+-   **Two steps, always in order.** First the omnibus test: do *any* group means differ? Only if that is significant do you run post-hoc comparisons (Tukey HSD) to find out *which* pairs differ.
+-   **Check the assumptions.** ANOVA needs approximately equal variances across groups (Levene's test) and roughly normal residuals. Treat formal tests as evidence rather than a gate, since they have least power exactly when small samples make violations matter most.
+-   **When assumptions fail.** The **Kruskal-Wallis** test is the rank-based alternative, with `pairwise.wilcox.test()` as its post-hoc counterpart.
 
-The next chapter extends this framework to repeated-measures designs, where the same subjects or plots are measured across multiple conditions.
