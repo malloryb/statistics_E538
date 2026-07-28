@@ -1,11 +1,7 @@
 ---
-author: 
+author:
   - Mallory L. Barnes
 aliases: [redirects/factorial-anova.html, redirects/more-factorial-designs.html]
-format:
-  pdf: default
-  html: default
-prefer-html: true
 ---
 
 ```{r, include = FALSE}
@@ -53,31 +49,39 @@ Our single IV (water availability) has three levels (Low, Medium, High). You can
 - IV1 (Soil pH: Acidic vs. Neutral); 
 - IV2 (Water Availability: Low vs. High)
 
-Now, we have two IVs (soil pH and water availability), each with two levels. This is called a **factorial** design because the levels of each independent variable are fully crossed: every level of one IV occurs alongside every level of the other.
-
-**Why This Matters**: Factorial designs let us study how multiple environmental drivers act together. This is often a more realistic picture of environmental systems.
-
-(Think this preamble may be fully redundant with the later section actually called "Why factorial designs matter". Can't I just set up the experiment here and generate the 2x2 figure for this?)
+Now we have two IVs, soil pH and water availability, each with two levels. This is called a **factorial** design, and it's easier to see what that means visually than to define it in words first. Take a look at @fig-10designs.
 
 ### 2x2 Designs
 
-We just showed an example of a **2x2 Factorial design**. We said this means the IVs are crossed, but it's easier understand seeing it visually. Take a look at @fig-10designs. With soil pH and water availability as our two IVs, each with two levels in the design:
+@fig-10designs lays out our soil pH and water availability example as a grid.
 
-(Want this figure generated for the 2x2 design of Clay vs. loam and water availability)
 ```{r}
 #| label: fig-10designs
-#| fig-cap: "Structure of 2x2 factorial designs"
-knitr::include_graphics("imgs/figures/2x2Design.png")
+#| fig-cap: "Structure of a 2x2 factorial design: soil type crossed with water availability."
+#| fig-alt: "A two-by-two grid. Columns are labeled Clay and Loam; rows are labeled Low Water and High Water. Each of the four cells is marked DV, indicating that the dependent variable is measured in every combination."
+#| out-width: "75%"
+#| fig-asp: 0.55
+
+soil_cells <- expand.grid(
+  Soil  = factor(c("Clay", "Loam"), levels = c("Clay", "Loam")),
+  Water = factor(c("Low Water", "High Water"), levels = c("Low Water", "High Water"))
+)
+soil_cells$fill <- c("#F5E2C8", "#F7DDD6", "#CFE3F2", "#DCEEDD")
+
+ggplot(soil_cells, aes(Soil, Water)) +
+  geom_tile(aes(fill = I(fill)), color = "grey30", linewidth = 0.6, width = 0.92, height = 0.92) +
+  geom_text(aes(label = paste0(Soil, "\n", Water)), fontface = "bold", size = 4.1, vjust = -0.15, color = "grey15") +
+  geom_text(aes(label = "DV measured here"), size = 3.2, vjust = 2.1, color = "grey30") +
+  labs(x = "Soil type", y = "Water availability") +
+  theme_classic(base_size = 13) +
+  theme(axis.ticks = element_blank())
 ```
 
-- IV1: Soil Type (Clay vs. Loam)
-- IV2: Water availability (Low vs. High)
-
-Each combination of soil type and drought condition creates a unique environment for the plants, giving four distinct scenarios to measure growth rates: 2 IVs, each with 2 levels, for 2x2 = 4 conditions total. The notation directly tells you the number of conditions.
+Each combination of soil type and water availability creates a unique environment for the plants, giving four distinct scenarios to measure growth rates: 2 IVs, each with 2 levels, for 2x2 = 4 conditions total. The notation directly tells you the number of conditions.
 
 ### Factorial Notation
 
-Anytime **all of the levels** of each IV in a design are fully crossed, so that they all occur for each level of every other IV, we can say the design is a **fully factorial** design. (Said this already but think this version makes the most senese)
+Anytime **all of the levels** of each IV in a design are fully crossed, so that they all occur for each level of every other IV, we can say the design is a **fully factorial** design.
 
 Our notation system succinctly encapsulates the structure of factorial designs. Each IV gets a number representing its levels. Here are a few examples:
 
@@ -95,17 +99,19 @@ Expanding on our designs, a 2x3 factorial design could investigate the impact of
 
 The rest of this chapter uses one example throughout, so it's worth setting it up carefully before any arithmetic starts.
 
-**The question.** Streams are affected by pollution, but they are also affected by how fast the water moves. Fast-moving water flushes contaminants downstream and re-oxygenates the channel; slow water lets them sit. So we might reasonably suspect that pollution does more damage in a sluggish stream than in a fast one. A factorial design is what lets us test that suspicion directly.
+**The question.** Streams are affected by pollution, but they are also affected by how fast the water moves. Fast-moving water flushes contaminants downstream and re-oxygenates the channel; slow water lets them sit. So we might reasonably suspect that pollution does more damage in a sluggish stream than in a fast one.
+
+Before we look at any data, it's worth stating that suspicion as a real prediction, because a factorial design is what lets us actually test it. We'd guess that no pollution plus high flow supports the most species, and that pollution plus low flow supports the fewest. But the other two combinations are the interesting ones, and a one-factor study could never distinguish them. Is a polluted, fast-moving stream more like a healthy stream, because the flow washes the pollution through before it can do damage? Or is it more like a degraded one, because the pollution is still there regardless of flow? Put differently: does pollution matter only when flow is low, with fast water washing its effect away entirely, or does pollution hurt a stream no matter how fast the water moves? That is exactly the kind of question an interaction test answers.
 
 **The setup.** We run an experiment in artificial stream channels. Each channel is assigned one of two pollution conditions and one of two flow rates, fully crossed, giving four conditions. @fig-10setup lays out the design.
 
-**The dependent variable** is **macroinvertebrate species count**: how many distinct kinds of aquatic insects, snails, worms, and crustaceans we find in a channel. This is a standard measure of stream health. These animals sit in the middle of the food web, many of them are pollution-sensitive, and they can't quickly flee a degraded reach the way fish can, so the number of species present is a good integrative signal of how habitable the water actually is. More species means a healthier stream. (would like some visual, maybe cute just icons: insects/snails (for DV), something indicating pollution, and something indicating flow. Could even make the questions more fleshed out, like "We expect that no pollution and high flow will have the most macroinvertabrates, and that high pollution + low flow will have the least, but what about the two other conditions? Is it better to have no pollution and low flow? Or is it better to have some pollution as long as the flow is high? Does the affect of polution only matter when the flow is low, and when teh flow is high it doesn't matter whether there's pollution or not because it's all getting washed away?)
+**The dependent variable** is **macroinvertebrate species count**: how many distinct kinds of aquatic insects, snails, worms, and crustaceans we find in a channel. This is a standard measure of stream health. These animals sit in the middle of the food web, many of them are pollution-sensitive, and they can't quickly flee a degraded reach the way fish can, so the number of species present is a good integrative signal of how habitable the water actually is. More species means a healthier stream.
 
 ```{r}
 #| label: fig-10setup
-#| fig-cap: "The 2x2 experimental design. Two pollution conditions crossed with two flow rates gives four stream-channel conditions. In every condition we count how many macroinvertebrate species are present."
-#| fig-alt: "A two-by-two grid. Columns are labeled No Pollution and Pollution; rows are labeled Low Flow and High Flow. Each of the four cells names its condition and notes five stream channels. A caption below the grid states that the measured outcome in every cell is the number of macroinvertebrate species."
-#| out-width: "85%"
+#| fig-cap: "The 2x2 experimental design. Two pollution conditions crossed with two flow rates gives four stream-channel conditions. In every condition we count how many macroinvertebrate species are present (the bug and snail icons), pollution is present or absent (the factory icon), and flow rate is marked by the number of water drops."
+#| fig-alt: "A two-by-two grid. Columns are labeled No Pollution and Pollution; rows are labeled Low Flow and High Flow. Each of the four cells notes five stream channels, shows a factory icon only in the two Pollution cells, shows one water drop in the two Low Flow cells and three water drops in the two High Flow cells, and shows a caterpillar and snail icon marking the dependent variable in every cell."
+#| out-width: "90%"
 #| fig-asp: 0.62
 
 cells <- expand.grid(
@@ -113,21 +119,34 @@ cells <- expand.grid(
   Flow      = factor(c("Low Flow", "High Flow"),     levels = c("Low Flow", "High Flow"))
 )
 cells$fill <- c("#F5E2C8", "#F7DDD6", "#CFE3F2", "#DCEEDD")
+cells$pollution_icon <- ifelse(cells$Pollution == "Pollution", "\U0001F3ED", "")
+cells$flow_icon <- ifelse(cells$Flow == "Low Flow",
+                           "\U0001F4A7", "\U0001F4A7\U0001F4A7\U0001F4A7")
+cells$dv_icon <- "\U0001F41B \U0001F40C"
 
-ggplot(cells, aes(Pollution, Flow)) +
+p_setup <- ggplot(cells, aes(Pollution, Flow)) +
   geom_tile(aes(fill = I(fill)), color = "grey30", linewidth = 0.6, width = 0.92, height = 0.92) +
   geom_text(aes(label = paste0(Pollution, "\n", Flow)),
-            fontface = "bold", size = 4.1, vjust = -0.15, color = "grey15") +
-  geom_text(aes(label = "5 stream channels"), size = 3.4, vjust = 2.1, color = "grey30") +
-  labs(
-    x = "Pollution condition", y = "Flow rate",
-    subtitle = "Measured in every channel: number of macroinvertebrate species present"
-  ) +
+            fontface = "bold", size = 4.0, vjust = -1.5, color = "grey15") +
+  geom_text(aes(label = pollution_icon), size = 7, vjust = 0.2) +
+  geom_text(aes(label = flow_icon), size = 5, vjust = 1.4) +
+  geom_text(aes(label = dv_icon), size = 6.5, vjust = 3.1) +
+  geom_text(aes(label = "5 channels each; count species present"), size = 3.0, vjust = 4.4, color = "grey30") +
+  labs(x = "Pollution condition", y = "Flow rate") +
+  coord_cartesian(clip = "off") +
   theme_classic(base_size = 13) +
   theme(
     axis.ticks = element_blank(),
-    plot.subtitle = element_text(size = 10.5, color = "grey25", margin = margin(b = 8))
+    plot.margin = margin(t = 10, r = 10, b = 25, l = 10)
   )
+
+# Emoji glyphs need Cairo's font fallback; the default ragg PNG device used
+# for fig-format: png chunks doesn't resolve color emoji, so we render
+# through grDevices::png(type="cairo") explicitly and embed the file.
+setup_png <- "imgs/figures/fig-10setup-rendered.png"
+ggsave(setup_png, p_setup, width = 7.2, height = 7.2 * 0.62, dpi = 150,
+       device = grDevices::png, type = "cairo")
+knitr::include_graphics(setup_png)
 ```
 
 ## Why factorial designs matter
@@ -234,377 +253,155 @@ We can represent the four combinations of conditions and their mean species coun
 
 ## What the ANOVA is really comparing
 
-Before running the full machinery, it's worth seeing what the interaction term is actually testing, because the answer is less mysterious than the arithmetic makes it look.
+Before running the full machinery, it's worth seeing what the interaction term is actually testing, because the answer is less mysterious than the arithmetic makes it look. Recall from earlier: an interaction is a **difference between differences**. Here's that idea with real numbers, using the four condition means directly, before we touch a single sum of squares.
 
-(wait why did we change it to repeated measures design here all of a sudden?) Suppose the same five stream channels were measured under all four conditions, making this a repeated-measures design. We could compute each channel's Pollution effect under low flow, then again under high flow, and simply ask whether those two numbers differ:
-
-(Make output look nicer, but really I don't think this RM aside is working pedagogically, is confusing)
 ```{r}
 A <- c(10, 8, 11, 9, 10)   # No Pollution, Low Flow
 B <- c(5, 4, 3, 4, 2)      # Pollution,    Low Flow
 C <- c(12, 13, 14, 11, 13) # No Pollution, High Flow
 D <- c(9, 8, 10, 11, 12)   # Pollution,    High Flow
 
-A_B <- A - B   # Pollution effect under Low Flow, per channel
-C_D <- C - D   # Pollution effect under High Flow, per channel
+pollution_effect_low  <- mean(A) - mean(B)
+pollution_effect_high <- mean(C) - mean(D)
+diff_of_diffs <- pollution_effect_low - pollution_effect_high
 
-t.test(A_B, C_D, paired = TRUE)
+knitr::kable(data.frame(
+  `Pollution effect, Low Flow` = pollution_effect_low,
+  `Pollution effect, High Flow` = pollution_effect_high,
+  `Difference of differences` = diff_of_diffs,
+  check.names = FALSE
+))
 ```
 
-The mean Pollution effect was 6 under low flow and 2.6 under high flow, a difference of differences of 3.4. A paired $t$-test on those two sets of difference scores gives $t(4) = 2.49$, $p = .067$: not significant at $\alpha=.05$.
-
-That is the interaction, computed with nothing more than a paired $t$-test on difference scores. The same trick works for each main effect, and the resulting $t$ values relate to the ANOVA's $F$ values by $t^2 = F$ in this design.
+Under low flow, the Pollution effect (no-pollution mean minus pollution mean) is `r pollution_effect_low`. Under high flow, it's `r pollution_effect_high`. Those two numbers aren't the same, so the Pollution effect isn't constant across Flow conditions, which is exactly what an interaction means. The gap between them, `r diff_of_diffs`, is a first, informal look at the interaction itself. Whether a gap that size is more than chance would produce is what the formal test below settles.
 
 ::: callout-note
-**Going deeper on repeated measures.** A full 2x2 repeated-measures design can be worked entirely through paired $t$-tests this way, one per main effect plus the interaction, and it produces results identical to a repeated-measures ANOVA. That walkthrough, along with the `aov()` syntax for repeated-measures designs and the error-term structure they require, lives in the out-of-sequence chapter *"Repeated Measures ANOVA"* in this book's repository. For the rest of this chapter we work with the more general **between-subjects** case, where different channels appear in each condition. (But why did we then do repeated measures?)
+**If your design were repeated measures instead.** We're treating each condition here as a different set of stream channels, a **between-subjects** design. If the *same* channels had instead been measured under all four conditions, you could compute this identical interaction test as a paired $t$-test on difference scores, and it would agree exactly with a repeated-measures ANOVA ($t^2=F$). That walkthrough lives in the out-of-sequence chapter *"Repeated Measures ANOVA"* in this book's repository, for whenever your own design calls for it.
 :::
 
 ## Computing a factorial ANOVA by hand
 
-In the **between-subjects** 2x2 design, different stream channels appear in each condition, so there are no per-channel difference scores to work with and we compute the ANOVA table directly. The logic is the same as the one-way ANOVA: partition the total variance into parts. For a 2x2 design, there's now one more part, the interaction:
+In our **between-subjects** 2x2 design, different stream channels appear in each condition: 5 channels per condition, 20 channels total, no repeats. The logic is the same as the one-way ANOVA in the last chapter: partition the total variance into parts. For a 2x2 design, there's now one more part, the interaction:
 
 $$SS_\text{Total} = SS_\text{Effect IV1} + SS_\text{Effect IV2} + SS_\text{Effect IV1xIV2} + SS_\text{Error}$$
 
-The sections below compute each SS in turn, using the same Pollution × Flow example, now as a between-subjects design: 5 different subjects per condition, 20 subjects total, so there's no subjects column.
+The tables below build up each piece the same way the one-way ANOVA chapter did: one row per channel, showing what that channel's score gets replaced with, its distance from the grand mean, and that distance squared.
 
 ### SS Total
 
-$SS_\text{Total}$ works exactly as it did for the one-way ANOVA: find the grand mean, subtract it from each score, square, and sum, reported in the bottom yellow row.
-
-(OK well I'm finding this confusing and overwrought so I can't imagine how the students would feel here. Also too many sig digits in this whole darn table, keep it to 2 and just indicate that if you must. But need to consider how to make this less confusing. Was this crump? How did I do this for the ANOVA chapter, I don't think it was this bad?)
+$SS_\text{Total}$ captures all of the variation in the data: the difference between each channel's score and the grand mean, squared and summed.
 
 ```{r}
-A <- c(10,8,11,9,10)  #nP_lF
-B  <- c(5,4,3,4,2)  #P_lF
-C <- c(12,13,14,11,13)  #nP_hF
-D  <- c(9,8,10,11,12)  #nP_lF
+species <- c(A, B, C, D)
+pollution <- rep(c("No Pollution", "Pollution", "No Pollution", "Pollution"), each = 5)
+flow <- rep(c("Low Flow", "Low Flow", "High Flow", "High Flow"), each = 5)
 
-grand_mean <- mean(c(A,B,C,D))
+gm <- mean(species)
+diff <- round(species - gm, 2)
+diff_sq <- round(diff^2, 2)
 
-Nothing <- as.character(c("","","","",""))
+df_total <- data.frame(Pollution = pollution, Flow = flow, Species = species, Diff = diff, `Diff Squared` = diff_sq, check.names = FALSE)
+df_total <- rbind(df_total, c("Sums", "", sum(species), sum(diff), sum(diff_sq)))
+df_total <- rbind(df_total, c("Means", "", round(mean(species), 2), "", ""))
 
-fake_data <- data.frame(Nothing,A, B, C, D, 
-                        A_d = round(A-grand_mean,digits=4),
-                        B_d = round(B-grand_mean,digits=4),
-                        C_d = round(C-grand_mean,digits=4),
-                        D_d = round(D-grand_mean,digits=4),
-                        A_s = round((A-grand_mean)^2,digits=4),
-                        B_s = round((B-grand_mean)^2,digits=4),
-                        C_s = round((C-grand_mean)^2,digits=4),
-                        D_s = round((D-grand_mean)^2,digits=4))
-
-fake_data$Nothing<-as.character(fake_data$Nothing)
-names(fake_data)[1]<-c(" ")
-names(fake_data)[6:13]<-c("A-GrandM",
-                          "B-GrandM",
-                          "C-GrandM",
-                          "D-GrandM",
-                          "(A-GrandM)^2",
-                          "(B-GrandM)^2",
-                          "(C-GrandM)^2",
-                          "(D-GrandM)^2"
-                          )
-
-
-
-
-
-fake_data<-fake_data %>%
-rbind(as.character(c("Means",colMeans(fake_data[1:5,2:5]),rep(c(""),8)))) %>%
-rbind(as.character(c("Grand Mean",mean(colMeans(fake_data[1:5,2:5])),rep(c(""),11)))) %>%
-rbind(as.character(c("sums",rep(c(" "),7),"Sums",colSums(fake_data[1:5,10:13])))) %>%
-rbind(as.character(c("SS Total",
-                     rep(c(" "),7),
-                     "SS Total",
-                     sum(colSums(fake_data[1:5,10:13])),
-                     rep(c(" "),3)
-                     )))
-
-kable(fake_data) %>%
-  add_header_above(c(" ",
-                     "No Pollution" = 1, "Pollution" = 1, "No Pollution" = 1, "Pollution" = 1, 
-                     "No Pollution" = 1, "Pollution" = 1, "No Pollution" = 1, "Pollution" = 1,
-                     "No Pollution" = 1, "Pollution" = 1, "No Pollution" = 1, "Pollution" = 1)) %>%
-  add_header_above(c(" ",
-                     "Low Flow" = 2, "High Flow" = 2 ,
-                     "Low Flow" = 2, "High Flow" = 2 ,
-                     "Low Flow" = 2, "High Flow" = 2))  %>%
-  add_header_above(c(" ",
-                     "All Conditions" = 4, 
-                     "Difference from Grand Mean" = 4, 
-                     "Squared Differences" = 4 )) %>%
-  row_spec(c(6,7), background = "lightgray")%>%
-  row_spec(c(8,9), background = "yellow")%>%
-  column_spec(c(10:13), background = "yellow")%>%
-  kable_styling() %>%
-  scroll_box(width = "100%")
-
+knitr::kable(df_total)
 ```
+
+The mean of all 20 scores is the **grand mean**, `r round(gm,2)`. The `Diff` column holds every channel's distance from it; `Diff Squared` squares those distances so they don't cancel (the same reason we squared deviations for the one-way ANOVA). Summing the squared column gives $SS_\text{Total} = `r round(sum(diff_sq),2)`$.
 
 ### SS Pollution
 
-$SS_\text{Pollution}$ isolates the variation due to the Pollution main effect: replace every score with its own Pollution-condition mean, find each of those means' distance from the grand mean, then square and sum, reported in the bottom yellow row.
+$SS_\text{Pollution}$ isolates the variation caused by pollution condition alone: replace every score with its own pollution-condition mean, then find that mean's distance from the grand mean.
 
 ```{r}
-A <- c(10,8,11,9,10)  #nD_nR
-B  <- c(5,4,3,4,2)  #D_nR
-C <- c(12,13,14,11,13)  #nD_R
-D  <- c(9,8,10,11,12)  #D_R
+nopoll_mean <- mean(species[pollution == "No Pollution"])
+poll_mean <- mean(species[pollution == "Pollution"])
+group_mean <- ifelse(pollution == "No Pollution", nopoll_mean, poll_mean)
 
-grand_mean <- mean(c(A,B,C,D))
-nd_mean<-mean(c(A,C))
-d_mean<-mean(c(B,D))
+diff <- round(group_mean - gm, 2)
+diff_sq <- round(diff^2, 2)
 
-Nothing <- as.character(c("","","","",""))
+df_poll <- data.frame(Pollution = pollution, Flow = flow, Species = species,
+                       `Group Mean` = round(group_mean, 2), Diff = diff, `Diff Squared` = diff_sq, check.names = FALSE)
+df_poll <- rbind(df_poll, c("Sums", "", sum(species), "", sum(diff), sum(diff_sq)))
 
-fake_data <- data.frame(Nothing,A, B, C, D, 
-                        A_d = round(nd_mean-grand_mean,digits=4),
-                        B_d = round(d_mean-grand_mean,digits=4),
-                        C_d = round(nd_mean-grand_mean,digits=4),
-                        D_d = round(d_mean-grand_mean,digits=4),
-                        A_s = round((nd_mean-grand_mean)^2,digits=4),
-                        B_s = round((d_mean-grand_mean)^2,digits=4),
-                        C_s = round((nd_mean-grand_mean)^2,digits=4),
-                        D_s = round((d_mean-grand_mean)^2,digits=4))
-
-fake_data$Nothing<-as.character(fake_data$Nothing)
-names(fake_data)[1]<-c(" ")
-names(fake_data)[6:13]<-c("NDM-GM A",
-                          "DM-GM B",
-                          "NDM-GM C",
-                          "DM-GM D",
-                          "(NDM-GM )^2 A",
-                          "(DM-GM)^2 B",
-                          "(NDM-GM)^2 C",
-                          "(DM-GM)^2 D"
-                          )
-
-
-
-
-
-fake_data<-fake_data %>%
-rbind(as.character(c("Means",colMeans(fake_data[1:5,2:5]),rep(c(""),8)))) %>%
-rbind(as.character(c("Grand Mean",mean(colMeans(fake_data[1:5,2:5])),
-                     "No Pollution",nd_mean,
-                     "Pollution",d_mean,
-                     rep(c(""),8)))) %>%
-rbind(as.character(c("sums",rep(c(" "),7),"Sums",colSums(fake_data[1:5,10:13])))) %>%
-rbind(as.character(c("SS Pollution",
-                     rep(c(" "),7),
-                     "SS Pollution",
-                     sum(colSums(fake_data[1:5,10:13])),
-                     rep(c(" "),3)
-                     )))
-
-kable(fake_data) %>%
-  add_header_above(c(" ",
-                     "No Pollution" = 1, "Pollution" = 1, "No Pollution" = 1, "Pollution" = 1, 
-                     "No Pollution" = 1, "Pollution" = 1, "No Pollution" = 1, "Pollution" = 1,
-                     "No Pollution" = 1, "Pollution" = 1, "No Pollution" = 1, "Pollution" = 1)) %>%
-  add_header_above(c(" ",
-                     "Low Flow" = 2, "High Flow" = 2 ,
-                     "Low Flow" = 2, "High Flow" = 2 ,
-                     "Low Flow" = 2, "High Flow" = 2))  %>%
-  add_header_above(c(" ",
-                     "All Conditions" = 4, 
-                     "Pollution Mean - GM" = 4, 
-                     "Squared Differences" = 4 )) %>%
-  row_spec(c(6,7), background = "lightgray")%>%
-  row_spec(c(8,9), background = "yellow")%>%
-  column_spec(c(10:13), background = "yellow")%>%
-  kable_styling() %>%
-  scroll_box(width = "100%")
-
+knitr::kable(df_poll)
 ```
 
-The grand mean is 8.95. The no-Pollution mean (columns A and C) is 11.1, giving a difference score of 11.1-8.95 = 2.15 for every no-Pollution observation. The Pollution mean (columns B and D) is 6.8, giving -2.15 for every Pollution observation. Since means are the balancing point of the data, the grand mean 8.95 sits exactly between the two condition means, 2.15 from each.
+Every no-pollution channel is replaced by the no-pollution mean, `r round(nopoll_mean,2)`; every pollution channel by the pollution mean, `r round(poll_mean,2)`. Squaring and summing those means' distances from the grand mean gives $SS_\text{Pollution} = `r round(sum(diff_sq),2)`$: the variation explained by pollution condition alone.
 
 ### SS Flow
 
-$SS_\text{Flow}$ works the same way: replace every score with its own Flow-condition mean, find each of those means' distance from the grand mean, then square and sum, reported in the bottom yellow row.
+$SS_\text{Flow}$ works the same way, grouping by flow rate instead of pollution condition.
 
 ```{r}
-A <- c(10,8,11,9,10)  #nD_nR
-B  <- c(5,4,3,4,2)  #D_nR
-C <- c(12,13,14,11,13)  #nD_R
-D  <- c(9,8,10,11,12)  #D_R
+low_mean <- mean(species[flow == "Low Flow"])
+high_mean <- mean(species[flow == "High Flow"])
+group_mean_flow <- ifelse(flow == "Low Flow", low_mean, high_mean)
 
-grand_mean <- mean(c(A,B,C,D))
-nr_mean<-mean(c(A,B))
-r_mean<-mean(c(C,D))
+diff <- round(group_mean_flow - gm, 2)
+diff_sq <- round(diff^2, 2)
 
-Nothing <- as.character(c("","","","",""))
+df_flow <- data.frame(Pollution = pollution, Flow = flow, Species = species,
+                       `Group Mean` = round(group_mean_flow, 2), Diff = diff, `Diff Squared` = diff_sq, check.names = FALSE)
+df_flow <- rbind(df_flow, c("Sums", "", sum(species), "", sum(diff), sum(diff_sq)))
 
-fake_data <- data.frame(Nothing,A, B, C, D, 
-                        A_d = round(nr_mean-grand_mean,digits=4),
-                        B_d = round(nr_mean-grand_mean,digits=4),
-                        C_d = round(r_mean-grand_mean,digits=4),
-                        D_d = round(r_mean-grand_mean,digits=4),
-                        A_s = round((nr_mean-grand_mean)^2,digits=4),
-                        B_s = round((nr_mean-grand_mean)^2,digits=4),
-                        C_s = round((r_mean-grand_mean)^2,digits=4),
-                        D_s = round((r_mean-grand_mean)^2,digits=4))
-
-fake_data$Nothing<-as.character(fake_data$Nothing)
-names(fake_data)[1]<-c(" ")
-names(fake_data)[6:13]<-c("NRM-GM A",
-                          "NRM-GM B",
-                          "RM-GM C",
-                          "RM-GM D",
-                          "(NRM-GM )^2 A",
-                          "(NRM-GM)^2 B",
-                          "(RM-GM)^2 C",
-                          "(RM-GM)^2 D"
-                          )
-
-fake_data<-fake_data %>%
-rbind(as.character(c("Means",colMeans(fake_data[1:5,2:5]),rep(c(""),8)))) %>%
-rbind(as.character(c("Grand Mean",mean(colMeans(fake_data[1:5,2:5])),
-                     "Low Flow",nr_mean,
-                     "High Flow",r_mean,
-                     rep(c(""),8)))) %>%
-rbind(as.character(c("sums",rep(c(" "),7),"Sums",colSums(fake_data[1:5,10:13])))) %>%
-rbind(as.character(c("SS Flow",
-                     rep(c(" "),7),
-                     "SS Flow",
-                     sum(colSums(fake_data[1:5,10:13])),
-                     rep(c(" "),3)
-                     )))
-
-kable(fake_data) %>%
-  add_header_above(c(" ",
-                     "No Pollution" = 1, "Pollution" = 1, "No Pollution" = 1, "Pollution" = 1, 
-                     "No Pollution" = 1, "Pollution" = 1, "No Pollution" = 1, "Pollution" = 1,
-                     "No Pollution" = 1, "Pollution" = 1, "No Pollution" = 1, "Pollution" = 1)) %>%
-  add_header_above(c(" ",
-                     "Low Flow" = 2, "High Flow" = 2 ,
-                     "Low Flow" = 2, "High Flow" = 2 ,
-                     "Low Flow" = 2, "High Flow" = 2))  %>%
-  add_header_above(c(" ",
-                     "All Conditions" = 4, 
-                     "Flow Mean - GM" = 4, 
-                     "Squared Differences" = 4 )) %>%
-  row_spec(c(6,7), background = "lightgray")%>%
-  row_spec(c(8,9), background = "yellow")%>%
-  column_spec(c(10:13), background = "yellow")%>%
-  kable_styling() %>%
-  scroll_box(width = "100%")
-
+knitr::kable(df_flow)
 ```
 
-Every Low Flow score is replaced with the Low Flow mean (6.6), 2.35 below the grand mean (8.95); every High Flow score is replaced with the High Flow mean (11.3), 2.35 above it. Squaring and summing those distances gives $SS_\text{Flow}$.
+Every low-flow channel is replaced by `r round(low_mean,2)`; every high-flow channel by `r round(high_mean,2)`. This gives $SS_\text{Flow} = `r round(sum(diff_sq),2)`$.
 
-### SS Pollution by Flow
+### SS Interaction
 
-The interaction is the one new piece an ANOVA with more than one IV requires. The question it answers: do the four individual condition means behave differently than the two main-effect group means alone would predict?
+The interaction is the one genuinely new piece a factorial ANOVA adds. It asks: do the four individual condition means behave differently than the two main effects alone would predict?
 
-Take the Low Flow group: its overall mean is 6.6. If Flow's effect were consistent across Pollution levels, each Pollution subgroup's Low Flow mean should also be about 6.6. It isn't: the no-Pollution/Low-Flow mean (column A) is 9.6, and the Pollution/Low-Flow mean (column B) is 3.6 (averaging to 6.6, but neither equal to it). That gap, variance the Flow mean alone can't explain, is exactly what the interaction captures.
+Take the Low Flow condition: its own mean was `r round(low_mean,2)`. If pollution's effect were the same regardless of flow, both pollution subgroups within Low Flow should also average close to that. They don't: the no-pollution/low-flow mean is `r round(mean(A),2)`, well above it, and the pollution/low-flow mean is `r round(mean(B),2)`, well below it. That gap, variance the two main effects can't explain on their own, is what the interaction captures.
 
-To compute it: replace each score with its own condition mean (one of the four cells), then subtract the score's Pollution-group mean and Flow-group mean, and add back the grand mean:
+To compute it, replace each score with its own condition mean, then subtract that channel's pollution-group mean and flow-group mean, and add back the grand mean once (to avoid subtracting it twice):
 
-$$\bar{X}_\text{condition} -\bar{X}_\text{IV1} - \bar{X}_\text{IV2} + \bar{X}_\text{Grand Mean}$$
-
-Equivalently, subtract the grand mean from the condition mean, then add back both main-effect means. Squaring and summing these gives $SS_\text{Interaction}$, reported in the bottom yellow row.
+$$\bar{X}_\text{condition} - \bar{X}_\text{Pollution group} - \bar{X}_\text{Flow group} + \bar{X}_\text{Grand mean}$$
 
 ```{r}
-A <- c(10,8,11,9,10)  #nD_nR
-B  <- c(5,4,3,4,2)  #D_nR
-C <- c(12,13,14,11,13)  #nD_R
-D  <- c(9,8,10,11,12)  #D_R
+cond_mean <- ave(species, pollution, flow)
+diff <- round(cond_mean - group_mean - group_mean_flow + gm, 2)
+diff_sq <- round(diff^2, 2)
 
-grand_mean <- mean(c(A,B,C,D))
-nr_mean<-mean(c(A,B))
-r_mean<-mean(c(C,D))
-nd_mean<-mean(c(A,C))
-d_mean<-mean(c(B,D))
+df_int <- data.frame(Pollution = pollution, Flow = flow, Species = species,
+                      `Condition Mean` = round(cond_mean, 2), Diff = diff, `Diff Squared` = diff_sq, check.names = FALSE)
+df_int <- rbind(df_int, c("Sums", "", sum(species), "", sum(diff), sum(diff_sq)))
 
-Nothing <- as.character(c("","","","",""))
-
-fake_data <- data.frame(Nothing,A, B, C, D, 
-                        A_d = round(mean(A)-nd_mean-nr_mean+grand_mean,digits=4),
-                        B_d = round(mean(B)-d_mean-nr_mean+grand_mean,digits=4),
-                        C_d = round(mean(C)-nd_mean-r_mean+grand_mean,digits=4),
-                        D_d = round(mean(D)-d_mean-r_mean+grand_mean,digits=4),
-                        A_s = round((mean(A)-nd_mean-nr_mean+grand_mean)^2,digits=4),
-                        B_s = round((mean(B)-d_mean-nr_mean+grand_mean)^2,digits=4),
-                        C_s = round((mean(C)-nd_mean-r_mean+grand_mean)^2,digits=4),
-                        D_s = round((mean(D)-d_mean-r_mean+grand_mean)^2,digits=4))
-
-fake_data$Nothing<-as.character(fake_data$Nothing)
-names(fake_data)[1]<-c(" ")
-names(fake_data)[6:13]<-c("A-NP-LF+GM",
-                          "B-P-LF+GM",
-                          "C-NP-HF+GM",
-                          "D-P-HF+GM",
-                          "(A-NP-LF+GM)^2 A",
-                          "(B-B-LF+GM)^2 B",
-                          "(C-NP-HF+GM)^2 C",
-                          "(D-P-HF+GM)^2 D"
-                          )
-
-fake_data<-fake_data %>%
-rbind(as.character(c("Means",colMeans(fake_data[1:5,2:5]),rep(c(""),8)))) %>%
-rbind(as.character(c("Grand Mean",mean(colMeans(fake_data[1:5,2:5])),
-                     "","",
-                     "","",
-                     rep(c(""),8)))) %>%
-rbind(as.character(c("sums",rep(c(" "),7),"Sums",colSums(fake_data[1:5,10:13])))) %>%
-rbind(as.character(c("SS Interaction",
-                     rep(c(" "),7),
-                     "SS Interaction",
-                     sum(colSums(fake_data[1:5,10:13])),
-                     rep(c(" "),3)
-                     )))
-
-kable(fake_data) %>%
-  add_header_above(c(" ",
-                     "No Pollution" = 1, "Pollution" = 1, "No Pollution" = 1, "Pollution" = 1, 
-                     "No Pollution" = 1, "Pollution" = 1, "No Pollution" = 1, "Pollution" = 1,
-                     "No Pollution" = 1, "Pollution" = 1, "No Pollution" = 1, "Pollution" = 1)) %>%
-  add_header_above(c(" ",
-                     "Low Flow" = 2, "High Flow" = 2 ,
-                     "Low Flow" = 2, "High Flow" = 2 ,
-                     "Low Flow" = 2, "High Flow" = 2))  %>%
-  add_header_above(c(" ",
-                     "All Conditions" = 4, 
-                     "Interaction Differences" = 4, 
-                     "Squared Differences" = 4 )) %>%
-  row_spec(c(6,7), background = "lightgray")%>%
-  row_spec(c(8,9), background = "yellow")%>%
-  column_spec(c(10:13), background = "yellow")%>%
-  kable_styling() %>%
-  scroll_box(width = "100%")
-
+knitr::kable(df_int)
 ```
+
+Squaring and summing gives $SS_\text{Interaction} = `r round(sum(diff_sq),2)`$.
 
 ### SS Error
 
-The last piece, $SS_\text{Error}$, follows by subtraction rather than a fresh table, since every other term in the identity is already known:
+The last piece follows by subtraction, since every other term in the identity is already known:
 
-$$SS_\text{Total} = SS_\text{Effect IV1} + SS_\text{Effect IV2} + SS_\text{Effect IV1xIV2} + SS_\text{Error}$$
+$$SS_\text{Error} = SS_\text{Total} - SS_\text{Pollution} - SS_\text{Flow} - SS_\text{Interaction}$$
 
-$$SS_\text{Error} = SS_\text{Total}- SS_\text{Effect IV1} - SS_\text{Effect IV2} - SS_\text{Effect IV1xIV2} = 242.95 - 92.45 - 110.45 - 14.45 = 25.6$$
+```{r}
+ss_total <- sum((species - gm)^2)
+ss_poll  <- sum((group_mean - gm)^2)
+ss_flow  <- sum((group_mean_flow - gm)^2)
+ss_int   <- sum((cond_mean - group_mean - group_mean_flow + gm)^2)
+ss_error <- ss_total - ss_poll - ss_flow - ss_int
+```
+
+$$SS_\text{Error} = `r round(ss_total,2)` - `r round(ss_poll,2)` - `r round(ss_flow,2)` - `r round(ss_int,2)` = `r round(ss_error,2)`$$
 
 ### Check your work
 
-Converting each $SS$ to an $F$-value works exactly as it did for the one-way ANOVA (divide by $df$ to get $MS$, then take the ratio), so we skip repeating that here. Instead, the check that matters: these hand-calculated $SS$ values should match what R computes directly.
+Converting each $SS$ to an $F$-value works exactly as it did for the one-way ANOVA: divide by $df$ to get $MS$, then take the ratio of each effect's $MS$ to $MS_\text{Error}$. Instead of repeating that by hand, the check that matters here is that these hand-calculated $SS$ values match what R computes directly.
 
 ```{r}
-Number_species <- c(A, B, C, D)
-Pollution    <- rep(rep(c("No Pollution", "Pollution"), each=5),2)
-Flow         <- rep(c("Low Flow","High Flow"),each=10)
-
-Pollution <- as.factor(Pollution)
-Flow      <- as.factor(Flow)
-
-all_df <- data.frame(Pollution, Flow, Number_species)
-
-aov_summary <- summary(aov(Number_species~Pollution*Flow, all_df))
-knitr::kable(xtable(aov_summary))
+all_df <- data.frame(Pollution = factor(pollution), Flow = factor(flow), Number_species = species)
+aov_summary <- summary(aov(Number_species ~ Pollution * Flow, all_df))
+knitr::kable(xtable::xtable(aov_summary))
 ```
 
-The `Sum Sq` column matches the hand-calculated values above. Note these results differ from the repeated-measures calculation earlier in the chapter: a between-subjects design has no channel-to-channel variation to split out of the error, which also means more degrees of freedom in the error term. With this specific dataset, that extra power is enough to make all three effects (both main effects and the interaction) significant here, where the interaction wasn't when the same numbers were treated as repeated measures.
+The `Sum Sq` column matches the hand-calculated values above: `r round(ss_poll,2)` for Pollution, `r round(ss_flow,2)` for Flow, `r round(ss_int,2)` for the interaction, `r round(ss_error,2)` for Error. All three effects are significant here, including the interaction we previewed informally a moment ago: the Pollution effect really is different at the two flow rates, not just by chance.
 
 ## Reading patterns in a 2x2
 
@@ -637,11 +434,11 @@ For example:
 - If the lines cross or diverge, the **pollution effect changes across flow rates**, showing an interaction.
 - If one line sits higher overall (say, high flow always supports more species), that's a main effect of flow.
 
-(Make the fact labels also match with the pattern #s you indicated above in the table)
+The eight panels below are numbered to match the table above, so panel "Pattern 3" in the figure is row 3 in the table, and so on.
 
 ```{r}
 #| label: fig-10bar22
-#| fig-cap: "Eight example patterns of main effects and interactions in a pollution × flow design."
+#| fig-cap: "Eight example patterns of main effects and interactions in a pollution × flow design, numbered to match the pattern table above."
 #| out-width: "100%"
 
 mk <- function(v) data.frame(
@@ -661,29 +458,19 @@ p8 <- mk(c(5, 10, 10, 5))
 
 all_22s <- rbind(p1, p2, p3, p4, p5, p6, p7, p8)
 
+# Panel order matches the pattern table (rows 1-8) exactly; do not reorder these levels.
 type <- c(
-  rep("None", 4),
-  rep("Pollution", 4),
-  rep("Pollution, Interaction", 4),
-  rep("Pollution, Flow", 4),
-  rep("Pollution, Flow, Interaction", 4),
-  rep("Flow", 4),
-  rep("Flow, Interaction", 4),
-  rep("Interaction only", 4)
+  rep("Pattern 1\nNone", 4),
+  rep("Pattern 2\nPollution", 4),
+  rep("Pattern 3\nPollution, Interaction", 4),
+  rep("Pattern 4\nPollution, Flow", 4),
+  rep("Pattern 5\nPollution, Flow, Interaction", 4),
+  rep("Pattern 6\nFlow", 4),
+  rep("Pattern 7\nFlow, Interaction", 4),
+  rep("Pattern 8\nInteraction only", 4)
 )
 
-all_22s$type <- factor(type,
-  levels = c(
-    "None",
-    "Pollution",
-    "Flow",
-    "Pollution, Flow",
-    "Interaction only",
-    "Pollution, Interaction",
-    "Flow, Interaction",
-    "Pollution, Flow, Interaction"
-  )
-)
+all_22s$type <- factor(type, levels = unique(type))
 
 ggplot(all_22s, aes(x = Pollution, y = means, group = Flow, fill = Flow)) +
   geom_bar(stat = "identity", position = "dodge") +
@@ -692,7 +479,7 @@ ggplot(all_22s, aes(x = Pollution, y = means, group = Flow, fill = Flow)) +
   ylab("Mean species count") +
   theme(
     legend.position = "top",
-    strip.text = element_text(size = 10),
+    strip.text = element_text(size = 8),
     axis.text.x = element_text(size = 8)
   )
 
@@ -717,6 +504,7 @@ ggplot(all_22s, aes(
   facet_wrap(~ type, nrow = 2) +
   ylab("Mean species count") +
   theme(legend.position = "top",
+        strip.text = element_text(size = 8),
         axis.text.x = element_text(size = 8))
 ```
 
