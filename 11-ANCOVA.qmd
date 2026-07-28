@@ -16,27 +16,20 @@ knitr::opts_chunk$set(cache=FALSE)
 library(tidyverse)
 library(ggpubr)
 
-# --- Data generation (replace your whole block) ---
-set.seed(123)
-n <- 200
-data <- tibble(
-  AreaType     = sample(c("Urban", "Rural"), n, replace = TRUE),
-  AirPollution = round(runif(n, min = 25, max = 150), 1)
-) |>
-  mutate(
-    # simple data-generating process: lower baseline in Urban, mild negative slope
-    BirdDensity = 10 + 0.2*AirPollution - if_else(AreaType=="Urban", 5, 0) + rnorm(n, 0, 4),
-    BirdDensity = pmax(0, round(BirdDensity, 0))
-  )
-
 ```
 
 \vspace{1cm}
 
 **ANCOVA** uses the same linear model ideas from regression, with one continuous covariate and one categorical factor. We first test whether groups have different **slopes** with respect to the covariate, then, only if slopes are parallel, we test whether groups differ in **adjusted means**.
 
+**A quick refresher, since regression was a few weeks ago.** A simple linear model is
+
+$$y = \beta_0 + \beta_1 x + \varepsilon$$
+
+one intercept, one slope, one line drawn through the data. ANOVA has the same shape, with a categorical predictor standing in for the continuous one. ANCOVA puts both kinds of predictor in the same equation, and that raises the question this whole chapter turns on: do our groups share that single line, or does each group need its own?
+
 ::: callout-note
-**Going deeper.** T-tests, ANOVA, regression, and ANCOVA are all special cases of one underlying framework, the **general linear model**. Seeing that unification, along with the indicator (dummy) variable mechanics that make it work, is genuinely useful, but it's a level of abstraction that belongs in a second statistics course, not a first one. If you want to go there, see the out-of-sequence chapter *"The Linear Model Framework: Dummy Variables and Interactions"* in this book's repository.
+**Going deeper.** Every test in this book, $t$-tests, ANOVA, regression, and ANCOVA, is the same underlying model with different kinds of predictors. Chasing that unification all the way, through reference coding across many categories, planned contrasts, and several continuous predictors at once, is what a second course in regression is for. Here we need exactly one piece of it: the two-category indicator variable.
 :::
 
 ## Moving Beyond Regression and ANOVA to ANCOVA
@@ -55,7 +48,44 @@ This specific subsection of general linear models is known as **Analysis of Cova
 
 ### Conceptual Background for ANCOVA
 
-At its core, ANCOVA checks whether groups share the same line, or whether each group needs its own slope and intercept. That's exactly what the interaction test below is doing, so keep the picture of "one shared line vs. two separate lines" in mind as we go.
+At its core, ANCOVA checks whether groups share the same line, or whether each group needs its own slope and intercept. That's exactly what the interaction test is doing. @fig-11onevstwo shows the three possibilities, and it's worth keeping this picture in mind for the rest of the chapter.
+
+```{r}
+#| label: fig-11onevstwo
+#| fig-cap: "The question ANCOVA answers. Left: one line describes both groups. Middle: the groups need different intercepts but share a slope, so the lines are parallel. Right: the groups need different slopes, so the lines are not parallel and the gap between them depends on where you look."
+#| fig-alt: "Three scatter plots, each with two colored groups of points. In the first, a single line runs through both groups. In the second, two parallel lines sit at different heights. In the third, two lines with visibly different slopes diverge from left to right."
+#| out-width: "100%"
+#| fig-asp: 0.45
+
+set.seed(11)
+n  <- 30
+x  <- runif(n * 2, 0, 10)
+g  <- rep(c("Group A", "Group B"), each = n)
+B  <- g == "Group B"
+
+# Three scenarios, deliberately kept on a similar y range so the shared axis
+# doesn't squash the first two panels.
+y_same     <- 8 + 0.5 * x + rnorm(n * 2, 0, 0.9)
+y_parallel <- 5 + 0.5 * x + ifelse(B, 5, 0) + rnorm(n * 2, 0, 0.9)
+y_slopes   <- ifelse(B, 5 + 0.9 * x, 12 - 0.2 * x) + rnorm(n * 2, 0, 0.9)
+
+lines_df <- rbind(
+  data.frame(x, g, y = y_same,     panel = "One shared line"),
+  data.frame(x, g, y = y_parallel, panel = "Parallel lines\n(same slope, different intercept)"),
+  data.frame(x, g, y = y_slopes,   panel = "Different slopes\n(the interaction)")
+)
+lines_df$panel <- factor(lines_df$panel, levels = unique(lines_df$panel))
+
+ggplot(lines_df, aes(x, y, color = g)) +
+  geom_point(alpha = 0.55, size = 1.5) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 1) +
+  facet_wrap(~panel) +
+  labs(x = "Covariate", y = "Response", color = NULL) +
+  theme_classic(base_size = 12) +
+  theme(legend.position = "top", strip.text = element_text(size = 9.5))
+```
+
+ANCOVA works right to left across that figure: first it asks whether the third panel is what we have (do the slopes differ?), and only if the answer is no does it ask whether we have the second panel or the first (do the intercepts differ?).
 
 ### Terminology in LMs
 
@@ -79,15 +109,10 @@ A few key terms help clarify how variables play different roles in linear models
 
 **Analysis of Covariance (ANCOVA)** extends ANOVA by adding a continuous predictor. It fits a linear model with both a categorical factor and a covariate, allowing us to compare groups **and** account for how the response changes with the continuous variable.
 
-The covariate may or may not be the main factor of interest. Sometimes we adjust for it, and sometimes we want to see whether its relationship with the response differs across groups.
+The questions that opened this chapter all ask the same kind of thing: does a *relationship* hold up across groups? That framing fits environmental work particularly well, because you usually can't experimentally strip out a covariate like temperature, rainfall, or year anyway. Often you wouldn't want to. It may be the reason you designed the study in the first place. **The covariate is the point, and the interaction is the finding.**
 
 ::: callout-tip
-**Two reasons people reach for ANCOVA.** If you look this test up elsewhere, you'll often see it introduced differently than we're introducing it here, so it's worth knowing both versions exist:
-
--   **The classic motivation (covariate as a nuisance):** you want to compare groups, but you know a continuous variable is quietly influencing the outcome and could confound the comparison if you ignore it. You add the covariate to *control for* it, so the group comparison is fairer. Most "which test should I use" flowcharts are built around this version, which is why ANCOVA usually doesn't get its own branch on them. It's treated as an add-on decision, not a starting point.
--   **The version we're emphasizing (covariate as the question):** you actually want to know whether a continuous relationship, like a trend over time, looks different across groups. Here the interaction *is* the finding, not a nuisance to control away. This is closer to how ANCOVA gets used in a lot of real environmental research (including, often, your own project), which is why this course leads with it.
-
-Both are the same test, mechanically. The difference is which term you actually came to interpret.
+**The other way you'll see ANCOVA.** Look this test up elsewhere and the covariate is usually a **nuisance**: something quietly influencing the outcome that you add to the model to control for, so a group comparison comes out fairer. There the interaction is a box to check rather than a result. Most "which test should I use" flowcharts assume that version, which is why ANCOVA rarely gets its own branch on them. Both are the same test; the difference is only which term you came to interpret, so decide that before you fit anything.
 :::
 
 For ANCOVA, you need:
@@ -95,6 +120,46 @@ For ANCOVA, you need:
 1)  A continuous dependent variable (the main effect you're studying)
 2)  At least one continuous independent variable (covariate)
 3)  At least one categorical independent variable (which can be either a fixed or random factor)
+
+### Indicator (dummy) variables and how they work
+
+Categorical predictors get into a linear model by being coded as **indicator variables**. For a factor with $k$ groups you include $k-1$ indicators; the omitted group becomes the **reference**, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:
+
+$$x_c = \begin{cases} 0 & \text{group 1 (the reference group)} \\ 1 & \text{group 2} \end{cases}$$
+
+In R, `lm(y ~ x + Group)` creates these indicators for you automatically.
+
+**Indicator variables in action.** When an indicator variable is turned on (set to 1), it activates the terms multiplied by that variable. Depending on where the indicator appears in the model, that can change the intercept, the slope, or both.
+
+Consider two predictors: a continuous variable $x_l$ and an indicator $x_c$ (0 or 1). Use this model:
+
+$$y = 2x_l + 1(x_l x_c) - 7x_c + 3$$
+
+**When** $x_c = 0$ (indicator off), only the baseline terms are active:
+
+$$y = 2x_l + 3 \qquad \text{slope} = 2, \ \text{intercept} = 3$$
+
+**When** $x_c = 1$ (indicator on), the new terms activate:
+
+$$y = (2x_l + 3) + (1x_l - 7) = 3x_l - 4 \qquad \text{slope} = 3, \ \text{intercept} = -4$$
+
+Turning on the indicator adds **+1 to the slope** and **−7 to the intercept**. One equation, two different lines, with the indicator deciding which one applies.
+
+This is how linear models represent different groups: the indicator ($x_c$) and its interaction with $x_l$ let a single equation shift the intercept and the slope for each group. ANCOVA uses exactly this logic to test, in order, whether the **slopes differ** between groups (the $x_l x_c$ term) and, if they don't, whether the **adjusted means** differ (the $x_c$ term).
+
+**Naming the pieces.** Write that same equation in the general form and each coefficient now has a job:
+
+$$y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x_l}_{\text{reference slope}} + \underbrace{\beta_2 x_c}_{\text{intercept shift}} + \underbrace{\beta_3 x_l x_c}_{\text{slope shift}} + \varepsilon$$
+
+-   $\beta_0$ and $\beta_1$ describe the line for the **reference group** ($x_c=0$).
+-   $\beta_2$ is how much the **intercept** moves for the other group.
+-   $\beta_3$ is how much the **slope** changes for the other group. This is the interaction term.
+
+If we only include $\beta_2$ and leave out $\beta_3$, we get a restricted version: the intercept can shift but the slope cannot, so the two lines are forced to be **parallel**. That is the parallel-lines model, and it is the one we fall back to when the slope difference turns out not to be significant.
+
+::: callout-note
+**Why this is worth the detour.** Every coefficient you will read out of an ANCOVA table is one of these four. Without the indicator, $\beta_2$ and $\beta_3$ are just numbers R hands you. With it, $\beta_3$ has a plain-language meaning you can check against a graph: it is the amount by which one group's line tilts away from the other's.
+:::
 
 ### The Null Hypothesis in ANCOVA
 
@@ -229,24 +294,21 @@ The categorical variable (urban vs. rural) is represented as a dummy variable, a
 # Set seed for reproducibility
 set.seed(123)
 
-# Generate data
-n <- 200  # Number of observations
-area_type <- sample(c("Urban", "Rural"), n, replace = TRUE)  # Randomly assign area type
-air_pollution <- runif(n, min = 25, max = 150)  # Generate continuous air pollution levels
+n <- 200                                                     # number of sites
+area_type <- sample(c("Urban", "Rural"), n, replace = TRUE)  # randomly assign area type
+air_pollution <- round(runif(n, min = 25, max = 150), 1)     # continuous covariate
+urban <- ifelse(area_type == "Urban", 1, 0)                  # 0/1 indicator
 
-# Generate bird density data
-# Assuming a simple linear relationship with air pollution and different intercepts for urban and rural
-# Generate bird density data
-# Adjusting the formula to avoid negative values
-bird_density <- 10 + 0.2 * air_pollution - ifelse(area_type == "Urban", 5, 0) + rnorm(n, mean = 0, sd = 4)
+# Bird density declines with pollution everywhere, but more steeply in urban
+# sites. That difference in slopes is the interaction we want the model to find.
+bird_density <- 40 -
+  0.05 * air_pollution -                # rural slope
+  3    * urban -                        # urban intercept offset
+  0.10 * air_pollution * urban +        # extra urban steepness (the interaction)
+  rnorm(n, mean = 0, sd = 5)            # noise
 
-# Ensure all bird densities are positive
-bird_density <-(round(ifelse(bird_density < 0, 0, bird_density), 0))
+bird_density <- round(pmax(bird_density, 0), 0)
 
-#Reverse air pollution for negative relationship
-air_pollution <- rev(round(air_pollution, 1))
-
-# Combine into a data frame
 data <- data.frame(AreaType = area_type, AirPollution = air_pollution, BirdDensity = bird_density)
 ```
 
@@ -254,10 +316,10 @@ Before we look at the model results, it's always good practice to **look at the 
 
 Visual inspection helps us check for broad patterns and see whether the model output later "makes sense."
 
-Let's start with the response variable, **bird density**, in @fig-12birddensity. This gives us a quick visual sense of whether urban and rural areas differ in their average values.
+Let's start with the response variable, **bird density**, in @fig-11birddensity. This gives us a quick visual sense of whether urban and rural areas differ in their average values.
 
 ```{r}
-#| label: fig-12birddensity
+#| label: fig-11birddensity
 #| fig-cap: "Bird density by area type. Rural sites sit higher than urban ones."
 #| fig-alt: "Boxplot of bird density for rural and urban area types. The rural box is centered higher than the urban box, with overlapping ranges."
 #| echo: true
@@ -276,7 +338,7 @@ If the covariate differs sharply between groups, ANCOVA will "adjust" for that d
 If it doesn't, group comparisons will look more like a simple ANOVA.
 
 ```{r}
-#| label: fig-12airpollution
+#| label: fig-11airpollution
 #| fig-cap: "Air pollution by area type. The two groups look broadly similar, so there is no large covariate imbalance for the model to adjust away."
 #| fig-alt: "Boxplot of air pollution for rural and urban area types. The two boxes overlap substantially with similar centers."
 #| echo: true
@@ -331,7 +393,7 @@ So we interpret the omnibus test through these individual terms rather than as a
 
 $H_{0,1}: \beta_{\text{interaction}} = 0$
 
-The interaction between air pollution and area type is **significant** ($p = 0.0399$).
+The interaction between air pollution and area type is **significant** ($p = .001$).
 
 Reject $H_{0,1}$ → our slopes are not parallel. Air pollution's relationship with bird density depends on area type.
 
@@ -339,11 +401,11 @@ Reject $H_{0,1}$ → our slopes are not parallel. Air pollution's relationship w
 
 Although not a formal ANCOVA hypothesis, this term tests whether air pollution predicts bird density *on average*, across both groups.
 
-It is **not significant** ($p = 0.7690$), so air pollution alone does not explain much variation.
+It is **significant** ($p < .001$): bird density falls as pollution rises.
 
 **3. Group (main effect of Area Type)** -- $H_{0,2}: \mu_{\text{Urban, adj}} = \mu_{\text{Rural, adj}}$
 
-Area type is **significant** ($p < 0.001$), suggesting lower average bird density in urban areas.
+Area type is **significant** ($p < .001$), suggesting lower average bird density in urban areas.
 
 However, because the interaction is significant, this group difference changes with air pollution level, so it should be interpreted conditionally, not as a single overall difference.
 
@@ -381,12 +443,12 @@ These coefficients give the *direction* and *magnitude* of each effect:
 
 As always, plotting helps confirm what the model tells us.
 
-A scatter plot with fitted regression lines (@fig-12ancovalines) lets us see how air pollution relates to bird density for each area type.
+A scatter plot with fitted regression lines (@fig-11ancovalines) lets us see how air pollution relates to bird density for each area type.
 
 ```{r}
-#| label: fig-12ancovalines
-#| fig-cap: "Bird density against air pollution, with a separate fitted line for each area type. The slopes run in opposite directions, which is what the interaction term tests."
-#| fig-alt: "Scatter plot of bird density against air pollution, colored by area type, with separate straight fitted lines for rural and urban sites running in opposite directions."
+#| label: fig-11ancovalines
+#| fig-cap: "Bird density against air pollution, with a separate fitted line for each area type. Both lines slope down, but the urban line falls about twice as steeply, which is what the interaction term tests."
+#| fig-alt: "Scatter plot of bird density against air pollution, colored by area type, with separate straight fitted lines for rural and urban sites. Both slope downward, and the urban line is noticeably steeper, so the two lines diverge as pollution increases."
 
 ggplot(data, aes(AirPollution, BirdDensity, color = AreaType)) +
   geom_point(alpha = 0.6) +
@@ -396,15 +458,15 @@ ggplot(data, aes(AirPollution, BirdDensity, color = AreaType)) +
        x = "Air Pollution", y = "Bird Density")
 ```
 
-Here, the slopes differ by area type, illustrating the **significant interaction** we detected statistically.
+Here, the slopes differ by area type, illustrating the **significant interaction** we detected statistically. Both lines slope downward, so pollution is associated with fewer birds in both settings, but the urban line drops roughly twice as fast. The two lines start close together at low pollution and pull apart as pollution rises, which is exactly what a slope difference looks like.
 
-You'll also notice quite a bit of scatter around each line, which makes sense, since our overall $R^2$ is only **0.116**.
+You'll also notice real scatter around each line, which makes sense: our overall $R^2$ is **0.65**.
 
 Remember, $R^2$ represents the **proportion of variance in bird density explained by the model**.
 
-So, about **12% of the variation** in bird density is explained by air pollution, area type, and their interaction.
+So about **65% of the variation** in bird density is explained by air pollution, area type, and their interaction.
 
-The remaining 88% reflects other factors, measurement noise, or natural ecological variability not captured by this simple model.
+The remaining 35% reflects other factors, measurement noise, or natural ecological variability not captured by this simple model. That is a strong fit by the standards of field data, and it is strong here partly because this is a synthetic dataset built to illustrate the method. Real environmental data are usually messier.
 
 **Step 5: Centering the covariate**
 
@@ -432,21 +494,23 @@ This re-centering doesn't change the slopes or $p$-values. It just shifts the in
 
 Centering does **not** change the slopes or their $p$-values.
 
-Notice that the coefficients for `AirPollution_c` (--0.04) and `AirPollution_c:AreaTypeUrban` (+0.07) are **identical** to the slopes we estimated before centering.
+Notice that the coefficients for `AirPollution_c` (--0.069) and `AirPollution_c:AreaTypeUrban` (--0.064) are **identical** to the slopes we estimated before centering.
 
-Only the **intercept** and the **AreaTypeUrban** (group difference) term have changed. They are now interpreted at the *mean pollution level* instead of pollution = 0.
+Only the **intercept** and the **AreaTypeUrban** (group difference) term have changed. They are now interpreted at the *mean pollution level* (about 86 units) instead of pollution = 0.
 
--   **Intercept (27.8):** Predicted bird density for **rural sites** at *average air pollution*.
+-   **Intercept (35.8):** Predicted bird density for **rural sites** at *average air pollution*.
 
--   **AreaTypeUrban (--5.8):** Urban sites have, on average, **about 6 fewer birds** than rural sites *at the same mean pollution level*.
+-   **AreaTypeUrban (--11.4):** Urban sites have, on average, **about 11 fewer birds** than rural sites *at the same mean pollution level*.
 
--   **AirPollution_c (-0.04):** Slope for rural sites, where bird density decreases slightly as pollution increases.
+-   **AirPollution_c (--0.069):** Slope for rural sites: bird density falls by about 0.07 birds for each additional unit of pollution.
 
--   **Interaction (+0.07):** Difference in slopes between groups. The urban slope = --0.04 + 0.07 ≈ **+0.03**, meaning bird density increases slightly with pollution in urban areas.
+-   **Interaction (--0.064):** Difference in slopes between groups. The urban slope = $-0.069 + (-0.064) \approx$ **--0.13**, roughly twice as steep a decline as in rural sites.
+
+Note how much the group difference changed when we centered: --5.9 before, --11.4 after. That is not a contradiction. Uncentered, the term compares groups at pollution = 0, a value we never actually observed. Centered, it compares them at average pollution, which is a real place in the data. When slopes differ, "the group difference" is not one number; it depends on where along the covariate you look.
 
 **Step 6: Summarize and Interpret**
 
-The significant interaction shows that **air pollution's effect on bird density depends on area type**: in rural sites, bird density decreases slightly as pollution rises, while in urban sites, it increases slightly.
+The significant interaction shows that **air pollution's effect on bird density depends on area type**: bird density declines with pollution in both settings, but the decline is about twice as steep in urban sites.
 
 Because the interaction is significant, we focus on these **different slopes**, not on adjusted mean differences.
 
@@ -454,7 +518,7 @@ If the interaction had **not** been significant, we would instead drop the inter
 
 Our results sentences might look something like this:
 
-Results from the ANCOVA indicated that air pollution's effect on bird density depended on area type, *F*(1, 196) = 4.28, *p* = .0399. Bird density declined with increasing pollution in rural sites but showed a slight increase in urban sites. These findings suggest that **urbanization modifies the pollution--bird density relationship** and may point toward the need for area-specific conservation strategies.
+Results from the ANCOVA indicated that air pollution's effect on bird density depended on area type, *F*(1, 196) = 10.91, *p* = .001. Bird density declined with increasing pollution in both settings, but the decline was roughly twice as steep at urban sites (slope --0.13) as at rural ones (slope --0.07). These findings suggest that **urbanization intensifies the pollution--bird density relationship** and may point toward the need for area-specific conservation strategies.
 
 **Key takeaways**
 
