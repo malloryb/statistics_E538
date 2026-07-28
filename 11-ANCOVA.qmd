@@ -24,28 +24,101 @@ As we've explored statistical modeling, we've understood the power of both regre
 
 $$\text{Regression} + \text{ANOVA} = \text{ANCOVA}$$
 
-
-The last chapter compared macroinvertebrate species count across two discrete Pollution categories, present or absent (actually think I said "no pollution" or "pollution" but this is probably better lingo), and two Flow categories, low or high. But (could also say that sadly no pollution is a pipe dream in most cases, but maybe too much of an aside, or also that "high" and "low" are hard, where did we make hte cutoff, etc, might as well just measure continuously if we can, or something practical to make that argument?) suppose you actually measured each channel's pollution concentration instead of just labeling it present or absent. 
+The last chapter compared macroinvertebrate species count across two discrete Pollution categories, present or absent, and two Flow categories, low or high. But suppose you actually measured each channel's pollution concentration instead of just labeling it present or absent.
 
 Does Flow's effect on species count still depend on pollution once pollution is treated as the continuous measurement it really is, rather than binned into two groups? *(covariate: pollution concentration; factor: flow rate)*
 
 -   Does exposure to PFAS correlate with lifetime cancer incidence uniformly across low- and high-income American populations? *(covariate: PFAS exposure; factor: income level)*
 
-Each question pairs a continuous relationship, the covariate's (don't I define a covariate later? that doesn't work then) effect on the outcome, with a categorical grouping. That pairing, one continuous covariate and one categorical factor, is what makes a design an ANCOVA rather than a plain regression or a plain ANOVA.
+Each question pairs a continuous relationship, a continuous variable's effect on the outcome, with a categorical grouping. That pairing, one continuous variable and one categorical factor, is what makes a design an ANCOVA rather than a plain regression or a plain ANOVA.
 
-The middle question is worth sitting with, because it's really a complaint about the last chapter. "Pollution: present or absent" is a real simplification of something that's actually continuous, a concentration in parts per billion, measured on a gradient, not a light switch (ah ok here's what I was asking for already!). Sorting continuous measurements into "high" and "low" buckets throws away exactly the information a covariate needs: how much more polluted, not just whether. Whenever you have the real numbers, ANCOVA (or, if there's no categorical factor left at all, plain regression) is almost always the better tool than forcing them into groups first.
+The middle question is worth sitting with, because it's really a complaint about the last chapter. "Pollution: present or absent" is a real simplification of something that's actually continuous, a concentration in parts per billion, measured on a gradient, not a light switch. Sorting continuous measurements into "high" and "low" buckets throws away exactly the information a covariate needs: how much more polluted, not just whether. Whenever you have the real numbers, ANCOVA (or, if there's no categorical factor left at all, plain regression) is almost always the better tool than forcing them into groups first.
 
 ANCOVA is a linear model built directly on regression's own equation. A simple linear model is
 
 $$y = \beta_0 + \beta_1 x + \varepsilon$$
 
-(Next sentence sounds AI-y, just say where beta_0 is intercept, B1 is the line, and epsilon is the error, and this is one line). one intercept, one slope, one line. 
+Here $\beta_0$ is the intercept, $\beta_1$ is the slope, and $\varepsilon$ is the error: one intercept, one slope, one line.
 
-ANCOVA adds a categorical factor to that equation, and the whole chapter turns on (turns on? weird phrasing) one question: does every group follow that same line, or does each group need its own slope and intercept? 
+ANCOVA adds a categorical factor to that equation, and the whole chapter comes down to one question: does every group follow that same line, or does each group need its own slope and intercept?
 
 We answer it in two steps: first test whether groups have different **slopes**, then, only if slopes are parallel, test whether groups differ in **adjusted means**.
 
-@fig-11onevstwo shows the three possibilities, and it's worth keeping this picture in mind for the rest of the chapter.
+### Terminology
+
+**Covariate:** a continuous variable that changes alongside the response and helps explain part of its variation. In environmental studies, common covariates include temperature, rainfall, soil moisture, or pollution concentration: factors that may influence the outcome but aren't the main treatment of interest. Including one lets us **adjust for its influence**, giving a clearer test of the categorical effect once that continuous background variation is accounted for.
+
+The categorical predictor itself, in every example this chapter uses, is what's called a **fixed factor**: specific, intentional levels chosen by the researcher (urban vs. rural, shaded vs. open canopy), not a random sample of possible groups. That distinction matters more once you're building mixed-effects models, which is beyond where this course goes. A random factor, by contrast, would be something like the specific counties your streams happen to sit in: you aren't interested in those ten counties for their own sake, they stand in for a larger population of possible counties, and you'd want your conclusions to generalize beyond just the ones you sampled.
+
+## What ANCOVA Is
+
+ANCOVA helps us answer: does a *relationship* hold up across groups? That framing fits environmental work particularly well, because you usually can't experimentally strip out a covariate like temperature, rainfall, or season anyway. Often you wouldn't want to. It may be the reason you designed the study in the first place. **The covariate is the point, and the interaction is the finding.**
+
+::: callout-note
+**The other way you'll see ANCOVA.** Elsewhere, the covariate is often a **nuisance** instead: something influencing the outcome that you control for so a group comparison comes out fairer, and an interaction is a box you check and hope stays empty.
+
+A classic version from psychology: comparing anxiety scores across two therapy groups at post-treatment, controlling for each participant's pre-treatment score as the covariate.
+
+Usually, nobody in that scenario wants to find an interaction; they want a clean, adjusted comparison of the two treatments.
+
+It's the same test (and the same math), the only difference is which term you came to interpret, so decide that before you fit anything.
+:::
+
+For ANCOVA, you need:
+
+1)  A continuous dependent variable (the main effect you're studying)
+2)  At least one continuous independent variable (covariate)
+3)  At least one categorical independent variable (which can be either a fixed or random factor)
+
+### Indicator (dummy) variables and how they work
+
+Before we can read real coefficients off an ANCOVA table, it helps to see exactly how one equation can represent two different groups at once. That's a short detour, and it pays off immediately below.
+
+Categorical predictors get into a linear model by being coded as **indicator variables**. For a factor with $k$ groups you include $k-1$ indicators; the omitted group becomes the **reference**, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:
+
+$$x_c = \begin{cases} 0 & \text{group 1 (the reference group)} \\ 1 & \text{group 2} \end{cases}$$
+
+In R, `lm(y ~ x + Group)` creates these indicators for you automatically.
+
+**Indicator variables in action.** When an indicator variable is turned on (set to 1), it activates the terms multiplied by that variable. Depending on where the indicator appears in the model, that can change the intercept, the slope, or both.
+
+Consider two predictors: a continuous variable $x_l$ and an indicator $x_c$ (0 or 1). The numbers below are arbitrary, chosen to make the arithmetic clean; the worked example later in this chapter plugs in real coefficients for air pollution and area type. Use this model:
+
+$$y = 2x_l + 1(x_l x_c) - 7x_c + 3$$
+
+**When** $x_c = 0$ (indicator off), only the baseline terms are active:
+
+$$y = 2x_l + 3 \qquad \text{slope} = 2, \ \text{intercept} = 3$$
+
+**When** $x_c = 1$ (indicator on), the new terms activate:
+
+$$y = (2x_l + 3) + (1x_l - 7) = 3x_l - 4 \qquad \text{slope} = 3, \ \text{intercept} = -4$$
+
+Turning on the indicator adds **+1 to the slope** and **−7 to the intercept**. One equation, two different lines, with the indicator deciding which one applies.
+
+This is how linear models represent different groups: the indicator ($x_c$) and its interaction with $x_l$ let a single equation shift the intercept and the slope for each group. ANCOVA uses exactly this logic to test, in order, whether the **slopes differ** between groups (the $x_l x_c$ term) and, if they don't, whether the **adjusted means** differ (the $x_c$ term).
+
+**Naming the pieces.** Write that same equation in the general form and each coefficient now has a job:
+
+$$y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x_l}_{\text{reference slope}} + \underbrace{\beta_2 x_c}_{\text{intercept shift}} + \underbrace{\beta_3 x_l x_c}_{\text{slope shift}} + \varepsilon$$
+
+-   $\beta_0$ and $\beta_1$ describe the line for the **reference group** ($x_c=0$).
+-   $\beta_2$ is how much the **intercept** moves for the other group.
+-   $\beta_3$ is how much the **slope** changes for the other group. This is the interaction term.
+
+If we only include $\beta_2$ and leave out $\beta_3$, we get a restricted version: the intercept can shift but the slope cannot, so the two lines are forced to be **parallel**. That is the parallel-lines model, and it is the one we fall back to when the slope difference turns out not to be significant.
+
+::: callout-note
+**Why this is worth the detour.** Every coefficient you will read out of an ANCOVA table is one of these four. Without the indicator, $\beta_2$ and $\beta_3$ are just numbers R hands you. With it, $\beta_3$ has a plain-language meaning you can check against a graph: it is the amount by which one group's line tilts away from the other's.
+:::
+
+### The Null Hypothesis in ANCOVA
+
+**Model.** For one covariate ($x$) and a two-level group indicator $x_c\in\{0,1\}$,
+
+$y=\beta_0+\beta_1 x+\beta_2 x_c+\beta_3(x\times x_c)+\varepsilon .$
+
+@fig-11onevstwo shows the three possibilities this model can produce, and it's worth keeping this picture in mind for the two steps below.
 
 ```{r}
 #| label: fig-11onevstwo
@@ -84,88 +157,7 @@ ggplot(lines_df, aes(x, y, color = g)) +
 
 ANCOVA works right to left across that figure: first it asks whether the rightmost panel is what we have (do the slopes differ?), and only if the answer is no does it ask whether we have the middle panel or the leftmost (do the intercepts differ?).
 
-### Terminology
-
-(yes covariate all the way down here. concerned about that with the begining) 
-
-**Covariate:** a continuous variable that changes alongside the response and helps explain part of its variation. In environmental studies, common covariates include temperature, rainfall, soil moisture, or pollution concentration: factors that may influence the outcome but aren't the main treatment of interest. Including one lets us **adjust for its influence**, giving a clearer test of the categorical effect once that continuous background variation is accounted for.
-
-The categorical predictor itself, in every example this chapter uses, is what's called a **fixed factor**: specific, intentional levels chosen by the researcher (urban vs. rural, shaded vs. open canopy), not a random sample of possible groups. That distinction matters more once you're building mixed-effects models, which is beyond where this course goes. (But, you could imagine a situation where, say, your streams are distributed across 10 different counties....(something better for example of random effect?) different )
-
-## What ANCOVA Is (is this the best heading here?)
-
-ANCOVA helps us answer: does a *relationship* hold up across groups? That framing fits environmental work particularly well, because you usually can't experimentally strip out a covariate like temperature, rainfall, or season anyway. Often you wouldn't want to. It may be the reason you designed the study in the first place. **The covariate is the point, and the interaction is the finding.**
-
-(check also consolidated/standardized callouts yesterday adn I don't think I usually had "tip' or a header for these)
-::: callout-tip
-**The other way you'll see ANCOVA.** Elsewhere, the covariate is often a **nuisance** instead: something influencing the outcome that you control for so a group comparison comes out fairer, and an interaction is a box you check and hope stays empty. 
-
-A classic version from psychology: comparing anxiety scores across two therapy groups at post-treatment, controlling for each participant's pre-treatment score as the covariate. 
-
-Nobody there wants to find an interaction (I mean who knows maybe they do, is there an even cleaner example?); they want a clean, adjusted comparison of the two treatments. 
-
-It's the same test (and the same math), the only difference is which term you came to interpret, so decide that before you fit anything.
-:::
-
-For ANCOVA, you need:
-
-1)  A continuous dependent variable (the main effect you're studying)
-2)  At least one continuous independent variable (covariate)
-3)  At least one categorical independent variable (which can be either a fixed or random factor)
-
-### Indicator (dummy) variables and how they work
-
-Before we can read real coefficients off an ANCOVA table, it helps to see exactly how one equation can represent two different groups at once. That's a short detour, and it pays off immediately below.
-
-Categorical predictors get into a linear model by being coded as **indicator variables**. For a factor with $k$ groups you include $k-1$ indicators; the omitted group becomes the **reference**, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:
-
-$$x_c = \begin{cases} 0 & \text{group 1 (the reference group)} \\ 1 & \text{group 2} \end{cases}$$
-
-In R, `lm(y ~ x + Group)` creates these indicators for you automatically.
-
-**Indicator variables in action.** When an indicator variable is turned on (set to 1), it activates the terms multiplied by that variable. Depending on where the indicator appears in the model, that can change the intercept, the slope, or both.
-
-Consider two predictors: a continuous variable $x_l$ and an indicator $x_c$ (0 or 1). Use this model: (should I actually use example for the indicator from examples we've already discussed? it would then be xx indicator on?)
-
-$$y = 2x_l + 1(x_l x_c) - 7x_c + 3$$
-
-**When** $x_c = 0$ (indicator off), only the baseline terms are active:
-
-$$y = 2x_l + 3 \qquad \text{slope} = 2, \ \text{intercept} = 3$$
-
-**When** $x_c = 1$ (indicator on), the new terms activate:
-
-$$y = (2x_l + 3) + (1x_l - 7) = 3x_l - 4 \qquad \text{slope} = 3, \ \text{intercept} = -4$$
-
-Turning on the indicator adds **+1 to the slope** and **−7 to the intercept**. One equation, two different lines, with the indicator deciding which one applies.
-
-This is how linear models represent different groups: the indicator ($x_c$) and its interaction with $x_l$ let a single equation shift the intercept and the slope for each group. ANCOVA uses exactly this logic to test, in order, whether the **slopes differ** between groups (the $x_l x_c$ term) and, if they don't, whether the **adjusted means** differ (the $x_c$ term).
-
-**Naming the pieces.** Write that same equation in the general form and each coefficient now has a job:
-
-$$y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x_l}_{\text{reference slope}} + \underbrace{\beta_2 x_c}_{\text{intercept shift}} + \underbrace{\beta_3 x_l x_c}_{\text{slope shift}} + \varepsilon$$
-
--   $\beta_0$ and $\beta_1$ describe the line for the **reference group** ($x_c=0$).
--   $\beta_2$ is how much the **intercept** moves for the other group.
--   $\beta_3$ is how much the **slope** changes for the other group. This is the interaction term.
-
-If we only include $\beta_2$ and leave out $\beta_3$, we get a restricted version: the intercept can shift but the slope cannot, so the two lines are forced to be **parallel**. That is the parallel-lines model, and it is the one we fall back to when the slope difference turns out not to be significant.
-
-::: callout-note
-**Why this is worth the detour.** Every coefficient you will read out of an ANCOVA table is one of these four. Without the indicator, $\beta_2$ and $\beta_3$ are just numbers R hands you. With it, $\beta_3$ has a plain-language meaning you can check against a graph: it is the amount by which one group's line tilts away from the other's.
-
-(Think the mechanism part should be cut - this whole 2nd paragraph in the callout - because this mechanism is about the dummy variables but the GLM unification point isn't. necessary and it's not being made very clearly in my opinion)
-This same mechanism underlies every test in this book: $t$-tests, ANOVA, regression, and ANCOVA are all the same linear model with different kinds of predictors. Chasing that unification all the way, through reference coding across many categories, planned contrasts, and several continuous predictors at once, is what a second course in regression is for. See the out-of-sequence chapter *"The Linear Model Framework: Dummy Variables and Interactions"* in this book's repository if you want to go there.
-:::
-
-### The Null Hypothesis in ANCOVA
-(ok I called indicator x_c above and now calling it g so it needs to be standard)
-
-**Model.** For one covariate (x) and a two-level group indicator $g\in{0,1}$,
-
-$y=\beta_0+\beta_1 x+\beta_2 g+\beta_3(x\times g)+\varepsilon .$
-
-**Step 1: Are slopes equal across groups?** This tests whether the covariate effect is the same in each group. (Think the 3 models figure elftmost to rightmost might make more sense down here than way up where it is in teh very beginning of chapter )
+**Step 1: Are slopes equal across groups?** This tests whether the covariate effect is the same in each group.
 
 -   Null: $H_{0,\text{int}}:\beta_3=0$ (parallel lines, same slope)
 -   Alternative: $H_{A,\text{int}}:\beta_3\neq 0$ (non-parallel lines, different slopes)
@@ -174,7 +166,7 @@ $y=\beta_0+\beta_1 x+\beta_2 g+\beta_3(x\times g)+\varepsilon .$
 
 **Step 2: Are adjusted means equal?** *(only if Step 1 retained parallel slopes)* Fit the model without the interaction,
 
-$y=\beta_0+\beta_1 x+\beta_2 g+\varepsilon .$
+$y=\beta_0+\beta_1 x+\beta_2 x_c+\varepsilon .$
 
 -   Null: $H_{0,\text{group}}:\beta_2=0$ (no difference in adjusted means)
 -   Alternative: $H_{A,\text{group}}:\beta_2\neq 0$
@@ -189,8 +181,8 @@ $y=\beta_0+\beta_1 x+\beta_2 g+\varepsilon .$
 
 **What to report.**
 
--   If $x\times g$ is significant: "The effect of $x$ differs by group," then provide the two line equations and a figure with separate fitted lines.
--   If $x\times g$ is not significant: report the common slope $\beta_1$ and the adjusted group difference $\beta_2$, with a figure showing parallel lines.
+-   If $x\times x_c$ is significant: "The effect of $x$ differs by group," then provide the two line equations and a figure with separate fitted lines.
+-   If $x\times x_c$ is not significant: report the common slope $\beta_1$ and the adjusted group difference $\beta_2$, with a figure showing parallel lines.
 
 **Common pitfalls.**
 
@@ -210,8 +202,8 @@ As always, statistical significance doesn't guarantee ecological or practical im
 -   Independent observations *(same as ANOVA)*
 -   Approximately normal residuals and similar variances across groups *(same as ANOVA)*
 -   Linearity within each group: the covariate--response relationship is a straight line *(new, about the covariate)*
--   Homogeneity of slopes: the groups share that same line, unless the interaction test says otherwise *(new --- this is the one the interaction test above directly checks), this isn't required to run the ANCOVA it's what the ANCOVA checks...*
--   The covariate is measured without substantial error (isn't that true for everythign?) and isn't itself affected by the treatment *(new, about the covariate, but isn't that true for every independent variable? I don't htink this one seems like a "real" one)*
+-   Homogeneity of slopes: the groups share that same line, unless the interaction test says otherwise *(new --- this is the one the interaction test above directly checks, rather than a condition you verify beforehand)*
+-   The covariate is measured with minimal error and isn't itself affected by the treatment *(new, and more consequential here than in an ordinary regression: measurement error in the covariate leaves genuine covariate-driven differences between groups only partially adjusted for, which can look like a treatment effect that isn't really there)*
 :::
 
 ## Full ANCOVA Example
@@ -224,7 +216,7 @@ We want to know whether this relationship differs between **urban** and **rural*
 
 Specifically, we want to know: Does the effect of air pollution on bird density differ between **urban** and **rural** areas?
 
-We might expect that air pollution will have a stronger negative effect in urban areas than in rural areas (why would we expect that - need simple explanation)
+We might expect that air pollution will have a stronger negative effect in urban areas than in rural areas: urban habitat is already fragmented and offers birds fewer clean patches to retreat to, so added pollution has less of a buffer to work against than it would in a rural area with more intact habitat nearby.
 
 ### Model
 
@@ -236,7 +228,7 @@ The categorical variable (urban vs. rural) is represented as a dummy variable, a
 
 ### Null and Alternative Hypotheses in our example ANCOVA
 
-First, we state our hypotheses: 
+First, we state our hypotheses:
 
 0.  **Omnibus (adjusted means) hypothesis** After adjusting for air pollution, do urban and rural sites differ in mean bird density?
 
@@ -328,7 +320,7 @@ Now that we've explored the data visually, we can test our hypotheses formally u
 
 **Step 1: Fit the ANCOVA model**.
 
-(make note/aside about how notice R handles it automatically, it's the same aov call we've been using)
+Notice this is the same `aov()` call we've been using for one-way and factorial ANOVA all along. R doesn't need a special "ANCOVA function": once `AirPollution` is numeric instead of a factor, `aov()` handles the continuous covariate automatically.
 
 `ancova <- aov(BirdDensity ~ AirPollution * AreaType, data = data)`
 
@@ -359,7 +351,7 @@ Because we included an interaction term, this omnibus test is **decomposed** int
 
 -   the **main effects** (covariate and group).
 
-So we interpret the omnibus test through these individual terms rather than as a separate $p$-value. (So this test doesn't have it's own p-value in teh table. Make that clearer)
+The ANCOVA table above has no row labeled "omnibus," and no single $p$-value that answers this test on its own. So we interpret the omnibus test through the interaction and main-effect rows that are actually in the table, not as a separate line item.
 
 **1. Interaction (slope difference)**:
 
@@ -490,14 +482,14 @@ Our results sentences might look something like this:
 
 Results from the ANCOVA indicated that air pollution's effect on bird density depended on area type, *F*(1, 196) = 10.91, *p* = .001. Bird density declined with increasing pollution in both settings, but the decline was roughly twice as steep at urban sites (slope --0.13) as at rural ones (slope --0.07). These findings suggest that **urbanization intensifies the pollution--bird density relationship** and may point toward the need for area-specific conservation strategies.
 
-(check on the chapter summary we did befoer but this key takeaways should maybe be in that part right?)
-**Key takeaways**
-
-1.  Always **check for interaction first**
-2.  If interaction is **significant**, interpret slope differences.
-3.  If not, **fit the reduced model** (no interaction) and compare adjusted means.
-4.  Center covariates when the intercept needs to represent a meaningful point.
-
 ## Chapter Summary
 
-In this chapter, we introduced **ANCOVA** as an extension of ANOVA that includes continuous covariates. We began by framing ANOVA within the linear modeling framework, showing how ANCOVA builds on it by combining categorical and continuous predictors. Using examples such as bird density across urban and rural environments, we developed and tested null and alternative hypotheses step by step. The main advantage of ANCOVA is its ability to adjust for continuous variables, allowing clearer interpretation of group effects.
+**Why it matters.** Environmental relationships rarely play out identically everywhere. ANCOVA is the tool for a specific, recurring question: does a continuous relationship, like pollution's effect on some outcome, hold the same way across different groups, or change from one group to the next?
+
+**Core ideas**
+
+-   **ANCOVA is regression plus a categorical factor.** It takes the familiar $y=\beta_0+\beta_1 x+\varepsilon$ line and lets a categorical grouping shift the intercept, the slope, or both, using the same indicator-variable machinery that underlies every linear model in this book.
+-   **Check the interaction first.** Before anything else, test whether the groups' slopes differ ($H_0:\beta_3=0$). That answer decides how everything else gets interpreted.
+-   **A significant interaction means report the two lines, not one number.** If slopes differ, describe how the relationship changes by group instead of collapsing to a single adjusted-mean comparison, which assumes parallel lines that don't actually hold here.
+-   **If slopes are parallel, compare adjusted means.** Drop the interaction term and test whether the groups' intercepts differ once the covariate is accounted for.
+-   **Center the covariate when the intercept should mean something.** Left uncentered, the intercept describes the groups at covariate = 0, a value the data may never actually contain.
