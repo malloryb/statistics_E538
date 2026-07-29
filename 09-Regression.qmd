@@ -446,9 +446,11 @@ kable(
 
 The residuals don't depart from normality here ($p = `r fmt_p(sh_out$p.value)`$). As with any formal normality test, treat this as one piece of evidence alongside the Q-Q plot and residual plot, not a strict gate. Shapiro-Wilk has the least power to detect real departures exactly when the sample is small, which is exactly when the visual checks matter most.
 
+Now apply the same two normality checks to the avian influenza model, the one we already know is badly nonlinear.
+
 ```{r}
 #| label: fig-10outbreakqq
-#| fig-cap: "Normal Q-Q plot of the same residuals. They fall close to the diagonal, so this diagnostic alone would not have flagged the problem."
+#| fig-cap: "Normal Q-Q plot of the outbreak model's residuals. They fall close to the diagonal, so this diagnostic alone would not have flagged the problem."
 #| fig-alt: "A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality."
 
 ggplot(outbreak_df, aes(sample = resid)) +
@@ -463,7 +465,7 @@ ggplot(outbreak_df, aes(sample = resid)) +
 sh_outbreak <- shapiro.test(resid(fit_outbreak))
 ```
 
-Consider the avian influenza data. The Q-Q plot looks close to straight, and Shapiro-Wilk agrees ($p = `r fmt_p(sh_outbreak$p.value)`$, not significant). The Q-Q plot and Shapiro-Wilk test check **normality of the residuals**, a different assumption than linearity, and a model can badly violate linearity while its residuals still look roughly normal.
+The Q-Q plot looks close to straight, and Shapiro-Wilk agrees ($p = `r fmt_p(sh_outbreak$p.value)`$, not significant). Both checks pass on a model we already know is the wrong shape. That is because they check **normality of the residuals**, which is a different assumption than linearity, and a model can badly violate linearity while its residuals still look roughly normal.
 
 ## Using the model: prediction
 
@@ -592,11 +594,11 @@ lin_pred30 <- predict(fit_outbreak, data.frame(days = 30))
 true_val30 <- 6 * exp(true_rate * 30)
 ```
 
-The linear model predicts about `r round(lin_pred30)` cases on day 30. If the outbreak is exponential, the actual count is closer to `r formatC(round(true_val30), big.mark=",", format="d")`, roughly `r round(true_val30/lin_pred30)` times higher! 
+The linear model predicts about `r round(lin_pred30)` cases on day 30. If the outbreak is exponential, the actual count is closer to `r formatC(round(true_val30), big.mark=",", format="d")`, roughly `r round(true_val30/lin_pred30)` times higher.
 
-Planning surveillance effort, carcass removal capacity, and containment staffing off the linear forecast wouldn't just be a little short, it would leave the response utterly unequipped for the outbreak that actually arrives. A straight line can look fine over a short early window while being catastrophically wrong about where that window leads.
+Planning surveillance and containment staffing off the linear forecast would leave the response badly under-resourced for the outbreak that actually arrives. A straight line can look fine over a short early window and still be very wrong about where that window leads.
 
-The fix isn't a bigger sample or a better line, it's the right model. Fitting curves and transformations is beyond what this course covers, but recognizing when you need one, by plotting the data and the residuals, is not.
+What this calls for is a different model, not more data or a better-fit line. Fitting curves and transformations is beyond what this course covers, but recognizing when you need one, by plotting the data and the residuals, is not.
 
 ## Chapter Summary
 
@@ -606,6 +608,6 @@ The fix isn't a bigger sample or a better line, it's the right model. Fitting cu
 
 -   **The slope is a hypothesis.** $H_0: \beta_1 = 0$ says there is no linear relationship. Testing it uses a $t$-test on the slope divided by its standard error, with $df = n-2$, and it is mechanically identical to testing a correlation coefficient.
 -   **$R^2$ is the effect size.** It partitions variance exactly as ANOVA does, reporting the proportion of variation in $y$ the line accounts for. A relationship can be real ($p$ small) and still explain very little, which is why you report both.
--   **Look at your data, then look at your residuals.** Linearity, constant variance, and roughly normal residuals are what the assumptions that must be met. A residuals-versus-fitted plot catches violations a formal test can miss entirely, as the outbreak example showed. Looking at your data, and then looking at your residuals, is the single most important habit in this chapter.
+-   **Look at your data, then look at your residuals.** The assumptions that must be met are linearity, constant variance, and roughly normal residuals. A residuals-versus-fitted plot catches violations a formal test can miss entirely, as the outbreak example showed.
 -   **Predict inside your data; extrapolate beyond with caution.** Interpolating within the observed range of $x$ is what regression is for. Extrapolating beyond it is sometimes justified, but only when you have good reason to believe the relationship stays the same shape past the range you observed.
 -   **A good** $R^2$ can still be the wrong model. The outbreak example fit a straight line to exponential growth and got $R^2=0.82$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast tens of thousands of cases short of reality. The residual plot catches this; a Q-Q plot, which checks a different assumption, does not.

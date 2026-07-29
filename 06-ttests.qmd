@@ -6,6 +6,7 @@ aliases: [redirects/t-tests.html]
 
 ```{r, include = FALSE}
 source("global_stuff.R")
+set.seed(538)
 ```
 
 ```{r, echo=FALSE}
@@ -22,7 +23,7 @@ fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = 
 
 In the early 1900s, William Sealy Gosset joined **Guinness**, then the world's largest brewery. Guinness hired scientifically trained brewers and gave them latitude to pursue research that improved the product. As production scaled, quality control mattered: a pint should taste the same in Dublin as in Detroit. Until then, hop quality was judged mostly by appearance and smell, which was unreliable. Chemical assays could measure ingredients, but the core problem was statistical. Inference relied on the normal (Z) distribution, which works well when samples are large enough for a normal approximation. In practice, Guinness could not destroy large volumes of beer or ingredients just to test them.
 
-Gosset set out to quantify the extra uncertainty introduced by **small** samples. How much wider is the error around an estimate when $n=10$ instead of $n=1000$? He derived a new sampling distribution that accounts for small-sample variability, now known as the **Student's (t) distribution**. Because Guinness restricted external publications, he published the 1908 paper under the pseudonym **"Student"** [@Student1908]. That is why we still say **Student's** $t$-test. The core idea you will use today is the same: measure a signal, scale it by its standard error, and compare the resulting $t$ to the appropriate $t$ distribution for your $n-1$ degrees of freedom.
+Gosset set out to quantify the extra uncertainty introduced by **small** samples. How much wider is the error around an estimate when $n=10$ instead of $n=1000$? He derived a new sampling distribution that accounts for small-sample variability, now known as the **Student's** $t$ distribution. Because Guinness restricted external publications, he published the 1908 paper under the pseudonym **"Student"** [@Student1908]. That is why we still say **Student's** $t$-test. The core idea you will use today is the same: measure a signal, scale it by its standard error, and compare the resulting $t$ to the appropriate $t$ distribution for your $n-1$ degrees of freedom.
 
 **Why this matters.** We often compare a sample mean to a reference (drinking-water standard, historical average) or compare two conditions (before/after, site A vs site B). A t-test asks whether the observed difference is larger than you would expect from sampling variation alone, given your $n$ and variability.
 
@@ -40,7 +41,7 @@ Always report:
 -   a 95% CI, the test statistic with df
 -   and the $p$-value.
 
-Example: "Mean change was (-0.42) units (95% CI \[-0.73,-0.11\] ;t(11)=-2.92; p=0.014)."
+Example: "Mean change was -0.42 units (95% CI \[-0.73, -0.11\]; *t*(11) = -2.92; p = 0.014)."
 
 ## From mean & SD to "signal over noise"
 
@@ -108,14 +109,14 @@ xs <- seq(-4, 4, length.out = 2000)
 
 df_vals <- tibble(
   dist = c("z (standard normal)", "t (df=10)", "t (df=2)"),
-  df    = c(NA, 8, 2)   # NA for z
+  df    = c(NA, 10, 2)   # NA for z
 )
 
 # Build a long data frame: every x crossed with each distribution
 plot_df <- tidyr::crossing(x = xs, df_vals) |>
   mutate(density = case_when(
     dist == "z (standard normal)" ~ dnorm(x),
-    dist == "t (df=10)"           ~ dt(x, df = 8),
+    dist == "t (df=10)"           ~ dt(x, df = 10),
     dist == "t (df=2)"            ~ dt(x, df = 2)
   ))
 
@@ -127,11 +128,19 @@ p_lin <- ggplot(plot_df, aes(x, density, color = dist)) +
   geom_line(linewidth = 1.2) +
   scale_color_manual(values = base_cols, guide = guide_legend(title = NULL)) +
   coord_cartesian(xlim = c(-4, 4), ylim = c(0, 0.45)) +
-  labs(x = expression(mu==0), y = "Density (linear scale)") +
+  labs(x = NULL, y = "Density (linear scale)") +
   theme_classic(base_size = 12) +
   theme(legend.position = "top")
 
-p_lin
+p_log <- ggplot(plot_df, aes(x, density, color = dist)) +
+  geom_line(linewidth = 1.2) +
+  scale_color_manual(values = base_cols, guide = "none") +
+  scale_y_log10() +
+  coord_cartesian(xlim = c(-4, 4)) +
+  labs(x = "value", y = "Density (log scale)") +
+  theme_classic(base_size = 12)
+
+p_lin / p_log
 
 ```
 
@@ -161,13 +170,11 @@ $t$ can be positive or negative depending on direction. Under $H_0$, $t \sim t_{
 **Standard error, again.** Remember that $s/\sqrt{n}$ is the **standard error (SE)**, the standard deviation of the sampling distribution of the mean.
 :::
 
-Let's see how $t$ values behave when samples really come from the null hypothesis. Under the null hypothesis, $t$ follows a $t$ distribution with $df = n-1$.\
-Large $|t|$ values are rare; with $df \approx 20$, $|t| \gtrsim 2$ is uncommon at $\alpha = .05$ (two-tailed).
+Let's see how $t$ values behave when samples really come from the null hypothesis. Under the null hypothesis, $t$ follows a $t$ distribution with $df = n-1$.
 
 ```{r}
 #| label: fig-7t-sim
 #| fig-cap: 'Histogram of 1,000 simulated $t$ values ($n=10$) drawn from a population with $\mu_0=0$. Most $t$s cluster near 0; large positive or negative values are rare.'
-set.seed(1)
 t_vals <- replicate(1000, {
   s <- rnorm(10, 0, 1)
   (mean(s) - 0) / (sd(s) / sqrt(length(s)))
@@ -212,7 +219,7 @@ $$
 
 We can confirm this with a single R command, `t.test(scores, mu = 50)`:
 
-**Results:** $t(9)=`r round(tt$statistic,2)`$, $p=`r signif(tt$p.value,3)`$; mean $=`r round(tt$estimate,2)`$ (95% CI `r paste0("[", ci_lo, ", ", ci_hi, "]")`).
+**Results:** $t(9)=`r round(tt$statistic,2)`$, $p=`r signif(tt$p.value,3)`$; mean $=`r round(tt$estimate,2)`$ (95% CI \[`r ci_lo`, `r ci_hi`\]).
 
 **Interpretation:** The mean (`r round(x,0)`%) is above chance (50%), but the difference is not statistically significant at $\alpha=.05$.
 
@@ -222,23 +229,17 @@ We can confirm this with a single R command, `t.test(scores, mu = 50)`:
 
 Every test in this book rests on assumptions. Assumptions are conditions that need to be roughly true for the math behind the test to be trustworthy. There are two different kinds of assumptions.
 
-**The universal assumption.** Every single test we cover in this class (one-sample $t$, paired $t$, independent $t$, ANOVA, regression) assumes your observations are **independent** and came from a **sound study design** (a fair sample, not one that systematically favors certain values). This assumption is so constant that from here on, we won't re-list it test by test. Keep it in the back of your mind, but if an exam or homework question asks you to "list the assumptions of this test," this isn't the answer they're looking for. 
+**The universal assumption.** Every single test we cover in this class (one-sample $t$, paired $t$, independent $t$, ANOVA, regression) assumes your observations are **independent** and came from a **sound study design** (a fair sample, not one that systematically favors certain values). This assumption is so constant that from here on, we won't re-list it test by test. Keep it in the back of your mind, but if an exam or homework question asks you to "list the assumptions of this test," this isn't the answer they're looking for.
 
 **Test-specific assumptions.** These come from how a particular test's math actually works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is **approximate normality** of the outcome itself (one-sample) or of the difference scores (paired). Why does this matter? The $t$-distribution we've been using to get $p$-values is *derived* assuming the sampling distribution of the mean is normal. If your data are badly skewed and your sample is small, that derivation is on shaky ground, and the $p$-value it hands you may not mean what it claims to mean.
 
-**How worried should you be?** It depends enormously on $n$. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the mean tends toward normal even when individual observations are skewed, so the $t$-test is fairly **robust** to non-normality once $n$ is reasonably large. A lot of environmental data, particularly field data, instead is from **small samples that are also skewed**. Examples include a handful of expensive water samples, a short list of monitoring wells, five plots you had time to visit before the storm rolled in. Small $n$ and non-normality reinforcing each other is when a $t$-test's answer becomes questionable.
+**How worried should you be?** It depends enormously on $n$. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the mean tends toward normal even when individual observations are skewed, so the $t$-test is fairly **robust** to non-normality once $n$ is reasonably large. A lot of environmental data, particularly field data, instead comes from **small samples that are also skewed**. Examples include a handful of expensive water samples, a short list of monitoring wells, five plots you had time to visit before the storm rolled in. Small $n$ and non-normality reinforcing each other is when a $t$-test's answer becomes questionable.
 
 **What to do about it.** First, look at your data. A histogram or a QQ-plot will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. Treat it as one more piece of evidence rather than a strict gate though: with a small sample, exactly when a violation matters most, it has low power and will often say "no problem" even when there is one. If your data look like a stretch and your sample is small, you have another option: a **nonparametric test** that doesn't lean on the normality assumption at all. You'll meet these nonparametric alternatives in the next chapter, once we've covered all three t-test forms below.
 
 ### How does t behave?
 
-Under the null hypothesis ($H_0$ true), $t$ follows a *t* distribution with degrees of freedom $df = n - 1$. Large $|t|$ values are rare; extreme sample means are unlikely if $H_0$ is true.
-
-For moderate sample sizes ($df \approx 20$), a simple rule of thumb is:
-
-> In a two-tailed test at $\alpha = .05$, $|t| \gtrsim 2$ is uncommon.
-
-This means values of $t$ beyond roughly $-2$ or $+2$ occur less than 5% of the time under the null. That's the foundation of the decision rule for $t$ tests: if your observed $t$ lies in those rare tails, you reject $H_0$.
+Extreme sample means are unlikely if $H_0$ is true, which is why large $|t|$ values are rare. Returning to the rule of thumb above, values of $t$ beyond roughly $-2$ or $+2$ occur less than 5% of the time under the null when $df \approx 20$. That's the foundation of the decision rule for $t$ tests: if your observed $t$ lies in those rare tails, you reject $H_0$.
 
 Remember, if we obtained a single $t$ from one sample we collected, we could consult the chance window in @fig-7-t-rejection below to find out whether the $t$ we obtained from the sample was likely or unlikely to occur by chance.
 
@@ -462,7 +463,7 @@ When the **same units** are measured twice (before/after, matched pairs), the qu
 
 This subtraction **cancels between-plot variability** (some plots are naturally wetter than others) and focuses on **within-plot change**.
 
-**Test on differences (paired (t)).** Compute one difference per plot, then run a **one-sample** $t$ against 0:
+**Test on differences (paired** $t$). Compute one difference per plot, then run a **one-sample** $t$ against 0:
 
 $$
 \bar d=\frac{1}{n}\sum_{i=1}^n d_i, \quad
@@ -470,7 +471,7 @@ s_d=\text{SD}(d_1,\ldots,d_n), \quad
 t = \frac{\bar d - 0}{s_d/\sqrt{n}}, \quad df=n-1.
 $$
 
-The **sign of $t$** matches $\bar d$ and your difference direction.
+The **sign of** $t$ matches $\bar d$ and your difference direction.
 
 **Mini walk-through (first 5 plots).** Using the first five plots, $\bar d = 2.8$ and $s_d = 3.42$. Then $$
 t=\frac{2.8}{3.42/\sqrt{5}} \approx 1.83,\qquad df=4,
@@ -560,7 +561,7 @@ knitr::kable(
 )
 ```
 
-At $n=20$, $t(19) = `r round(full20_out$statistic, 2)`$, $p = `r fmt_p(full20_out$p.value)`$: significant. The mean difference (`r round(full20_out$estimate, 1)` percentage points) is in the same range as what the 5-plot subset already suggested; what changed is the standard error, which shrank enough with the larger sample to rule out chance. This is the payoff of pairing: same design, more plots, more power to detect a real effect.
+At $n=20$, $t(19) = `r round(full20_out$statistic, 2)`$, $p =`r fmt_p(full20_out$p.value)`$: significant. The mean difference (`r round(full20_out$estimate, 1)` percentage points) is in the same range as what the 5-plot subset already suggested; what changed is the standard error, which shrank enough with the larger sample to rule out chance. This is the payoff of pairing: same design, more plots, more power to detect a real effect.
 
 ## Two independent groups
 
@@ -623,11 +624,11 @@ t.test(a,b, paired=FALSE, var.equal = TRUE)
 
 ## Simulating data for t-tests
 
-An "advanced" topic for $t$-tests is the idea of using R to conduct simulations for $t$-tests.
+We can also use R to simulate data for $t$-tests, which is worth knowing how to do.
 
-If you recall, $t$ is a property of a sample. We calculate $t$ from our sample. The $t$ distribution is the hypothetical behavior of our sample. That is, if we had taken thousands upon thousands of samples, and calculated $t$ for each one, and then looked at the distribution of those $t$'s, we would have the sampling distribution of $t$!
+Recall that $t$ is a property of a sample: we calculate it from the sample we collected. If we took thousands of samples and calculated $t$ for each one, the distribution of those values would be the sampling distribution of $t$.
 
-It can be very useful to get in the habit of using R to simulate data under certain conditions, to see how your sample data, and things like $t$ behave. Why is this useful? It mainly prepares you with some intuitions about how sampling error (random chance) can influence your results, given specific parameters of your design, such as sample-size, the size of the mean difference you expect to find in your data, and the amount of variation you might find. These methods can be used formally to conduct power-analyses. Or more informally for data sense.
+Simulating data under conditions you choose builds intuition for how sampling error influences your results, given the specific parameters of your design: sample size, the size of the mean difference you expect, and the amount of variation. The same methods can be used formally to conduct power analyses, or informally for data sense.
 
 ### Simulating a one-sample t-test
 
@@ -752,9 +753,9 @@ length(save_ps[save_ps<.05])
 length(save_ps[save_ps<.05])/1000
 ```
 
-We happened to get `r length(save_ps[save_ps<.05])` simulations where p was less than .05, that's only `r length(save_ps[save_ps<.05])/1000` of experiments. If you were the researcher, would you want to run an experiment that would be successful only `r length(save_ps[save_ps<.05])/1000` of the time? Probably not, that's the case for designing a better experiment.
+We got `r length(save_ps[save_ps<.05])` simulations where p was less than .05, or `r 100*length(save_ps[save_ps<.05])/1000`% of experiments. A design that detects a real effect that rarely is not one you want to run, which is the argument for designing a better experiment.
 
-How would you run a better simulated experiment? Well, you could increase $n$, the number of subjects in the experiment. Let's increase $n$ from 10 to 100, and see what happens to the number of "significant" simulated experiments.
+The most direct lever is $n$, the number of subjects. Let's increase $n$ from 10 to 100 and see what happens to the number of "significant" simulated experiments.
 
 ```{r, echo=TRUE}
 
@@ -821,9 +822,9 @@ Same story as before: about 5% of these simulated experiments come out "signific
 
 -   **Signal over noise.** A difference is only impressive relative to the variability around it. Every $t$ statistic is a ratio: the effect you observed on top, an estimate of how much that effect could bounce around by chance on the bottom.
 -   **Three forms, one idea.** The one-sample, paired, and independent-samples $t$-tests differ in what goes into the numerator, but all three ask whether an observed difference is large compared to its own standard error. The paired test is just the one-sample test applied to difference scores.
--   **Why $t$ and not $z$.** When the population SD $\sigma$ is unknown, we estimate it with $s$, which adds uncertainty. The $t$ distribution accounts for that by being fatter in the tails than the normal, and it tightens toward the normal as degrees of freedom grow.
+-   **Why** $t$ and not $z$. When the population SD $\sigma$ is unknown, we estimate it with $s$, which adds uncertainty. The $t$ distribution accounts for that by being fatter in the tails than the normal, and it tightens toward the normal as degrees of freedom grow.
 -   **Assumptions come in two kinds.** *Independence and a sound study design* apply to every test in this book and are assumed from here on. The *test-specific* assumption for these tests is approximate normality, of the outcome for a one-sample test or of the difference scores for a paired test.
--   **How worried to be depends on $n$.** Thanks to the Central Limit Theorem, $t$-tests are fairly robust to non-normality once samples are reasonably large. The danger zone is small *and* skewed, which describes a lot of environmental field data. Plot your data first; treat a Shapiro-Wilk result as evidence rather than a gate, since it has least power exactly when you need it most.
+-   **How worried to be depends on** $n$. Thanks to the Central Limit Theorem, $t$-tests are fairly robust to non-normality once samples are reasonably large. The danger zone is small *and* skewed, which describes a lot of environmental field data. Plot your data first; treat a Shapiro-Wilk result as evidence rather than a gate, since it has least power exactly when you need it most.
 -   **Choose your tails before you look.** Default to two-tailed. Reserve one-tailed tests for cases where theory rules out the opposite direction, and decide before seeing the result.
 
 ## Videos

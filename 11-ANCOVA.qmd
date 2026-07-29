@@ -20,19 +20,19 @@ library(ggpubr)
 
 \vspace{1cm}
 
-As we've explored statistical modeling, we've understood the power of both regression and ANOVA. Now, let's merge them:
+We've now covered both regression and ANOVA. This chapter merges them:
 
 $$\text{Regression} + \text{ANOVA} = \text{ANCOVA}$$
 
 The last chapter compared macroinvertebrate species count across two discrete Pollution categories, present or absent, and two Flow categories, low or high. But suppose you actually measured each channel's pollution concentration instead of just labeling it present or absent.
 
-Does Flow's effect on species count still depend on pollution once pollution is treated as the continuous measurement it really is, rather than binned into two groups? *(covariate: pollution concentration; factor: flow rate)*
+-   Does Flow's effect on species count still depend on pollution once pollution is treated as the continuous measurement it really is, rather than binned into two groups? *(covariate: pollution concentration; factor: flow rate)*
 
 -   Does exposure to PFAS correlate with lifetime cancer incidence uniformly across low- and high-income American populations? *(covariate: PFAS exposure; factor: income level)*
 
 Each question pairs a continuous relationship, a continuous variable's effect on the outcome, with a categorical grouping. That pairing, one continuous variable and one categorical factor, is what makes a design an ANCOVA rather than a plain regression or a plain ANOVA.
 
-The middle question is worth sitting with, because it's really a complaint about the last chapter. "Pollution: present or absent" is a real simplification of something that's actually continuous, a concentration in parts per billion, measured on a gradient, not a light switch. Sorting continuous measurements into "high" and "low" buckets throws away exactly the information a covariate needs: how much more polluted, not just whether. Whenever you have the real numbers, ANCOVA (or, if there's no categorical factor left at all, plain regression) is almost always the better tool than forcing them into groups first.
+The first question is worth sitting with, because it's really a complaint about the last chapter. "Pollution: present or absent" is a real simplification of something that's actually continuous, a concentration in parts per billion, measured on a gradient, not a light switch. Sorting continuous measurements into "high" and "low" buckets throws away exactly the information a covariate needs: how much more polluted, not just whether. Whenever you have the real numbers, ANCOVA (or, if there's no categorical factor left at all, plain regression) is almost always the better tool than forcing them into groups first.
 
 ANCOVA is a linear model built directly on regression's own equation. A simple linear model is
 
@@ -52,7 +52,7 @@ The categorical predictor itself, in every example this chapter uses, is what's 
 
 ## What ANCOVA Is
 
-ANCOVA helps us answer: does a *relationship* hold up across groups? That framing fits environmental work particularly well, because you usually can't experimentally strip out a covariate like temperature, rainfall, or season anyway. Often you wouldn't want to. It may be the reason you designed the study in the first place. **The covariate is the point, and the interaction is the finding.**
+ANCOVA helps us answer: does a *relationship* hold up across groups? That framing fits environmental work particularly well, because you usually can't experimentally strip out a covariate like temperature, rainfall, or season anyway. Often you wouldn't want to. It may be the reason you designed the study in the first place. In the examples in this chapter, the covariate is what we care about and the interaction is the result we're testing for.
 
 ::: callout-note
 **The other way you'll see ANCOVA.** Elsewhere, the covariate is often a **nuisance** instead: something influencing the outcome that you control for so a group comparison comes out fairer, and an interaction is a box you check and hope stays empty.
@@ -72,7 +72,7 @@ For ANCOVA, you need:
 
 ### Indicator (dummy) variables and how they work
 
-Before we can read real coefficients off an ANCOVA table, it helps to see exactly how one equation can represent two different groups at once. That's a short detour, and it pays off immediately below.
+Before we can read real coefficients off an ANCOVA table, it helps to see exactly how one equation can represent two different groups at once.
 
 Categorical predictors get into a linear model by being coded as **indicator variables**. For a factor with $k$ groups you include $k-1$ indicators; the omitted group becomes the **reference**, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:
 
@@ -109,7 +109,7 @@ $$y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x_
 If we only include $\beta_2$ and leave out $\beta_3$, we get a restricted version: the intercept can shift but the slope cannot, so the two lines are forced to be **parallel**. That is the parallel-lines model, and it is the one we fall back to when the slope difference turns out not to be significant.
 
 ::: callout-note
-**Why this is worth the detour.** Every coefficient you will read out of an ANCOVA table is one of these four. Without the indicator, $\beta_2$ and $\beta_3$ are just numbers R hands you. With it, $\beta_3$ has a plain-language meaning you can check against a graph: it is the amount by which one group's line tilts away from the other's.
+**Why this matters.** Every coefficient you will read out of an ANCOVA table is one of these four. Without the indicator, $\beta_2$ and $\beta_3$ are just numbers R hands you. With it, $\beta_3$ has a plain-language meaning you can check against a graph: it is the amount by which one group's line tilts away from the other's.
 :::
 
 ### The Null Hypothesis in ANCOVA
@@ -202,7 +202,7 @@ As always, statistical significance doesn't guarantee ecological or practical im
 -   Independent observations *(same as ANOVA)*
 -   Approximately normal residuals and similar variances across groups *(same as ANOVA)*
 -   Linearity within each group: the covariate--response relationship is a straight line *(new, about the covariate)*
--   Homogeneity of slopes: the groups share that same line, unless the interaction test says otherwise *(new --- this is the one the interaction test above directly checks, rather than a condition you verify beforehand)*
+-   Homogeneity of slopes: the groups share that same line, unless the interaction test says otherwise *(new, and this is the one the interaction test above directly checks, rather than a condition you verify beforehand)*
 -   The covariate is measured with minimal error and isn't itself affected by the treatment *(new, and more consequential here than in an ordinary regression: measurement error in the covariate leaves genuine covariate-driven differences between groups only partially adjusted for, which can look like a treatment effect that isn't really there)*
 :::
 
