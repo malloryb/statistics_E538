@@ -11,7 +11,7 @@ library(ggplot2)
 ```
 
 ```{bash, eval=FALSE}
-quarto render 04-SamplesPopulations.qmd --to html --lua-filter ./section_lengths.lua --metadata wordcount_out=chapter4_section_lengths.csv
+quarto render 03-SamplesPopulations.qmd --to html --lua-filter ./section_lengths.lua --metadata wordcount_out=chapter4_section_lengths.csv
 ```
 
 # Probability and Distributions
@@ -20,7 +20,7 @@ quarto render 04-SamplesPopulations.qmd --to html --lua-filter ./section_lengths
 
 ## From description to inference
 
-Up to this point, we've focused on experimental design and descriptive statistics: how to collect data and how to summarize it with graphs and averages. But statistics is more than description. Its power is in inference, using limited data to say something about a broader population. Inference relies on two foundations: probability theory and the behavior of samples from distributions.
+Up to this point, we've focused on experimental design and descriptive statistics: how to collect data and how to summarize it with graphs and averages. But statistics is more than description. It also lets us do inference, using limited data to say something about a broader population. Inference relies on two foundations: probability theory and the behavior of samples from distributions.
 
 ## Probability vs. Statistics
 
@@ -41,7 +41,9 @@ Here, the **model is known** (fair coin, fair deck). Data are imagined.
 Here, the **data are known**. The model is what we want to learn about.
 
 ::: callout-note
-**Shortcut.** Probability goes model → data. Statistics goes data → model.
+Probability goes model → data.
+
+Statistics goes data → model.
 :::
 
 ## What does probability mean?
@@ -66,7 +68,7 @@ At the core of probability theory is the idea of a distribution: a set of possib
 
 Suppose we track which ice cream flavor a customer chooses: chocolate, vanilla, or strawberry. Each choice is an *elementary event*, and the set of all possible events is the *sample space*, $S$:
 
-$S = {\text{chocolate}, \text{vanilla}, \text{strawberry}}$
+$S = \{\text{chocolate}, \text{vanilla}, \text{strawberry}\}$
 
 If we record how often each flavor is chosen, we might estimate the following probabilities:
 
@@ -94,7 +96,7 @@ ggplot(flavors, aes(x = flavor, y = probability)) +
   geom_text(aes(label = probability), vjust = -0.5) +
   ylim(0, 1) +
   labs(x = "Flavor", y = "Probability") +
-  theme_classic(base_size=12)
+  theme_classic(base_size=14)
 ```
 
 **Non-elementary events**
@@ -103,7 +105,7 @@ We can also define events that group multiple outcomes.
 
 For example, let $A=$ "not chocolate." Then:
 
-$$P(A) = P(vanilla) + P(strawberry)  = 0.5$$
+$$P(A) = P(\text{vanilla}) + P(\text{strawberry}) = 0.5$$
 
 ## Rules of Probability
 
@@ -112,25 +114,25 @@ Some basic rules follow from this framework. Let's consider a sample space $X$ t
 Here are our rules:
 
 | English   | Notation   | Formula                                             |
-|:------------------|:------------------|:-----------------------------------|
+|:------------------|:------------------|:----------------------------------|
 | not A     | $\neg A$   | $P(\neg A) = 1 - P(A)$                              |
 | A and B   | $A \cap B$ | $P(A \cap B) = P(A\mid B)\,P(B) = P(B\mid A)\,P(A)$ |
 | A or B    | $A \cup B$ | $P(A \cup B) = P(A) + P(B) - P(A \cap B)$           |
 | A given B | $A \mid B$ | $P(A \mid B) = \dfrac{P(A \cap B)}{P(B)}$           |
 
-These rules look abstract at first, but they are just formal ways of describing common-sense situations. Let's work through them step by step with our ice cream example. We'll assign probabilities to each flavor and then show how the rules play out with real numbers. That way, the notation is always tied to something you can picture.
+These rules look abstract at first, but they are just formal ways of describing common-sense situations. Let's work through them with our ice cream example, so the notation stays tied to something you can picture.
 
 Let's add a fourth flavor and assign some probabilities:
 
 **Flavor Probability:**
 
--   Chocolate $P(\text{chocolate})=0.4$
+-   Chocolate: $P(\text{chocolate})=0.4$
 
--   Vanilla $P(\text{vanilla})=0.3$
+-   Vanilla: $P(\text{vanilla})=0.3$
 
--   Strawberry $P(\text{strawberry})=0.2$
+-   Strawberry: $P(\text{strawberry})=0.2$
 
--   Rocky Road $P(\text{rocky road})=0.1$
+-   Rocky Road: $P(\text{rocky road})=0.1$
 
 Notice these add to 1, as they must.
 
@@ -152,29 +154,25 @@ So, $P(\neg A) = 1 - P(A) = 1 - 0.9 = 0.1$
 
 ### $A$ **and** $B$ (the intersection)
 
-Think of *and* as meaning “both at once.” For probabilities, that translates into the **overlap** of the two events.
+Think of *and* as meaning "both at once." For probabilities, that translates into the **overlap** of the two events.
 
 -   The only overlap between $A$ and $B$ is chocolate: $A \cap B = (\text{chocolate})$
 
 -   The intersection $A \cap B$ contains only chocolate, and its probability is $0.4$.
 
--   So $P(A \cap B) = 0.4$
-
-To reiterate: *And* means overlap, not “add the probabilities together.”
+Note that *and* means overlap here, not "add the probabilities together."
 
 ### $A$ **or** $B$ (the union)
 
-*Or* in probability is inclusive: it means “in A, or in B, or in both.”
+*Or* in probability is inclusive: it means "in A, or in B, or in both."
 
 -   If we combine everything in either set, we get all four flavors.
 
 -   $A \cup B = (\text{chocolate, vanilla, strawberry, rocky road})$
 
--   That’s the whole sample space, so $P(A \cup B) = 1$.
+-   That's the whole sample space, so $P(A \cup B) = 1$.
 
--   So $P(A \cup B) = 1$.
-
-To reiterate: *or* covers everything in either group. We subtract the overlap (\$A \cap B\$) so we don’t double-count it.
+*Or* covers everything in either group. We subtract the overlap $A \cap B$ so we don't double-count it.
 
 ### **Conditional probability**
 
@@ -241,7 +239,7 @@ pbinom(q = 4, size = 20, prob = 0.5)
 
 The probability is about $0.6$%
 
-The probability is slightly higher here, because it also includes the probability we could get 3, 2, or 1 heads as well.
+The probability is slightly higher here, because it also includes the probability of getting 3, 2, 1, or 0 heads.
 
 ::: callout-note
 **R's distribution helpers.** Every distribution in R comes with the same four:
@@ -277,7 +275,7 @@ pdf <- tibble(x = x, d = dnorm(x, 0, 1))
 ggplot(pdf, aes(x, d)) +
   geom_line() +
   labs(x = "x", y = "Probability density") +
-  theme_classic()
+  theme_classic(base_size=14)
 ```
 
 ::: callout-note
@@ -308,7 +306,7 @@ ggplot(pdf, aes(x, d)) +
   geom_line() +
   geom_area(data = shade, aes(y = d), alpha = .3) +
   labs(x = "x", y = "Probability density") +
-  theme_minimal()
+  theme_classic(base_size=14)
 ```
 
 **Two common queries**
@@ -353,7 +351,7 @@ In this section we introduced the building blocks of probability, with an emphas
     -   Normal: describes continuous outcomes centered at a mean, with spread determined by the standard deviation.
     -   Others ($t$, $\chi^2$, $F$) appear later when we turn to inference.
 
-**Takeaway**: probability provides the language and tools that make statistical inference possible. Once we understand how outcomes behave under these distributions, we can ask questions about samples, uncertainty, and whether results are surprising enough to change what we believe about the world.
+**Takeaway**: probability is what makes statistical inference possible. Once we know how outcomes behave under these distributions, we can ask whether a result is surprising enough to change what we believe.
 
 ## Samples, populations and sampling
 
@@ -403,7 +401,7 @@ knitr::include_graphics("imgs/navarro_img/estimation/srs2.png")
 Random samples are the gold standard, and in many areas of environmental science they are common: inventory plots, transects, and monitoring networks are usually designed with probability-based methods. Still, many studies rely on modified approaches:
 
 -   **Stratified sampling** divides the population into subgroups (strata) and samples within each. This ensures representation of small but important groups, such as rare habitat types.
--   **Opportunistic or logistically constrained sampling** selects cases that are accessible or already monitored. These are not random, but they are common in practice when budgets, terrain, or historical networks limit where data can be collected. .
+-   **Opportunistic or logistically constrained sampling** selects cases that are accessible or already monitored. These are not random, but they are common in practice when budgets, terrain, or historical networks limit where data can be collected.
 
 ### How much does it matter if you don't have a random sample?
 
@@ -415,7 +413,7 @@ The key is to consider whether the way you sampled could plausibly distort the c
 
 So far we have talked about populations the way a scientist might: a group of people, a stand of trees, a set of rivers. Statisticians formalize this idea by treating a population as a **probability distribution**, the abstract source from which data are drawn.
 
-For example, suppose daily coffee consumption in adults follow an approximately normal distribution with mean $\mu - 2$ cups/day and standard deviation $\sigma = 1$ cup/day. These are the **population parameters**.
+For example, suppose daily coffee consumption in adults follows an approximately normal distribution with mean $\mu = 2$ cups/day and standard deviation $\sigma = 1$ cup/day. These are the **population parameters**.
 
 ```{r}
 #| label: fig-coffeeDist
@@ -495,11 +493,11 @@ $$
 N \to \infty \quad \Rightarrow \quad \bar{X} \to \mu
 $$
 
-Although easiest to see with the mean, the law applies to many sample statistics: proportions, variances, correlations, and more. The guarantee is that, with enough data, the statistics you calculate from a sample will hover ever closer to their population counterparts.
+Although easiest to see with the mean, the law applies to many sample statistics: proportions, variances, correlations, and more.
 
 The idea is obvious enough that Jacob Bernoulli, who first formalized it in 1713, remarked that "even the most stupid of men" already know it by instinct. His phrasing hasn't aged well, but the insight remains correct: averaging over more observations reduces the "danger of wandering from one's goal."
 
-In practice, this means any single sample statistic will be off the mark, but if we keep collecting data, those statistics will tend to get closer and closer to the true population parameters. The law of large numbers is one of the fundamental guarantees that makes statistical inference possible.
+In practice, any single sample statistic will be off the mark, but if we keep collecting data those statistics get closer to the true population parameters. This is one of the guarantees that makes statistical inference possible.
 
 ## Sampling distributions and the central limit theorem
 
@@ -514,7 +512,7 @@ The phrase is clunky, but the idea is straightforward.
 
 So the **sampling distribution of the sample means** is simply the distribution formed by repeating your study many times and collecting all those sample averages.
 
-Why is this useful? Because it tells us how much the sample mean varies from sample to sample, and how close we can expect it to be to the population mean.
+This is useful because it tells us how much the sample mean varies from sample to sample, and how close we can expect it to be to the population mean.
 
 ### Seeing the pieces
 
@@ -566,7 +564,7 @@ ggplot(df2, aes(x=a))+
   xlab("value")
 ```
 
-We had a uniform distribution originally, but @fig-4unifmany does not look like a uniform distribution. This is key takeaway: the histogram of sample means does **not** look like the original uniform distribution. Instead, it has its own shape and variability. That fact leads directly to the **central limit theorem**, which we'll introduce next.
+We started with a uniform distribution, but @fig-4unifmany does not look uniform at all. The histogram of sample means has its own shape and its own variability, and that fact leads directly to the **central limit theorem**.
 
 ### Beyond the mean
 
@@ -614,10 +612,13 @@ ggarrange(a,b,c,d,
 
 So far, you've seen that sample means vary from one sample to the next, and that their variability shrinks as sample size grows. The **sampling distribution of the mean** is just the distribution you get if you compute the mean from many different samples of the same size.
 
-Intuitively: - Small samples → sample means bounce around more → wide sampling distribution. - Large samples → sample means are more stable → narrow sampling distribution.
+Intuitively:
+
+-   Small samples → sample means bounce around more → wide sampling distribution.
+
+-   Large samples → sample means are more stable → narrow sampling distribution.
 
 @fig-4samplingmean animates this idea. Each panel shows samples of size 10, 50, 100, or 1000 drawn from a normal distribution (red line). Grey bars show the sample itself, the red line marks that sample's mean, and the blue histogram shows the distribution of sample means across many repetitions. Notice how the blue distribution shrinks around the population mean as $n$ increases.
-
 
 ::: {.content-visible when-format="html"}
 ```{r}
@@ -629,7 +630,7 @@ knitr::include_graphics(path="imgs/gifs/sampleDistNormal-1.gif")
 :::
 
 ::: {.content-visible when-format="pdf"}
-![Simulation of samples (grey), their means (red line), and the sampling distribution of the mean (blue). As sample size grows, the distribution of sample means narrows and centers on the population mean. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/sampleDistNormal-1.png){#fig-4samplingmean width=75%}
+![Simulation of samples (grey), their means (red line), and the sampling distribution of the mean (blue). As sample size grows, the distribution of sample means narrows and centers on the population mean. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/sampleDistNormal-1.png){#fig-4samplingmean width="75%"}
 :::
 
 ```{r, eval=F}
@@ -697,7 +698,7 @@ Together, these three facts form our practical version of the **central limit th
 
 The full CLT is mathematically more general and has a complicated proof, but for our purposes these three results capture what we need. To see the third point in action, let's look at histograms of **sample means** drawn from different underlying distributions. Remember: these are distributions of *sample means*, not of individual observations.
 
-In @fig-4sampledistmeannorm, we are smapling from a *normal* distribution (red line). The sampling distribution of the mean (blue bars) is also normal.
+In @fig-4sampledistmeannorm, we are sampling from a *normal* distribution (red line). The sampling distribution of the mean (blue bars) is also normal.
 
 ```{r}
 #| label: fig-4sampledistmeannorm
@@ -833,9 +834,9 @@ Together, these results are the essence of the central limit theorem (CLT). Form
 
 $$SE = \frac{\sigma}{\sqrt{N}}.$$
 
-This formula shows how sample size controls reliability. As $N$ increases, the denominator grows and the SE falls. The drop is not linear: doubling $N$ cuts the SE by only about 30%, which is why the benefits of ever-larger samples taper off. Still, larger samples consistently produce more stable and trustworthy estimates of $\mu$.
+This formula shows how sample size controls reliability. As $N$ increases, the denominator grows and the SE falls. The drop is not linear: doubling $N$ cuts the SE by only about 30%, which is why the benefits of ever-larger samples taper off. Larger samples still produce more stable estimates of $\mu$.
 
-The CLT is one of the cornerstones of statistics. It explains why sample means are useful, why bigger studies are more reliable, and why the normal curve appears so often in practice. Whenever you average across many influences, exam scores, crop yields, daily temperatures, the distribution of those averages tends to be normal.
+The CLT also explains why the normal curve appears so often in practice. Whenever you average across many influences, whether exam scores or crop yields or daily temperatures, the distribution of those averages tends to be normal.
 
 ## z-scores
 
@@ -936,7 +937,13 @@ ggplot(t_df, aes(x=x_range,y=dnorm_vec))+
 
 $z=\frac{x-\mu}{\sigma}$
 
-Interpretation is immediate: - z=0 is the mean, - z=1 is one SD above the mean, - z=-2 is two SDs below, etc.
+Interpretation is immediate:
+
+-   $z=0$ is the mean
+
+-   $z=1$ is one SD above the mean
+
+-   $z=-2$ is two SDs below the mean
 
 Because z-scores put everything on the same scale, you can compare values across different normal variables (or read probabilities from the standard normal). And by the CLT, you can do the same with *sample means* when N is modestly large.
 
@@ -967,7 +974,7 @@ Finally, z-scores are also called **standardized scores** because they express d
 
 ## The chi-square distribution
 
-Not every named distribution is symmetric like the normal. The **chi-square ($\chi^2$) distribution** is another shape you'll see repeatedly once we get to hypothesis testing, particularly for categorical data, where the question isn't "how far is this mean from that one?" but "how far are these observed counts from what we'd expect?"
+Not every named distribution is symmetric like the normal. The **chi-square (**$\chi^2$) distribution is another shape you'll see repeatedly once we get to hypothesis testing, particularly for categorical data, where the question isn't "how far is this mean from that one?" but "how far are these observed counts from what we'd expect?"
 
 ```{r}
 #| label: fig-4chisq-shapes
@@ -1003,10 +1010,10 @@ You'll put this distribution to work later for the chi-square goodness-of-fit an
 
 A statistic describes your data; an estimate is your best guess about the corresponding population parameter. For the mean, these coincide:
 
-| Symbol | What is it? | Do we know it? |
+| Symbol      | What is it?                     | Do we know it?                                  |
 |-------------------|--------------------------|---------------------------|
-| $\bar{X}$ | Sample mean | Yes, calculated from the raw data |
-| $\mu$ | True population mean | Almost never known for sure |
+| $\bar{X}$   | Sample mean                     | Yes, calculated from the raw data               |
+| $\mu$       | True population mean            | Almost never known for sure                     |
 | $\hat{\mu}$ | Estimate of the population mean | Yes, for simple random samples $\hat\mu=\bar X$ |
 
 ### Estimating the population standard deviation
@@ -1023,7 +1030,7 @@ We can see this by creating a **sampling distribution of the standard deviation*
 
 ```{r}
 #| label: fig-sampdistsd
-#| fig-cap: "Sampling distribution of the sample standard deviation for N = 2. The true population SD is 15 (dashed line), but most experiments produce smaller values. The average sample SD is only 8.5, showing that $s$ underestimates $sigma$."
+#| fig-cap: "Sampling distribution of the sample standard deviation for N = 2. The true population SD is 15 (dashed line), but most experiments produce smaller values. The average sample SD is only 8.5, showing that $s$ underestimates $\\sigma$."
 
 knitr::include_graphics("imgs/navarro_img/estimation/sampdistsd.png")
 ```
@@ -1058,9 +1065,9 @@ We just saw *that* the sample standard deviation is biased. Here is *why*, and w
 
 #### Why does this happen?
 
-Picture a tiny sample of $n=3$ values. The sample mean $\bar{x}$ might land close to the true population mean $\mu$, or it might land far away, and we don’t know in advance which. But $\bar{x}$ is always computed **from** those three sample points, which pulls it toward the middle of *those specific* points. As a result, distances from the sample points to $\bar{x}$ tend to be a little **shorter**, on average, than distances from those same points to the true $\mu$ would be.
+Picture a tiny sample of $n=3$ values. The sample mean $\bar{x}$ might land close to the true population mean $\mu$, or it might land far away, and we don't know in advance which. But $\bar{x}$ is always computed **from** those three sample points, which pulls it toward the middle of *those specific* points. As a result, distances from the sample points to $\bar{x}$ tend to be a little **shorter**, on average, than distances from those same points to the true $\mu$ would be.
 
-Since variance and SD are built from squared distances to the mean, this shrinkage carries through: the sample variance computed the “obvious” way (divide by $n$) is biased **small**, and the sample SD inherits that bias.
+Since variance and SD are built from squared distances to the mean, this shrinkage carries through: the sample variance computed the "obvious" way (divide by $n$) is biased **small**, and the sample SD inherits that bias.
 
 The fix is to divide by $n-1$ instead of $n$. Writing it out, the naive sample variance is
 
@@ -1070,11 +1077,11 @@ and it systematically underestimates $\sigma^2$, the population variance. The co
 
 $$s_{n-1}^2 = \frac{1}{n-1}\sum_{i=1}^n (x_i - \bar{x})^2.$$
 
-This $s_{n-1}^2$ is an **unbiased** estimator of $\sigma^2$, so averaged across many samples it lands right on the true population variance. Take the square root of either formula to get back to an SD. One small wrinkle: because square roots aren’t linear, even the corrected $s_{n-1}$ is *technically* still very slightly biased for $\sigma$. In practice that residual bias is tiny and shrinks as $n$ grows, which is why $s_{n-1}$ is the standard choice for a sample SD.
+This $s_{n-1}^2$ is an **unbiased** estimator of $\sigma^2$, so averaged across many samples it lands right on the true population variance. Take the square root of either formula to get back to an SD. One small wrinkle: because square roots aren't linear, even the corrected $s_{n-1}$ is *technically* still very slightly biased for $\sigma$. In practice that residual bias is tiny and shrinks as $n$ grows, which is why $s_{n-1}$ is the standard choice for a sample SD.
 
 #### Seeing the bias
 
-Let’s make this concrete. Suppose our full population is every even number from 80 to 120, with true mean $\mu = 100$, marked in red in @fig-sdbias-population.
+Let's make this concrete. Suppose our full population is every even number from 80 to 120, with true mean $\mu = 100$, marked in red in @fig-sdbias-population.
 
 ```{r, echo=F}
 #| label: fig-sdbias-population
@@ -1105,10 +1112,10 @@ ggplot() +
     axis.text.x   = element_text(size = 9, margin = margin(t = 2)))
 ```
 
-Now let’s draw three separate samples of $n=3$ from that population, each on its own number line. The light blue point is the sample mean $\bar{x}$; the three filled blue points are the sampled values. On the right of each panel:
+Now let's draw three separate samples of $n=3$ from that population, each on its own number line. The light blue point is the sample mean $\bar{x}$; the three filled blue points are the sampled values. On the right of each panel:
 
--   **uncorrected $s$** (divide by $n$): the naive sample SD,
--   **corrected $s$** (divide by $n-1$): the conventional sample SD,
+-   **uncorrected** $s$ (divide by $n$): the naive sample SD,
+-   **corrected** $s$ (divide by $n-1$): the conventional sample SD,
 -   $\sigma$: the true population SD, about 12.1.
 
 ```{r, echo=F}
@@ -1182,7 +1189,7 @@ plot_scenario(c(80,102,114), "C. Sample mean near, points wide (SD too big)")
 
 In Example C, the sample mean lands close to $\mu$ again, but this time the three points happen to be spread wide. $\sigma$ is about 12.1, uncorrected $s$ is 14.1, corrected $s$ is 17.2. Here $s$ *overshoots* $\sigma$ instead.
 
-So sometimes $s$ undershoots and sometimes it overshoots. Why call it “biased small,” then? Because outcomes like A and B (tight, unrepresentative samples) happen more often than outcomes like C. Average over enough samples, and the sample SD comes in low more often than it comes in high. Let’s check that directly by simulating 8,000 samples, shown in @fig-sdbias-simulation.
+So sometimes $s$ undershoots and sometimes it overshoots. Why call it "biased small," then? Because outcomes like A and B (tight, unrepresentative samples) happen more often than outcomes like C. Average over enough samples, and the sample SD comes in low more often than it comes in high. Let's check that directly by simulating 8,000 samples, shown in @fig-sdbias-simulation.
 
 ```{r, echo=F}
 #| label: fig-sdbias-simulation
@@ -1266,7 +1273,7 @@ Two things to notice. First, compare the top row (divide by $n$) to the bottom r
 -   The naive sample SD (divide by $n$) tends to underestimate $\sigma$.
 -   Dividing by $n-1$ instead corrects this bias, and is the standard choice for sample data.
 -   The correction matters most for small $n$, and fades as $n$ grows.
--   On an exam, if you’re asked for “the sample standard deviation,” use the $n-1$ version unless told otherwise. R’s `sd()` function already does this for you.
+-   On an exam, if you're asked for "the sample standard deviation," use the $n-1$ version unless told otherwise. R's `sd()` function already does this for you.
 
 ::: callout-note
 **Connecting back to the law of large numbers.** Both of the ideas we met earlier in this chapter bear directly on what we just saw:
@@ -1275,14 +1282,13 @@ Two things to notice. First, compare the top row (divide by $n$) to the bottom r
 -   **Central limit theorem:** the CLT describes the sampling distribution of the **mean**, not the standard deviation. So we cannot assume the distribution of sample SDs is normal no matter how large $n$ gets, even though the histograms above happen to look reasonably bell-shaped.
 :::
 
-
 To summarize:
 
-| Symbol | Definition | Known? |
-|-------------------|------------------------------|------------------------|
-| $s^2$ | Sample variance (divide by $N$) | Yes, calculated directly from data |
-| $\sigma^2$ | Population variance | No, almost never known exactly |
-| $\hat{\sigma}^2$ | Estimated population variance (divide by $N-1$) | Yes, but distinct from $s^2$ |
+| Symbol           | Definition                                      | Known?                             |
+|-------------------|-----------------------------|------------------------|
+| $s^2$            | Sample variance (divide by $N$)                 | Yes, calculated directly from data |
+| $\sigma^2$       | Population variance                             | No, almost never known exactly     |
+| $\hat{\sigma}^2$ | Estimated population variance (divide by $N-1$) | Yes, but distinct from $s^2$       |
 
 ## Estimating a confidence interval
 
@@ -1296,13 +1302,13 @@ You'll use this directly in Chapter 5, where a confidence interval becomes one o
 
 Thanks to the central limit theorem, we know the sampling distribution of the mean is approximately normal. In a normal distribution, 95% of values fall within about 1.96 standard deviations of the mean.
 
-If we **knew** the population mean and SD ($\mu$, $\sigma$)), the central limit theorem tells us where **sample means** tend to fall: a sample mean ($\bar X$) is usually within about (1.96) standard errors of ($\mu$), where
+If we **knew** the population mean and SD ($\mu$, $\sigma$), the central limit theorem tells us where **sample means** tend to fall: a sample mean $\bar X$ is usually within about 1.96 standard errors of $\mu$, where
 
 $\text{SEM}=\frac{\sigma}{\sqrt{N}}$
 
 That's the *forward* view (model → data).
 
-In practice we want the reverse (data → model): given an observed ($\bar X$), what can we say about ($\mu$)? Rearranging the same inequality gives
+In practice we want the reverse (data → model): given an observed $\bar X$, what can we say about $\mu$? Rearranging the same inequality gives
 
 $$
 \bar{X} - 1.96\,\frac{\sigma}{\sqrt{N}} \le \mu \le \bar{X} + 1.96\,\frac{\sigma}{\sqrt{N}}
@@ -1314,7 +1320,7 @@ $$
 CI_{95} = \bar{X} \pm 1.96\,\frac{\sigma}{\sqrt{N}}
 $$
 
-The constant (1.96) is the normal cutoff for 95%; for other levels use the corresponding normal quantile (e.g., (1.04) for 70%).
+The constant 1.96 is the normal cutoff for 95%. For other levels use the corresponding normal quantile, for example 1.04 for 70%.
 
 **The catch**
 
@@ -1338,7 +1344,7 @@ Confidence intervals tell us how precise our guess is, and they force us to ackn
 
 -   **Probability runs model → data; statistics runs data → model.** Probability starts from a known process and predicts what data it produces. Statistics starts from observed data and reasons backward to the process. The rest of the book is the second direction.
 -   **A population is a distribution, not just a group.** Treating the population as a probability distribution is what lets us say anything precise about how samples behave.
--   **Law of large numbers.** As $N$ grows, a sample statistic settles onto the population value. Bigger samples give more reliable estimates, and this is why.
+-   **Law of large numbers.** As $N$ grows, a sample statistic settles onto the population value. This is why bigger samples give more reliable estimates.
 -   **Sampling distributions are the key abstraction.** Any statistic computed over repeated samples has its own distribution. The sampling distribution of the mean is the one that matters most, and its spread is the **standard error**, $\sigma/\sqrt{N}$.
 -   **The central limit theorem.** The sampling distribution of the mean centers on $\mu$, narrows as $N$ grows, and approaches normal *regardless of the population's shape*. That last clause is what lets normal-based methods work on data that are not themselves normal.
 -   **Not every estimator is unbiased.** The sample mean lands on $\mu$ on average, but the sample SD systematically underestimates $\sigma$. Dividing by $N-1$ corrects it, and the correction matters most when $N$ is small.
