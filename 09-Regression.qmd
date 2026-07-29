@@ -11,62 +11,154 @@ fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = 
 
 # Simple Linear Regression
 
+> Essentially, all models are wrong, but some are useful.\
+> George E. P. Box
+
 ```{r}
 library(tidyverse)
 library(broom)
 library(knitr)
 ```
 
-Back in the correlation chapter, we fit a best-fit line through a scatterplot of chocolate and happiness, and learned how to compute its slope and intercept from the data. That was a description: given this sample, here is the line that summarizes it. What we could not yet do was ask the inference question that every other test in this book has asked. Is the slope we found in this sample close to what we'd expect from a real population relationship, or is it the kind of thing chance alone could produce? Now that we have hypothesis testing, sampling distributions, and the logic of comparing an observed statistic to a null distribution, we can put the regression line through the same machinery.
+Back in Chapter 2, we used the covariance between two variables to quantify the strength and direction of a relationship (**Pearson's $r$**), and fit a best-fit line through a scatterplot, learning to compute its slope and intercept from the data. What we couldn't yet do was ask the **inference question** every other test in this book has asked: 
 
-## From description to inference
+*Could chance alone plausibly have produced our result?*
 
-A sample slope is a statistic, and like any statistic, it varies from sample to sample. If we drew a new sample from the same population and fit a new line, we would get a slightly different slope, just by chance. Simple linear regression asks whether the slope we observed is large enough, relative to that sampling variability, to conclude that a real linear relationship exists in the population, rather than one produced by chance alone.
+Now that we've learned hypothesis testing, sampling distributions, and the logic of comparing an observed statistic to a null distribution, we can put the regression line through that same machinery to test whether a given **slope** is evidence of a real relationship.
 
-**Example: stream temperature and dissolved oxygen.** Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO) to decline as stream temperature rises. This matters for stream health: low DO can stress or kill fish and invertebrates. Suppose we sample 30 stream sites, measuring water temperature (°C) and dissolved oxygen (mg/L) at each.
+## Regression Basics 
+
+The equation for a linear regression will be familiar, and it's one of the most heavily used equations in applied science: 
+
+$y = \beta_0 + \beta_1 x + \varepsilon$ 
+
+*Slope term*: $\beta_1$
+
+*Intercept term*: $\beta_0$. 
+
+A linear equation, fit to real data, is a statistical **model**.  We never observe $\beta_1$ directly. So, we need one additional term for the *residual error*, $\varepsilon$. This is the additional variability in the DV not explained by our model. 
+
+**Parameters and sample statistics**
+
+Because it's a *model*, our beta coefficients represent the **population parameters**, which you'll recall come from the inferred, but never truly known, parent distribution.
+
+| Symbol | What is it? | Do we know it? |
+|-------------------|--------------------------|---------------------------|
+| $\beta_0, \beta_1$ | True population intercept and slope | Almost never known for sure |
+| $b_0, b_1$ | Sample intercept and slope | Yes, calculated by fitting the line to our data |
+
+What we generate by drawing the best-fit line through our data is a *sample slope*, usually written $b_1$.
+
+### Hypotheses
+
+Our null and alternate hypotheses are fairly straightforward: 
+
+-  $H_0: \beta_1 = 0$ (there is no linear relationship between the continuous IV and the continuous DV)
+
+-   $H_A: \beta_1 \neq 0$ (there is a linear relationship between the variables)
+
+**But how to test them formally?**
+
+Recall the "signal over noise" pattern, which is the basis for inference.  
+
+$$
+\text{statistic}=\frac{\text{effect}}{\text{error}}.
+$$
+
+Like any other statistic, $b_1$ varies from sample to sample. If we drew a new sample from the same population and fit a new line, we'd get a slightly different $b_1$, just by chance. 
+Simple linear regression asks whether the sample slope $b_1$ is large enough, relative to that sampling variability, to conclude that a real linear relationship exists in the population, rather than one produced by chance alone.
+
+We've previously done $t$-tests on means, but the test statistic can be generated for other values too, in this case, our sample slope: 
+
+$$
+t = \frac{\text{effect}}{\text{standard error}} = \frac{b_1}{SE(b_1)}
+$$
+
+We need just one more thing to get our p-value, our degrees of freedom. In our simple linear regression, one degree of freedom is spent estimating the intercept, one for the slope:  
+
+$df = n - 2$
+
+Comparing our estimated slope to its standard error, we can now quantify the probability our $b_1$ estimate could have occured by chance alone under the null hypothesis. 
+
+## Worked regression example: stream temperature and dissolved oxygen.
+
+Let's work through an example. Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO) to decline as stream temperature rises. This matters for stream health: low DO can stress or kill fish and invertebrates. Suppose we sample 40 stream sites, measuring water temperature (°C) and dissolved oxygen (mg/L) at each.
 
 ```{r}
 #| label: fig-10regscatter
-#| fig-cap: "Stream temperature and dissolved oxygen at 30 sample sites, with the fitted regression line."
+#| fig-cap: "Stream temperature and dissolved oxygen at 40 sample sites, with the fitted regression line."
 
 set.seed(538)
-n <- 30
+n <- 40
 stream_temp <- round(runif(n, 10, 24), 1)
-DO <- round(13.5 - 0.28 * stream_temp + rnorm(n, 0, 0.9), 2)
+DO <- round(13.5 - 0.28 * stream_temp + rnorm(n, 0, 1.1), 2)
 stream_df <- data.frame(stream_temp, DO)
 
 ggplot(stream_df, aes(x = stream_temp, y = DO)) +
-  geom_point() +
+  geom_point(size=1.5) +
   geom_smooth(method = "lm", se = FALSE) +
-  theme_classic() +
+  theme_classic(base_size = 14) +
   xlab("Stream temperature (°C)") +
   ylab("Dissolved oxygen (mg/L)")
+
 ```
 
-The scatterplot in @fig-10regscatter shows a clear downward trend. The question this chapter answers: is that trend real, or could a sample of 30 sites show a downward-sloping line like this even if temperature and DO were unrelated in the population?
+The scatterplot in @fig-10regscatter shows a clear downward trend. Just from the graph, we can guess a couple of things: 
 
-## The regression model
+* Pearson's $r$ should be negative, since DO falls as temperature rises
+
+* It should sit fairly close to $-1$ since the points hug the line with only modest scatter. 
+
+Before now, we didn't have a way to test whether an $r$ that size is more than chance would produce, only how to compute it. Regression adds that missing piece by writing that observed relationship as a model we can test. 
+
+### The regression model
 
 We model dissolved oxygen as a linear function of stream temperature, plus error:
 
 $$DO = \beta_0 + \beta_1(\text{Temperature}) + \varepsilon$$
 
-Here $\beta_0$ is the population intercept, $\beta_1$ is the population slope, and $\varepsilon$ is the error, the part of DO that temperature alone doesn't explain. We don't know $\beta_0$ and $\beta_1$; we estimate them from the sample as $b_0$ and $b_1$, using the same least-squares logic from the correlation chapter (the line that minimizes the sum of squared residuals).
+$\beta_0$ is the population intercept, $\beta_1$ is the population slope, and $\varepsilon$ is the error, the part of DO that temperature alone doesn't explain. 
 
-In R, this is a single line:
+We don't know $\beta_0$ and $\beta_1$; we estimate them from the sample as $b_0$ and $b_1$, using the same least-squares logic from Chapter 2 (the line that minimizes the sum of squared residuals).
+
+In R, this is a single line of code:
 
 ```{r 10fitshow, echo = TRUE, eval = FALSE}
 fit <- lm(DO ~ stream_temp, data = stream_df)
 ```
 
+This fitted line (@fig-10regresidviz) is the best-fit line that minimizes the total squared distance between the data and the line. 
+
+
 ```{r 10fit}
 fit <- lm(DO ~ stream_temp, data = stream_df)
 fit_tidy <- tidy(fit, conf.int = TRUE)
 fit_glance <- glance(fit)
+```
 
+```{r}
+#| label: fig-10regresidviz
+#| fig-cap: "Stream temperature and dissolved oxygen with the fitted line. Vertical red segments are residuals."
+#| fig-alt: "Scatter plot of dissolved oxygen against stream temperature with a fitted downward-sloping line. Open circles mark each point's predicted value on the line, and a red vertical segment connects each observed point to its prediction."
+
+stream_df$fitted_line <- fitted(fit)
+
+ggplot(stream_df, aes(x = stream_temp, y = DO)) +
+  geom_smooth(method = "lm", se = FALSE, color = "lightblue") +
+  geom_segment(aes(xend = stream_temp, yend = fitted_line), color = "red", alpha = 0.6) +
+  geom_point(size=1.3) +
+  geom_point(aes(y = fitted_line), shape = 1) +
+  theme_classic(base_size=14) +
+  xlab("Stream temperature (°C)") +
+  ylab("Dissolved oxygen (mg/L)")
+```
+
+Here's the table of model coefficients R gives us.
+
+```{r fitKable}
 kable(
   fit_tidy %>%
-    mutate(across(c(estimate, std.error, statistic, conf.low, conf.high), ~round(., 3)),
+    mutate(across(c(estimate, std.error, statistic, conf.low, conf.high), ~round(., 2)),
            p.value = fmt_p(p.value)) %>%
     rename(Term = term, Estimate = estimate, `Std. Error` = std.error,
            `t` = statistic, `p` = p.value, `CI low` = conf.low, `CI high` = conf.high),
@@ -74,28 +166,79 @@ kable(
 )
 ```
 
-Reading the table: the fitted line is $\widehat{DO} = `r round(coef(fit)[1], 2)` `r ifelse(coef(fit)[2] >= 0, "+", "-")` `r abs(round(coef(fit)[2], 2))` \times \text{Temperature}$. The intercept ($b_0 = `r round(coef(fit)[1], 2)`$) is the model's predicted DO at 0°C, technically part of the model but outside the range of temperatures we actually sampled (10 to 24°C), so we won't lean on it for interpretation. The slope ($b_1 = `r round(coef(fit)[2], 2)`$) is the part we care about: for every 1°C increase in stream temperature, predicted dissolved oxygen drops by about `r abs(round(coef(fit)[2], 2))` mg/L.
+With the results of the regression, we can get an equation for the fitted line: 
+
+$\widehat{DO} = `r round(coef(fit)[1], 2)` `r ifelse(coef(fit)[2] >= 0, "+", "-")` `r abs(round(coef(fit)[2], 2))` \times \text{Temperature}$.
+
+The hat over $DO$ marks it as a *predicted* value, what the model outputs for a given temperature, as distinct from an actually observed $DO$ measurement.
+
+The "estimate" column in our regression model output for the intercept and the slope are $b_0$ and $b_1$, not $\beta_0$ and $\beta_1$. Recall this line is our model's estimate from this one sample, not the true population line, which we never actually observe.
+
+The intercept ($b_0 = `r round(coef(fit)[1], 2)`$) is the model's predicted DO at 0°C, technically part of the model but outside the range of temperatures we actually sampled (10 to 24°C), so we won't lean on it for interpretation.
+
+The slope ($b_1 = `r round(coef(fit)[2], 2)`$) is the part we care about most: for every 1°C increase in stream temperature, predicted dissolved oxygen drops by about `r abs(round(coef(fit)[2], 2))` mg/L.
 
 ## Testing the slope
 
-The slope $b_1$ is a sample estimate. The hypothesis test asks whether the population slope $\beta_1$ could plausibly be zero, that is, whether temperature and DO are linearly unrelated.
+The slope $b_1$ is a sample estimate. Recall the hypothesis test asks whether the population slope $\beta_1$ could plausibly be zero: 
 
-- $H_0: \beta_1 = 0$ (no linear relationship between stream temperature and dissolved oxygen)
-- $H_A: \beta_1 \neq 0$ (there is a linear relationship)
+-   $H_0: \beta_1 = 0$ (no linear relationship between stream temperature and dissolved oxygen)
 
-The test statistic compares the estimated slope to its standard error:
+-   $H_A: \beta_1 \neq 0$ (there is a linear relationship)
+
+This $t$-test for the regression slope, unlike the tests in earlier chapters, doesn't need a separate function call: `lm()` computes it automatically the moment you fit the model. You the get whole coefficient table, `Std. Error`, $t$, and $p$, all at once.
+
+Recall the test statistic compares the estimated slope to its standard error, the `Std. Error` column already in the coefficient table above, which measures how much $b_1$ would bounce around from sample to sample if we repeated this study over and over:
 
 $$t = \frac{b_1}{SE(b_1)} = \frac{`r round(coef(fit)[2],3)`}{`r round(fit_tidy$std.error[2],3)`} = `r round(fit_tidy$statistic[2],2)`$$
 
-with $df = n - 2 = `r nrow(stream_df) - 2`$ (one degree of freedom spent estimating the intercept, one for the slope). From the coefficient table above, $t = `r round(fit_tidy$statistic[2],2)`$, $p `r fmt_p(fit_tidy$p.value[2])`$. This crosses the conventional $\alpha = .05$ threshold, so we reject $H_0$: stream temperature is linearly related to dissolved oxygen.
+with $df = n - 2 = `r nrow(stream_df) - 2`$ (one degree of freedom spent estimating the intercept, one for the slope).
 
-The 95% confidence interval for the slope, also in the table, runs from `r round(fit_tidy$conf.low[2],3)` to `r round(fit_tidy$conf.high[2],3)` mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will.
+**Where the $p$-value comes from.** If temperature and DO were truly unrelated in the population, repeating this study many times would still produce a nonzero $b_1$ just by chance, and a $t$-statistic that follows a $t$-distribution with $df = `r nrow(stream_df) - 2`$. @fig-10regslopenull shows that distribution, with the critical values marking the boundary of the most extreme 5% under $H_0$, and our observed $t$ marked against it.
 
-::: callout-note
-**The same test in different clothes.** This is the correlation test from Chapter 2, just written differently. Testing $H_0: \beta_1 = 0$ for the slope and testing $H_0: \rho = 0$ for the correlation coefficient give the identical $t$-statistic and identical $p$-value. Regression and correlation are two views of the same underlying relationship: correlation asks how strongly two variables move together, and regression additionally lets us write down an equation and make predictions.
-:::
+```{r}
+#| label: fig-10regslopenull
+#| fig-cap: "The null distribution of t for the slope test at df=38. Shaded tails are the rejection region at alpha=.05; the dashed line marks our observed t, far into the left tail."
+#| fig-alt: "A t-distribution centered at zero with 38 degrees of freedom. Both tails beyond the critical values around plus or minus 2.02 are shaded and labeled as the rejection region, with the middle labeled retain H0. A vertical red line marks the observed t of about negative 6.72, far to the left of the critical value, labeled directly on the plot."
+
+df_slope <- nrow(stream_df) - 2
+obs_t <- fit_tidy$statistic[2]
+xs <- seq(-8, 8, length.out = 2000)
+dens <- dt(xs, df_slope)
+crit <- qt(c(.025, .975), df_slope)
+
+t_null_df <- data.frame(x = xs, y = dens,
+                         tail = ifelse(xs <= crit[1] | xs >= crit[2], "Rejection region", "Retain"),
+                         region = ifelse(xs <= crit[1], "left",
+                                   ifelse(xs >= crit[2], "right", "mid")))
+
+ggplot(t_null_df, aes(x, y, fill = tail, group = region)) +
+  geom_area(alpha = 0.4, color = NA) +
+  geom_line(aes(group = 1), color = "black", linewidth = 0.9) +
+  geom_vline(xintercept = crit, linetype = 2) +
+  geom_vline(xintercept = obs_t, linetype = 1, color = "darkred", linewidth = 0.9) +
+  annotate("text", x = obs_t, y = max(dens) * 0.95,
+           label = paste0("observed t = ", round(obs_t, 2)), color = "darkred", hjust = -0.08, size = 4) +
+  annotate("text", x = -3.6, y = 0.06, label = "rejection\nregion", size = 3.4, color = "grey20") +
+  annotate("text", x = 3.6, y = 0.06, label = "rejection\nregion", size = 3.4, color = "grey20") +
+  annotate("text", x = 0, y = 0.2, label = "retain H0", size = 3.6, color = "grey20") +
+  scale_fill_manual(values = c("Rejection region" = "#F8766D", "Retain" = "#7FCFCB")) +
+  labs(x = "t", y = "Density") +
+  theme_classic(base_size = 14) +
+  theme(legend.position = "none")
+```
+
+Our observed $t = `r round(fit_tidy$statistic[2],2)`$ sits far past the critical values of about $\pm `r round(qt(.975, nrow(stream_df)-2),2)`$, well outside where 95% of $t$-values would fall if temperature and DO were unrelated. The $p$-value is just the probability of landing that far out (or farther) in either tail under $H_0$: here, $p `r fmt_p(fit_tidy$p.value[2])`$, meaning essentially never. This crosses the conventional $\alpha = .05$ threshold. 
+
+We **reject** $H_0$: stream temperature **is** linearly related to dissolved oxygen.
+
+The 95% confidence interval for the slope, also in the coefficient table above, runs from `r round(fit_tidy$conf.low[2],3)` to `r round(fit_tidy$conf.high[2],3)` mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will.
 
 ## R-squared: variance explained
+
+After fitting a linear regression model, you also need to determine how well the model fits the data. Does it do a good job of explaining changes in the dependent variable?
+
+**R-squared** is a goodness-of-fit measure for linear regression models. It tells us the percentage of the variance in the dependent variable that the independent variables explain collectively. R-squared measures the strength of the relationship between your model and the dependent variable on a convenient 0 – 100% scale.
 
 Just as one-way ANOVA in the last chapter partitioned total variability into a between-groups piece and a within-groups piece, regression partitions the total variability in $Y$ into a piece explained by the line and a piece left over as residual error:
 
@@ -104,6 +247,8 @@ $$SS_{Total} = SS_{Regression} + SS_{Residual}$$
 $R^2$ is the proportion of that total variability the line accounts for:
 
 $$R^2 = \frac{SS_{Regression}}{SS_{Total}}$$
+
+For simple regression with one predictor, $R^2$ is literally Pearson's $r$ from Chapter 2, squared: $(`r round(cor(stream_df$stream_temp, stream_df$DO), 3)`)^2 = `r round(cor(stream_df$stream_temp, stream_df$DO)^2, 3)`$, matching the model's $R^2$ below exactly.
 
 ```{r}
 kable(
@@ -119,20 +264,83 @@ kable(
 )
 ```
 
+The table also reports $F$, $df1$, and $df2$. With one predictor, $F$ and $t$ test the exact same thing: $F = t^2 = `r round(fit_tidy$statistic[2],2)`^2 = `r round(fit_tidy$statistic[2]^2,2)`$, matching the table. ANOVA reports its omnibus test this same way, and $F$ is the form that generalizes once more than one predictor is involved, which comes up shortly.
+
 Here $R^2 = `r round(fit_glance$r.squared, 2)`$: stream temperature accounts for about `r round(fit_glance$r.squared*100)`% of the variation we observed in dissolved oxygen across sites. The remaining variation comes from everything else the model doesn't capture (discharge, shading, groundwater input, and so on), folded into $\varepsilon$.
 
-$R^2$ is regression's effect size. A relationship can be tested (is $\beta_1$ significantly different from 0?) and separately sized (how much of the variation does it actually explain?), the same distinction Chapter 5 introduced for Cohen's $d$ and that eta-squared makes for ANOVA. A small sample can produce a significant slope that explains very little variance; $R^2$ is what tells you whether the relationship is worth acting on, not just whether it's real.
+**Reporting the result.** We report a regression result the same way as any other test: the slope, the test statistic, degrees of freedom, and $p$, plus $R^2$ as the effect size.
+
+> Dissolved oxygen declined significantly with stream temperature, $b_1 = `r round(coef(fit)[2],2)`$, $t(`r nrow(stream_df)-2`) = `r round(fit_tidy$statistic[2],2)`$, $p < .001$, $R^2 = `r round(fit_glance$r.squared,2)`$.
+
+## Consider both significance and effect size
+
+As with all our tests, our significance test isn't the whole picture. In addition to testing our slope (is $\beta_1$ significantly different from 0?), we also consider $R^2$, which is regression's **effect size**. 
+
+The two don't move together the way intuition suggests. 
+
+A **very large sample**, the kind common in remote sensing and other big-data environmental work, can make a trivial effect statistically significant: more observations shrink the standard error until almost any nonzero slope clears $p<.05$, no matter how little variance it explains. 
+
+A **small sample** tends to fail the opposite way, missing a real, sizeable effect because the standard error is too large for it to reach significance. 
+
+$R^2$ is what tells you how much of the variation is actually being explained. 
+
+Neither $p$ alone nor $R^2$ alone tells the whole story, so we must report both.
+
+@fig-10regeffectpanels shows all three combinations this can produce: a strong relationship with a non-significant slope (underpowered), a weak relationship with a significant slope (a large sample), and a relationship that is both strong and significant.
+
+```{r}
+#| label: fig-10regeffectpanels
+#| fig-cap: "R-squared and the slope's p-value can disagree. Left: a strong relationship (high R-squared) that isn't statistically significant. Middle: a weak relationship (low R-squared) that is significant anyway. Right: strong and significant together."
+#| fig-alt: "Three scatter plots with fitted lines. The left panel shows a steep, tight relationship with few points and a non-significant p-value. The middle panel shows a nearly flat, scattered relationship with many points and a significant p-value. The right panel shows a steep, tight relationship with many points and a significant p-value."
+
+mk_panel <- function(seed, n, slope, noise, label) {
+  set.seed(seed)
+  x <- runif(n, 0, 10)
+  y <- 5 + slope * x + rnorm(n, 0, noise)
+  d <- data.frame(x, y)
+  f <- lm(y ~ x, data = d)
+  g <- glance(f)
+  p_txt <- fmt_p(g$p.value)
+  p_txt <- ifelse(startsWith(p_txt, "<"), p_txt, paste("=", p_txt))
+  d$panel <- sprintf("%s\nR^2 = %.3f, p %s", label, g$r.squared, p_txt)
+  d
+}
+
+panel_under  <- mk_panel(seed = 15,  n = 6,    slope = 1.4,  noise = 3.2, label = "Strong & underpowered")
+panel_huge_n <- mk_panel(seed = 538, n = 5000, slope = 0.05, noise = 3.0, label = "Weak & huge sample")
+panel_both   <- mk_panel(seed = 538, n = 60,   slope = 1.4,  noise = 1.6, label = "Strong & significant")
+
+all_panels <- rbind(panel_under, panel_huge_n, panel_both)
+all_panels$panel <- factor(all_panels$panel, levels = unique(all_panels$panel))
+
+ggplot(all_panels, aes(x, y)) +
+  geom_point(alpha = 0.5, size = 1.4, color = "steelblue4") +
+  geom_smooth(method = "lm", se = FALSE, color = "firebrick") +
+  facet_wrap(~panel, scales = "free") +
+  theme_classic(base_size = 14) +
+  theme(strip.text = element_text(size = 12))
+```
+
+::: callout-note
+**How big is a "good" $R^2$?** It depends on the field. In studies of human behavior, where dozens of unmeasured factors shape any outcome, an $R^2$ of 0.20 is a genuinely strong result. Environmental systems tend toward more direct physical relationships, so 0.5-0.8 for a well-chosen single predictor isn't unusual. An $R^2$ that looks *too* good, say 0.98, from one predictor in a noisy field system, is itself worth a second look: it's more often a sign of a setup problem than something to celebrate.
+:::
 
 ## Checking assumptions
 
 Simple linear regression assumes:
 
-- **Linearity**: the true relationship between $X$ and $Y$ is a straight line.
-- **Independence**: observations don't influence each other (the universal assumption from Chapter 6, still not something you list when asked to enumerate a test's specific assumptions, but always worth checking your study design against).
-- **Constant variance (homoscedasticity)**: the spread of residuals is roughly the same across the whole range of $X$.
-- **Normality of residuals**: the residuals are approximately normally distributed.
+-   **Linearity**: the true relationship between $X$ and $Y$ is a straight line.
 
-The most useful diagnostic is a residuals-versus-fitted plot:
+-   **Constant variance (homoscedasticity)**: the spread of residuals is roughly the same across the whole range of $X$.
+
+-   **Normality of residuals**: the residuals are approximately normally distributed.
+
+### Sometimes the truth isn't a line at all
+
+> You can do linear regression without thinking about whether the phenomenon you're modeling is actually close to linear. But you shouldn't.\
+> Jordan Ellenberg, *How Not to Be Wrong*
+
+A straight line is not guaranteed to be the right shape for your data, and the two assumptions above have two different failure signatures on this one plot: a curve means linearity is violated, a funnel shape means constant variance is violated. The most useful diagnostic for catching either is a residuals-versus-fitted plot:
 
 ```{r}
 #| label: fig-10regresid
@@ -142,14 +350,90 @@ stream_df$fitted <- fitted(fit)
 stream_df$resid <- resid(fit)
 
 ggplot(stream_df, aes(x = fitted, y = resid)) +
-  geom_point() +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  theme_classic() +
+  geom_point(color = "steelblue4", size = 1.8) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "firebrick") +
+  theme_classic(base_size = 14) +
   xlab("Fitted values") +
   ylab("Residuals")
 ```
 
-@fig-10regresid shows what we want to see: residuals scattered evenly above and below zero, with no curve (which would suggest the true relationship isn't linear) and no funnel shape (which would suggest variance changes across the range of $X$). For normality, we check the residuals directly:
+@fig-10regresid, for our stream temperature data, shows what we want to see: residuals scattered evenly above and below zero, with no curve (which would suggest the true relationship isn't linear) and no funnel shape (which would suggest variance changes systematically across the range of $X$).
+
+Let's try checking residuals for a different set of data, this time on avian influenza cases over time.
+
+```{r}
+#| label: fig-10outbreakfit
+#| fig-cap: "New avian influenza cases per day, days 1-14 of an outbreak, with a fitted straight line."
+#| fig-alt: "Scatter plot of new cases per day against day of outbreak, with a fitted straight regression line. Points curve gently above and below the line."
+
+set.seed(538)
+days <- 1:14
+true_rate <- 0.28
+cases <- round(6 * exp(true_rate * days) + rnorm(14, 0, 5))
+cases <- pmax(cases, 1)
+outbreak_df <- data.frame(days, cases)
+
+fit_outbreak <- lm(cases ~ days, data = outbreak_df)
+outbreak_tidy <- glance(fit_outbreak)
+
+ggplot(outbreak_df, aes(days, cases)) +
+  geom_point(color = "steelblue4", size = 1.8) +
+  geom_smooth(method = "lm", se = FALSE, color = "firebrick") +
+  theme_classic(base_size = 14) +
+  xlab("Day of outbreak") +
+  ylab("New cases detected")
+```
+
+A straight line fit to these 14 days gives $R^2 = `r round(outbreak_tidy$r.squared, 2)`$ and $p `r fmt_p(outbreak_tidy$p.value)`$, which by the benchmark from a couple pages back looks like a solid, significant fit for a field system. Nothing about those numbers alone raises a flag.
+
+**Check it properly.** The residuals-versus-fitted plot tells a different story than the $R^2$ and slope test did.
+
+```{r}
+#| label: fig-10outbreakresid
+#| fig-cap: "Residuals versus fitted values for the linear outbreak model. A clear U-shape, not random scatter, is the signature of a nonlinear relationship forced into a straight line."
+#| fig-alt: "Residuals plotted against fitted values. The residuals form a clear U-shaped curve: negative in the middle, positive at both low and high fitted values, rather than scattering randomly around zero."
+
+outbreak_df$fitted <- fitted(fit_outbreak)
+outbreak_df$resid <- resid(fit_outbreak)
+
+ggplot(outbreak_df, aes(fitted, resid)) +
+  geom_point(color = "steelblue4", size = 1.8) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "firebrick") +
+  theme_classic(base_size = 14) +
+  xlab("Fitted values") +
+  ylab("Residuals")
+```
+
+That U-shape is unambiguous: the line underpredicts early and late in the outbreak and overpredicts in the middle, exactly what you'd see forcing a straight line through a curve. 
+
+If a residual plot curves rather than scattering randomly, that's the model telling you a straight line is the wrong tool. 
+
+Fixes typically include:
+
+-   a different model (often adding a polynomial term)
+-   a transformation, re-expressing a variable on a different scale so a straight line fits it (log-transforming a variable that grows multiplicatively, like the outbreak data below, is the most common case)
+-   or a nonlinear model entirely, beyond what this course covers
+
+### Checking normality
+
+For normality, we check the residuals two ways: visually, with a **Q-Q plot**, and formally, with the **Shapiro-Wilk test**.
+
+A Q-Q plot sorts the residuals and compares them to where a perfectly normal distribution would place values at the same percentiles. If the residuals are normal, the points fall close to the diagonal line; a systematic curve or S-shape means they don't.
+
+```{r}
+#| label: fig-10regqq
+#| fig-cap: "Normal Q-Q plot of the stream temperature model's residuals. Points close to the diagonal support normality."
+#| fig-alt: "A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality."
+
+ggplot(stream_df, aes(sample = resid)) +
+  stat_qq(color = "steelblue4") +
+  stat_qq_line(color = "firebrick") +
+  theme_classic(base_size = 14) +
+  xlab("Theoretical quantiles") +
+  ylab("Sample quantiles")
+```
+
+@fig-10regqq looks close to straight, consistent with normal residuals. Shapiro-Wilk asks the same question formally: $H_0$ is that the residuals come from a normal distribution, so a small $p$-value is the evidence against normality.
 
 ```{r}
 sh_out <- shapiro.test(resid(fit))
@@ -160,11 +444,34 @@ kable(
 )
 ```
 
-The residuals don't depart from normality here ($p `r fmt_p(sh_out$p.value)`$). As with any formal normality test, treat this as one piece of evidence alongside the residual plot, not a strict gate. Shapiro-Wilk has the least power to detect real departures exactly when the sample is small, which is exactly when a visual check matters most.
+The residuals don't depart from normality here ($p = `r fmt_p(sh_out$p.value)`$). As with any formal normality test, treat this as one piece of evidence alongside the Q-Q plot and residual plot, not a strict gate. Shapiro-Wilk has the least power to detect real departures exactly when the sample is small, which is exactly when the visual checks matter most.
+
+```{r}
+#| label: fig-10outbreakqq
+#| fig-cap: "Normal Q-Q plot of the same residuals. They fall close to the diagonal, so this diagnostic alone would not have flagged the problem."
+#| fig-alt: "A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality."
+
+ggplot(outbreak_df, aes(sample = resid)) +
+  stat_qq(color = "steelblue4", size = 1.8) +
+  stat_qq_line(color = "firebrick") +
+  theme_classic(base_size = 14) +
+  xlab("Theoretical quantiles") +
+  ylab("Sample quantiles")
+```
+
+```{r}
+sh_outbreak <- shapiro.test(resid(fit_outbreak))
+```
+
+Consider the avian influenza data. The Q-Q plot looks close to straight, and Shapiro-Wilk agrees ($p = `r fmt_p(sh_outbreak$p.value)`$, not significant). The Q-Q plot and Shapiro-Wilk test check **normality of the residuals**, a different assumption than linearity, and a model can badly violate linearity while its residuals still look roughly normal.
 
 ## Using the model: prediction
 
-Once we've confirmed a real linear relationship, the fitted equation lets us predict DO at any stream temperature. For example, at 20°C:
+Once we've confirmed a real linear relationship, the fitted equation lets us predict DO at any stream temperature. Plugging temperature into the fitted line directly gives the prediction: at 20°C,
+
+$$\widehat{DO} = b_0 + b_1(20) = `r round(coef(fit)[1],2)` + (`r round(coef(fit)[2],2)`)(20) = `r round(coef(fit)[1] + coef(fit)[2]*20, 2)`$$
+
+R gives the same number, along with a confidence interval:
 
 ```{r}
 newd <- data.frame(stream_temp = 20)
@@ -177,7 +484,119 @@ kable(
 )
 ```
 
-At 20°C, the model predicts DO of `r round(pred_out[1],2)` mg/L, with a 95% confidence interval from `r round(pred_out[2],2)` to `r round(pred_out[3],2)`. Notice that 20°C falls inside our sampled range of 10 to 24°C, this is interpolation, and it's what regression is good for. Predicting DO at, say, 35°C would be extrapolation: nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction.
+At 20°C, the model predicts DO of `r round(pred_out[1],2)` mg/L, with a 95% confidence interval from `r round(pred_out[2],2)` to `r round(pred_out[3],2)`. Notice that 20°C falls inside our sampled range of 10 to 24°C, this is interpolation, and it's what regression is good for. Predicting DO at, say, 35°C would be extrapolation: nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. @fig-10regextrap shows both zones on the same line.
+
+```{r}
+#| label: fig-10regextrap
+#| fig-cap: "The fitted line within the observed temperature range (solid blue, interpolation) and extended beyond it in both directions (dashed red, extrapolation). Dotted grey lines mark the edges of the observed data, 10 to 24°C."
+#| fig-alt: "Scatter plot of dissolved oxygen against stream temperature. A solid blue line covers the observed range from 10 to 24 degrees C, and a dashed red line extends the same fitted trend below and above that range."
+
+obs_range <- data.frame(stream_temp = seq(10, 24, length.out = 50))
+obs_range$DO <- predict(fit, obs_range)
+obs_range$part <- "Observed range (interpolation)"
+
+extrap_range <- data.frame(stream_temp = seq(0, 35, length.out = 100))
+extrap_range$DO <- predict(fit, extrap_range)
+extrap_range$part <- "Beyond observed range (extrapolation)"
+extrap_range <- extrap_range[extrap_range$stream_temp < 10 | extrap_range$stream_temp > 24, ]
+
+extrap_range$part <- factor(extrap_range$part, levels = c("Observed range (interpolation)", "Beyond observed range (extrapolation)"))
+obs_range$part <- factor(obs_range$part, levels = levels(extrap_range$part))
+
+ggplot() +
+  geom_line(data = extrap_range, aes(stream_temp, DO, color = part, linetype = part), linewidth = 1.5) +
+  geom_line(data = obs_range, aes(stream_temp, DO, color = part, linetype = part), linewidth = 1) +
+  geom_point(data = stream_df, aes(stream_temp, DO), size = 1.5) +
+  geom_vline(xintercept = c(10, 24), linetype = "dotted", color = "grey60", size=1.2) +
+  scale_color_manual(values = c("Observed range (interpolation)" = "steelblue1", "Beyond observed range (extrapolation)" = "firebrick")) +
+  scale_linetype_manual(values = c("Observed range (interpolation)" = "solid", "Beyond observed range (extrapolation)" = "dashed")) +
+  labs(x = "Stream temperature (°C)", y = "Dissolved oxygen (mg/L)", color = NULL, linetype = NULL) +
+  theme_classic(base_size = 14) +
+  theme(legend.position = "top")
+```
+
+Regression is used for extrapolation all the time, and often reasonably: a well-understood physical process can justify projecting a line beyond the data you happened to collect. Extrapolating a straight line is only safe if the true relationship actually stays straight past the range you observed. 
+
+The problem is that a narrow window of data can't tell you which kind of curve you're actually on. @fig-10curveshapes shows four very different relationships, exponential growth, a sigmoid, a hump-shaped curve, and a truly straight line, each with the same short observed window highlighted in blue. The fitted line (dashed red) extrapolated based on the observed data is also exactly the same for all 4 panels, it just looks different because the y-axis scales are different. Once you see the full curve (grey), you can see how badly linear extrapolation beyond the range of observed data would perform in each case. 
+
+```{r}
+#| label: fig-10curveshapes
+#| fig-cap: "Four different true relationships that all look locally linear over a short observed window (blue). A line fit to that window (dashed red) extrapolates identically well in each panel, but only the genuinely linear case stays correct once the full curve (grey) is revealed."
+#| fig-alt: "Four panels: exponential, sigmoid, hump-shaped, and linear curves. In each, a short initial segment is highlighted in blue and looks nearly straight. A dashed red line extends that local trend across the full range. The full grey curve shows the true shape, which diverges sharply from the dashed line except in the linear panel, where the two coincide."
+
+curve_x <- seq(0, 10, length.out = 300)
+mk_curve <- function(x, y, label) data.frame(x = x, y = y, curve = label)
+
+curve_df <- rbind(
+  mk_curve(curve_x, exp(0.5 * curve_x), "Exponential"),
+  mk_curve(curve_x, 10 / (1 + exp(-(curve_x - 5))), "Sigmoid"),
+  mk_curve(curve_x, -(curve_x - 5)^2 + 25, "Hump-shaped"),
+  mk_curve(curve_x, 2 * curve_x, "Linear")
+)
+curve_df$curve <- factor(curve_df$curve, levels = c("Exponential", "Sigmoid", "Hump-shaped", "Linear"))
+
+curve_window <- curve_df[curve_df$x <= 3, ]
+
+curve_fits <- do.call(rbind, lapply(split(curve_window, curve_window$curve), function(w) {
+  f <- lm(y ~ x, data = w)
+  data.frame(x = curve_x, pred = predict(f, data.frame(x = curve_x)), curve = w$curve[1])
+}))
+
+ggplot() +
+  geom_line(data = curve_df, aes(x, y), color = "grey50", linewidth = 0.9) +
+  geom_line(data = curve_fits, aes(x, pred), color = "firebrick", linetype = "dashed", linewidth = 0.9) +
+  geom_line(data = curve_window, aes(x, y), color = "steelblue1", linewidth = 2.2) +
+  facet_wrap(~curve, scales = "free_y") +
+  theme_classic(base_size = 13) +
+  labs(x = "x", y = "y")
+```
+
+To make this a bit more concrete, suppose officials use the linear fitted line from our example above to project avian influenza cases at day 30, well past the 14 days observed.
+
+```{r}
+#| label: fig-10outbreakextrap
+#| fig-cap: "The linear fit extended (dashed) past the observed range, against the true exponential trajectory (dotted grey). The straight line badly underestimates how large the outbreak actually becomes."
+#| fig-alt: "Line graph of cases against day of outbreak from day 1 to day 30. A solid blue line and observed points cover days 1 through 14. A dashed red line continues the same linear trend from day 14 to day 30, staying low. A dotted grey curve shows the true exponential trajectory, which rises steeply and dramatically outpaces the dashed line by day 30."
+
+obs_days <- 1:14
+extrap_days <- 14:30
+full_days <- 1:30
+
+lin_obs <- data.frame(days = obs_days,
+                       cases = predict(fit_outbreak, data.frame(days = obs_days)),
+                       part = "Observed range (interpolation)")
+lin_extrap_df <- data.frame(days = extrap_days,
+                             cases = predict(fit_outbreak, data.frame(days = extrap_days)),
+                             part = "Beyond observed range (extrapolation)")
+lin_obs$part <- factor(lin_obs$part, levels = c("Observed range (interpolation)", "Beyond observed range (extrapolation)"))
+lin_extrap_df$part <- factor(lin_extrap_df$part, levels = levels(lin_obs$part))
+true_df <- data.frame(days = full_days, cases = 6 * exp(true_rate * full_days))
+
+ggplot() +
+  geom_line(data = true_df, aes(days, cases), color = "grey40", linetype = "dotted", linewidth = 1.1) +
+  geom_line(data = lin_obs, aes(days, cases, linetype = part, color = part), linewidth = 1.3) +
+  geom_line(data = lin_extrap_df, aes(days, cases, linetype = part, color = part), linewidth = 1.3) +
+  geom_point(data = outbreak_df, aes(days, cases)) +
+  geom_vline(xintercept = 14, linetype = "dashed", color = "grey60") +
+  annotate("text", x = 14.3, y = 26500, label = "last observed day", hjust = 0, size = 5, color = "grey40") +
+  annotate("text", x = 20, y = 10000, label = "true trajectory", color = "grey40", size = 5) +
+  scale_color_manual(values = c("Observed range (interpolation)" = "steelblue1", "Beyond observed range (extrapolation)" = "firebrick")) +
+  scale_linetype_manual(values = c("Observed range (interpolation)" = "solid", "Beyond observed range (extrapolation)" = "dashed")) +
+  labs(x = "Day of outbreak", y = "New cases detected", color = NULL, linetype = NULL) +
+  theme_classic(base_size = 14) +
+  theme(legend.position = "top")
+```
+
+```{r}
+lin_pred30 <- predict(fit_outbreak, data.frame(days = 30))
+true_val30 <- 6 * exp(true_rate * 30)
+```
+
+The linear model predicts about `r round(lin_pred30)` cases on day 30. If the outbreak is exponential, the actual count is closer to `r formatC(round(true_val30), big.mark=",", format="d")`, roughly `r round(true_val30/lin_pred30)` times higher! 
+
+Planning surveillance effort, carcass removal capacity, and containment staffing off the linear forecast wouldn't just be a little short, it would leave the response utterly unequipped for the outbreak that actually arrives. A straight line can look fine over a short early window while being catastrophically wrong about where that window leads.
+
+The fix isn't a bigger sample or a better line, it's the right model. Fitting curves and transformations is beyond what this course covers, but recognizing when you need one, by plotting the data and the residuals, is not.
 
 ## Chapter Summary
 
@@ -187,7 +606,6 @@ At 20°C, the model predicts DO of `r round(pred_out[1],2)` mg/L, with a 95% con
 
 -   **The slope is a hypothesis.** $H_0: \beta_1 = 0$ says there is no linear relationship. Testing it uses a $t$-test on the slope divided by its standard error, with $df = n-2$, and it is mechanically identical to testing a correlation coefficient.
 -   **$R^2$ is the effect size.** It partitions variance exactly as ANOVA does, reporting the proportion of variation in $y$ the line accounts for. A relationship can be real ($p$ small) and still explain very little, which is why you report both.
--   **Assumptions are not bookkeeping.** Linearity, independence, constant variance, and roughly normal residuals are what license the test and the predictions. A residuals-versus-fitted plot catches most problems faster than any formal test.
--   **Predict inside your data, not outside it.** Interpolating within the observed range of $x$ is what regression is for. Extrapolating beyond it assumes a linear relationship continues where you have no evidence at all.
--   **This model keeps growing.** Add a categorical group alongside the continuous predictor and the same machinery becomes ANCOVA, which closes out the course in Chapter 11.
-
+-   **Look at your data, then look at your residuals.** Linearity, constant variance, and roughly normal residuals are what the assumptions that must be met. A residuals-versus-fitted plot catches violations a formal test can miss entirely, as the outbreak example showed. Looking at your data, and then looking at your residuals, is the single most important habit in this chapter.
+-   **Predict inside your data; extrapolate beyond with caution.** Interpolating within the observed range of $x$ is what regression is for. Extrapolating beyond it is sometimes justified, but only when you have good reason to believe the relationship stays the same shape past the range you observed.
+-   **A good** $R^2$ can still be the wrong model. The outbreak example fit a straight line to exponential growth and got $R^2=0.82$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast tens of thousands of cases short of reality. The residual plot catches this; a Q-Q plot, which checks a different assumption, does not.

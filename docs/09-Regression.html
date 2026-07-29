@@ -248,13 +248,24 @@ div.csl-indent {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#from-description-to-inference" id="toc-from-description-to-inference" class="nav-link active" data-scroll-target="#from-description-to-inference"><span class="header-section-number">9.1</span> From description to inference</a></li>
-  <li><a href="#the-regression-model" id="toc-the-regression-model" class="nav-link" data-scroll-target="#the-regression-model"><span class="header-section-number">9.2</span> The regression model</a></li>
+  <li><a href="#regression-basics" id="toc-regression-basics" class="nav-link active" data-scroll-target="#regression-basics"><span class="header-section-number">9.1</span> Regression Basics</a>
+  <ul class="collapse">
+  <li><a href="#hypotheses" id="toc-hypotheses" class="nav-link" data-scroll-target="#hypotheses"><span class="header-section-number">9.1.1</span> Hypotheses</a></li>
+  </ul></li>
+  <li><a href="#worked-regression-example-stream-temperature-and-dissolved-oxygen." id="toc-worked-regression-example-stream-temperature-and-dissolved-oxygen." class="nav-link" data-scroll-target="#worked-regression-example-stream-temperature-and-dissolved-oxygen."><span class="header-section-number">9.2</span> Worked regression example: stream temperature and dissolved oxygen.</a>
+  <ul class="collapse">
+  <li><a href="#the-regression-model" id="toc-the-regression-model" class="nav-link" data-scroll-target="#the-regression-model"><span class="header-section-number">9.2.1</span> The regression model</a></li>
+  </ul></li>
   <li><a href="#testing-the-slope" id="toc-testing-the-slope" class="nav-link" data-scroll-target="#testing-the-slope"><span class="header-section-number">9.3</span> Testing the slope</a></li>
   <li><a href="#r-squared-variance-explained" id="toc-r-squared-variance-explained" class="nav-link" data-scroll-target="#r-squared-variance-explained"><span class="header-section-number">9.4</span> R-squared: variance explained</a></li>
-  <li><a href="#checking-assumptions" id="toc-checking-assumptions" class="nav-link" data-scroll-target="#checking-assumptions"><span class="header-section-number">9.5</span> Checking assumptions</a></li>
-  <li><a href="#using-the-model-prediction" id="toc-using-the-model-prediction" class="nav-link" data-scroll-target="#using-the-model-prediction"><span class="header-section-number">9.6</span> Using the model: prediction</a></li>
-  <li><a href="#chapter-summary" id="toc-chapter-summary" class="nav-link" data-scroll-target="#chapter-summary"><span class="header-section-number">9.7</span> Chapter Summary</a></li>
+  <li><a href="#consider-both-significance-and-effect-size" id="toc-consider-both-significance-and-effect-size" class="nav-link" data-scroll-target="#consider-both-significance-and-effect-size"><span class="header-section-number">9.5</span> Consider both significance and effect size</a></li>
+  <li><a href="#checking-assumptions" id="toc-checking-assumptions" class="nav-link" data-scroll-target="#checking-assumptions"><span class="header-section-number">9.6</span> Checking assumptions</a>
+  <ul class="collapse">
+  <li><a href="#sometimes-the-truth-isnt-a-line-at-all" id="toc-sometimes-the-truth-isnt-a-line-at-all" class="nav-link" data-scroll-target="#sometimes-the-truth-isnt-a-line-at-all"><span class="header-section-number">9.6.1</span> Sometimes the truth isn’t a line at all</a></li>
+  <li><a href="#checking-normality" id="toc-checking-normality" class="nav-link" data-scroll-target="#checking-normality"><span class="header-section-number">9.6.2</span> Checking normality</a></li>
+  </ul></li>
+  <li><a href="#using-the-model-prediction" id="toc-using-the-model-prediction" class="nav-link" data-scroll-target="#using-the-model-prediction"><span class="header-section-number">9.7</span> Using the model: prediction</a></li>
+  <li><a href="#chapter-summary" id="toc-chapter-summary" class="nav-link" data-scroll-target="#chapter-summary"><span class="header-section-number">9.8</span> Chapter Summary</a></li>
   </ul>
 <div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/malloryb/statistics_E538/edit/master/09-Regression.qmd" class="toc-action">Edit this page</a></p></div></div></nav>
     </div>
@@ -281,7 +292,7 @@ div.csl-indent {
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">July 28, 2026</p>
+      <p class="date-modified">July 29, 2026</p>
     </div>
   </div>
     
@@ -290,32 +301,112 @@ div.csl-indent {
 
 </header>
 
-<p>Back in the correlation chapter, we fit a best-fit line through a scatterplot of chocolate and happiness, and learned how to compute its slope and intercept from the data. That was a description: given this sample, here is the line that summarizes it. What we could not yet do was ask the inference question that every other test in this book has asked. Is the slope we found in this sample close to what we’d expect from a real population relationship, or is it the kind of thing chance alone could produce? Now that we have hypothesis testing, sampling distributions, and the logic of comparing an observed statistic to a null distribution, we can put the regression line through the same machinery.</p>
-<section id="from-description-to-inference" class="level2" data-number="9.1">
-<h2 data-number="9.1" class="anchored" data-anchor-id="from-description-to-inference"><span class="header-section-number">9.1</span> From description to inference</h2>
-<p>A sample slope is a statistic, and like any statistic, it varies from sample to sample. If we drew a new sample from the same population and fit a new line, we would get a slightly different slope, just by chance. Simple linear regression asks whether the slope we observed is large enough, relative to that sampling variability, to conclude that a real linear relationship exists in the population, rather than one produced by chance alone.</p>
-<p><strong>Example: stream temperature and dissolved oxygen.</strong> Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO) to decline as stream temperature rises. This matters for stream health: low DO can stress or kill fish and invertebrates. Suppose we sample 30 stream sites, measuring water temperature (<c2><b0>C) and dissolved oxygen (mg/L) at each.</b0></c2></p>
+<blockquote class="blockquote">
+<p>Essentially, all models are wrong, but some are useful.<br>
+George E. P. Box</p>
+</blockquote>
+<p>Back in Chapter 2, we used the covariance between two variables to quantify the strength and direction of a relationship (<strong>Pearson’s <span class="math inline">\(r\)</span></strong>), and fit a best-fit line through a scatterplot, learning to compute its slope and intercept from the data. What we couldn’t yet do was ask the <strong>inference question</strong> every other test in this book has asked:</p>
+<p><em>Could chance alone plausibly have produced our result?</em></p>
+<p>Now that we’ve learned hypothesis testing, sampling distributions, and the logic of comparing an observed statistic to a null distribution, we can put the regression line through that same machinery to test whether a given <strong>slope</strong> is evidence of a real relationship.</p>
+<section id="regression-basics" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="regression-basics"><span class="header-section-number">9.1</span> Regression Basics</h2>
+<p>The equation for a linear regression will be familiar, and it’s one of the most heavily used equations in applied science:</p>
+<p><span class="math inline">\(y = \beta_0 + \beta_1 x + \varepsilon\)</span></p>
+<p><em>Slope term</em>: <span class="math inline">\(\beta_1\)</span></p>
+<p><em>Intercept term</em>: <span class="math inline">\(\beta_0\)</span>.</p>
+<p>A linear equation, fit to real data, is a statistical <strong>model</strong>. We never observe <span class="math inline">\(\beta_1\)</span> directly. So, we need one additional term for the <em>residual error</em>, <span class="math inline">\(\varepsilon\)</span>. This is the additional variability in the DV not explained by our model.</p>
+<p><strong>Parameters and sample statistics</strong></p>
+<p>Because it’s a <em>model</em>, our beta coefficients represent the <strong>population parameters</strong>, which you’ll recall come from the inferred, but never truly known, parent distribution.</p>
+<table class="table">
+<colgroup>
+<col style="width: 26%">
+<col style="width: 36%">
+<col style="width: 37%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Symbol</th>
+<th>What is it?</th>
+<th>Do we know it?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(\beta_0, \beta_1\)</span></td>
+<td>True population intercept and slope</td>
+<td>Almost never known for sure</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(b_0, b_1\)</span></td>
+<td>Sample intercept and slope</td>
+<td>Yes, calculated by fitting the line to our data</td>
+</tr>
+</tbody>
+</table>
+<p>What we generate by drawing the best-fit line through our data is a <em>sample slope</em>, usually written <span class="math inline">\(b_1\)</span>.</p>
+<section id="hypotheses" class="level3" data-number="9.1.1">
+<h3 data-number="9.1.1" class="anchored" data-anchor-id="hypotheses"><span class="header-section-number">9.1.1</span> Hypotheses</h3>
+<p>Our null and alternate hypotheses are fairly straightforward:</p>
+<ul>
+<li><p><span class="math inline">\(H_0: \beta_1 = 0\)</span> (there is no linear relationship between the continuous IV and the continuous DV)</p></li>
+<li><p><span class="math inline">\(H_A: \beta_1 \neq 0\)</span> (there is a linear relationship between the variables)</p></li>
+</ul>
+<p><strong>But how to test them formally?</strong></p>
+<p>Recall the “signal over noise” pattern, which is the basis for inference.</p>
+<p><span class="math display">\[
+\text{statistic}=\frac{\text{effect}}{\text{error}}.
+\]</span></p>
+<p>Like any other statistic, <span class="math inline">\(b_1\)</span> varies from sample to sample. If we drew a new sample from the same population and fit a new line, we’d get a slightly different <span class="math inline">\(b_1\)</span>, just by chance. Simple linear regression asks whether the sample slope <span class="math inline">\(b_1\)</span> is large enough, relative to that sampling variability, to conclude that a real linear relationship exists in the population, rather than one produced by chance alone.</p>
+<p>We’ve previously done <span class="math inline">\(t\)</span>-tests on means, but the test statistic can be generated for other values too, in this case, our sample slope:</p>
+<p><span class="math display">\[
+t = \frac{\text{effect}}{\text{standard error}} = \frac{b_1}{SE(b_1)}
+\]</span></p>
+<p>We need just one more thing to get our p-value, our degrees of freedom. In our simple linear regression, one degree of freedom is spent estimating the intercept, one for the slope:</p>
+<p><span class="math inline">\(df = n - 2\)</span></p>
+<p>Comparing our estimated slope to its standard error, we can now quantify the probability our <span class="math inline">\(b_1\)</span> estimate could have occured by chance alone under the null hypothesis.</p>
+</section>
+</section>
+<section id="worked-regression-example-stream-temperature-and-dissolved-oxygen." class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="worked-regression-example-stream-temperature-and-dissolved-oxygen."><span class="header-section-number">9.2</span> Worked regression example: stream temperature and dissolved oxygen.</h2>
+<p>Let’s work through an example. Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO) to decline as stream temperature rises. This matters for stream health: low DO can stress or kill fish and invertebrates. Suppose we sample 40 stream sites, measuring water temperature (°C) and dissolved oxygen (mg/L) at each.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-10regscatter" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="09-Regression_files/figure-html/fig-10regscatter-1.png" class="img-fluid figure-img" style="width:75.0%"></p>
-<figcaption class="figure-caption">Figure&nbsp;9.1: Stream temperature and dissolved oxygen at 30 sample sites, with the fitted regression line.</figcaption>
+<figcaption class="figure-caption">Figure&nbsp;9.1: Stream temperature and dissolved oxygen at 40 sample sites, with the fitted regression line.</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>The scatterplot in <a href="#fig-10regscatter">Figure&nbsp;<span>9.1</span></a> shows a clear downward trend. The question this chapter answers: is that trend real, or could a sample of 30 sites show a downward-sloping line like this even if temperature and DO were unrelated in the population?</p>
-</section>
-<section id="the-regression-model" class="level2" data-number="9.2">
-<h2 data-number="9.2" class="anchored" data-anchor-id="the-regression-model"><span class="header-section-number">9.2</span> The regression model</h2>
+<p>The scatterplot in <a href="#fig-10regscatter">Figure&nbsp;<span>9.1</span></a> shows a clear downward trend. Just from the graph, we can guess a couple of things:</p>
+<ul>
+<li><p>Pearson’s <span class="math inline">\(r\)</span> should be negative, since DO falls as temperature rises</p></li>
+<li><p>It should sit fairly close to <span class="math inline">\(-1\)</span> since the points hug the line with only modest scatter.</p></li>
+</ul>
+<p>Before now, we didn’t have a way to test whether an <span class="math inline">\(r\)</span> that size is more than chance would produce, only how to compute it. Regression adds that missing piece by writing that observed relationship as a model we can test.</p>
+<section id="the-regression-model" class="level3" data-number="9.2.1">
+<h3 data-number="9.2.1" class="anchored" data-anchor-id="the-regression-model"><span class="header-section-number">9.2.1</span> The regression model</h3>
 <p>We model dissolved oxygen as a linear function of stream temperature, plus error:</p>
 <p><span class="math display">\[DO = \beta_0 + \beta_1(\text{Temperature}) + \varepsilon\]</span></p>
-<p>Here <span class="math inline">\(\beta_0\)</span> is the population intercept, <span class="math inline">\(\beta_1\)</span> is the population slope, and <span class="math inline">\(\varepsilon\)</span> is the error, the part of DO that temperature alone doesn’t explain. We don’t know <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span>; we estimate them from the sample as <span class="math inline">\(b_0\)</span> and <span class="math inline">\(b_1\)</span>, using the same least-squares logic from the correlation chapter (the line that minimizes the sum of squared residuals).</p>
-<p>In R, this is a single line:</p>
+<p><span class="math inline">\(\beta_0\)</span> is the population intercept, <span class="math inline">\(\beta_1\)</span> is the population slope, and <span class="math inline">\(\varepsilon\)</span> is the error, the part of DO that temperature alone doesn’t explain.</p>
+<p>We don’t know <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span>; we estimate them from the sample as <span class="math inline">\(b_0\)</span> and <span class="math inline">\(b_1\)</span>, using the same least-squares logic from Chapter 2 (the line that minimizes the sum of squared residuals).</p>
+<p>In R, this is a single line of code:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(DO <span class="sc">~</span> stream_temp, <span class="at">data =</span> stream_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>This fitted line (<a href="#fig-10regresidviz">Figure&nbsp;<span>9.2</span></a>) is the best-fit line that minimizes the total squared distance between the data and the line.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-10regresidviz" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="09-Regression_files/figure-html/fig-10regresidviz-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Scatter plot of dissolved oxygen against stream temperature with a fitted downward-sloping line. Open circles mark each point's predicted value on the line, and a red vertical segment connects each observed point to its prediction."></p>
+<figcaption class="figure-caption">Figure&nbsp;9.2: Stream temperature and dissolved oxygen with the fitted line. Vertical red segments are residuals.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Here’s the table of model coefficients R gives us.</p>
 <div class="cell">
 <div class="cell-output-display">
 <table data-quarto-postprocess="true" class="table table-sm table-striped small">
@@ -334,21 +425,21 @@ div.csl-indent {
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">(Intercept)</td>
-<td style="text-align: right;">14.418</td>
-<td style="text-align: right;">0.615</td>
-<td style="text-align: right;">23.430</td>
+<td style="text-align: right;">13.40</td>
+<td style="text-align: right;">0.73</td>
+<td style="text-align: right;">18.44</td>
 <td style="text-align: left;">&lt; .001</td>
-<td style="text-align: right;">13.158</td>
-<td style="text-align: right;">15.679</td>
+<td style="text-align: right;">11.93</td>
+<td style="text-align: right;">14.87</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">stream_temp</td>
-<td style="text-align: right;">-0.318</td>
-<td style="text-align: right;">0.034</td>
-<td style="text-align: right;">-9.453</td>
+<td style="text-align: right;">-0.27</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">-6.72</td>
 <td style="text-align: left;">&lt; .001</td>
-<td style="text-align: right;">-0.387</td>
-<td style="text-align: right;">-0.249</td>
+<td style="text-align: right;">-0.35</td>
+<td style="text-align: right;">-0.19</td>
 </tr>
 </tbody>
 </table>
@@ -356,39 +447,49 @@ div.csl-indent {
 
 </div>
 </div>
-<p>Reading the table: the fitted line is <span class="math inline">\(\widehat{DO} = 14.42 - 0.32 \times \text{Temperature}\)</span>. The intercept (<span class="math inline">\(b_0 = 14.42\)</span>) is the model’s predicted DO at 0<c2><b0>C, technically part of the model but outside the range of temperatures we actually sampled (10 to 24<c2><b0>C), so we won’t lean on it for interpretation. The slope (<span class="math inline">\(b_1 = -0.32\)</span>) is the part we care about: for every 1<c2><b0>C increase in stream temperature, predicted dissolved oxygen drops by about 0.32 mg/L.</b0></c2></b0></c2></b0></c2></p>
+<p>With the results of the regression, we can get an equation for the fitted line:</p>
+<p><span class="math inline">\(\widehat{DO} = 13.4 - 0.27 \times \text{Temperature}\)</span>.</p>
+<p>The hat over <span class="math inline">\(DO\)</span> marks it as a <em>predicted</em> value, what the model outputs for a given temperature, as distinct from an actually observed <span class="math inline">\(DO\)</span> measurement.</p>
+<p>The “estimate” column in our regression model output for the intercept and the slope are <span class="math inline">\(b_0\)</span> and <span class="math inline">\(b_1\)</span>, not <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span>. Recall this line is our model’s estimate from this one sample, not the true population line, which we never actually observe.</p>
+<p>The intercept (<span class="math inline">\(b_0 = 13.4\)</span>) is the model’s predicted DO at 0°C, technically part of the model but outside the range of temperatures we actually sampled (10 to 24°C), so we won’t lean on it for interpretation.</p>
+<p>The slope (<span class="math inline">\(b_1 = -0.27\)</span>) is the part we care about most: for every 1°C increase in stream temperature, predicted dissolved oxygen drops by about 0.27 mg/L.</p>
+</section>
 </section>
 <section id="testing-the-slope" class="level2" data-number="9.3">
 <h2 data-number="9.3" class="anchored" data-anchor-id="testing-the-slope"><span class="header-section-number">9.3</span> Testing the slope</h2>
-<p>The slope <span class="math inline">\(b_1\)</span> is a sample estimate. The hypothesis test asks whether the population slope <span class="math inline">\(\beta_1\)</span> could plausibly be zero, that is, whether temperature and DO are linearly unrelated.</p>
+<p>The slope <span class="math inline">\(b_1\)</span> is a sample estimate. Recall the hypothesis test asks whether the population slope <span class="math inline">\(\beta_1\)</span> could plausibly be zero:</p>
 <ul>
-<li><span class="math inline">\(H_0: \beta_1 = 0\)</span> (no linear relationship between stream temperature and dissolved oxygen)</li>
-<li><span class="math inline">\(H_A: \beta_1 \neq 0\)</span> (there is a linear relationship)</li>
+<li><p><span class="math inline">\(H_0: \beta_1 = 0\)</span> (no linear relationship between stream temperature and dissolved oxygen)</p></li>
+<li><p><span class="math inline">\(H_A: \beta_1 \neq 0\)</span> (there is a linear relationship)</p></li>
 </ul>
-<p>The test statistic compares the estimated slope to its standard error:</p>
-<p><span class="math display">\[t = \frac{b_1}{SE(b_1)} = \frac{-0.318}{0.034} = -9.45\]</span></p>
-<p>with <span class="math inline">\(df = n - 2 = 28\)</span> (one degree of freedom spent estimating the intercept, one for the slope). From the coefficient table above, <span class="math inline">\(t = -9.45\)</span>, <span class="math inline">\(p &lt; .001\)</span>. This crosses the conventional <span class="math inline">\(\alpha = .05\)</span> threshold, so we reject <span class="math inline">\(H_0\)</span>: stream temperature is linearly related to dissolved oxygen.</p>
-<p>The 95% confidence interval for the slope, also in the table, runs from -0.387 to -0.249 mg/L per <c2><b0>C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will.</b0></c2></p>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p><strong>The same test in different clothes.</strong> This is the correlation test from Chapter 2, just written differently. Testing <span class="math inline">\(H_0: \beta_1 = 0\)</span> for the slope and testing <span class="math inline">\(H_0: \rho = 0\)</span> for the correlation coefficient give the identical <span class="math inline">\(t\)</span>-statistic and identical <span class="math inline">\(p\)</span>-value. Regression and correlation are two views of the same underlying relationship: correlation asks how strongly two variables move together, and regression additionally lets us write down an equation and make predictions.</p>
+<p>This <span class="math inline">\(t\)</span>-test for the regression slope, unlike the tests in earlier chapters, doesn’t need a separate function call: <code>lm()</code> computes it automatically the moment you fit the model. You the get whole coefficient table, <code>Std. Error</code>, <span class="math inline">\(t\)</span>, and <span class="math inline">\(p\)</span>, all at once.</p>
+<p>Recall the test statistic compares the estimated slope to its standard error, the <code>Std. Error</code> column already in the coefficient table above, which measures how much <span class="math inline">\(b_1\)</span> would bounce around from sample to sample if we repeated this study over and over:</p>
+<p><span class="math display">\[t = \frac{b_1}{SE(b_1)} = \frac{-0.271}{0.04} = -6.72\]</span></p>
+<p>with <span class="math inline">\(df = n - 2 = 38\)</span> (one degree of freedom spent estimating the intercept, one for the slope).</p>
+<p><strong>Where the <span class="math inline">\(p\)</span>-value comes from.</strong> If temperature and DO were truly unrelated in the population, repeating this study many times would still produce a nonzero <span class="math inline">\(b_1\)</span> just by chance, and a <span class="math inline">\(t\)</span>-statistic that follows a <span class="math inline">\(t\)</span>-distribution with <span class="math inline">\(df = 38\)</span>. <a href="#fig-10regslopenull">Figure&nbsp;<span>9.3</span></a> shows that distribution, with the critical values marking the boundary of the most extreme 5% under <span class="math inline">\(H_0\)</span>, and our observed <span class="math inline">\(t\)</span> marked against it.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-10regslopenull" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="09-Regression_files/figure-html/fig-10regslopenull-1.png" class="img-fluid figure-img" style="width:75.0%" alt="A t-distribution centered at zero with 38 degrees of freedom. Both tails beyond the critical values around plus or minus 2.02 are shaded and labeled as the rejection region, with the middle labeled retain H0. A vertical red line marks the observed t of about negative 6.72, far to the left of the critical value, labeled directly on the plot."></p>
+<figcaption class="figure-caption">Figure&nbsp;9.3: The null distribution of t for the slope test at df=38. Shaded tails are the rejection region at alpha=.05; the dashed line marks our observed t, far into the left tail.</figcaption>
+</figure>
 </div>
 </div>
+</div>
+<p>Our observed <span class="math inline">\(t = -6.72\)</span> sits far past the critical values of about <span class="math inline">\(\pm 2.02\)</span>, well outside where 95% of <span class="math inline">\(t\)</span>-values would fall if temperature and DO were unrelated. The <span class="math inline">\(p\)</span>-value is just the probability of landing that far out (or farther) in either tail under <span class="math inline">\(H_0\)</span>: here, <span class="math inline">\(p &lt; .001\)</span>, meaning essentially never. This crosses the conventional <span class="math inline">\(\alpha = .05\)</span> threshold.</p>
+<p>We <strong>reject</strong> <span class="math inline">\(H_0\)</span>: stream temperature <strong>is</strong> linearly related to dissolved oxygen.</p>
+<p>The 95% confidence interval for the slope, also in the coefficient table above, runs from -0.353 to -0.189 mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will.</p>
 </section>
 <section id="r-squared-variance-explained" class="level2" data-number="9.4">
 <h2 data-number="9.4" class="anchored" data-anchor-id="r-squared-variance-explained"><span class="header-section-number">9.4</span> R-squared: variance explained</h2>
+<p>After fitting a linear regression model, you also need to determine how well the model fits the data. Does it do a good job of explaining changes in the dependent variable?</p>
+<p><strong>R-squared</strong> is a goodness-of-fit measure for linear regression models. It tells us the percentage of the variance in the dependent variable that the independent variables explain collectively. R-squared measures the strength of the relationship between your model and the dependent variable on a convenient 0 – 100% scale.</p>
 <p>Just as one-way ANOVA in the last chapter partitioned total variability into a between-groups piece and a within-groups piece, regression partitions the total variability in <span class="math inline">\(Y\)</span> into a piece explained by the line and a piece left over as residual error:</p>
 <p><span class="math display">\[SS_{Total} = SS_{Regression} + SS_{Residual}\]</span></p>
 <p><span class="math inline">\(R^2\)</span> is the proportion of that total variability the line accounts for:</p>
 <p><span class="math display">\[R^2 = \frac{SS_{Regression}}{SS_{Total}}\]</span></p>
+<p>For simple regression with one predictor, <span class="math inline">\(R^2\)</span> is literally Pearson’s <span class="math inline">\(r\)</span> from Chapter 2, squared: <span class="math inline">\((-0.737)^2 = 0.543\)</span>, matching the model’s <span class="math inline">\(R^2\)</span> below exactly.</p>
 <div class="cell">
 <div class="cell-output-display">
 <table data-quarto-postprocess="true" class="table table-sm table-striped small">
@@ -406,10 +507,10 @@ Note
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">value</td>
-<td style="text-align: right;">0.761</td>
-<td style="text-align: right;">89.36</td>
+<td style="text-align: right;">0.543</td>
+<td style="text-align: right;">45.09</td>
 <td style="text-align: right;">1</td>
-<td style="text-align: right;">28</td>
+<td style="text-align: right;">38</td>
 <td style="text-align: left;">&lt; .001</td>
 </tr>
 </tbody>
@@ -418,30 +519,119 @@ Note
 
 </div>
 </div>
-<p>Here <span class="math inline">\(R^2 = 0.76\)</span>: stream temperature accounts for about 76% of the variation we observed in dissolved oxygen across sites. The remaining variation comes from everything else the model doesn’t capture (discharge, shading, groundwater input, and so on), folded into <span class="math inline">\(\varepsilon\)</span>.</p>
-<p><span class="math inline">\(R^2\)</span> is regression’s effect size. A relationship can be tested (is <span class="math inline">\(\beta_1\)</span> significantly different from 0?) and separately sized (how much of the variation does it actually explain?), the same distinction Chapter 5 introduced for Cohen’s <span class="math inline">\(d\)</span> and that eta-squared makes for ANOVA. A small sample can produce a significant slope that explains very little variance; <span class="math inline">\(R^2\)</span> is what tells you whether the relationship is worth acting on, not just whether it’s real.</p>
+<p>The table also reports <span class="math inline">\(F\)</span>, <span class="math inline">\(df1\)</span>, and <span class="math inline">\(df2\)</span>. With one predictor, <span class="math inline">\(F\)</span> and <span class="math inline">\(t\)</span> test the exact same thing: <span class="math inline">\(F = t^2 = -6.72^2 = 45.09\)</span>, matching the table. ANOVA reports its omnibus test this same way, and <span class="math inline">\(F\)</span> is the form that generalizes once more than one predictor is involved, which comes up shortly.</p>
+<p>Here <span class="math inline">\(R^2 = 0.54\)</span>: stream temperature accounts for about 54% of the variation we observed in dissolved oxygen across sites. The remaining variation comes from everything else the model doesn’t capture (discharge, shading, groundwater input, and so on), folded into <span class="math inline">\(\varepsilon\)</span>.</p>
+<p><strong>Reporting the result.</strong> We report a regression result the same way as any other test: the slope, the test statistic, degrees of freedom, and <span class="math inline">\(p\)</span>, plus <span class="math inline">\(R^2\)</span> as the effect size.</p>
+<blockquote class="blockquote">
+<p>Dissolved oxygen declined significantly with stream temperature, <span class="math inline">\(b_1 = -0.27\)</span>, <span class="math inline">\(t(38) = -6.72\)</span>, <span class="math inline">\(p &lt; .001\)</span>, <span class="math inline">\(R^2 = 0.54\)</span>.</p>
+</blockquote>
 </section>
-<section id="checking-assumptions" class="level2" data-number="9.5">
-<h2 data-number="9.5" class="anchored" data-anchor-id="checking-assumptions"><span class="header-section-number">9.5</span> Checking assumptions</h2>
+<section id="consider-both-significance-and-effect-size" class="level2" data-number="9.5">
+<h2 data-number="9.5" class="anchored" data-anchor-id="consider-both-significance-and-effect-size"><span class="header-section-number">9.5</span> Consider both significance and effect size</h2>
+<p>As with all our tests, our significance test isn’t the whole picture. In addition to testing our slope (is <span class="math inline">\(\beta_1\)</span> significantly different from 0?), we also consider <span class="math inline">\(R^2\)</span>, which is regression’s <strong>effect size</strong>.</p>
+<p>The two don’t move together the way intuition suggests.</p>
+<p>A <strong>very large sample</strong>, the kind common in remote sensing and other big-data environmental work, can make a trivial effect statistically significant: more observations shrink the standard error until almost any nonzero slope clears <span class="math inline">\(p&lt;.05\)</span>, no matter how little variance it explains.</p>
+<p>A <strong>small sample</strong> tends to fail the opposite way, missing a real, sizeable effect because the standard error is too large for it to reach significance.</p>
+<p><span class="math inline">\(R^2\)</span> is what tells you how much of the variation is actually being explained.</p>
+<p>Neither <span class="math inline">\(p\)</span> alone nor <span class="math inline">\(R^2\)</span> alone tells the whole story, so we must report both.</p>
+<p><a href="#fig-10regeffectpanels">Figure&nbsp;<span>9.4</span></a> shows all three combinations this can produce: a strong relationship with a non-significant slope (underpowered), a weak relationship with a significant slope (a large sample), and a relationship that is both strong and significant.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-10regeffectpanels" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="09-Regression_files/figure-html/fig-10regeffectpanels-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Three scatter plots with fitted lines. The left panel shows a steep, tight relationship with few points and a non-significant p-value. The middle panel shows a nearly flat, scattered relationship with many points and a significant p-value. The right panel shows a steep, tight relationship with many points and a significant p-value."></p>
+<figcaption class="figure-caption">Figure&nbsp;9.4: R-squared and the slope’s p-value can disagree. Left: a strong relationship (high R-squared) that isn’t statistically significant. Middle: a weak relationship (low R-squared) that is significant anyway. Right: strong and significant together.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>How big is a “good” <span class="math inline">\(R^2\)</span>?</strong> It depends on the field. In studies of human behavior, where dozens of unmeasured factors shape any outcome, an <span class="math inline">\(R^2\)</span> of 0.20 is a genuinely strong result. Environmental systems tend toward more direct physical relationships, so 0.5-0.8 for a well-chosen single predictor isn’t unusual. An <span class="math inline">\(R^2\)</span> that looks <em>too</em> good, say 0.98, from one predictor in a noisy field system, is itself worth a second look: it’s more often a sign of a setup problem than something to celebrate.</p>
+</div>
+</div>
+</section>
+<section id="checking-assumptions" class="level2" data-number="9.6">
+<h2 data-number="9.6" class="anchored" data-anchor-id="checking-assumptions"><span class="header-section-number">9.6</span> Checking assumptions</h2>
 <p>Simple linear regression assumes:</p>
 <ul>
-<li><strong>Linearity</strong>: the true relationship between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> is a straight line.</li>
-<li><strong>Independence</strong>: observations don’t influence each other (the universal assumption from Chapter 6, still not something you list when asked to enumerate a test’s specific assumptions, but always worth checking your study design against).</li>
-<li><strong>Constant variance (homoscedasticity)</strong>: the spread of residuals is roughly the same across the whole range of <span class="math inline">\(X\)</span>.</li>
-<li><strong>Normality of residuals</strong>: the residuals are approximately normally distributed.</li>
+<li><p><strong>Linearity</strong>: the true relationship between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> is a straight line.</p></li>
+<li><p><strong>Constant variance (homoscedasticity)</strong>: the spread of residuals is roughly the same across the whole range of <span class="math inline">\(X\)</span>.</p></li>
+<li><p><strong>Normality of residuals</strong>: the residuals are approximately normally distributed.</p></li>
 </ul>
-<p>The most useful diagnostic is a residuals-versus-fitted plot:</p>
+<section id="sometimes-the-truth-isnt-a-line-at-all" class="level3" data-number="9.6.1">
+<h3 data-number="9.6.1" class="anchored" data-anchor-id="sometimes-the-truth-isnt-a-line-at-all"><span class="header-section-number">9.6.1</span> Sometimes the truth isn’t a line at all</h3>
+<blockquote class="blockquote">
+<p>You can do linear regression without thinking about whether the phenomenon you’re modeling is actually close to linear. But you shouldn’t.<br>
+Jordan Ellenberg, <em>How Not to Be Wrong</em></p>
+</blockquote>
+<p>A straight line is not guaranteed to be the right shape for your data, and the two assumptions above have two different failure signatures on this one plot: a curve means linearity is violated, a funnel shape means constant variance is violated. The most useful diagnostic for catching either is a residuals-versus-fitted plot:</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-10regresid" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="09-Regression_files/figure-html/fig-10regresid-1.png" class="img-fluid figure-img" style="width:75.0%"></p>
-<figcaption class="figure-caption">Figure&nbsp;9.2: Residuals versus fitted values for the stream temperature model. A random scatter around zero, with no funnel shape or curve, supports linearity and constant variance.</figcaption>
+<figcaption class="figure-caption">Figure&nbsp;9.5: Residuals versus fitted values for the stream temperature model. A random scatter around zero, with no funnel shape or curve, supports linearity and constant variance.</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-10regresid">Figure&nbsp;<span>9.2</span></a> shows what we want to see: residuals scattered evenly above and below zero, with no curve (which would suggest the true relationship isn’t linear) and no funnel shape (which would suggest variance changes across the range of <span class="math inline">\(X\)</span>). For normality, we check the residuals directly:</p>
+<p><a href="#fig-10regresid">Figure&nbsp;<span>9.5</span></a>, for our stream temperature data, shows what we want to see: residuals scattered evenly above and below zero, with no curve (which would suggest the true relationship isn’t linear) and no funnel shape (which would suggest variance changes systematically across the range of <span class="math inline">\(X\)</span>).</p>
+<p>Let’s try checking residuals for a different set of data, this time on avian influenza cases over time.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-10outbreakfit" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="09-Regression_files/figure-html/fig-10outbreakfit-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Scatter plot of new cases per day against day of outbreak, with a fitted straight regression line. Points curve gently above and below the line."></p>
+<figcaption class="figure-caption">Figure&nbsp;9.6: New avian influenza cases per day, days 1-14 of an outbreak, with a fitted straight line.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>A straight line fit to these 14 days gives <span class="math inline">\(R^2 = 0.81\)</span> and <span class="math inline">\(p &lt; .001\)</span>, which by the benchmark from a couple pages back looks like a solid, significant fit for a field system. Nothing about those numbers alone raises a flag.</p>
+<p><strong>Check it properly.</strong> The residuals-versus-fitted plot tells a different story than the <span class="math inline">\(R^2\)</span> and slope test did.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-10outbreakresid" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="09-Regression_files/figure-html/fig-10outbreakresid-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Residuals plotted against fitted values. The residuals form a clear U-shaped curve: negative in the middle, positive at both low and high fitted values, rather than scattering randomly around zero."></p>
+<figcaption class="figure-caption">Figure&nbsp;9.7: Residuals versus fitted values for the linear outbreak model. A clear U-shape, not random scatter, is the signature of a nonlinear relationship forced into a straight line.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>That U-shape is unambiguous: the line underpredicts early and late in the outbreak and overpredicts in the middle, exactly what you’d see forcing a straight line through a curve.</p>
+<p>If a residual plot curves rather than scattering randomly, that’s the model telling you a straight line is the wrong tool.</p>
+<p>Fixes typically include:</p>
+<ul>
+<li>a different model (often adding a polynomial term)</li>
+<li>a transformation, re-expressing a variable on a different scale so a straight line fits it (log-transforming a variable that grows multiplicatively, like the outbreak data below, is the most common case)</li>
+<li>or a nonlinear model entirely, beyond what this course covers</li>
+</ul>
+</section>
+<section id="checking-normality" class="level3" data-number="9.6.2">
+<h3 data-number="9.6.2" class="anchored" data-anchor-id="checking-normality"><span class="header-section-number">9.6.2</span> Checking normality</h3>
+<p>For normality, we check the residuals two ways: visually, with a <strong>Q-Q plot</strong>, and formally, with the <strong>Shapiro-Wilk test</strong>.</p>
+<p>A Q-Q plot sorts the residuals and compares them to where a perfectly normal distribution would place values at the same percentiles. If the residuals are normal, the points fall close to the diagonal line; a systematic curve or S-shape means they don’t.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-10regqq" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="09-Regression_files/figure-html/fig-10regqq-1.png" class="img-fluid figure-img" style="width:75.0%" alt="A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality."></p>
+<figcaption class="figure-caption">Figure&nbsp;9.8: Normal Q-Q plot of the stream temperature model’s residuals. Points close to the diagonal support normality.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><a href="#fig-10regqq">Figure&nbsp;<span>9.8</span></a> looks close to straight, consistent with normal residuals. Shapiro-Wilk asks the same question formally: <span class="math inline">\(H_0\)</span> is that the residuals come from a normal distribution, so a small <span class="math inline">\(p\)</span>-value is the evidence against normality.</p>
 <div class="cell">
 <div class="cell-output-display">
 <table data-quarto-postprocess="true" class="table table-sm table-striped small">
@@ -454,8 +644,8 @@ Note
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">0.97</td>
-<td style="text-align: left;">0.658</td>
+<td style="text-align: right;">0.99</td>
+<td style="text-align: left;">0.987</td>
 </tr>
 </tbody>
 </table>
@@ -463,15 +653,29 @@ Note
 
 </div>
 </div>
-<p>The residuals don’t depart from normality here (<span class="math inline">\(p 0.658\)</span>). As with any formal normality test, treat this as one piece of evidence alongside the residual plot, not a strict gate. Shapiro-Wilk has the least power to detect real departures exactly when the sample is small, which is exactly when a visual check matters most.</p>
+<p>The residuals don’t depart from normality here (<span class="math inline">\(p = 0.987\)</span>). As with any formal normality test, treat this as one piece of evidence alongside the Q-Q plot and residual plot, not a strict gate. Shapiro-Wilk has the least power to detect real departures exactly when the sample is small, which is exactly when the visual checks matter most.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-10outbreakqq" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="09-Regression_files/figure-html/fig-10outbreakqq-1.png" class="img-fluid figure-img" style="width:75.0%" alt="A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality."></p>
+<figcaption class="figure-caption">Figure&nbsp;9.9: Normal Q-Q plot of the same residuals. They fall close to the diagonal, so this diagnostic alone would not have flagged the problem.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Consider the avian influenza data. The Q-Q plot looks close to straight, and Shapiro-Wilk agrees (<span class="math inline">\(p = 0.060\)</span>, not significant). The Q-Q plot and Shapiro-Wilk test check <strong>normality of the residuals</strong>, a different assumption than linearity, and a model can badly violate linearity while its residuals still look roughly normal.</p>
 </section>
-<section id="using-the-model-prediction" class="level2" data-number="9.6">
-<h2 data-number="9.6" class="anchored" data-anchor-id="using-the-model-prediction"><span class="header-section-number">9.6</span> Using the model: prediction</h2>
-<p>Once we’ve confirmed a real linear relationship, the fitted equation lets us predict DO at any stream temperature. For example, at 20<c2><b0>C:</b0></c2></p>
+</section>
+<section id="using-the-model-prediction" class="level2" data-number="9.7">
+<h2 data-number="9.7" class="anchored" data-anchor-id="using-the-model-prediction"><span class="header-section-number">9.7</span> Using the model: prediction</h2>
+<p>Once we’ve confirmed a real linear relationship, the fitted equation lets us predict DO at any stream temperature. Plugging temperature into the fitted line directly gives the prediction: at 20°C,</p>
+<p><span class="math display">\[\widehat{DO} = b_0 + b_1(20) = 13.4 + (-0.27)(20) = 7.98\]</span></p>
+<p>R gives the same number, along with a confidence interval:</p>
 <div class="cell">
 <div class="cell-output-display">
 <table data-quarto-postprocess="true" class="table table-sm table-striped small">
-<caption>Predicted dissolved oxygen at 20C, with 95% confidence interval</caption>
+<caption>Predicted dissolved oxygen at 20°C, with 95% confidence interval</caption>
 <thead>
 <tr class="header">
 <th style="text-align: right;" data-quarto-table-cell-role="th">Stream temperature</th>
@@ -483,9 +687,9 @@ Note
 <tbody>
 <tr class="odd">
 <td style="text-align: right;">20</td>
-<td style="text-align: right;">8.05</td>
-<td style="text-align: right;">7.74</td>
-<td style="text-align: right;">8.36</td>
+<td style="text-align: right;">7.98</td>
+<td style="text-align: right;">7.59</td>
+<td style="text-align: right;">8.37</td>
 </tr>
 </tbody>
 </table>
@@ -493,18 +697,54 @@ Note
 
 </div>
 </div>
-<p>At 20<c2><b0>C, the model predicts DO of 8.05 mg/L, with a 95% confidence interval from 7.74 to 8.36. Notice that 20<c2><b0>C falls inside our sampled range of 10 to 24<c2><b0>C, this is interpolation, and it’s what regression is good for. Predicting DO at, say, 35<c2><b0>C would be extrapolation: nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction.</b0></c2></b0></c2></b0></c2></b0></c2></p>
+<p>At 20°C, the model predicts DO of 7.98 mg/L, with a 95% confidence interval from 7.59 to 8.37. Notice that 20°C falls inside our sampled range of 10 to 24°C, this is interpolation, and it’s what regression is good for. Predicting DO at, say, 35°C would be extrapolation: nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. <a href="#fig-10regextrap">Figure&nbsp;<span>9.10</span></a> shows both zones on the same line.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-10regextrap" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="09-Regression_files/figure-html/fig-10regextrap-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Scatter plot of dissolved oxygen against stream temperature. A solid blue line covers the observed range from 10 to 24 degrees C, and a dashed red line extends the same fitted trend below and above that range."></p>
+<figcaption class="figure-caption">Figure&nbsp;9.10: The fitted line within the observed temperature range (solid blue, interpolation) and extended beyond it in both directions (dashed red, extrapolation). Dotted grey lines mark the edges of the observed data, 10 to 24°C.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Regression is used for extrapolation all the time, and often reasonably: a well-understood physical process can justify projecting a line beyond the data you happened to collect. Extrapolating a straight line is only safe if the true relationship actually stays straight past the range you observed.</p>
+<p>The problem is that a narrow window of data can’t tell you which kind of curve you’re actually on. <a href="#fig-10curveshapes">Figure&nbsp;<span>9.11</span></a> shows four very different relationships, exponential growth, a sigmoid, a hump-shaped curve, and a truly straight line, each with the same short observed window highlighted in blue. The fitted line (dashed red) extrapolated based on the observed data is also exactly the same for all 4 panels, it just looks different because the y-axis scales are different. Once you see the full curve (grey), you can see how badly linear extrapolation beyond the range of observed data would perform in each case.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-10curveshapes" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="09-Regression_files/figure-html/fig-10curveshapes-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Four panels: exponential, sigmoid, hump-shaped, and linear curves. In each, a short initial segment is highlighted in blue and looks nearly straight. A dashed red line extends that local trend across the full range. The full grey curve shows the true shape, which diverges sharply from the dashed line except in the linear panel, where the two coincide."></p>
+<figcaption class="figure-caption">Figure&nbsp;9.11: Four different true relationships that all look locally linear over a short observed window (blue). A line fit to that window (dashed red) extrapolates identically well in each panel, but only the genuinely linear case stays correct once the full curve (grey) is revealed.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>To make this a bit more concrete, suppose officials use the linear fitted line from our example above to project avian influenza cases at day 30, well past the 14 days observed.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-10outbreakextrap" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="09-Regression_files/figure-html/fig-10outbreakextrap-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Line graph of cases against day of outbreak from day 1 to day 30. A solid blue line and observed points cover days 1 through 14. A dashed red line continues the same linear trend from day 14 to day 30, staying low. A dotted grey curve shows the true exponential trajectory, which rises steeply and dramatically outpaces the dashed line by day 30."></p>
+<figcaption class="figure-caption">Figure&nbsp;9.12: The linear fit extended (dashed) past the observed range, against the true exponential trajectory (dotted grey). The straight line badly underestimates how large the outbreak actually becomes.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The linear model predicts about 530 cases on day 30. If the outbreak is exponential, the actual count is closer to 26,682, roughly 50 times higher!</p>
+<p>Planning surveillance effort, carcass removal capacity, and containment staffing off the linear forecast wouldn’t just be a little short, it would leave the response utterly unequipped for the outbreak that actually arrives. A straight line can look fine over a short early window while being catastrophically wrong about where that window leads.</p>
+<p>The fix isn’t a bigger sample or a better line, it’s the right model. Fitting curves and transformations is beyond what this course covers, but recognizing when you need one, by plotting the data and the residuals, is not.</p>
 </section>
-<section id="chapter-summary" class="level2" data-number="9.7">
-<h2 data-number="9.7" class="anchored" data-anchor-id="chapter-summary"><span class="header-section-number">9.7</span> Chapter Summary</h2>
+<section id="chapter-summary" class="level2" data-number="9.8">
+<h2 data-number="9.8" class="anchored" data-anchor-id="chapter-summary"><span class="header-section-number">9.8</span> Chapter Summary</h2>
 <p><strong>Why it matters.</strong> Regression is where description becomes inference. Chapter 2 drew a best-fit line through a scatterplot; this chapter turns that line into something you can test, quantify, and make predictions from.</p>
 <p><strong>Core ideas</strong></p>
 <ul>
 <li><strong>The slope is a hypothesis.</strong> <span class="math inline">\(H_0: \beta_1 = 0\)</span> says there is no linear relationship. Testing it uses a <span class="math inline">\(t\)</span>-test on the slope divided by its standard error, with <span class="math inline">\(df = n-2\)</span>, and it is mechanically identical to testing a correlation coefficient.</li>
 <li><strong><span class="math inline">\(R^2\)</span> is the effect size.</strong> It partitions variance exactly as ANOVA does, reporting the proportion of variation in <span class="math inline">\(y\)</span> the line accounts for. A relationship can be real (<span class="math inline">\(p\)</span> small) and still explain very little, which is why you report both.</li>
-<li><strong>Assumptions are not bookkeeping.</strong> Linearity, independence, constant variance, and roughly normal residuals are what license the test and the predictions. A residuals-versus-fitted plot catches most problems faster than any formal test.</li>
-<li><strong>Predict inside your data, not outside it.</strong> Interpolating within the observed range of <span class="math inline">\(x\)</span> is what regression is for. Extrapolating beyond it assumes a linear relationship continues where you have no evidence at all.</li>
-<li><strong>This model keeps growing.</strong> Add a categorical group alongside the continuous predictor and the same machinery becomes ANCOVA, which closes out the course in Chapter 11.</li>
+<li><strong>Look at your data, then look at your residuals.</strong> Linearity, constant variance, and roughly normal residuals are what the assumptions that must be met. A residuals-versus-fitted plot catches violations a formal test can miss entirely, as the outbreak example showed. Looking at your data, and then looking at your residuals, is the single most important habit in this chapter.</li>
+<li><strong>Predict inside your data; extrapolate beyond with caution.</strong> Interpolating within the observed range of <span class="math inline">\(x\)</span> is what regression is for. Extrapolating beyond it is sometimes justified, but only when you have good reason to believe the relationship stays the same shape past the range you observed.</li>
+<li><strong>A good</strong> <span class="math inline">\(R^2\)</span> can still be the wrong model. The outbreak example fit a straight line to exponential growth and got <span class="math inline">\(R^2=0.82\)</span>, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast tens of thousands of cases short of reality. The residual plot catches this; a Q-Q plot, which checks a different assumption, does not.</li>
 </ul>
 
 
