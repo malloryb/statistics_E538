@@ -341,7 +341,7 @@ An $F$-value and its $p$-value don't, by themselves, tell us what the group mean
 
 That said, a large $F$ with a small $p$-value does tell us one thing for certain: the group means **must** differ somewhere. If they didn't, the variance explained by group membership (the numerator of $F$) wouldn't be large enough to produce that result. We know a difference exists; identifying it requires a separate step.
 
-#### ANOVA is an omnibus test
+**ANOVA is an omnibus test.**
 
 This is why ANOVA is called an **omnibus test**: omnibus meaning "comprising several items." It answers one overall question that stands in for several pairwise ones at once.
 
@@ -357,7 +357,7 @@ c.  $A\neq C=B$
 
 A small $F$ with a large $p$-value means we don't reject the hypothesis of no differences: we have no evidence the three group means differ, and whatever gaps exist could easily be chance. A large $F$ with a small $p$-value (below our alpha criterion) means we reject that hypothesis and conclude at least one group mean differs from the others. That's the omnibus test: it tells us *whether* the means differ, not yet *which* ones.
 
-#### Looking at group means directly
+**Looking at group means directly.**
 
 The 10,000 simulated experiments above never once showed us the actual group means behind each $F$-value. @fig-9manyDiffs shows the group means (with standard-error bars) from 10 of those null simulations.
 
@@ -390,12 +390,13 @@ plot_df2 <- all_df %>%
 
 #print(plot_df2[1:10,])
 
-ggplot(data = plot_df2, aes(x = site_type, y = group_means, color = simulations)) +
-  geom_point() +
+ggplot(data = plot_df2, aes(x = site_type, y = group_means)) +
+  geom_point(color = "#1446a0", size = 2) +
   geom_errorbar(aes(ymin = group_means - group_SE, ymax = group_means +
-                      group_SE)) +
+                      group_SE), color = "#1446a0", width = 0.25) +
   theme_classic() +
-  ylab("Mean Abundance") +
+  xlab("Site type") +
+  ylab("Mean abundance") +
   facet_wrap( ~ simulations, nrow=2)
 
 ```
@@ -404,7 +405,7 @@ Each panel is one simulated experiment; the dots are the group means for site ty
 
 In most panels, the error bars overlap heavily, visually suggesting no real difference. In a few, they overlap less, which would suggest a difference that isn't actually there. Concluding a real effect from one of those panels would be a Type I error: we know there's no true difference here because we built the simulation that way, but in a real study you don't get to know that in advance.
 
-#### What group means look like when F is less than 1
+**What group means look like when F is less than 1.**
 
 @fig-9flessthanone shows 10 simulated experiments, this time filtered to only the ones where $F<1$, the cases where we'd clearly fail to reject the null.
 
@@ -438,19 +439,20 @@ plot_df <- all_df %>%
   dplyr::summarise(means = mean(abundance),
                    SEs = sd(abundance) / sqrt(length(abundance)))
 
-ggplot(plot_df, aes(x = site_type, y = means, fill = simulations)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs)) +
+ggplot(plot_df, aes(x = site_type, y = means)) +
+  geom_bar(stat = "identity", position = "dodge", fill = "#63b8ff") +
+  geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.25) +
   theme_classic() +
   facet_wrap( ~ simulations, nrow=2) +
-  ylab("Mean Abundance") +
+  xlab("Site type") +
+  ylab("Mean abundance") +
   coord_cartesian(ylim = c(85, 115))
 
 ```
 
 The panel numbers show which simulations actually produced $F<1$. The bars aren't perfectly flat, but what matters is that within each panel, the error bars for all three means overlap heavily: our estimate of the mean is about the same across groups, and we wouldn't be making a Type I error here.
 
-#### What group means look like when F exceeds the critical value
+**What group means look like when F exceeds the critical value.**
 
 Earlier we found a critical value of 3.35: only 5% of $F$-values from this null distribution exceed it. @fig-9sigdiffs shows 10 simulations filtered to exactly that rare case, $F>3.35$, even though every one of them is still drawn from the same null distribution with no real group differences. Rejecting the null whenever $F$ clears 3.35 is the right long-run decision rule, but every one of these particular simulations would be a Type I error if we did.
 
@@ -484,12 +486,13 @@ plot_df <- all_df %>%
   dplyr::summarise(means = mean(abundance),
                    SEs = sd(abundance) / sqrt(length(abundance)))
 
-ggplot(plot_df, aes(x = site_type, y = means, fill = simulations)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs)) +
+ggplot(plot_df, aes(x = site_type, y = means)) +
+  geom_bar(stat = "identity", position = "dodge", fill = "#b22222") +
+  geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.25) +
   theme_classic() +
   facet_wrap( ~ simulations, nrow = 2) +
-  ylab("Mean Abundance") +
+  xlab("Site type") +
+  ylab("Mean abundance") +
   coord_cartesian(ylim = c(85, 115))
 
 ```
