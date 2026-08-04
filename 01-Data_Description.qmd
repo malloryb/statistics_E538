@@ -564,16 +564,25 @@ Each bar counts the days falling in a temperature range, and the pattern is now 
 #| fig-alt: "Four histograms of daily maximum temperature using 5, 10, 20, and 50 bins. The five-bin version is blocky, the fifty-bin version is jagged and sparse, and the middle two show the shape most clearly."
 
 library(ggplot2)
-library(ggpubr)
 
-mk <- function(b) {
-  ggplot(airquality, aes(x = Temp)) +
-    geom_histogram(bins = b, fill = "#0097c3", color = "white") +
-    labs(x = NULL, y = NULL, title = paste(b, "bins")) +
-    theme_classic(base_size = 12)
+make_bins <- function(x, b) {
+  breaks <- seq(min(x), max(x), length.out = b + 1)
+  mids <- (head(breaks, -1) + tail(breaks, -1)) / 2
+  counts <- as.integer(table(cut(x, breaks, include.lowest = TRUE)))
+  data.frame(mid = mids, count = counts, width = diff(breaks)[1])
 }
 
-ggarrange(mk(5), mk(10), mk(20), mk(50), ncol = 2, nrow = 2)
+bin_widths <- c(5, 10, 20, 50)
+binned_df <- do.call(rbind, lapply(bin_widths, function(b) {
+  d <- make_bins(airquality$Temp, b)
+  d$bins <- factor(paste(b, "bins"), levels = paste(bin_widths, "bins"))
+  d
+}))
+
+ggplot(binned_df, aes(x = mid, y = count, width = width)) +
+  geom_col() +
+  facet_wrap(~bins, scales = "free") +
+  labs(x = NULL, y = NULL)
 ```
 
 All four show the same general shape, but the extremes are unhelpful. Five bins is so coarse that the peak becomes one wide block. Fifty spreads `r nrow(airquality)` days so thinly that the bars jump around at random. The middle two are the ones you would actually use. The shape a histogram shows you is real, but only if you pick a sensible bin width.
@@ -1091,4 +1100,3 @@ The [Datasaurus Dozen](https://www.autodeskresearch.com/publications/samestats) 
 -   **Variation.** The range, then deviations from the mean, then squared deviations, the sum of squares, the variance, and finally the standard deviation, which returns the measure of spread to the original units.
 
 -   **Always look at the graph.** Anscombe's Quartet and the Datasaurus Dozen make the point that identical summary statistics can describe radically different data.
-

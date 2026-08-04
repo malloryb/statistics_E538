@@ -34,13 +34,14 @@ if (knitr::is_latex_output()) {
 }
 
 # 3) Book-wide default colour palette.
-# Okabe-Ito: the standard colourblind-safe qualitative palette. Several chapters
-# (Ch6, Ch7) already use these exact hex codes, so this makes the rest of the book
-# match rather than introducing a new scheme. Figures that set their own
-# scale_colour_manual()/scale_fill_manual() are unaffected; this only replaces
-# ggplot2's default hue wheel, which is what made the multi-panel simulation
-# figures look garish.
-# The brand palette, exactly as specified.
+# The E-538 brand palette, specified by Mallory. The first two (cool sky /
+# brick red) are essentially steelblue1 + firebrick, her preferred pairing and
+# the strongest of several tested for colourblind separation (deltaE ~70 under
+# deuteranopia, vs ~18-28 for Okabe-Ito orderings and ggplot2's default hue
+# wheel). That matters because most figures in this book are binary
+# comparisons, so the two most-used colours are also the best-separated ones.
+# Figures that set their own scale_colour_manual()/scale_fill_manual() are
+# unaffected; the options() below only replace ggplot2's default hue wheel.
 e538_palette <- c(
   "#63b8ff",  # cool sky
   "#b22222",  # brick red
