@@ -378,7 +378,48 @@ Suppose we have a bag with 10 chips, each uniquely labeled, some black and some 
 #| label: fig-srs1
 #| fig-cap: "Simple random sampling without replacement from a finite population"
 
-knitr::include_graphics("imgs/navarro_img/estimation/srs1.png")
+draw_sampling_diagram <- function(samples, black_chips, title1, title2) {
+  pop_letters <- letters[1:10]
+  pop_df <- data.frame(
+    letter = pop_letters,
+    x = rep(0:4, times = 2),
+    y = rep(c(1, 0), each = 5)
+  )
+  pop_df$black <- pop_df$letter %in% black_chips
+
+  sample_y <- c(2, 0.5, -1)
+  sample_df <- do.call(rbind, lapply(seq_along(samples), function(i) {
+    data.frame(letter = samples[[i]], x = 8:11, y = sample_y[i])
+  }))
+  sample_df$black <- sample_df$letter %in% black_chips
+
+  arrow_df <- data.frame(x = 5.2, y = 0.5, xend = 7.4, yend = sample_y)
+
+  chip_df <- rbind(pop_df, sample_df)
+
+  ggplot() +
+    geom_segment(data = arrow_df, aes(x = x, y = y, xend = xend, yend = yend),
+                 arrow = arrow(length = unit(0.2, "cm")), color = "grey40", linewidth = 0.4) +
+    geom_point(data = chip_df, aes(x = x, y = y, fill = black),
+               shape = 21, size = 11, color = "black", stroke = 0.8) +
+    geom_text(data = chip_df, aes(x = x, y = y, label = letter, color = black),
+              fontface = "bold", size = 4.2) +
+    scale_fill_manual(values = c(`FALSE` = "white", `TRUE` = e538_plot_palette[3]), guide = "none") +
+    scale_color_manual(values = c(`FALSE` = "black", `TRUE` = "white"), guide = "none") +
+    annotate("text", x = 2, y = 1.8, label = "population", size = 4.5, hjust = 0.5) +
+    annotate("text", x = 9.5, y = 2.9, label = title1, size = 4.5, hjust = 0.5) +
+    annotate("text", x = 9.5, y = 2.55, label = title2, size = 4.5, hjust = 0.5) +
+    coord_fixed(clip = "off") +
+    theme_void() +
+    theme(plot.margin = margin(10, 10, 10, 10))
+}
+
+pop_letters <- letters[1:10]
+black_chips <- c("a", "b", "g", "h")
+
+samples_srs1 <- replicate(3, sample(pop_letters, 4, replace = FALSE), simplify = FALSE)
+draw_sampling_diagram(samples_srs1, black_chips,
+                       "simple random samples", "(without replacement)")
 ```
 
 Now imagine a different procedure: someone peeks inside and deliberately picks only black chips. That is a **biased sample**. The difference is critical. With a random sample, we can use statistical tools to generalize from the sample to the population; with a biased sample, we cannot.
@@ -387,7 +428,9 @@ Now imagine a different procedure: someone peeks inside and deliberately picks o
 #| label: fig-brs
 #| fig-cap: "Biased sampling without replacement from a finite populations."
 
-knitr::include_graphics("imgs/navarro_img/estimation/brs.png")
+samples_brs <- replicate(3, sample(black_chips, 4, replace = FALSE), simplify = FALSE)
+draw_sampling_diagram(samples_brs, black_chips,
+                       "biased sampling", "(without replacement)")
 ```
 
 Another variation is to draw chips **with replacement**, meaning each chip is returned to the bag before the next draw. In practice, most studies are "without replacement," but much of statistical theory assumes replacement. When the population is large, the difference is negligible.
@@ -396,7 +439,9 @@ Another variation is to draw chips **with replacement**, meaning each chip is re
 #| label: fig-srs2
 #| fig-cap: "Simple random sampling with replacement from a finite population."
 
-knitr::include_graphics("imgs/navarro_img/estimation/srs2.png")
+samples_srs2 <- replicate(3, sample(pop_letters, 4, replace = TRUE), simplify = FALSE)
+draw_sampling_diagram(samples_srs2, black_chips,
+                       "simple random samples", "(with replacement)")
 ```
 
 ### Random and non-random samples in practice
@@ -1033,7 +1078,20 @@ We can see this by creating a **sampling distribution of the standard deviation*
 #| label: fig-sampdistsd
 #| fig-cap: "Sampling distribution of the sample standard deviation for N = 2. The true population SD is 15 (dashed line), but most experiments produce smaller values. The average sample SD is only 8.5, showing that $s$ underestimates $\\sigma$."
 
-knitr::include_graphics("imgs/navarro_img/estimation/sampdistsd.png")
+sd_biased <- function(x) sqrt(mean((x - mean(x))^2))
+
+pop_mean <- 100
+pop_sd <- 15
+
+sds_n2 <- replicate(20000, sd_biased(rnorm(2, pop_mean, pop_sd)))
+
+ggplot(data.frame(s = sds_n2), aes(x = s)) +
+  geom_histogram(binwidth = 2, boundary = 0) +
+  geom_vline(xintercept = pop_sd, linetype = "dashed") +
+  annotate("text", x = pop_sd, y = Inf, label = "Population SD", hjust = -0.05, vjust = 1.5) +
+  xlim(0, 60) +
+  xlab("Sample standard deviation (N = 2)") +
+  ylab("Count")
 ```
 
 Even though the true $\sigma$ is 15, the average **sample SD** is only about 8.5. This is very different from the sampling distribution of the mean, which is centered on $\mu$.
@@ -1048,7 +1106,18 @@ If we repeat the simulation for a range of sample sizes, the contrast is clear:
 #| label: fig-estimatorbiasA
 #| fig-cap: "The sample mean is an unbiased estimator of the population mean."
 
-knitr::include_graphics("imgs/navarro_img/estimation/biasMean-eps-converted-to.png")
+ns <- 1:10
+avg_mean <- sapply(ns, function(n) mean(replicate(5000, mean(rnorm(n, pop_mean, pop_sd)))))
+avg_sd   <- sapply(ns, function(n) mean(replicate(5000, sd_biased(rnorm(n, pop_mean, pop_sd)))))
+df_bias <- data.frame(n = ns, avg_mean = avg_mean, avg_sd = avg_sd)
+
+ggplot(df_bias, aes(x = n, y = avg_mean)) +
+  geom_line(color = "#b22222", linetype = "dashed") +
+  geom_point(color = "#1446a0", size = 2) +
+  scale_x_continuous(breaks = 1:10) +
+  ylim(96, 104) +
+  xlab("Sample size") +
+  ylab("Average sample mean")
 ```
 
 @fig-estimatorbiasB shows the sample standard deviation as a function of sample size. Unlike the mean, the sample standard deviation does not center on the population value. Small samples especially understate variability.
@@ -1057,7 +1126,14 @@ knitr::include_graphics("imgs/navarro_img/estimation/biasMean-eps-converted-to.p
 #| label: fig-estimatorbiasB
 #| fig-cap: "The sample standard deviation is a biased estimator of the population standard deviation."
 
-knitr::include_graphics("imgs/navarro_img/estimation/biasSD-eps-converted-to.png")
+ggplot(df_bias, aes(x = n, y = avg_sd)) +
+  geom_line(color = "#b22222", linetype = "dashed") +
+  geom_point(color = "#1446a0", size = 2) +
+  geom_hline(yintercept = pop_sd, linetype = "dashed") +
+  scale_x_continuous(breaks = 1:10) +
+  ylim(0, 16) +
+  xlab("Sample size") +
+  ylab("Average sample standard deviation")
 ```
 
 ### Why variance needs a small correction
@@ -1351,36 +1427,3 @@ Confidence intervals tell us how precise our guess is, and they force us to ackn
 -   **Not every estimator is unbiased.** The sample mean lands on $\mu$ on average, but the sample SD systematically underestimates $\sigma$. Dividing by $N-1$ corrects it, and the correction matters most when $N$ is small.
 -   **Confidence intervals express uncertainty.** Rather than reporting a single estimate, a CI reports the range of population values the data are consistent with.
 
-## Videos
-
-### Introduction to Probability
-
-Jeff has several more videos on probability that you can view on his [statistics playlist](https://www.youtube.com/playlist?list=PLKXdxQAT3tCvuex_E1ZnQYaw897ELUSaI).
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/RoalMn9VHZg" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-
-</iframe>
-
-### Chebychev's Theorem
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/4RtwqCFt1IU" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-
-</iframe>
-
-### Z-scores
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/dQVO0KAxFaU" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-
-</iframe>
-
-### Normal Distribution I
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/FPJDF9fGwwE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-
-</iframe>
-
-### Normal Distribution II
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/mPdnF-GVuCo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-
-</iframe>

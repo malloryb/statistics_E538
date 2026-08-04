@@ -77,6 +77,13 @@ options(
 ggplot2::update_geom_defaults("point", list(colour = e538_plot_palette[3]))
 ggplot2::update_geom_defaults("line",  list(colour = e538_plot_palette[2]))
 
+# geom_histogram() is built on GeomBar, so this covers both. Default fill is
+# "grey35" with no border, which is what produced the grey blobby look;
+# switching to the palette's light blue with a black border keeps bars
+# visually distinct from each other (crisper than a white/no border, and
+# matches the black axis lines/text theme_classic already uses everywhere).
+ggplot2::update_geom_defaults("bar", list(fill = e538_palette[1], colour = "black"))
+
 # 5) Default theme.
 # theme_set() changes what a bare ggplot() call renders with when a chunk
 # adds no theme_*() of its own. A chunk that still calls theme_classic()
