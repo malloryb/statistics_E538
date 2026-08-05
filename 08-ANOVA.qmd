@@ -34,7 +34,7 @@ With two groups, a $t$-test already answers that question. ANOVA extends the sam
 
 Suppose we're comparing three restoration treatments for vegetation cover: **compost**, **mulch**, and a bare-soil **control**. With three groups, there are three possible pairwise comparisons: compost vs. mulch, compost vs. control, and mulch vs. control.
 
-We could run a separate $t$-test for each. The problem is that every test carries its own 5% chance of a false positive, and those chances accumulate across tests. If we run $m$ independent tests at $\alpha=.05$, the probability of at least one false positive across all of them is
+We could run a separate $t$-test for each. The problem is that every test carries its own 5% chance of a false positive, and those chances accumulate across tests. This is the independence multiplication rule from Chapter 3 doing its work: if we run $m$ independent tests at $\alpha=.05$, the probability of at least one false positive across all of them is
 
 $$
 P(\text{at least one false positive}) = 1-(1-\alpha)^m.
@@ -562,11 +562,53 @@ summary_out  <- summary(aov_out)
 knitr::kable(xtable(summary_out))
 ```
 
-We report the result as:
+::: callout-important
+**Reporting this result.** Report the direction in plain language, the test statistic with both degrees of freedom, the error term, $p$, and the effect size.
 
-> There was a significant effect of forest type on salamander abundance, F(2, 21) = 14.60, MSE = 10.65, p \< 0.001.
+> There was a significant effect of forest type on salamander abundance, $F(2, 21) = 14.60$, $MSE = 10.70$, $p < .001$, $\eta^2 = 0.58$.
+:::
 
 The F-value of 14.60 falls far into the tail of the null F distribution for df(2, 21): values this large arise by chance less than 0.1% of the time. We reject the null hypothesis that all three group means are equal.
+
+### Effect size: eta-squared
+
+The $F$-test answers whether the group means differ by more than chance would produce. It says nothing about *how much* of the variation in salamander abundance forest type actually accounts for, and those are separate questions. Chapter 6 made the same distinction for the $t$-test, where $p$ told us whether a difference was detectable and Cohen's $d$ told us how large it was.
+
+ANOVA's effect size is **eta-squared** ($\eta^2$), and we already computed both of its ingredients when we partitioned the sums of squares:
+
+$$
+\eta^2 = \frac{SS_\text{Between}}{SS_\text{Total}} = \frac{SS_\text{Between}}{SS_\text{Between} + SS_\text{Within}}
+$$
+
+$SS_\text{Between}$ is the variation the group means can account for and $SS_\text{Total}$ is all the variation there is, so $\eta^2$ is the proportion of the total variation attributable to the grouping variable. It runs from 0 to 1.
+
+```{r}
+#| label: tbl-9etasq
+#| tbl-cap: "Eta-squared for the effect of forest type on salamander abundance."
+
+ss <- summary(aov_out)[[1]][["Sum Sq"]]
+ss_between <- ss[1]
+ss_within  <- ss[2]
+eta_sq     <- ss_between / (ss_between + ss_within)
+
+knitr::kable(
+  data.frame(
+    `SS Between` = round(ss_between, 2),
+    `SS Within`  = round(ss_within, 2),
+    `SS Total`   = round(ss_between + ss_within, 2),
+    `Eta-squared` = round(eta_sq, 3),
+    check.names = FALSE
+  )
+)
+```
+
+Here $\eta^2 = `r round(eta_sq, 2)`$: forest type accounts for about `r round(eta_sq * 100)`% of the variation in salamander abundance across these 24 plots. The remaining `r round((1 - eta_sq) * 100)`% is within-group variation, the plot-to-plot differences that forest type alone cannot explain.
+
+If that formula looks familiar, it should. $\eta^2$ is the same quantity as $R^2$ in regression, computed the same way from the same partition of variance, which is Chapter 9's topic and the reason both chapters keep describing variance as something you divide up.
+
+**Interpreting the number.** Cohen's conventional benchmarks are $\eta^2 = 0.01$ (small), $0.06$ (medium), and $0.14$ (large), so 0.58 is a substantial effect. Treat those cutoffs as rough orientation rather than a grading scale: what counts as a large effect depends entirely on the system you are studying. An $\eta^2$ of 0.10 would be unremarkable in a controlled greenhouse experiment and notable in a field survey where dozens of uncontrolled factors also drive the response.
+
+**Why report it at all.** $p$-values depend on sample size and $\eta^2$ does not. Survey enough plots and a difference of half a salamander per plot will clear $p < .05$ while accounting for almost none of the variation. Reporting both keeps a statistically detectable result from being mistaken for an ecologically meaningful one.
 
 ### Checking ANOVA's assumptions
 
@@ -664,6 +706,7 @@ The pattern matches Tukey HSD exactly: Old-growth differs significantly from bot
 -   **Partition the variation.** Total variation splits into a piece explained by group membership ($SS_\text{Between}$) and unexplained residual variation ($SS_\text{Within}$). That split is the whole idea.
 -   **$F$ is a ratio of the two.** After adjusting each sum of squares for its degrees of freedom, $F = MS_\text{Between} / MS_\text{Within}$. A large $F$ means between-group differences are large relative to within-group noise.
 -   **Two steps, always in order.** First the omnibus test: do *any* group means differ? Only if that is significant do you run post-hoc comparisons (Tukey HSD) to find out *which* pairs differ.
+-   **$\eta^2$ is the effect size.** $SS_\text{Between}/SS_\text{Total}$ is the proportion of variation the grouping variable accounts for. It is the same quantity as regression's $R^2$, and it does not depend on sample size the way $p$ does, so report it alongside $F$.
 -   **Check the assumptions.** ANOVA needs approximately equal variances across groups (Levene's test) and roughly normal residuals. Treat formal tests as evidence rather than a gate, since they have least power exactly when small samples make violations matter most.
 -   **When assumptions fail.** The **Kruskal-Wallis** test is the rank-based alternative, with `pairwise.wilcox.test()` as its post-hoc counterpart.
 

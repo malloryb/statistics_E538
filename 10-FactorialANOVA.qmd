@@ -280,8 +280,8 @@ knitr::kable(data.frame(
 
 Under low flow, the Pollution effect (no-pollution mean minus pollution mean) is `r pollution_effect_low`. Under high flow, it's `r pollution_effect_high`. Those two numbers aren't the same, so the Pollution effect isn't constant across Flow conditions, which is exactly what an interaction means. The gap between them, `r diff_of_diffs`, is a first, informal look at the interaction itself. Whether a gap that size is more than chance would produce is what the formal test below settles.
 
-::: callout-note
-**If your design were repeated measures instead.** We're treating each condition here as a different set of stream channels, a **between-subjects** design. If the *same* channels had instead been measured under all four conditions, you could compute this identical interaction test as a paired $t$-test on difference scores, and it would agree exactly with a repeated-measures ANOVA ($t^2=F$). That walkthrough lives in the out-of-sequence chapter *"Repeated Measures ANOVA"* in this book's repository, for whenever your own design calls for it.
+::: callout-warning
+**If your design were repeated measures instead.** Here each condition uses a different set of stream channels, a **between-subjects** design. Had the *same* channels been measured under all four conditions, this identical interaction test could be computed as a paired $t$-test on difference scores, agreeing exactly with a repeated-measures ANOVA ($t^2=F$). That walkthrough lives in the out-of-sequence *Repeated Measures ANOVA* chapter in this book's repository.
 :::
 
 ## Computing a factorial ANOVA by hand
@@ -412,6 +412,47 @@ knitr::kable(xtable::xtable(aov_summary))
 
 The `Sum Sq` column matches the hand-calculated values above: `r round(ss_poll,2)` for Pollution, `r round(ss_flow,2)` for Flow, `r round(ss_int,2)` for the interaction, `r round(ss_error,2)` for Error. All three effects are significant here, including the interaction we previewed informally a moment ago: the Pollution effect really is different at the two flow rates, not just by chance.
 
+### Effect size in a factorial design
+
+The one-way ANOVA in Chapter 8 had one effect and so needed one effect size, $\eta^2 = SS_\text{Between}/SS_\text{Total}$. A 2x2 runs three tests, so it needs three effect sizes, and the sums of squares we just computed by hand are all the ingredients required.
+
+The direct extension keeps $SS_\text{Total}$ in the denominator for every effect:
+
+$$
+\eta^2 = \frac{SS_\text{Effect}}{SS_\text{Total}}
+$$
+
+Each effect then reports its share of *all* the variation in the study, so the three values plus error's share add to 1. That is easy to interpret, but it has an awkward property: adding a second factor to a study inflates $SS_\text{Total}$, which shrinks the $\eta^2$ of a factor whose behavior did not change at all. The same effect looks smaller purely because you studied something else alongside it.
+
+**Partial eta-squared** avoids that by setting the other factors' variation aside instead of counting it:
+
+$$
+\eta_p^2 = \frac{SS_\text{Effect}}{SS_\text{Effect} + SS_\text{Error}}
+$$
+
+The question it answers is narrower: of the variation this effect could plausibly account for, once the other factors are held out, how much does it account for? Because each effect gets its own denominator, partial values do not sum to 1 and are always at least as large as the corresponding $\eta^2$.
+
+```{r}
+#| label: tbl-10etasq
+#| tbl-cap: "Eta-squared and partial eta-squared for each effect in the 2x2 design."
+
+ss_all <- c(Pollution = ss_poll, Flow = ss_flow, `Pollution x Flow` = ss_int)
+
+knitr::kable(
+  data.frame(
+    Effect        = names(ss_all),
+    SS            = round(ss_all, 2),
+    `Eta-squared` = round(ss_all / ss_total, 3),
+    `Partial eta-squared` = round(ss_all / (ss_all + ss_error), 3),
+    check.names = FALSE, row.names = NULL
+  )
+)
+```
+
+Flow accounts for the largest share of the total variation, pollution is close behind, and the interaction is much smaller at $\eta^2 = `r round(ss_int/ss_total, 2)`$. That last number is worth sitting with. The interaction is significant, and it is also the smallest of the three effects, which is a common combination and not a contradiction: significance and magnitude answer different questions. The interaction is small in the sense that it accounts for little of the total variation, and consequential in the sense that it changes what the pollution main effect means.
+
+**Which one to report.** Most statistical software, including SPSS and R's `effectsize` package, gives you partial $\eta_p^2$ by default, and it is the more common choice in published work. Either is defensible, but say which you used, because the two can differ substantially: pollution is $\eta^2 = `r round(ss_poll/ss_total, 2)`$ but $\eta_p^2 = `r round(ss_poll/(ss_poll+ss_error), 2)`$ here. Reporting the larger number without labeling it overstates the effect. Never compare a partial value from one study against an unpartialed value from another.
+
 ## Reading patterns in a 2x2
 
 Having computed one ANOVA table by hand, we can stop doing arithmetic and start doing the part that actually determines whether you get the science right: reading the result.
@@ -530,8 +571,8 @@ In the line graphs, interactions are easiest to see:
 
 -   If the interaction is **not significant**, we then examine the two main effects separately, interpreting each as an overall difference averaged across the other factor.
 
-::: callout-note
-**Which factor goes on the x-axis?** It doesn't change the statistics either way, since the same four (or six, or more) condition means are being plotted regardless of which axis carries which factor. Two rules of thumb make the picture easier to read: put the factor with more levels on the x-axis, since a longer line is easier to follow than several short, crowded ones; and put whichever factor is your main scientific interest there too, since readers compare points along the x-axis more naturally than they compare separate colored lines.
+::: callout-tip
+**Which factor goes on the x-axis?** The statistics are identical either way, since the same condition means get plotted regardless. Two rules of thumb make the picture easier to read. Put the factor with more levels on the x-axis, since one long line is easier to follow than several short, crowded ones. And put whichever factor is your main scientific interest there too, since readers compare points along an axis more naturally than separate colored lines.
 :::
 
 ## Interpreting main effects and interactions
@@ -545,6 +586,12 @@ It's convenient to think of a main effect as one manipulation's consistent influ
 -   Look for non-parallel or crossing lines. That signals that simple effects differ across levels of the other factor.
 -   Report the pattern using simple effects: e.g., "Pollution reduced species count sharply under low flow, and only slightly under high flow."
 -   If you must report a main effect, qualify it: "There was a main effect of pollution, but it varied by flow rate."
+
+::: callout-important
+**Reporting this result.** Lead with the interaction, then give the simple effects, then report the main effects only with their qualification attached. Every effect gets its own effect size, labeled so the reader knows whether it is partialed.
+
+> The effect of pollution on macroinvertebrate species count depended on flow rate, *F*(1, 16) = 9.03, *p* = .008, $\eta_p^2 = 0.36$. Under low flow, polluted channels supported 6.0 fewer species than unpolluted ones (3.6 vs. 9.6); under high flow that gap narrowed to 2.6 species (10.0 vs. 12.6). Both main effects were also significant, pollution *F*(1, 16) = 57.78, *p* \< .001, $\eta_p^2 = 0.78$, and flow *F*(1, 16) = 69.03, *p* \< .001, $\eta_p^2 = 0.81$, but each should be read in light of the interaction: pollution costs a stream far more species when the water is moving slowly.
+:::
 
 Here are two generalized examples to help you make sense of these issues:
 
@@ -645,7 +692,7 @@ We might expect data like shown in @fig-1023design:
 #| out-width: "100%"
 #| fig-asp: 0.5
 
-species_count <- c(2.9, 1.9, 2.8, 2.5, 2.7, 2.7)
+species_count <- c(11, 5, 10, 8, 9, 9)
 pollution <- rep(c("No Pollution", "Pollution"), 3)
 flow_rate <- factor(rep(c("Low", "Medium", "High"), each = 2),
                     levels = c("Low", "Medium", "High"))
@@ -657,17 +704,18 @@ ggplot(df, aes(x = flow_rate, y = species_count, color = pollution, group = poll
   geom_line() +
   ylab("Mean species count") +
   xlab("Flow rate") +
+  labs(color = "Pollution") +
   theme_classic()
 
 ```
 
 The figure shows some pretend means in all conditions. Let's talk about the main effects and interaction.
 
-1.  **Main Effect of Pollution**: The main effect of pollution is evident. The "No Pollution" line sits above the "Pollution" line at every flow rate, so unpolluted channels generally support higher species counts.
+1.  **Main Effect of Pollution**: The main effect of pollution is evident. Averaged across flow rates, unpolluted channels support higher species counts (10 vs. 7.3). The "No Pollution" line sits above the "Pollution" line at low and medium flow, and the two coincide at high flow.
 
-2.  **Main Effect of Flow**: There is a main effect of flow as well. Averaged over pollution condition, species counts are lowest at low flow and higher at medium and high flow.
+2.  **Main Effect of Flow**: There is a main effect of flow as well. Averaged over pollution condition, species counts are lowest at low flow (8) and higher at medium and high flow (9 each).
 
-3.  **Interaction Between Pollution and Flow**: Is there an interaction? Yes. Remember, an interaction occurs when the effect of one IV depends on the levels of another. The gap between polluted and unpolluted channels is much larger at low flow than at high flow. So the size of the pollution effect changes with flow rate. There is evidence in the means for an interaction. You would have to conduct an inferential test on the interaction term to see if these differences were likely or unlikely to be due to sampling error.
+3.  **Interaction Between Pollution and Flow**: Is there an interaction? Yes. Remember, an interaction occurs when the effect of one IV depends on the levels of another. The pollution gap is 6 species at low flow, 2 at medium, and 0 at high. So the size of the pollution effect changes with flow rate, which is also why the pollution main effect above describes no single flow condition well. You would have to conduct an inferential test on the interaction term to see if these differences were likely or unlikely to be due to sampling error.
 
 If there was no interaction and no main effect of flow, we would see something like the pattern in @fig-1023one.
 
@@ -677,7 +725,7 @@ If there was no interaction and no main effect of flow, we would see something l
 #| out-width: "100%"
 #| fig-asp: 0.5
 
-species_count <- c(2.5, 2.0, 2.5, 2.0, 2.5, 2.0)
+species_count <- c(10, 7, 10, 7, 10, 7)
 pollution <- rep(c("No Pollution", "Pollution"), 3)
 flow_rate <- factor(rep(c("Low", "Medium", "High"), each = 2),
                     levels = c("Low", "Medium", "High"))
@@ -689,6 +737,7 @@ ggplot(df, aes(x = flow_rate, y = species_count, color = pollution, group = poll
   geom_line() +
   ylab("Mean species count") +
   xlab("Flow rate") +
+  labs(color = "Pollution") +
   theme_classic()
 ```
 
@@ -700,7 +749,7 @@ What would you say about the interaction if you saw the pattern in @fig-1023int?
 #| out-width: "100%"
 #| fig-asp: 0.5
 
-species_count <- c(2.5, 1.8, 2.5, 1.8, 2.5, 2.3)
+species_count <- c(10, 6, 10, 6, 10, 9)
 pollution <- rep(c("No Pollution", "Pollution"), 3)
 flow_rate <- factor(rep(c("Low", "Medium", "High"), each = 2),
                     levels = c("Low", "Medium", "High"))
@@ -712,6 +761,7 @@ ggplot(df, aes(x = flow_rate, y = species_count, color = pollution, group = poll
   geom_line() +
   ylab("Mean species count") +
   xlab("Flow rate") +
+  labs(color = "Pollution") +
   theme_classic()
 ```
 
@@ -753,6 +803,7 @@ The interpretation of main effects and interactions is the same, but the error t
 -   **A 2×2 tests three things.** One main effect per factor, plus their interaction. That means three null hypotheses, and you should be able to state all three in plain language before running anything.
 -   **An interaction is a difference between differences.** It asks whether the effect of one factor changes across levels of another. That framing is what the arithmetic is actually computing, and you can compute it directly with a paired $t$-test on difference scores.
 -   **The partition extends the one-way logic.** $SS_\text{Total}$ now splits into each main effect, the interaction, and error. Working one table through by hand shows that the interaction term is the only genuinely new piece.
+-   **Three tests, three effect sizes.** $\eta^2$ divides each effect's $SS$ by $SS_\text{Total}$; partial $\eta_p^2$ divides it by that effect plus error. Partial values are always larger and do not sum to 1, so label which one you are reporting. A significant effect can still be a small one, which is exactly the case for this chapter's interaction.
 -   **Read the interaction first.** If it's significant, do not interpret the main effects on their own, because they are not consistent across conditions. Report simple effects instead: what factor A does at each level of B. Only when the interaction is not significant do the main effects stand on their own.
 -   **Learn to read the picture.** In a line plot, parallel lines mean no interaction, crossing or diverging lines mean an interaction, and vertical separation between lines means a main effect. There are eight possible patterns in a 2×2, and recognizing them by eye is faster than parsing the table.
 -   **An averaged main effect can be an artifact.** A factor that matters a lot in one condition and not at all in another will still produce a "significant main effect" once you average across conditions. That number is real arithmetic, but it describes something that never happens in either condition.
