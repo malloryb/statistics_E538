@@ -15,9 +15,9 @@ source("global_stuff.R")
 
 ## The Role of Statistics in Environmental Science
 
-Environmental questions are usually questions about change. Is this stream warming? Did the restoration work? They are hard to answer because the systems never sit still to begin with. Streams warm and cool over a single day, and vegetation recovers in fits and starts. Something is always changing, so finding a real effect means separating it from the change that would have happened anyway.
+Environmental questions are usually questions about change. Is this stream warming? Did the restoration work? They are hard to answer because the systems never sit still to begin with. Streams warm and cool over a single day, and vegetation may look the same for years and then suddenly recover. Something is always changing, so finding a real effect means separating it from the change that would have happened anyway.
 
-That is what statistics is for. It gives you a way to say how much of what you observed is the thing you were looking for and how much is ordinary variation, and how confident you should be in telling the two apart. Most environmental claims you will read or make rest on that distinction, whether or not anyone says so out loud.
+That's what statistics is for. It gives you a way to say how much of what you observed is the thing you were looking for vs. how much is ordinary variation, and how confident you should be in telling the two apart. Most environmental claims you will read or make rest on that distinction, whether or not anyone says so out loud.
 
 ### Why Numbers Matter
 
@@ -93,7 +93,7 @@ ggplot(fig1_df, aes(x = Country, y = CFR_crude_pct, fill = Country)) +
   theme(legend.position = "none")
 ```
 
-At face value, Italy looks worse. But what happens when we stratify by age group? Because age strongly affects COVID fatality, splitting cases into 10-year bands reveals a different picture. When we do, China's fatality rate is higher in every band.
+At face value, Italy looks worse. But what happens when we stratify by age group? Because older people are much more likely to die from COVID than younger people, splitting cases into 10-year bands reveals a different picture. When we do, China's fatality rate is higher in every band.
 
 ```{r}
 #| label: fig-simpson-by-age-group
@@ -110,7 +110,7 @@ ggplot(fig2_df, aes(x = Age, y = CFR_band_pct, fill = Country)) +
   theme(legend.position = "top")
 ```
 
-The reversal happens because Italy's population skews older while China's skews younger, and baseline risk rises steeply with age. Italy had a greater proportion of older people getting sick, which pulls Italy's overall average up. Similarly, China's average is pulled down because a greater proportion of younger people are getting sick. Aggregating without adjusting for age hid the within-group pattern entirely. Once we asked a more specific question, the answer reversed.
+The reversal happens because Italy's population skews older while China's skews younger. Italy therefore had a greater proportion of older people getting sick, which pulls Italy's overall average up. Similarly, China's average is pulled down because a greater proportion of younger people are getting sick. Aggregating without adjusting for age hid the within-group pattern entirely. Once we asked a more specific question, the answer reversed.
 
 ```{r}
 #| label: fig-age-distributions
@@ -127,13 +127,13 @@ ggplot(fig3_df, aes(x = Age, y = Prop, fill = Country, group=Country)) +
   geom_col(position = position_dodge(width = 0.4), width = 0.7) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   facet_wrap(~Country)+
-  labs(title = "Case age mix: Italy skewed older, China skewed younger",
+  labs(title = "Case ages: Italy skewed older, China skewed younger",
        x = "Age band", y = "Share of cases", fill = NULL) +
   theme_classic(base_size = 13) +
   theme(legend.position = "none", panel.border = element_rect(linewidth = 1, fill=NA), axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-Sheer volume is the other reason. Satellites measure surface temperature, field stations log rainfall, and sensors track air quality, so a single study can generate thousands of rows. On top of that, river flow changes by the hour and human activity layers on more variability still. Statistics is how we compress all of that into something we can reason about.
+Sheer volume is the other reason numbers matter. Satellites measure surface temperature, field stations log rainfall, and sensors track air quality, so a single study can generate thousands of rows. On top of that, river flow changes by the hour and human activity layers on more variability still. Statistics is how we compress all of that into something we can reason about.
 
 It would be reasonable to ask why you need to learn this yourself rather than handing the analysis to someone who already knows it. Three reasons:
 
@@ -153,33 +153,43 @@ Finally, none of this is only for researchers, or only for environmental science
 
 Every dataset begins with measurement: assigning numbers, labels, or categories to aspects of the world so they can be recorded and analyzed. Science often deals with broad ideas that need to be pinned down before they can be studied. For example, *soil health* or *forest change* are meaningful, but vague. To analyze them, we have to decide exactly what we mean and how to capture it. That process is called **operationalization**: turning a general concept into something measurable.
 
-Before moving on, let's clarify how operationalization fits with three related terms:
+Let's clarify how operationalization fits with three related terms:
 
--   **Operationalization**: the step where you define exactly how a broad idea will be captured with a measure
--   **Measure**: the tool or method used to make observations
--   **Variable**: the actual values you record once the measure is applied. Variables are the actual data that end up in our dataset.
+- **Operationalization**: the step where you define exactly how a broad idea will be captured with a measure
+- **Measure**: the tool or method used to make observations
+- **Variable**: the actual values you record once the measure is applied. Variables are the actual data that end up in our dataset.
 
 **Example:**
 
--   Concept of interest: *Soil health*
-    -   **Operationalization:** concentration of organic carbon in the top 30 cm
-    -   **Measure:** laboratory analysis of soil samples
-    -   **Variable:** recorded carbon concentration values for each plot
+- Concept of interest: *Soil health*
+  - **Operationalization:** concentration of organic carbon in the top 30 cm
+  - **Measure:** laboratory analysis of soil samples
+  - **Variable:** recorded carbon concentration values for each plot
 
-*Soil health* is the idea we care about, but you cannot go outside and measure an idea. Organic carbon is a defensible stand-in, since healthy soils generally store more of it, but soil health also involves compaction, pH, microbial activity, and how well the soil holds water. So the first decision is which facet will stand in for the whole:
+*Soil health* is the idea we care about, but you cannot go outside and measure an idea. Organic carbon is a defensible stand-in, since healthy soils generally store more of it, but soil health also involves compaction, pH, microbial activity, and how well the soil holds water. So the first decision is which facet of soil health will stand in for the whole:
 
--   **Which facet?** ☐ pH ☐ compaction ☑ ***organic carbon*** ☐ microbial activity ☐ water-holding capacity
+**Which facet?**: 
+
+* ☐ pH 
+* ☐ compaction 
+* ☑ ***organic carbon*** 
+* ☐ microbial activity 
+* ☐ water-holding capacity
 
 Choosing carbon means the other facets go unmeasured. And the choice is not finished, it has only narrowed. How deep will you sample? Thirty centimeters is conventional, but 10 cm or a full meter would give different answers:
 
--   **Sampling depth?** ☐ 10 cm ☑ ***30 cm*** ☐ 1 m
+**Sampling depth?** : 
+
+* ☐ 10 cm 
+* ☑ ***30 cm*** 
+* ☐ 1 m
 
 There are a dozen more, and each one is a place where another reasonable person might go the other way:
 
--   **Which carbon counts?** ☑ ***organic*** ☐ carbonate minerals ☐ total
--   **How many cores per plot?** ☐ 1 ☐ 3 ☑ ***6*** ☐ 9
--   **Where in the plot?** ☐ wherever is easiest ☑ ***stratified random*** ☐ along a fixed transect
--   **When in the season?** ☐ spring ☑ ***after harvest*** ☐ same calendar date each year
+- **Which carbon counts?** ☑ ***organic*** ☐ carbonate minerals ☐ total
+- **How many cores per plot?** ☐ 1 ☐ 3 ☑ ***6*** ☐ 9
+- **Where in the plot?** ☐ wherever is easiest ☑ ***stratified random*** ☐ along a fixed transect
+- **When in the season?** ☐ spring ☑ ***after harvest*** ☐ same calendar date each year
 
 Every checked box narrows what "soil health" now means in your dataset, and every unchecked box is a part of soil health your data can no longer speak to. Another researcher could work down the same list, check different boxes, report a different number, and both of you would be right, because you measured different things and gave them the same name.
 
@@ -213,7 +223,7 @@ avg <- rgb(m[1], m[2], m[3], maxColorValue = 255)
 tiles <- data.frame(
   x    = c(1, 2, 3, 4, 5.6),
   fill = c(lc, avg),
-  lab  = c("Forest", "Grassland", "Wetland", "Urban", "Average")
+  lab  = c("Forest", "Grassland", "Water", "Urban", "Average")
 )
 
 ggplot(tiles, aes(x = x, y = 0)) +
@@ -228,7 +238,7 @@ ggplot(tiles, aes(x = x, y = 0)) +
   theme_void()
 ```
 
-You get a color back. Nothing on the map is that color, and more importantly there is no class it could represent, because forest and urban have no midpoint. That is what makes a variable nominal: the values are **labels, not quantities**, so arithmetic on them runs perfectly well and tells you nothing. Land cover is unusual in even having numbers attached that *could* be averaged, and only because someone chose colors for a map. Most nominal variables, like species identity or watershed name, have nothing there to average in the first place.
+You get a color back. Nothing on the map is that color, and more importantly there is no class it could represent, because there's no midpoint between water and urban. That is what makes a variable nominal: the values are **labels, not quantities**, so arithmetic on them runs perfectly well and tells you nothing. Land cover is unusual in even having numbers attached that *could* be averaged, and only because someone chose colors for a map. Most nominal variables, like species identity or watershed name, have nothing there to average in the first place.
 
 ### Ordinal scale
 
@@ -327,9 +337,9 @@ p <- p +
            color = "#1E40AF", linewidth = 0.45) +
   annotate("text", x = kg2x(85.5), y = y_line - 0.52, label = "29 kg apart",
            size = 3.5, color = "#1E40AF") +
-  annotate("segment", x = kg2x(101), xend = kg2x(102.8), y = y_line - 0.42, yend = y_line - 0.68,
+  annotate("segment", x = kg2x(102), xend = kg2x(103), y = y_line - 0.2, yend = y_line - 0.66,
            color = "#1E40AF", linewidth = 0.4) +
-  annotate("text", x = kg2x(103.2), y = y_line - 0.72, label = "2 kg apart",
+  annotate("text", x = kg2x(102.5), y = y_line - .70, label = "2 kg apart",
            size = 3.5, color = "#1E40AF", hjust = 0)
 
 p +
@@ -347,9 +357,11 @@ On the podium, second place looks exactly as far from first as it does from thir
 
 Interval variables have equal intervals between values, so differences are meaningful. However, zero is arbitrary, so multiplication and division are not valid.
 
-*Example:* temperature in degrees Celsius. A difference of 3$^\circ$ means the same regardless of whether it is 7 → 10 or 15 → 18. But 0$^\circ$C does not mean "no temperature." That zero is defined by the freezing point of water, which is a useful convention rather than a fact about heat. So you can say today is 3$^\circ$ warmer than yesterday, but you cannot say 20$^\circ$C is "twice as hot" as 10$^\circ$C.
+*Example:* temperature in degrees Celsius. 
 
-*Alternate example:* calendar years. The ten years from 1990 to 2000 are the same length as the ten years from 2010 to 2020, so differences work fine. But year 0 is a convention we agreed on, not the beginning of time, and other calendars put their zero somewhere else and are equally correct. That is why the year 2000 is not "twice as late" as the year 1000.
+A difference of 3$^\circ$ means the same regardless of whether it is 7 → 10 or 15 → 18. But 0$^\circ$C does not mean "no temperature." That zero is defined by the freezing point of water, which is a useful convention rather than a fact about heat. So you can say today is 3$^\circ$ warmer than yesterday, but you cannot say 20$^\circ$C is "twice as hot" as 10$^\circ$C.
+
+*Another example:* calendar years. The ten years from 1990 to 2000 are the same length as the ten years from 2010 to 2020, so differences work fine. But year 0 is a convention we agreed on, not the beginning of time, and other calendars put their zero somewhere else and are equally correct. That is why the year 2000 is not "twice as late" as the year 1000.
 
 ### Ratio scale
 
@@ -361,7 +373,7 @@ Temperature makes an unusually clean comparison here, because the same physical 
 
 ```{r}
 #| label: fig-1temp-scales
-#| fig-cap: "The same physical range of temperatures on two scales. Both rails cover identical ground; only the placement of zero differs. Celsius anchors its zero to the freezing point of water, Kelvin to the absence of thermal energy."
+#| fig-cap: "The same physical range of temperatures on two scales. These are both covering identical ground in terms of heat content; only the placement of zero differs. Celsius anchors its zero to the freezing point of water, Kelvin to the absence of thermal energy."
 #| fig-alt: "Two vertical temperature scales side by side spanning the same physical range. On the Celsius scale, zero sits near the top with a shaded region of negative temperatures extending far below it. On the Kelvin scale, zero sits at the very bottom, with an arrow noting that nothing colder exists."
 #| out-width: "78%"
 #| fig-asp: 0.72
@@ -422,7 +434,7 @@ ggplot() +
 The consequence is easy to check. Going from 10$^\circ$C to 20$^\circ$C doubles the Celsius number, so it is tempting to call it twice as hot. On the Kelvin scale those same two temperatures are 283 K and 293 K, an increase of about 3.5%. The physical change is small. The doubling was an artifact of where Celsius happens to put its zero. Kelvin has a true zero, so its ratios do hold: 200 K really does carry twice the thermal energy of 100 K.
 
 |          | can rank | can subtract/add | can multiply/divide | example          |
-|--------------|:------------:|:------------:|:--------------:|--------------|
+|---------------|:-------------:|:-------------:|:-------------:|---------------|
 | nominal  |          |                  |                     | land cover class |
 | ordinal  |    x     |                  |                     | finishing place  |
 | interval |    x     |        x         |                     | temperature (°C) |
@@ -432,9 +444,9 @@ The consequence is easy to check. Going from 10$^\circ$C to 20$^\circ$C doubles 
 
 Another useful distinction is whether a variable can take on values in between others.
 
--   A **continuous variable** can, in principle, take on any value within a range. For example, consider height. If you are 72 inches tall and your friend Cameron is 71 inches tall, Alan could be 71.4 inches and David 71.49 inches. Because we can always imagine a new value in between two others, height is continuous.
+- A **continuous variable** can, in principle, take on any value within a range. For example, consider height. If you are 72 inches tall and your friend Cameron is 71 inches tall, Alan could be 71.4 inches and David 71.49 inches. Because we can always imagine a new value in between two others, height is continuous.
 
--   A **discrete variable** is, in effect, a variable that isn't continuous. Discrete variables have separate, distinct values with nothing in between. Nominal variables are always discrete: there is no land cover class that falls "between" wetland and urban in the same way that 71.4 falls between 71 and 72. Ordinal variables are also discrete: although second place falls between first and third, nothing can logically fall between first and second.
+- A **discrete variable** is, in effect, a variable that isn't continuous. Discrete variables have separate, distinct values with nothing in between. Nominal variables are always discrete: there is no land cover class that falls "between" wetland and urban in the same way that 71.4 falls between 71 and 72. Ordinal variables are also discrete: although second place falls between first and third, nothing can logically fall between first and second.
 
 Interval and ratio variables can be either. Height (a ratio variable) is continuous. But the number of people living in a household (a ratio variable) is discrete: you cannot have 4.2 people. Temperature in degrees Celsius (an interval variable) is also continuous. But the year you started college (an interval variable) is discrete: there is no year between 2022 and 2023.
 
@@ -455,14 +467,14 @@ These categories are guides, not hard rules. For example, survey responses on a 
 
 One last piece of terminology before we leave variables behind. In most studies we have many variables, but when we analyze them, we usually split them into two roles: the **thing we're trying to explain** and the **thing doing the explaining**. To keep it straight, we use $Y$ for the variable being explained, and a $X_1$, $X_2$, etc. for the variables used to explain it.
 
-Traditionally, $X$ is called the **independent variable (IV)** and $Y$ is the **dependent variable (DV).** The logic is that if there's a relationship, $Y$ depends on $X$. These terms can be clunky and can be confusing because: (a) IVs are rarely actually "independent of everything else" and (b) if there's no relationship, then the DV doesn't actually "depend" on the IV at all.
+Traditionally, $X$ is called the **independent variable (IV)** and $Y$ is the **dependent variable (DV).** The logic is that if there's a relationship, $Y$ depends on $X$. These terms can be clunky and confusing because: (a) IVs are rarely actually "independent of everything else" and (b) if there's no relationship, then the DV doesn't actually "depend" on the IV at all.
 
 Two alternative vocabularies are often clearer. In experiments, IVs are **manipulations** and DVs are **measurements**. When we are using $X$ to predict $Y$ rather than manipulating anything, the pair is **predictor** and **outcome**.
 
-| role of the variable         | classical name            | in experiments | in prediction |
-|:---------------------|:------------------|:---------------|:---------------|
-| "to be explained" ($Y$)      | dependent variable (DV)   | measurement    | outcome       |
-| "to do the explaining" ($X$) | independent variable (IV) | manipulation   | predictor     |
+| role of the variable | classical name | in experiments | in prediction |
+|:--------------------|:-----------------|:----------------|:----------------|
+| "to be explained" ($Y$) | dependent variable (DV) | measurement | outcome |
+| "to do the explaining" ($X$) | independent variable (IV) | manipulation | predictor |
 
 ::: {.callout-note title="Note: Which terms this course uses"}
 You should recognize all three pairs, since all three appear in the literature. This book uses **IV and DV** when comparing groups ($t$-tests, ANOVA) and **predictor and outcome** for regression, where nothing is manipulated and "independent variable" would mislead. A later chapter switching vocabulary is following the convention of the method, not introducing a new idea.
@@ -480,9 +492,9 @@ In **environmental science** the limitation is usually not ethics but feasibilit
 
 **Quasi-experiments** compare conditions the researcher did not create. You cannot control what a factory discharges into a river, but you can compare reaches above and below the outfall and use statistical tools to account for the confounding variables you could not hold constant.
 
-**Time series** follow one system over a long stretch, which matters because many environmental processes unfold across decades or centuries. Tracking global temperature or sea level takes years of consistent measurement, and statistics is what separates the trend from the natural year-to-year noise.
+**Time series** follow one system over a long stretch, which matters because many environmental processes unfold across years or decades. Tracking global temperature or sea level takes years of consistent measurement, and statistics is what separates the trend from the natural year-to-year noise.
 
-**Case studies** go deep on a single event or place: the aftermath of a wildfire, the ecology of a threatened habitat, the consequences of a policy. One case is tied to its context, but a well-designed one can still expose a mechanism that travels. A drought in one forest can reveal how water potential and transpiration respond to stress, which helps anticipate what other forests will do.
+**Case studies** go deep on a single event or place: the aftermath of a wildfire, the ecology of a threatened habitat, the consequences of a policy. One case is tied to its context, but a well-designed one can still expose a mechanism that will generalize elsewhere. A drought in one forest can reveal how water potential and transpiration respond to stress, which helps anticipate what other forests will do.
 
 ## From measurement to description
 
@@ -594,11 +606,11 @@ All four show the same general shape, but the extremes are unhelpful. Five bins 
 
 Three terms will keep coming up: **distribution, central tendency, and variance.** Their everyday meanings aren't far from the statistical ones.
 
--   **Distribution**: how values are spread across their range. A histogram is one way of showing a distribution. The shape of the distribution tells us where values are concentrated, where they're rare, and how far the extremes reach. Later we'll see that distributions don't just describe data, we also use them to **generate theoretical data**, which is the basis for sampling distributions and tools like *t*-tests.
+- **Distribution**: how values are spread across their range. A histogram is one way of showing a distribution. The shape of the distribution tells us where values are concentrated, where they're rare, and how far the extremes reach. Later we'll see that distributions don't just describe data, we also use them to **generate theoretical data**, which is the basis for sampling distributions and tools like *t*-tests.
 
--   **Central tendency** is about *sameness*: where values cluster. In the temperature histogram, most days sit in the high 70s and low 80s, so we say the data have a central tendency around 80°F. Central tendency doesn't mean "everything is the same", just that many values gather in a common area. Some datasets even have more than one cluster, and therefore more than one central tendency.
+- **Central tendency** is about *sameness*: where values cluster. In the temperature histogram, most days sit in the high 70s and low 80s, so we say the data have a central tendency around 80°F. Central tendency doesn't mean "everything is the same", just that many values gather in a common area. Some datasets even have more than one cluster, and therefore more than one central tendency.
 
--   **Variance** is about *differentness*: how spread out the values are. If every day had been 78°F, variance would be zero. Instead the days run from 56°F to 97°F, so there is real variance to describe. In practice, variance is a family of measures we use to quantify differences, and we'll introduce those next.
+- **Variance** is about *differentness*: how spread out the values are. If every day had been 78°F, variance would be zero. Instead the days run from 56°F to 97°F, so there is real variance to describe. In practice, variance is a family of measures we use to quantify differences, and we'll introduce those next.
 
 ## Measures of Central Tendency (Sameness)
 
@@ -726,9 +738,9 @@ All three land in different places, and the order they fall in is not an acciden
 
 They differ because each one is sensitive to something different.
 
--   The **mean** uses every value, so it feels the full weight of those bad-air days out past 150 ppb. Add one extreme day and the mean moves.
--   The **median** only cares about which value sits in the middle. Those same extreme days push it over by one position at most, so it stays down where the bulk of the days actually are.
--   The **mode** ignores position entirely and reports whichever value occurred most often. It answers a genuinely different question: not "what is the center" but "what happened most".
+- The **mean** uses every value, so it feels the full weight of those bad-air days out past 150 ppb. Add one extreme day and the mean moves.
+- The **median** only cares about which value sits in the middle. Those same extreme days push it over by one position at most, so it stays down where the bulk of the days actually are.
+- The **mode** ignores position entirely and reports whichever value occurred most often. It answers a genuinely different question: not "what is the center" but "what happened most".
 
 Neither the mean nor the median is wrong here. They answer different questions. If you want to know what a typical day looked like, the median is the better guide. If you care about the total ozone burden across the summer, the mean is the number that relates to that total.
 
@@ -1100,11 +1112,11 @@ knitr::kable(ac_long_summary, digits = 2)
 
 Rounded to two decimals, all four datasets have the **same descriptive statistics**:
 
--   same mean and variance for $x$
+- same mean and variance for $x$
 
--   same mean and variance for $y$
+- same mean and variance for $y$
 
--   same correlation between $x$ and $y$
+- same correlation between $x$ and $y$
 
 Yet the scatterplots could not look more different. (Anscombe constructed the four sets to agree to two decimal places, so they differ very slightly beyond that. Carry more decimals and the variances of $y$ separate in the third one.)
 
@@ -1120,24 +1132,24 @@ The [Datasaurus Dozen](https://www.autodeskresearch.com/publications/samestats) 
 
 *On measurement and study design:*
 
--   **Why statistics matters.** It will not answer every scientific question, but it provides a disciplined way to separate signal from bias, and to avoid being fooled by aggregated data, as Simpson's paradox shows.
+- **Why statistics matters.** It will not answer every scientific question, but it provides a disciplined way to separate signal from bias, and to avoid being fooled by aggregated data, as Simpson's paradox shows.
 
--   **Operationalization and measurement.** Turning a broad concept like *soil health* into something recordable is a decision you have to make and justify, not something the data hands you.
+- **Operationalization and measurement.** Turning a broad concept like *soil health* into something recordable is a decision you have to make and justify, not something the data hands you.
 
--   **Scales of measurement.** Nominal, ordinal, interval, and ratio, plus the continuous-versus-discrete distinction. These determine which statistical tools are available to you, which is why we return to them all semester.
+- **Scales of measurement.** Nominal, ordinal, interval, and ratio, plus the continuous-versus-discrete distinction. These determine which statistical tools are available to you, which is why we return to them all semester.
 
--   **Predictors and outcomes.** The roles variables play in an analysis, and the several vocabularies used to describe them.
+- **Predictors and outcomes.** The roles variables play in an analysis, and the several vocabularies used to describe them.
 
--   **Experimental and non-experimental research.** Environmental science rarely permits full experimental control, so the field leans on quasi-experiments, long-term time series, and case studies.
+- **Experimental and non-experimental research.** Environmental science rarely permits full experimental control, so the field leans on quasi-experiments, long-term time series, and case studies.
 
 *On describing data:*
 
--   **Plot first.** Scatter plots and histograms show the shape of a distribution, and bin width is a choice that changes what you see.
+- **Plot first.** Scatter plots and histograms show the shape of a distribution, and bin width is a choice that changes what you see.
 
--   **Central tendency.** The mode, median, and mean each summarize the "middle" differently, and they diverge when data are skewed.
+- **Central tendency.** The mode, median, and mean each summarize the "middle" differently, and they diverge when data are skewed.
 
--   **The weighted mean.** When you average across groups of unequal size, weight each value by its own $n$. A plain average of group means silently treats a small group as being as informative as a large one.
+- **The weighted mean.** When you average across groups of unequal size, weight each value by its own $n$. A plain average of group means silently treats a small group as being as informative as a large one.
 
--   **Variation.** The range, then deviations from the mean, then squared deviations, the sum of squares, the variance, and finally the standard deviation, which returns the measure of spread to the original units.
+- **Variation.** The range, then deviations from the mean, then squared deviations, the sum of squares, the variance, and finally the standard deviation, which returns the measure of spread to the original units.
 
--   **Always look at the graph.** Anscombe's Quartet and the Datasaurus Dozen make the point that identical summary statistics can describe radically different data.
+- **Always look at the graph.** Anscombe's Quartet and the Datasaurus Dozen make the point that identical summary statistics can describe radically different data.
