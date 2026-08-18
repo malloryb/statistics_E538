@@ -109,36 +109,23 @@ For example, let $A=$ "not chocolate." Then:
 
 $$P(A) = P(\text{vanilla}) + P(\text{strawberry}) = 0.5$$
 
-## Rules of Probability
+## Two rules that matter later
 
-Some basic rules follow from this framework. Let's consider a sample space $X$ that consists of elementary events $x$, and two non-elementary events, which we'll call $A$ and $B$.
-
-Here are our rules:
-
-| English   | Notation   | Formula                                             |
-|:------------------|:------------------|:----------------------------------|
-| not A     | $\neg A$   | $P(\neg A) = 1 - P(A)$                              |
-| A and B   | $A \cap B$ | $P(A \cap B) = P(A\mid B)\,P(B) = P(B\mid A)\,P(A)$ |
-| A or B    | $A \cup B$ | $P(A \cup B) = P(A) + P(B) - P(A \cap B)$           |
-| A given B | $A \mid B$ | $P(A \mid B) = \dfrac{P(A \cap B)}{P(B)}$           |
-
-These rules look abstract, but each one just formalizes a common-sense situation. Keep the table as a reference; you will not need to manipulate the notation in this course. Two of the four ideas do come back, so they are worth a closer look.
+Probability has a full set of formal rules for combining events, and an introductory probability course would work through all of them. This course needs exactly two, so those are the two we develop here. Everything else you can look up if you ever need it.
 
 ### Conditional probability
 
-$P(A \mid B)$ is read "the probability of $A$ given that $B$ has occurred." Conditioning narrows the sample space: instead of asking how likely $A$ is among all outcomes, you ask how likely it is among the outcomes where $B$ already happened. A stream might exceed a nutrient threshold on 20% of all days, but on 60% of days following heavy rain. Same stream, different question.
+A **conditional probability** is the probability of one thing *given that* something else has already happened. Conditioning narrows the field: instead of asking how likely an event is among all outcomes, you ask how likely it is among the outcomes where the condition already holds. A stream might exceed a nutrient threshold on 20% of all days, but on 60% of days following heavy rain. Same stream, different question, because the second one only counts rainy days.
 
 This is the shape of every inference from here on. A $p$-value, which arrives in Chapter 5, is a conditional probability: the probability of data at least this extreme *given that* the null hypothesis is true.
 
 ### Independence
 
-Two events are **independent** when knowing that one occurred tells you nothing about whether the other did, which is to say that conditioning changes nothing:
+Two events are **independent** when knowing that one occurred tells you nothing about whether the other did. Conditioning on one changes nothing about the other, so the conditional probability is just the ordinary one.
 
-$$P(A \mid B) = P(A)$$
+That gives us the rule we actually use. When two events are independent, the probability that *both* happen is the product of their separate probabilities:
 
-That simplifies the "and" rule from the table above. When $A$ and $B$ are independent, their joint probability is just the product:
-
-$$P(A \cap B) = P(A) \times P(B)$$
+$$P(\text{both}) = P(\text{first}) \times P(\text{second})$$
 
 Two coin flips are independent: the first landing heads does not change the odds on the second. Two soil samples taken a meter apart usually are **not**, because nearby soil tends to be alike, so knowing one sample's nitrogen content tells you something real about its neighbor's.
 
@@ -300,7 +287,7 @@ In this section we introduced the building blocks of probability, with an emphas
 
 -   Distributions: A probability distribution assigns probabilities to all possible outcomes of a random variable. For discrete variables (like coin flips), probabilities are attached to each outcome; for continuous variables (like exam scores), probabilities come from areas under a curve.
 
--   Rules of probability: Complements, intersections (and), unions (or), and conditional probabilities all follow from the basic distribution framework. The two that carry forward are **conditional probability**, which is the form every $p$-value takes, and **independence**, which is the assumption underneath every test in this book.
+-   Rules of probability: this course needs two of them. **Conditional probability** is the form every $p$-value takes, and **independence** is the assumption underneath every test in this book, as well as the reason running many tests inflates the false-positive rate.
 
 -   Key distributions:
 
@@ -552,7 +539,7 @@ If we repeat this thousands of times and plot all the sample means, we get a new
 #| label: fig-4unifmany
 #| fig-cap: "Sample means from 10,000 samples of size 20, drawn from the uniform distribution of numbers 1 to 10. The histogram centers on the expected value of 5.5, but individual samples scatter around it."
 
-a<-round(runif(20*10000,1,10))
+a<-sample(1:10,20*10000,replace=TRUE)
 df<-data.frame(a,sample=rep(1:10000,each=20))
 df2<-aggregate(a~sample,df,mean)
 
@@ -693,7 +680,7 @@ $$\text{SEM} = \frac{\sigma}{\sqrt{N}}$$
 
 3.  Its shape approaches normal as $N$ grows, no matter what the shape of the population is.
 
-Together, these three facts form our practical version of the **central limit theorem (CLT)**. The first fact, that sample means converge to the population mean, comes from the law of large numbers. The second formalizes how the SE shrinks with larger $N$. And the third shows why the normal curve appears so often: the distribution of sample means tends toward normality, even when the underlying data are skewed or flat.
+Together, these three facts form our practical version of the **central limit theorem (CLT)**. The first fact says the sampling distribution is *centered* on $\mu$, which is what it means to call $\bar{X}$ unbiased, and it holds at every sample size, not just large ones. The second formalizes how the SE shrinks with larger $N$. And the third shows why the normal curve appears so often: the distribution of sample means tends toward normality, even when the underlying data are skewed or flat.
 
 The full CLT is mathematically more general and has a complicated proof, but for our purposes these three results capture what we need. To see the third point in action, let's look at histograms of **sample means** drawn from different underlying distributions. Remember: these are distributions of *sample means*, not of individual observations.
 
@@ -1225,7 +1212,7 @@ plot_scenario(c(80,102,114), "C. Sample mean near, points wide (SD too big)")
 
 In Example C, the sample mean lands close to $\mu$ again, but this time the three points happen to be spread wide. $\sigma$ is about 12.1, uncorrected $s$ is 14.1, corrected $s$ is 17.2. Here $s$ *overshoots* $\sigma$ instead.
 
-So sometimes $s$ undershoots and sometimes it overshoots. Why call it "biased small," then? Because outcomes like A and B (tight, unrepresentative samples) happen more often than outcomes like C. Average over enough samples, and the sample SD comes in low more often than it comes in high. Let's check that directly by simulating 8,000 samples, shown in @fig-sdbias-simulation.
+So sometimes $s$ undershoots and sometimes it overshoots. Why call it "biased small," then? Because outcomes like A and B (tight, unrepresentative samples) happen more often than outcomes like C. Average over enough samples, and the sample SD comes in low more often than it comes in high. Let's check that by simulating 8,000 samples, shown in @fig-sdbias-simulation. The simulation draws from a normal population with the same $\mu = 100$ and $\sigma = 12.11$ as the number line above, rather than from the 21 even numbers themselves, so the histograms come out smooth enough to read. The bias is a general property of the sample SD, not a quirk of one particular population.
 
 ```{r, echo=F}
 #| label: fig-sdbias-simulation
@@ -1305,7 +1292,7 @@ Two things to notice. First, compare the top row (divide by $n$) to the bottom r
 
 -   The sample mean is unbiased for $\mu$, so no correction is needed.
 -   The naive sample SD (divide by $n$) tends to underestimate $\sigma$.
--   Dividing by $n-1$ instead corrects this bias, and is the standard choice for sample data.
+-   Dividing by $n-1$ instead makes the *variance* unbiased, removes nearly all of the bias in the SD, and is the standard choice for sample data.
 -   The correction matters most for small $n$, and fades as $n$ grows.
 -   On an exam, if you're asked for "the sample standard deviation," use the $n-1$ version unless told otherwise. R's `sd()` function already does this for you.
 

@@ -258,6 +258,8 @@ knitr::kable(the_df_short)
 
 Deviations from the mean for chocolate (column `C_d`), deviations from the mean for happiness (column `H_d`), and their products. The mean of those products (in the bottom right corner of the table) is the official **covariance**.
 
+One note before moving on. The formula above divides by $N$, which is the population version, and that is what the table computes. R's `cov()` and `sd()` divide by $n-1$ instead, for the same reason the sample standard deviation did back in Chapter 1. The two differ only by a factor of $n/(n-1)$, and that factor cancels completely in Pearson's $r$ below, so $r$ comes out identical either way. If you compute the covariance itself in R, though, expect a slightly larger number than the one in this table.
+
 Covariance is a powerful idea, but it has a major drawback: its magnitude is hard to interpret. Just as variance is tied to squared units, covariance is tied to the scales of both variables, so a covariance of 3.22 isn't inherently "large" or "small" the way a correlation is. All we can read directly from it is the sign, not the strength. To compare strength across variables with different units or scales, we need to normalize covariance, which leads to Pearson's $r$.
 
 ### Pearson's r
@@ -345,7 +347,7 @@ ggplot(all_data,aes(x=chocolate_x,y=happiness_x))+
 
 ### The best fit line
 
-Notice the blue lines in these panels. Each is a **best fit** line: the single straight line that best summarizes the overall pattern of dots.
+Notice the red lines in these panels. Each is a **best fit** line: the single straight line that best summarizes the overall pattern of dots.
 
 With one variable, we use the mean to describe central tendency in one dimension. With two variables plotted together, we need a two-dimensional equivalent. A line serves that purpose, capturing the average relationship across the cloud of points.
 
@@ -461,8 +463,8 @@ all_df<-data.frame(scores,x,y,x_squared,y_squared,xy)
 all_df <- all_df %>%
   rbind(c("Sums",colSums(all_df[1:7,2:6]))) 
 
-slope=((sum(y)*sum(x_squared))-(sum(x)*sum(xy)))/((7*sum(x_squared))-sum(x)^2)
-intercept=(7*sum(xy)-sum(x)*sum(y))/(7*sum(x_squared)-sum(x)^2)
+intercept=((sum(y)*sum(x_squared))-(sum(x)*sum(xy)))/((7*sum(x_squared))-sum(x)^2)
+slope=(7*sum(xy)-sum(x)*sum(y))/(7*sum(x_squared)-sum(x)^2)
 
 knitr::kable(all_df)
 
@@ -472,13 +474,13 @@ The table has 7 pairs of $x$ and $y$ scores, plus columns for $x^2$, $y^2$, and 
 
 $intercept = b = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2} = \frac{39 * 200 - 34*231}{7*200-34^2} = -.221$
 
-$slope = m = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2} = \frac{7*231-34*39}{7*275-34^2} = 1.19$
+$slope = m = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2} = \frac{7*231-34*39}{7*200-34^2} = 1.19$
 
 To check the work, plot the scores and draw a line through them with slope = 1.19 and y-intercept = -.221. As shown in @fig-3corwithLine, the line runs through the middle of the dots, as it should.
 
 ```{r}
 #| label: fig-3corwithLine
-#| fig-cap: "An example regression line with confidence bands going through a few data points in a scatterplot"
+#| fig-cap: "An example regression line going through a few data points in a scatterplot."
 #| out-width: "75%"
 
 plot_df<-data.frame(x,y)
@@ -506,8 +508,8 @@ Here is what the numbers on each ball could look like for each participant:
 ```{r 3northsouth}
 
 Ball<-1:10
-North_pole<-round(round(runif(10,1,10)))
-South_pole<-round(round(runif(10,1,10)))
+North_pole<-sample(1:10,10,replace=TRUE)
+South_pole<-sample(1:10,10,replace=TRUE)
 
 the_df_balls<-data.frame(Ball,North_pole,South_pole)
 
@@ -535,8 +537,8 @@ Running the game 1,000 times, each time generating 10 random numbers for both th
 
 simulated_correlations <- length(0)
 for(sim in 1:1000){
-  North_pole <- runif(10,1,10)
-  South_pole <- runif(10,1,10)
+  North_pole <- sample(1:10,10,replace=TRUE)
+  South_pole <- sample(1:10,10,replace=TRUE)
   simulated_correlations[sim] <- cor(North_pole,South_pole)
 }
 
@@ -573,8 +575,8 @@ library(gganimate)
 
 all_df<-data.frame()
 for(sim in 1:10){
-  North_pole <- runif(10,1,10)
-  South_pole <- runif(10,1,10)
+  North_pole <- sample(1:10,10,replace=TRUE)
+  South_pole <- sample(1:10,10,replace=TRUE)
   t_df<-data.frame(simulation=rep(sim,10),
                                   North_pole,
                                   South_pole)

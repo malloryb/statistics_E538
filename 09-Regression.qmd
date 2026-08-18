@@ -83,7 +83,22 @@ Comparing our estimated slope to its standard error, we can now quantify the pro
 
 ## Worked regression example: stream temperature and dissolved oxygen
 
-Let's work through an example. Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO) to decline as stream temperature rises. This matters for stream health: low DO can stress or kill fish and invertebrates. Suppose we sample 40 stream sites, measuring water temperature (°C) and dissolved oxygen (mg/L) at each.
+Let's work through an example. Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO) to decline as stream temperature rises. This matters for stream health: low DO can stress or kill fish and invertebrates. @fig-10streamdesign lays out the design, and the change from every previous chapter is immediate.
+
+```{r}
+#| label: fig-10streamdesign
+#| fig-cap: "A regression design. The predictor is no longer a set of boxes to sort sites into: every site sits somewhere along a continuous range, which is what a slope is built to describe."
+#| fig-alt: "Study design schematic. IV: stream temperature, continuous, an arrow running from 10 to 24 degrees Celsius across 40 sites. DV: dissolved oxygen in mg per litre."
+#| fig-asp: 0.34
+#| out-width: "100%"
+
+design_continuous("Stream temperature (continuous)", "10 \u00b0C", "24 \u00b0C",
+                  "40 sites", "Dissolved oxygen (mg/L)",
+                  "Does DO change as temperature rises?")
+```
+
+Up to now every design put units into boxes and asked whether the boxes differed. Here there are no boxes: temperature varies continuously, each of the 40 sites sits somewhere along that range, and the question becomes how much DO changes per degree rather than whether two groups differ. That shift from boxes to a range is what a slope is for.
+
 
 ```{r}
 #| label: fig-10regscatter
@@ -97,7 +112,7 @@ stream_df <- data.frame(stream_temp, DO)
 
 ggplot(stream_df, aes(x = stream_temp, y = DO)) +
   geom_point(size=1.5) +
-  geom_smooth(method = "lm", se = FALSE) +
+  geom_smooth(method = "lm", se = FALSE, color = "#b22222") +
   xlab("Stream temperature (°C)") +
   ylab("Dissolved oxygen (mg/L)")
 
@@ -266,7 +281,7 @@ The table also reports $F$, $df1$, and $df2$. With one predictor, $F$ and $t$ te
 
 Here $R^2 = `r round(fit_glance$r.squared, 2)`$: stream temperature accounts for about `r round(fit_glance$r.squared*100)`% of the variation we observed in dissolved oxygen across sites. The remaining variation comes from everything else the model doesn't capture (discharge, shading, groundwater input, and so on), folded into $\varepsilon$.
 
-:::: {.callout-important title="Important: Results reporting"}
+:::: {.callout-important title="Results reporting: regression"}
 We report a regression result the same way as any other test: the slope, the test statistic, degrees of freedom, and $p$, plus $R^2$ as the effect size.
 
 > Dissolved oxygen declined significantly with stream temperature, $b_1 = `r round(coef(fit)[2],2)`$, $t(`r nrow(stream_df)-2`) = `r round(fit_tidy$statistic[2],2)`$, $p < .001$, $R^2 = `r round(fit_glance$r.squared,2)`$.
@@ -357,7 +372,20 @@ ggplot(stream_df, aes(x = fitted, y = resid)) +
 
 @fig-10regresid, for our stream temperature data, shows what we want to see: residuals scattered evenly above and below zero, with no curve (which would suggest the true relationship isn't linear) and no funnel shape (which would suggest variance changes systematically across the range of $X$).
 
-Let's try checking residuals for a different set of data, this time on avian influenza cases over time.
+Let's try checking residuals for a different set of data, this time on avian influenza cases over time. The design is the same shape as the stream example, with time as the continuous predictor.
+
+```{r}
+#| label: fig-10outbreakdesign
+#| fig-cap: "The outbreak data as a design. Structurally identical to the stream example, which is what makes it a fair test of whether a straight line is the right model."
+#| fig-alt: "Study design schematic. IV: day of outbreak, continuous, an arrow running from day 1 to day 14. DV: new cases detected per day."
+#| fig-asp: 0.34
+#| out-width: "100%"
+
+design_continuous("Day of outbreak (continuous)", "day 1", "day 14", "14 days",
+                  "New cases detected per day",
+                  "Do new cases change over time?")
+```
+
 
 ```{r}
 #| label: fig-10outbreakfit

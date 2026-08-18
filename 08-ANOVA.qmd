@@ -59,13 +59,14 @@ Even with only five groups, there's a 40% chance of turning up at least one "sig
 #| fig-cap: "Familywise Type I error rate as the number of independent t-tests increases, at alpha = .05 per test."
 #| out-width: "80%"
 
-m <- 1:10
+m <- 1:12
 familywise <- 1 - (1 - .05)^m
 
 ggplot(data.frame(m, familywise), aes(x = m, y = familywise)) +
   geom_line() +
   geom_point() +
   scale_y_continuous(labels = scales::percent) +
+  scale_x_continuous(breaks = 1:12) +
   xlab("Number of independent t-tests") +
   ylab("Familywise Type I error rate") +
   theme_classic(base_size = 12)
@@ -127,8 +128,8 @@ df <- data.frame(groups, scores, diff, diff_squared)
 df$groups <- as.character(df$groups)
 
 df <- df %>%
-  rbind(c("Sums", colSums(df[1:9, 2:4]))) %>%
-  rbind(c("Means", colMeans(df[1:9, 2:4])))
+  rbind(c("Sums", round(colSums(df[1:9, 2:4]), 2))) %>%
+  rbind(c("Means", round(colMeans(df[1:9, 2:4]), 2)))
 
 knitr::kable(df)
 
@@ -163,8 +164,8 @@ df <- data.frame(groups, scores, means, diff, diff_squared)
 df$groups <- as.character(df$groups)
 
 df <- df %>%
-  rbind(c("Sums", colSums(df[1:9, 2:5]))) %>%
-  rbind(c("Means", colMeans(df[1:9, 2:5])))
+  rbind(c("Sums", round(colSums(df[1:9, 2:5]), 2))) %>%
+  rbind(c("Means", round(colMeans(df[1:9, 2:5]), 2)))
 
 knitr::kable(df)
 
@@ -198,8 +199,8 @@ df <- data.frame(groups, scores, means, diff, diff_squared)
 df$groups <- as.character(df$groups)
 
 df <- df %>%
-  rbind(c("Sums", colSums(df[1:9, 2:5]))) %>%
-  rbind(c("Means", colMeans(df[1:9, 2:5])))
+  rbind(c("Sums", round(colSums(df[1:9, 2:5]), 2))) %>%
+  rbind(c("Means", round(colMeans(df[1:9, 2:5]), 2)))
 
 knitr::kable(df)
 
@@ -248,7 +249,7 @@ library(xtable)
 aov_out <- aov(scores ~ groups, df[1:9, ])
 summary_out <- summary(aov_out)
 
-knitr::kable(xtable(summary_out))
+knitr::kable(xtable(summary_out), digits = c(0, 0, 2, 2, 2, 4))
 
 ```
 
@@ -394,7 +395,8 @@ ggplot(data = plot_df2, aes(x = site_type, y = group_means)) +
                       group_SE), color = "#1446a0", width = 0.25) +
   xlab("Site type") +
   ylab("Mean abundance") +
-  facet_wrap( ~ simulations, nrow=2)
+  facet_wrap( ~ simulations, nrow=2) +
+  theme(panel.border = element_rect(colour = "grey30", fill = NA, linewidth = 0.5))
 
 ```
 
@@ -442,7 +444,8 @@ ggplot(plot_df, aes(x = site_type, y = means)) +
   facet_wrap( ~ simulations, nrow=2) +
   xlab("Site type") +
   ylab("Mean abundance") +
-  coord_cartesian(ylim = c(85, 115))
+  coord_cartesian(ylim = c(85, 115)) +
+  theme(panel.border = element_rect(colour = "grey30", fill = NA, linewidth = 0.5))
 
 ```
 
@@ -488,7 +491,8 @@ ggplot(plot_df, aes(x = site_type, y = means)) +
   facet_wrap( ~ simulations, nrow = 2) +
   xlab("Site type") +
   ylab("Mean abundance") +
-  coord_cartesian(ylim = c(85, 115))
+  coord_cartesian(ylim = c(85, 115)) +
+  theme(panel.border = element_rect(colour = "grey30", fill = NA, linewidth = 0.5))
 
 ```
 
@@ -502,7 +506,22 @@ The following example applies the full ANOVA workflow, from descriptive summarie
 
 ### Salamander abundance across forest types
 
-Plethodontid salamanders are sensitive indicators of forest condition: they depend on moist microhabitats, abundant coarse woody debris, and stable soil temperatures, all features that decline with forest disturbance. A field ecologist surveys salamander abundance at 24 plots distributed across three forest types: **old-growth** (8 plots), **secondary** forest (8 plots), and **managed plantation** (8 plots). The research question is whether mean salamander abundance differs among forest types.
+Plethodontid salamanders are sensitive indicators of forest condition: they depend on moist microhabitats, abundant coarse woody debris, and stable soil temperatures, all features that decline with forest disturbance. A field ecologist surveys salamander abundance across three forest types, laid out in @fig-9salamanderdesign.
+
+```{r}
+#| label: fig-9salamanderdesign
+#| fig-cap: "The salamander study as a design schematic. Structurally this is the two-group design from Chapters 4 and 6 with one more box added, which is exactly why ANOVA generalizes the t-test rather than replacing it."
+#| fig-alt: "Study design schematic. IV: forest type, categorical. Three boxes labelled Old-growth, Secondary and Managed, each with n = 8 plots. DV: salamander abundance per plot."
+#| fig-asp: 0.34
+#| out-width: "100%"
+
+design_groups("Forest type (categorical)",
+              c("Old-growth", "Secondary", "Managed"), 8, "plots",
+              "Salamander abundance (per plot)",
+              "Do the three means differ by more than chance?")
+```
+
+Compare that with the two-group designs earlier in the book: nothing has changed except the number of boxes. That is the entire reason ANOVA exists as a generalization of the $t$-test rather than a separate idea, and it is also why adding boxes is what forces the multiple-comparisons problem we opened this chapter with.
 
 Let's look at the data and findings. Note that you will work through these steps yourself in Lab 10.
 
@@ -553,10 +572,10 @@ We now conduct the one-way ANOVA to test whether these differences are larger th
 library(xtable)
 aov_out      <- aov(abundance ~ forest_type, data = salamander_df)
 summary_out  <- summary(aov_out)
-knitr::kable(xtable(summary_out))
+knitr::kable(xtable(summary_out), digits = c(0, 0, 2, 2, 2, 4))
 ```
 
-:::: {.callout-important title="Important: Results reporting"}
+:::: {.callout-important title="Results reporting: one-way ANOVA"}
 Report the direction in plain language, the test statistic with both degrees of freedom, the error term, $p$, and the effect size.
 
 > There was a significant effect of forest type on salamander abundance, $F(2, 21) = 14.60$, $MSE = 10.70$, $p < .001$, $\eta^2 = 0.58$.
@@ -583,13 +602,14 @@ $SS_\text{Between}$ is the variation the group means can account for and $SS_\te
 ss <- summary(aov_out)[[1]][["Sum Sq"]]
 ss_between <- ss[1]
 ss_within  <- ss[2]
-eta_sq     <- ss_between / (ss_between + ss_within)
+ss_total   <- ss_between + ss_within
+eta_sq     <- ss_between / ss_total
 
 knitr::kable(
   data.frame(
     `SS Between` = round(ss_between, 2),
     `SS Within`  = round(ss_within, 2),
-    `SS Total`   = round(ss_between + ss_within, 2),
+    `SS Total`   = round(ss_total, 2),
     `Eta-squared` = round(eta_sq, 3),
     check.names = FALSE
   )
@@ -647,13 +667,47 @@ tukey_out <- TukeyHSD(aov_out)
 knitr::kable(round(tukey_out$forest_type, 4))
 ```
 
-The Tukey results show:
+**Reading the table, column by column.** Each row is one pairwise comparison, and there are three of them because three groups make three pairs.
 
--   **Old-growth vs. Managed**: mean difference = 8.25 individuals/plot, p = 0.0002. Old-growth plots support significantly higher salamander abundance than managed plantations.
--   **Old-growth vs. Secondary**: mean difference = 6.88 individuals/plot, p = 0.0011. Old-growth plots also differ significantly from secondary forest.
--   **Secondary vs. Managed**: mean difference = 1.38 individuals/plot, p = 0.68. Secondary forest and managed plantation plots are **not** significantly different from each other.
+-   **diff** is the difference in group means, computed as *the second group listed minus the first*. Read the row label right to left.
+-   **lwr** and **upr** are the lower and upper bounds of the 95% confidence interval for that difference.
+-   **p adj** is the $p$-value *after* adjusting for the fact that you are making three comparisons at once. This adjustment is the whole point of Tukey HSD: it is why running the three comparisons here does not carry the 14% familywise error rate we computed at the start of the chapter.
 
-The pattern is ecologically interpretable: old-growth forest supports the highest salamander abundance, consistent with its structural complexity and stable microclimate. Secondary forest and managed plantation are statistically indistinguishable, suggesting that the early stages of forest recovery may not yet restore the conditions salamanders require.
+**Watch the sign.** This is the single easiest thing to get backwards. The row `Secondary-Old-growth` has a diff of $-6.875$, and that negative sign does **not** mean secondary forest has more salamanders. It means secondary *minus* old-growth is negative, so old-growth is the higher of the two, by 6.88 individuals per plot. Always translate the sign back into a sentence naming which group is larger before you write anything down.
+
+**The confidence interval and the $p$-value say the same thing.** A pair differs significantly at $\alpha = .05$ exactly when its 95% interval excludes zero. Check both columns against each other as a habit: `Secondary-Old-growth` runs from $-11.00$ to $-2.75$, entirely below zero, and its $p$ is .0011. `Managed-Secondary` runs from $-5.50$ to $2.75$, straddling zero, and its $p$ is .68. The two columns can never disagree, so if they seem to, you have misread a row.
+
+So the three comparisons give:
+
+-   **Old-growth vs. Secondary**: old-growth is higher by 6.88 individuals/plot, $p = .001$. Significant.
+-   **Old-growth vs. Managed**: old-growth is higher by 8.25 individuals/plot, $p < .001$. Significant.
+-   **Secondary vs. Managed**: they differ by 1.38 individuals/plot, $p = .68$. Not significant.
+
+**"Not significant" does not mean "the same."** Secondary and managed plantation differ by 1.38 salamanders per plot in this sample. That difference is real in the data; what the test says is that with eight plots per group we cannot distinguish it from sampling noise. A larger study might well separate them. Report it as "we did not detect a difference," never as "there is no difference."
+
+**Compact letter display.** Once you have more than three groups, a list of pairwise sentences gets unwieldy fast, so results are usually summarized with letters placed above each group. The rule is simple: **groups that share a letter were not significantly different; groups sharing no letter were.** @fig-9tukeyletters puts the salamander results in that form.
+
+```{r}
+#| label: fig-9tukeyletters
+#| fig-cap: "Mean salamander abundance with Tukey letters. Old-growth carries an 'a' and differs from both other types; secondary and managed share a 'b', so they were not distinguishable from each other."
+#| fig-asp: 0.62
+#| out-width: "90%"
+
+letters_df <- descriptive_df %>%
+  dplyr::mutate(tukey_letter = c("a", "b", "b"))
+
+ggplot(letters_df, aes(x = forest_type, y = means)) +
+  geom_bar(stat = "identity", fill = "#63b8ff") +
+  geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.15) +
+  geom_text(aes(y = means + SEs + 1.1, label = tukey_letter),
+            fontface = "bold", size = 5) +
+  ylab("Salamander abundance (individuals/plot)") +
+  xlab("Forest type")
+```
+
+Old-growth gets its own letter because it differs from both of the others. Secondary and managed share a letter because the test could not separate them. Note that a group can carry *two* letters, written "ab", when it differs from neither of two groups that do differ from each other. That looks contradictory but isn't: it means that group sits in the middle, close enough to both ends that neither comparison reached significance, while the two ends are far enough apart that theirs did.
+
+The pattern here is ecologically interpretable: old-growth forest supports the highest salamander abundance, consistent with its structural complexity and stable microclimate. Secondary forest and managed plantation could not be distinguished, suggesting that the early stages of forest recovery may not yet restore the conditions salamanders require.
 
 ### Nonparametric alternative: the Kruskal-Wallis test
 

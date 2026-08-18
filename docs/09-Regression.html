@@ -2,18 +2,24 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.353">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Mallory L. Barnes">
 
-<title>Answering questions with data - 9&nbsp; Simple Linear Regression</title>
+<title>9&nbsp; Simple Linear Regression – Answering questions with data</title>
 <style>
-code{white-space: pre-wrap;}
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -22,6 +28,7 @@ ul.task-list li input[type="checkbox"] {
   vertical-align: middle;
 }
 /* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
@@ -86,22 +93,29 @@ div.csl-indent {
 <meta name="quarto:offset" content="./">
 <link href="./10-FactorialANOVA.html" rel="next">
 <link href="./08-ANOVA.html" rel="prev">
-<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-d3f7f8e73c8d287b30bcf59c2b563615.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
   "collapse-after": 3,
   "panel-placement": "start",
   "type": "textbox",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -110,37 +124,67 @@ div.csl-indent {
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
-    "search-submit-button-title": "Submit"
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
   }
 }</script>
 
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
 
-<meta property="og:title" content="Answering questions with data - 9&nbsp; Simple Linear Regression">
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<meta property="og:title" content="9&nbsp; Simple Linear Regression – Answering questions with data">
 <meta property="og:description" content="">
-<meta property="og:image" content="09-Regression_files/figure-html/fig-10regscatter-1.png">
-<meta property="og:site-name" content="Answering questions with data">
-<meta name="twitter:title" content="Answering questions with data - 9&nbsp; Simple Linear Regression">
+<meta property="og:image" content="09-Regression_files/figure-html/fig-10streamdesign-1.png">
+<meta property="og:site_name" content="Answering questions with data">
+<meta property="og:image:alt" content="Study design schematic. IV: stream temperature, continuous, an arrow running from 10 to 24 degrees Celsius across 40 sites. DV: dissolved oxygen in mg per litre.">
+<meta name="twitter:title" content="9&nbsp; Simple Linear Regression – Answering questions with data">
 <meta name="twitter:description" content="A free textbook teaching introductory statistics for environmental science graduate students, including a lab manual, and course website. Licensed on CC BY SA 4.0">
 <meta name="twitter:image" content="imgs/TextbookCover.png">
 <meta name="twitter:site" content="@mallory_barnes">
 <meta name="twitter:card" content="summary">
 </head>
 
-<body class="nav-sidebar floating">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav">
     <div class="container-fluid d-flex">
-      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./09-Regression.html"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Simple Linear Regression</span></a></li></ol></nav>
-      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-      </a>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./09-Regression.html"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Simple Linear Regression</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
         <i class="bi bi-search"></i>
       </button>
@@ -150,7 +194,7 @@ div.csl-indent {
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="./">Answering questions with data</a> 
@@ -241,7 +285,7 @@ div.csl-indent {
     </ul>
     </div>
 </nav>
-<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" class="toc-active">
@@ -267,7 +311,7 @@ div.csl-indent {
   <li><a href="#using-the-model-prediction" id="toc-using-the-model-prediction" class="nav-link" data-scroll-target="#using-the-model-prediction"><span class="header-section-number">9.7</span> Using the model: prediction</a></li>
   <li><a href="#chapter-summary" id="toc-chapter-summary" class="nav-link" data-scroll-target="#chapter-summary"><span class="header-section-number">9.8</span> Chapter Summary</a></li>
   </ul>
-<div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/malloryb/statistics_E538/edit/master/09-Regression.qmd" class="toc-action">Edit this page</a></p></div></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/malloryb/statistics_E538/edit/master/09-Regression.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -292,14 +336,16 @@ div.csl-indent {
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">August 4, 2026</p>
+      <p class="date-modified">August 5, 2026</p>
     </div>
   </div>
     
   </div>
   
 
+
 </header>
+
 
 <blockquote class="blockquote">
 <p><em>Essentially, all models are wrong, but some are useful.</em></p>
@@ -317,7 +363,7 @@ div.csl-indent {
 <p>A linear equation, fit to real data, is a statistical <strong>model</strong>. We never observe <span class="math inline">\(\beta_1\)</span> directly. So, we need one additional term for the <em>residual error</em>, <span class="math inline">\(\varepsilon\)</span>. This is the additional variability in the DV not explained by our model.</p>
 <p><strong>Parameters and sample statistics</strong></p>
 <p>Because it’s a <em>model</em>, our beta coefficients represent the <strong>population parameters</strong>, which you’ll recall come from the inferred, but never truly known, parent distribution.</p>
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 26%">
 <col style="width: 36%">
@@ -368,18 +414,37 @@ t = \frac{\text{effect}}{\text{standard error}} = \frac{b_1}{SE(b_1)}
 </section>
 <section id="worked-regression-example-stream-temperature-and-dissolved-oxygen" class="level2" data-number="9.2">
 <h2 data-number="9.2" class="anchored" data-anchor-id="worked-regression-example-stream-temperature-and-dissolved-oxygen"><span class="header-section-number">9.2</span> Worked regression example: stream temperature and dissolved oxygen</h2>
-<p>Let’s work through an example. Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO) to decline as stream temperature rises. This matters for stream health: low DO can stress or kill fish and invertebrates. Suppose we sample 40 stream sites, measuring water temperature (°C) and dissolved oxygen (mg/L) at each.</p>
+<p>Let’s work through an example. Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO) to decline as stream temperature rises. This matters for stream health: low DO can stress or kill fish and invertebrates. <a href="#fig-10streamdesign" class="quarto-xref">Figure&nbsp;<span>9.1</span></a> lays out the design, and the change from every previous chapter is immediate.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-10regscatter" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="09-Regression_files/figure-html/fig-10regscatter-1.png" class="img-fluid figure-img" style="width:75.0%"></p>
-<figcaption class="figure-caption">Figure&nbsp;9.1: Stream temperature and dissolved oxygen at 40 sample sites, with the fitted regression line.</figcaption>
+<div id="fig-10streamdesign" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Study design schematic. IV: stream temperature, continuous, an arrow running from 10 to 24 degrees Celsius across 40 sites. DV: dissolved oxygen in mg per litre.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10streamdesign-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10streamdesign-1.png" class="img-fluid figure-img" style="width:100.0%" alt="Study design schematic. IV: stream temperature, continuous, an arrow running from 10 to 24 degrees Celsius across 40 sites. DV: dissolved oxygen in mg per litre.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10streamdesign-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.1: A regression design. The predictor is no longer a set of boxes to sort sites into: every site sits somewhere along a continuous range, which is what a slope is built to describe.
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>The scatterplot in <a href="#fig-10regscatter">Figure&nbsp;<span>9.1</span></a> shows a clear downward trend. Just from the graph, we can guess a couple of things:</p>
+<p>Up to now every design put units into boxes and asked whether the boxes differed. Here there are no boxes: temperature varies continuously, each of the 40 sites sits somewhere along that range, and the question becomes how much DO changes per degree rather than whether two groups differ. That shift from boxes to a range is what a slope is for.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-10regscatter" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10regscatter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10regscatter-1.png" class="img-fluid figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10regscatter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.2: Stream temperature and dissolved oxygen at 40 sample sites, with the fitted regression line.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The scatterplot in <a href="#fig-10regscatter" class="quarto-xref">Figure&nbsp;<span>9.2</span></a> shows a clear downward trend. Just from the graph, we can guess a couple of things:</p>
 <ul>
 <li><p>Pearson’s <span class="math inline">\(r\)</span> should be negative, since DO falls as temperature rises</p></li>
 <li><p>It should sit fairly close to <span class="math inline">\(-1\)</span> since the points hug the line with only modest scatter.</p></li>
@@ -393,15 +458,19 @@ t = \frac{\text{effect}}{\text{standard error}} = \frac{b_1}{SE(b_1)}
 <p>We don’t know <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span>; we estimate them from the sample as <span class="math inline">\(b_0\)</span> and <span class="math inline">\(b_1\)</span>, using the same least-squares logic from Chapter 2 (the line that minimizes the sum of squared residuals).</p>
 <p>In R, this is a single line of code:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(DO <span class="sc">~</span> stream_temp, <span class="at">data =</span> stream_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(DO <span class="sc">~</span> stream_temp, <span class="at">data =</span> stream_df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>This fitted line (<a href="#fig-10regresidviz">Figure&nbsp;<span>9.2</span></a>) is the best-fit line that minimizes the total squared distance between the data and the line.</p>
+<p>This fitted line (<a href="#fig-10regresidviz" class="quarto-xref">Figure&nbsp;<span>9.3</span></a>) is the best-fit line that minimizes the total squared distance between the data and the line.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-10regresidviz" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="09-Regression_files/figure-html/fig-10regresidviz-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Scatter plot of dissolved oxygen against stream temperature with a fitted downward-sloping line. Open circles mark each point's predicted value on the line, and a red vertical segment connects each observed point to its prediction."></p>
-<figcaption class="figure-caption">Figure&nbsp;9.2: Stream temperature and dissolved oxygen with the fitted line. Vertical red segments are residuals.</figcaption>
+<div id="fig-10regresidviz" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Scatter plot of dissolved oxygen against stream temperature with a fitted downward-sloping line. Open circles mark each point's predicted value on the line, and a red vertical segment connects each observed point to its prediction.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10regresidviz-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10regresidviz-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Scatter plot of dissolved oxygen against stream temperature with a fitted downward-sloping line. Open circles mark each point's predicted value on the line, and a red vertical segment connects each observed point to its prediction.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10regresidviz-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.3: Stream temperature and dissolved oxygen with the fitted line. Vertical red segments are residuals.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -409,7 +478,7 @@ t = \frac{\text{effect}}{\text{standard error}} = \frac{b_1}{SE(b_1)}
 <p>Here’s the table of model coefficients R gives us.</p>
 <div class="cell">
 <div class="cell-output-display">
-<table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<table class="caption-top table table-sm table-striped small">
 <caption>Coefficient table for DO ~ stream temperature</caption>
 <thead>
 <tr class="header">
@@ -443,8 +512,6 @@ t = \frac{\text{effect}}{\text{standard error}} = \frac{b_1}{SE(b_1)}
 </tr>
 </tbody>
 </table>
-
-
 </div>
 </div>
 <p>With the results of the regression, we can get an equation for the fitted line:</p>
@@ -466,13 +533,17 @@ t = \frac{\text{effect}}{\text{standard error}} = \frac{b_1}{SE(b_1)}
 <p>Recall the test statistic compares the estimated slope to its standard error, the <code>Std. Error</code> column already in the coefficient table above, which measures how much <span class="math inline">\(b_1\)</span> would bounce around from sample to sample if we repeated this study over and over:</p>
 <p><span class="math display">\[t = \frac{b_1}{SE(b_1)} = \frac{-0.271}{0.04} = -6.72\]</span></p>
 <p>with <span class="math inline">\(df = n - 2 = 38\)</span> (one degree of freedom spent estimating the intercept, one for the slope).</p>
-<p><strong>Where the <span class="math inline">\(p\)</span>-value comes from.</strong> If temperature and DO were truly unrelated in the population, repeating this study many times would still produce a nonzero <span class="math inline">\(b_1\)</span> just by chance, and a <span class="math inline">\(t\)</span>-statistic that follows a <span class="math inline">\(t\)</span>-distribution with <span class="math inline">\(df = 38\)</span>. <a href="#fig-10regslopenull">Figure&nbsp;<span>9.3</span></a> shows that distribution, with the critical values marking the boundary of the most extreme 5% under <span class="math inline">\(H_0\)</span>, and our observed <span class="math inline">\(t\)</span> marked against it.</p>
+<p><strong>Where the <span class="math inline">\(p\)</span>-value comes from.</strong> If temperature and DO were truly unrelated in the population, repeating this study many times would still produce a nonzero <span class="math inline">\(b_1\)</span> just by chance, and a <span class="math inline">\(t\)</span>-statistic that follows a <span class="math inline">\(t\)</span>-distribution with <span class="math inline">\(df = 38\)</span>. <a href="#fig-10regslopenull" class="quarto-xref">Figure&nbsp;<span>9.4</span></a> shows that distribution, with the critical values marking the boundary of the most extreme 5% under <span class="math inline">\(H_0\)</span>, and our observed <span class="math inline">\(t\)</span> marked against it.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-10regslopenull" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="09-Regression_files/figure-html/fig-10regslopenull-1.png" class="img-fluid figure-img" style="width:75.0%" alt="A t-distribution centered at zero with 38 degrees of freedom. Both tails beyond the critical values around plus or minus 2.02 are shaded and labeled as the rejection region, with the middle labeled retain H0. A vertical red line marks the observed t of about negative 6.72, far to the left of the critical value, labeled directly on the plot."></p>
-<figcaption class="figure-caption">Figure&nbsp;9.3: The null distribution of t for the slope test at df=38. Shaded tails are the rejection region at alpha=.05; the dashed line marks our observed t, far into the left tail.</figcaption>
+<div id="fig-10regslopenull" class="quarto-float quarto-figure quarto-figure-center anchored" alt="A t-distribution centered at zero with 38 degrees of freedom. Both tails beyond the critical values around plus or minus 2.02 are shaded and labeled as the rejection region, with the middle labeled retain H0. A vertical red line marks the observed t of about negative 6.72, far to the left of the critical value, labeled directly on the plot.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10regslopenull-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10regslopenull-1.png" class="img-fluid figure-img" style="width:75.0%" alt="A t-distribution centered at zero with 38 degrees of freedom. Both tails beyond the critical values around plus or minus 2.02 are shaded and labeled as the rejection region, with the middle labeled retain H0. A vertical red line marks the observed t of about negative 6.72, far to the left of the critical value, labeled directly on the plot.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10regslopenull-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.4: The null distribution of t for the slope test at df=38. Shaded tails are the rejection region at alpha=.05; the dashed line marks our observed t, far into the left tail.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -492,7 +563,7 @@ t = \frac{\text{effect}}{\text{standard error}} = \frac{b_1}{SE(b_1)}
 <p>For simple regression with one predictor, <span class="math inline">\(R^2\)</span> is literally Pearson’s <span class="math inline">\(r\)</span> from Chapter 2, squared: <span class="math inline">\((-0.737)^2 = 0.543\)</span>, matching the model’s <span class="math inline">\(R^2\)</span> below exactly.</p>
 <div class="cell">
 <div class="cell-output-display">
-<table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<table class="caption-top table table-sm table-striped small">
 <caption>Model fit for DO ~ stream temperature</caption>
 <thead>
 <tr class="header">
@@ -515,19 +586,17 @@ t = \frac{\text{effect}}{\text{standard error}} = \frac{b_1}{SE(b_1)}
 </tr>
 </tbody>
 </table>
-
-
 </div>
 </div>
 <p>The table also reports <span class="math inline">\(F\)</span>, <span class="math inline">\(df1\)</span>, and <span class="math inline">\(df2\)</span>. With one predictor, <span class="math inline">\(F\)</span> and <span class="math inline">\(t\)</span> test the exact same thing: <span class="math inline">\(F = t^2 = -6.72^2 = 45.09\)</span>, matching the table. ANOVA reports its omnibus test this same way, and <span class="math inline">\(F\)</span> is the form that generalizes once more than one predictor is involved, which comes up shortly.</p>
 <p>Here <span class="math inline">\(R^2 = 0.54\)</span>: stream temperature accounts for about 54% of the variation we observed in dissolved oxygen across sites. The remaining variation comes from everything else the model doesn’t capture (discharge, shading, groundwater input, and so on), folded into <span class="math inline">\(\varepsilon\)</span>.</p>
-<div class="callout callout-style-default callout-important callout-titled" title="Important: Results reporting">
+<div class="callout callout-style-default callout-important callout-titled" title="Results reporting: regression">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Important: Results reporting
+<span class="screen-reader-only">Important</span>Results reporting: regression
 </div>
 </div>
 <div class="callout-body-container callout-body">
@@ -546,13 +615,17 @@ Important: Results reporting
 <p>A <strong>small sample</strong> tends to fail the opposite way, missing a real, sizeable effect because the standard error is too large for it to reach significance.</p>
 <p><span class="math inline">\(R^2\)</span> is what tells you how much of the variation is actually being explained.</p>
 <p>Neither <span class="math inline">\(p\)</span> alone nor <span class="math inline">\(R^2\)</span> alone tells the whole story, so we must report both.</p>
-<p><a href="#fig-10regeffectpanels">Figure&nbsp;<span>9.4</span></a> shows all three combinations this can produce: a strong relationship with a non-significant slope (underpowered), a weak relationship with a significant slope (a large sample), and a relationship that is both strong and significant.</p>
+<p><a href="#fig-10regeffectpanels" class="quarto-xref">Figure&nbsp;<span>9.5</span></a> shows all three combinations this can produce: a strong relationship with a non-significant slope (underpowered), a weak relationship with a significant slope (a large sample), and a relationship that is both strong and significant.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-10regeffectpanels" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="09-Regression_files/figure-html/fig-10regeffectpanels-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Three scatter plots with fitted lines. The left panel shows a steep, tight relationship with few points and a non-significant p-value. The middle panel shows a nearly flat, scattered relationship with many points and a significant p-value. The right panel shows a steep, tight relationship with many points and a significant p-value."></p>
-<figcaption class="figure-caption">Figure&nbsp;9.4: R-squared and the slope’s p-value can disagree. Left: a strong relationship (high R-squared) that isn’t statistically significant. Middle: a weak relationship (low R-squared) that is significant anyway. Right: strong and significant together.</figcaption>
+<div id="fig-10regeffectpanels" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Three scatter plots with fitted lines. The left panel shows a steep, tight relationship with few points and a non-significant p-value. The middle panel shows a nearly flat, scattered relationship with many points and a significant p-value. The right panel shows a steep, tight relationship with many points and a significant p-value.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10regeffectpanels-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10regeffectpanels-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Three scatter plots with fitted lines. The left panel shows a steep, tight relationship with few points and a non-significant p-value. The middle panel shows a nearly flat, scattered relationship with many points and a significant p-value. The right panel shows a steep, tight relationship with many points and a significant p-value.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10regeffectpanels-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.5: R-squared and the slope’s p-value can disagree. Left: a strong relationship (high R-squared) that isn’t statistically significant. Middle: a weak relationship (low R-squared) that is significant anyway. Right: strong and significant together.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -563,7 +636,7 @@ Important: Results reporting
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Warning: How big is a “good” <span class="math inline">\(R^2\)</span>?
+<span class="screen-reader-only">Caution</span>Warning: How big is a “good” <span class="math inline">\(R^2\)</span>?
 </div>
 </div>
 <div class="callout-body-container callout-body">
@@ -588,22 +661,44 @@ Jordan Ellenberg, <em>How Not to Be Wrong</em></p>
 <p>A straight line is not guaranteed to be the right shape for your data, and the two assumptions above have two different failure signatures on this one plot: a curve means linearity is violated, a funnel shape means constant variance is violated. The most useful diagnostic for catching either is a residuals-versus-fitted plot:</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-10regresid" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="09-Regression_files/figure-html/fig-10regresid-1.png" class="img-fluid figure-img" style="width:75.0%"></p>
-<figcaption class="figure-caption">Figure&nbsp;9.5: Residuals versus fitted values for the stream temperature model. A random scatter around zero, with no funnel shape or curve, supports linearity and constant variance.</figcaption>
+<div id="fig-10regresid" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10regresid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10regresid-1.png" class="img-fluid figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10regresid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.6: Residuals versus fitted values for the stream temperature model. A random scatter around zero, with no funnel shape or curve, supports linearity and constant variance.
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-10regresid">Figure&nbsp;<span>9.5</span></a>, for our stream temperature data, shows what we want to see: residuals scattered evenly above and below zero, with no curve (which would suggest the true relationship isn’t linear) and no funnel shape (which would suggest variance changes systematically across the range of <span class="math inline">\(X\)</span>).</p>
-<p>Let’s try checking residuals for a different set of data, this time on avian influenza cases over time.</p>
+<p><a href="#fig-10regresid" class="quarto-xref">Figure&nbsp;<span>9.6</span></a>, for our stream temperature data, shows what we want to see: residuals scattered evenly above and below zero, with no curve (which would suggest the true relationship isn’t linear) and no funnel shape (which would suggest variance changes systematically across the range of <span class="math inline">\(X\)</span>).</p>
+<p>Let’s try checking residuals for a different set of data, this time on avian influenza cases over time. The design is the same shape as the stream example, with time as the continuous predictor.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-10outbreakfit" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="09-Regression_files/figure-html/fig-10outbreakfit-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Scatter plot of new cases per day against day of outbreak, with a fitted straight regression line. Points curve gently above and below the line."></p>
-<figcaption class="figure-caption">Figure&nbsp;9.6: New avian influenza cases per day, days 1-14 of an outbreak, with a fitted straight line.</figcaption>
+<div id="fig-10outbreakdesign" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Study design schematic. IV: day of outbreak, continuous, an arrow running from day 1 to day 14. DV: new cases detected per day.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10outbreakdesign-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10outbreakdesign-1.png" class="img-fluid figure-img" style="width:100.0%" alt="Study design schematic. IV: day of outbreak, continuous, an arrow running from day 1 to day 14. DV: new cases detected per day.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10outbreakdesign-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.7: The outbreak data as a design. Structurally identical to the stream example, which is what makes it a fair test of whether a straight line is the right model.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-10outbreakfit" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Scatter plot of new cases per day against day of outbreak, with a fitted straight regression line. Points curve gently above and below the line.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10outbreakfit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10outbreakfit-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Scatter plot of new cases per day against day of outbreak, with a fitted straight regression line. Points curve gently above and below the line.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10outbreakfit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.8: New avian influenza cases per day, days 1-14 of an outbreak, with a fitted straight line.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -612,10 +707,14 @@ Jordan Ellenberg, <em>How Not to Be Wrong</em></p>
 <p><strong>Check it properly.</strong> The residuals-versus-fitted plot tells a different story than the <span class="math inline">\(R^2\)</span> and slope test did.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-10outbreakresid" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="09-Regression_files/figure-html/fig-10outbreakresid-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Residuals plotted against fitted values. The residuals form a clear U-shaped curve: negative in the middle, positive at both low and high fitted values, rather than scattering randomly around zero."></p>
-<figcaption class="figure-caption">Figure&nbsp;9.7: Residuals versus fitted values for the linear outbreak model. A clear U-shape, not random scatter, is the signature of a nonlinear relationship forced into a straight line.</figcaption>
+<div id="fig-10outbreakresid" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Residuals plotted against fitted values. The residuals form a clear U-shaped curve: negative in the middle, positive at both low and high fitted values, rather than scattering randomly around zero.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10outbreakresid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10outbreakresid-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Residuals plotted against fitted values. The residuals form a clear U-shaped curve: negative in the middle, positive at both low and high fitted values, rather than scattering randomly around zero.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10outbreakresid-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.9: Residuals versus fitted values for the linear outbreak model. A clear U-shape, not random scatter, is the signature of a nonlinear relationship forced into a straight line.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -635,18 +734,22 @@ Jordan Ellenberg, <em>How Not to Be Wrong</em></p>
 <p>A Q-Q plot sorts the residuals and compares them to where a perfectly normal distribution would place values at the same percentiles. If the residuals are normal, the points fall close to the diagonal line; a systematic curve or S-shape means they don’t.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-10regqq" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="09-Regression_files/figure-html/fig-10regqq-1.png" class="img-fluid figure-img" style="width:75.0%" alt="A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality."></p>
-<figcaption class="figure-caption">Figure&nbsp;9.8: Normal Q-Q plot of the stream temperature model’s residuals. Points close to the diagonal support normality.</figcaption>
+<div id="fig-10regqq" class="quarto-float quarto-figure quarto-figure-center anchored" alt="A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10regqq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10regqq-1.png" class="img-fluid figure-img" style="width:75.0%" alt="A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10regqq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.10: Normal Q-Q plot of the stream temperature model’s residuals. Points close to the diagonal support normality.
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-10regqq">Figure&nbsp;<span>9.8</span></a> looks close to straight, consistent with normal residuals. Shapiro-Wilk asks the same question formally: <span class="math inline">\(H_0\)</span> is that the residuals come from a normal distribution, so a small <span class="math inline">\(p\)</span>-value is the evidence against normality.</p>
+<p><a href="#fig-10regqq" class="quarto-xref">Figure&nbsp;<span>9.10</span></a> looks close to straight, consistent with normal residuals. Shapiro-Wilk asks the same question formally: <span class="math inline">\(H_0\)</span> is that the residuals come from a normal distribution, so a small <span class="math inline">\(p\)</span>-value is the evidence against normality.</p>
 <div class="cell">
 <div class="cell-output-display">
-<table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<table class="caption-top table table-sm table-striped small">
 <caption>Shapiro-Wilk test on the regression residuals</caption>
 <thead>
 <tr class="header">
@@ -661,18 +764,20 @@ Jordan Ellenberg, <em>How Not to Be Wrong</em></p>
 </tr>
 </tbody>
 </table>
-
-
 </div>
 </div>
 <p>The residuals don’t depart from normality here (<span class="math inline">\(p = 0.987\)</span>). As with any formal normality test, treat this as one piece of evidence alongside the Q-Q plot and residual plot, not a strict gate. Shapiro-Wilk has the least power to detect real departures exactly when the sample is small, which is exactly when the visual checks matter most.</p>
 <p>Now apply the same two normality checks to the avian influenza model, the one we already know is badly nonlinear.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-10outbreakqq" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="09-Regression_files/figure-html/fig-10outbreakqq-1.png" class="img-fluid figure-img" style="width:75.0%" alt="A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality."></p>
-<figcaption class="figure-caption">Figure&nbsp;9.9: Normal Q-Q plot of the outbreak model’s residuals. They fall close to the diagonal, so this diagnostic alone would not have flagged the problem.</figcaption>
+<div id="fig-10outbreakqq" class="quarto-float quarto-figure quarto-figure-center anchored" alt="A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10outbreakqq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10outbreakqq-1.png" class="img-fluid figure-img" style="width:75.0%" alt="A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10outbreakqq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.11: Normal Q-Q plot of the outbreak model’s residuals. They fall close to the diagonal, so this diagnostic alone would not have flagged the problem.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -687,7 +792,7 @@ Jordan Ellenberg, <em>How Not to Be Wrong</em></p>
 <p>R gives the same number, along with a confidence interval:</p>
 <div class="cell">
 <div class="cell-output-display">
-<table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<table class="caption-top table table-sm table-striped small">
 <caption>Predicted dissolved oxygen at 20°C, with 95% confidence interval</caption>
 <thead>
 <tr class="header">
@@ -706,29 +811,35 @@ Jordan Ellenberg, <em>How Not to Be Wrong</em></p>
 </tr>
 </tbody>
 </table>
-
-
 </div>
 </div>
-<p>At 20°C, the model predicts DO of 7.98 mg/L, with a 95% confidence interval from 7.59 to 8.37. Notice that 20°C falls inside our sampled range of 10 to 24°C, this is interpolation, and it’s what regression is good for. Predicting DO at, say, 35°C would be extrapolation: nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. <a href="#fig-10regextrap">Figure&nbsp;<span>9.10</span></a> shows both zones on the same line.</p>
+<p>At 20°C, the model predicts DO of 7.98 mg/L, with a 95% confidence interval from 7.59 to 8.37. Notice that 20°C falls inside our sampled range of 10 to 24°C, this is interpolation, and it’s what regression is good for. Predicting DO at, say, 35°C would be extrapolation: nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. <a href="#fig-10regextrap" class="quarto-xref">Figure&nbsp;<span>9.12</span></a> shows both zones on the same line.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-10regextrap" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="09-Regression_files/figure-html/fig-10regextrap-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Scatter plot of dissolved oxygen against stream temperature. A solid blue line covers the observed range from 10 to 24 degrees C, and a dashed red line extends the same fitted trend below and above that range."></p>
-<figcaption class="figure-caption">Figure&nbsp;9.10: The fitted line within the observed temperature range (solid blue, interpolation) and extended beyond it in both directions (dashed red, extrapolation). Dotted grey lines mark the edges of the observed data, 10 to 24°C.</figcaption>
+<div id="fig-10regextrap" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Scatter plot of dissolved oxygen against stream temperature. A solid blue line covers the observed range from 10 to 24 degrees C, and a dashed red line extends the same fitted trend below and above that range.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10regextrap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10regextrap-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Scatter plot of dissolved oxygen against stream temperature. A solid blue line covers the observed range from 10 to 24 degrees C, and a dashed red line extends the same fitted trend below and above that range.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10regextrap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.12: The fitted line within the observed temperature range (solid blue, interpolation) and extended beyond it in both directions (dashed red, extrapolation). Dotted grey lines mark the edges of the observed data, 10 to 24°C.
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
 <p>Regression is used for extrapolation all the time, and often reasonably: a well-understood physical process can justify projecting a line beyond the data you happened to collect. Extrapolating a straight line is only safe if the true relationship actually stays straight past the range you observed.</p>
-<p>The problem is that a narrow window of data can’t tell you which kind of curve you’re actually on. <a href="#fig-10curveshapes">Figure&nbsp;<span>9.11</span></a> shows four very different relationships, exponential growth, a sigmoid, a hump-shaped curve, and a truly straight line, each with the same short observed window highlighted in blue. The fitted line (dashed red) extrapolated based on the observed data is also exactly the same for all 4 panels, it just looks different because the y-axis scales are different. Once you see the full curve (grey), you can see how badly linear extrapolation beyond the range of observed data would perform in each case.</p>
+<p>The problem is that a narrow window of data can’t tell you which kind of curve you’re actually on. <a href="#fig-10curveshapes" class="quarto-xref">Figure&nbsp;<span>9.13</span></a> shows four very different relationships, exponential growth, a sigmoid, a hump-shaped curve, and a truly straight line, each with the same short observed window highlighted in blue. The fitted line (dashed red) extrapolated based on the observed data is also exactly the same for all 4 panels, it just looks different because the y-axis scales are different. Once you see the full curve (grey), you can see how badly linear extrapolation beyond the range of observed data would perform in each case.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-10curveshapes" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="09-Regression_files/figure-html/fig-10curveshapes-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Four panels: exponential, sigmoid, hump-shaped, and linear curves. In each, a short initial segment is highlighted in blue and looks nearly straight. A dashed red line extends that local trend across the full range. The full grey curve shows the true shape, which diverges sharply from the dashed line except in the linear panel, where the two coincide."></p>
-<figcaption class="figure-caption">Figure&nbsp;9.11: Four different true relationships that all look locally linear over a short observed window (blue). A line fit to that window (dashed red) extrapolates identically well in each panel, but only the genuinely linear case stays correct once the full curve (grey) is revealed.</figcaption>
+<div id="fig-10curveshapes" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Four panels: exponential, sigmoid, hump-shaped, and linear curves. In each, a short initial segment is highlighted in blue and looks nearly straight. A dashed red line extends that local trend across the full range. The full grey curve shows the true shape, which diverges sharply from the dashed line except in the linear panel, where the two coincide.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10curveshapes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10curveshapes-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Four panels: exponential, sigmoid, hump-shaped, and linear curves. In each, a short initial segment is highlighted in blue and looks nearly straight. A dashed red line extends that local trend across the full range. The full grey curve shows the true shape, which diverges sharply from the dashed line except in the linear panel, where the two coincide.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10curveshapes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.13: Four different true relationships that all look locally linear over a short observed window (blue). A line fit to that window (dashed red) extrapolates identically well in each panel, but only the genuinely linear case stays correct once the full curve (grey) is revealed.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -736,10 +847,14 @@ Jordan Ellenberg, <em>How Not to Be Wrong</em></p>
 <p>To make this a bit more concrete, suppose officials use the linear fitted line from our example above to project avian influenza cases at day 30, well past the 14 days observed.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-10outbreakextrap" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="09-Regression_files/figure-html/fig-10outbreakextrap-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Line graph of cases against day of outbreak from day 1 to day 30. A solid blue line and observed points cover days 1 through 14. A dashed red line continues the same linear trend from day 14 to day 30, staying low. A dotted grey curve shows the true exponential trajectory, which rises steeply and dramatically outpaces the dashed line by day 30."></p>
-<figcaption class="figure-caption">Figure&nbsp;9.12: The linear fit extended (dashed) past the observed range, against the true exponential trajectory (dotted grey). The straight line badly underestimates how large the outbreak actually becomes.</figcaption>
+<div id="fig-10outbreakextrap" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Line graph of cases against day of outbreak from day 1 to day 30. A solid blue line and observed points cover days 1 through 14. A dashed red line continues the same linear trend from day 14 to day 30, staying low. A dotted grey curve shows the true exponential trajectory, which rises steeply and dramatically outpaces the dashed line by day 30.">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-10outbreakextrap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09-Regression_files/figure-html/fig-10outbreakextrap-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Line graph of cases against day of outbreak from day 1 to day 30. A solid blue line and observed points cover days 1 through 14. A dashed red line continues the same linear trend from day 14 to day 30, staying low. A dotted grey curve shows the true exponential trajectory, which rises steeply and dramatically outpaces the dashed line by day 30.">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-10outbreakextrap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.14: The linear fit extended (dashed) past the observed range, against the true exponential trajectory (dotted grey). The straight line badly underestimates how large the outbreak actually becomes.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -770,43 +885,58 @@ Barnes, Mallory L. 2023. <em>Statistics for Environmental Science</em>.
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
-window.document.addEventListener("DOMContentLoaded", function (event) {
-  const toggleBodyColorMode = (bsSheetEl) => {
-    const mode = bsSheetEl.getAttribute("data-mode");
-    const bodyEl = window.document.querySelector("body");
-    if (mode === "dark") {
-      bodyEl.classList.add("quarto-dark");
-      bodyEl.classList.remove("quarto-light");
-    } else {
-      bodyEl.classList.add("quarto-light");
-      bodyEl.classList.remove("quarto-dark");
-    }
-  }
-  const toggleBodyColorPrimary = () => {
-    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-    if (bsSheetEl) {
-      toggleBodyColorMode(bsSheetEl);
-    }
-  }
-  toggleBodyColorPrimary();  
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
       }
+      return false;
     }
-    return false;
-  }
-  const clipboard = new window.ClipboardJS('.code-copy-button', {
-    text: function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
       for (const childEl of codeEl.children) {
         if (isCodeAnnotation(childEl)) {
           childEl.remove();
@@ -814,202 +944,354 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       }
       return codeEl.innerText;
     }
-  });
-  clipboard.on('success', function(e) {
-    // button target
-    const button = e.trigger;
-    // don't keep focus
-    button.blur();
-    // flash "checked"
-    button.classList.add('code-copy-button-checked');
-    var currentTitle = button.getAttribute("title");
-    button.setAttribute("title", "Copied!");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copied!");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
-    setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
-      }
-      button.setAttribute("title", currentTitle);
-      button.classList.remove('code-copy-button-checked');
-    }, 1000);
-    // clear code selection
-    e.clearSelection();
-  });
-  function tippyHover(el, contentFn) {
-    const config = {
-      allowHTML: true,
-      content: contentFn,
-      maxWidth: 500,
-      delay: 100,
-      arrow: false,
-      appendTo: function(el) {
-          return el.parentElement;
-      },
-      interactive: true,
-      interactiveBorder: 10,
-      theme: 'quarto',
-      placement: 'bottom-start'
-    };
-    window.tippy(el, config); 
-  }
-  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-  for (var i=0; i<noterefs.length; i++) {
-    const ref = noterefs[i];
-    tippyHover(ref, function() {
-      // use id or data attribute instead here
-      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-      try { href = new URL(href).hash; } catch {}
-      const id = href.replace(/^#\/?/, "");
-      const note = window.document.getElementById(id);
-      return note.innerHTML;
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
     });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
-        }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
-      }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
     }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
           }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
       });
     }
-  }
-});
-</script>
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="./08-ANOVA.html" class="pagination-link">
+      <a href="./08-ANOVA.html" class="pagination-link" aria-label="ANOVA">
         <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">ANOVA</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./10-FactorialANOVA.html" class="pagination-link">
+      <a href="./10-FactorialANOVA.html" class="pagination-link" aria-label="Factorial ANOVA">
         <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Factorial ANOVA</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
@@ -1018,4 +1300,5 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 
 
 
-</body></html>
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/malloryb/statistics_E538/edit/master/09-Regression.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li></ul></div></div></div></footer></body></html>

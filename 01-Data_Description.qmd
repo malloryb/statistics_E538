@@ -130,7 +130,7 @@ ggplot(fig3_df, aes(x = Age, y = Prop, fill = Country, group=Country)) +
   labs(title = "Case age mix: Italy skewed older, China skewed younger",
        x = "Age band", y = "Share of cases", fill = NULL) +
   theme_classic(base_size = 13) +
-  theme(legend.position = "none", panel.border = element_rect(size = 1, fill=NA), axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+  theme(legend.position = "none", panel.border = element_rect(linewidth = 1, fill=NA), axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
 Sheer volume is the other reason. Satellites measure surface temperature, field stations log rainfall, and sensors track air quality, so a single study can generate thousands of rows. On top of that, river flow changes by the hour and human activity layers on more variability still. Statistics is how we compress all of that into something we can reason about.
@@ -464,9 +464,9 @@ Two alternative vocabularies are often clearer. In experiments, IVs are **manipu
 | "to be explained" ($Y$)      | dependent variable (DV)   | measurement    | outcome       |
 | "to do the explaining" ($X$) | independent variable (IV) | manipulation   | predictor     |
 
-:::: {.callout-note title="Note: Which terms this course uses"}
+::: {.callout-note title="Note: Which terms this course uses"}
 You should recognize all three pairs, since all three appear in the literature. This book uses **IV and DV** when comparing groups ($t$-tests, ANOVA) and **predictor and outcome** for regression, where nothing is manipulated and "independent variable" would mislead. A later chapter switching vocabulary is following the convention of the method, not introducing a new idea.
-::::
+:::
 
 ## Experimental and non-experimental research
 
@@ -660,9 +660,9 @@ Suppose you're monitoring vegetation recovery at three restored wetland sites. E
 
 | Site | Mean vegetation cover (%) | Plots ($n$) |
 |:-----|--------------------------:|------------:|
-| A    | 46                        | 12          |
-| B    | 58                        | 14          |
-| C    | 73                        | 30          |
+| A    |                        46 |          12 |
+| B    |                        58 |          14 |
+| C    |                        73 |          30 |
 
 What is the average cover across all three sites? The tempting move is to average the three site means:
 
@@ -680,7 +680,7 @@ The weighted answer, 63.5, sits well above the unweighted 59, pulled toward Site
 
 You have already met this idea outside of statistics. A course grade works the same way: an exam worth 60% and a quiz worth 20% don't get averaged evenly. Same formula, with percentages as the weights instead of sample sizes.
 
-Unequal group sizes come back when we reach ANOVA in Chapter 8, where each group mean is weighted by its own $n$ for exactly this reason.
+The same logic applies any time you combine group averages that rest on different amounts of data. Whenever you see an average of averages, it is worth asking whether the groups behind it were the same size.
 
 ### Comparing the mean, median, and mode
 
@@ -732,9 +732,9 @@ They differ because each one is sensitive to something different.
 
 Neither the mean nor the median is wrong here. They answer different questions. If you want to know what a typical day looked like, the median is the better guide. If you care about the total ozone burden across the summer, the mean is the number that relates to that total.
 
-:::: {.callout-caution title="Warning: When the mode gets fragile"}
+::: {.callout-caution title="Warning: When the mode gets fragile"}
 Ozone is a continuous measurement, so exact repeats are largely an accident of rounding. The value `r as.numeric(names(sort(table(airquality$Ozone), decreasing = TRUE))[1])` ppb occurs `r max(table(airquality$Ozone))` times out of `r sum(!is.na(airquality$Ozone))` days, barely more often than several neighbors. Round differently and the mode moves. It is at its best for categorical variables, where "most common land cover class" is exactly the question, and for values that genuinely repeat.
-::::
+:::
 
 ## Measures of Variation (Different*ness*)
 
@@ -940,7 +940,7 @@ $(1−5)+(2−5)+(6−5)+(7−5)+(9−5)=0$
 
 This makes the mean unique. It is the **only value** for which the sum of deviations equals zero:
 
-$\sum_{i=1}^{n}x_{{i}-a} = 0 \quad \Rightarrow \quad a = \bar{x}$
+$\sum_{i=1}^{n}(x_{i}-a) = 0 \quad \Rightarrow \quad a = \bar{x}$
 
 The mean is not just a "typical" value, it is the one point where the data balance. And that balancing property is exactly why the raw deviations always sum to zero. To summarize variation, we need a way around this problem.
 
@@ -1039,9 +1039,9 @@ The last column shows absolute deviations. If we take their mean, we get the mea
 
 Descriptive statistics are useful, but they are also compressed summaries. They reduce a dataset to a few numbers, which means they always lose detail. That's fine if the summary captures the important features, but sometimes it doesn't.
 
-:::: {.callout-tip title="Tip: Always pair a summary with a plot"}
+::: {.callout-tip title="Tip: Always pair a summary with a plot"}
 Compute the descriptive statistics, then plot the data, and check that the two tell the same story.
-::::
+:::
 
 We just did this with ozone: the gap between the mean and the median said "skewed," and the histogram confirmed it.
 
@@ -1091,13 +1091,14 @@ ac_long_summary <- ac_long %>%
                     dplyr::summarise(mean_x = mean(x),
                               var_x = var(x),
                               mean_y = mean(y),
-                              var_y = var(y))
+                              var_y = var(y),
+                              cor_xy = cor(x, y))
 
-knitr::kable(ac_long_summary)
+knitr::kable(ac_long_summary, digits = 2)
 
 ```
 
-All four datasets have the **exact same descriptive statistics**:
+Rounded to two decimals, all four datasets have the **same descriptive statistics**:
 
 -   same mean and variance for $x$
 
@@ -1105,7 +1106,7 @@ All four datasets have the **exact same descriptive statistics**:
 
 -   same correlation between $x$ and $y$
 
-Yet the scatterplots could not look more different.
+Yet the scatterplots could not look more different. (Anscombe constructed the four sets to agree to two decimal places, so they differ very slightly beyond that. Carry more decimals and the variances of $y$ separate in the third one.)
 
 ### Datasaurus Dozen
 

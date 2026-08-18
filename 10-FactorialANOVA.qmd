@@ -58,7 +58,7 @@ Now we have two IVs, soil pH and water availability, each with two levels. This 
 ```{r}
 #| label: fig-10designs
 #| fig-cap: "Structure of a 2x2 factorial design: soil pH crossed with water availability."
-#| fig-alt: "A two-by-two grid. Columns are labeled Acidic and Neutral; rows are labeled Low Water and High Water. Each of the four cells is marked DV, indicating that the dependent variable is measured in every combination, and shows a droplet icon marking the water level, one droplet for Low Water and three for High Water."
+#| fig-alt: "A two-by-two grid. Columns are labeled Acidic and Neutral; rows are labeled Low Water and High Water. Each of the four cells is marked DV, indicating that the dependent variable is measured in every combination."
 #| out-width: "75%"
 #| fig-asp: 0.55
 
@@ -67,13 +67,10 @@ soil_cells <- expand.grid(
   Water = factor(c("Low Water", "High Water"), levels = c("Low Water", "High Water"))
 )
 soil_cells$fill <- c("#F5E2C8", "#F7DDD6", "#CFE3F2", "#DCEEDD")
-soil_cells$water_icon <- ifelse(soil_cells$Water == "Low Water",
-                                 "\U0001F4A7", "\U0001F4A7\U0001F4A7\U0001F4A7")
 
 p_designs <- ggplot(soil_cells, aes(Soil, Water)) +
   geom_tile(aes(fill = I(fill)), color = "grey30", linewidth = 0.6, width = 0.92, height = 0.92) +
   geom_text(aes(label = paste0(Soil, "\n", Water)), fontface = "bold", size = 4.1, vjust = -0.4, color = "grey15") +
-  geom_text(aes(label = water_icon), size = 5, vjust = 1.6) +
   geom_text(aes(label = "DV measured here"), size = 3.2, vjust = 3.6, color = "grey30") +
   labs(x = "Soil pH", y = "Water availability") +
   theme_classic(base_size = 13) +
@@ -109,16 +106,32 @@ The rest of this chapter uses one example throughout, so it's worth setting it u
 
 **The dependent variable** is **macroinvertebrate species count**: how many distinct kinds of aquatic insects, snails, worms, and crustaceans live in a stream. This is a standard measure of stream health. These animals sit in the middle of the food web, many are pollution-sensitive, and they can't flee a degraded stream the way fish can. More species present means a healthier stream.
 
-**The design.** Our two IVs are pollution ("No Pollution" vs. "Pollution") and flow rate ("High Flow" vs. "Low Flow"). Two IVs, two levels each, so you should already be able to name this factorial design. It's a 2x2.
+**The design.** We run an experiment in artificial stream channels, each assigned one pollution condition and one flow rate. @fig-10design summarizes it.
 
-**The setup.** We run an experiment in artificial stream channels. Each channel is assigned one pollution condition and one flow rate, fully crossed, giving four conditions. @fig-10setup lays out the design.
+```{r}
+#| label: fig-10design
+#| fig-cap: "A fully crossed factorial design, read as arithmetic: two pollution levels times two flow levels gives four conditions. Every combination is measured, which is what 'fully crossed' means."
+#| fig-alt: "Study design schematic. IV: pollution crossed with flow rate, both categorical. Two boxes for pollution and two for flow rate, joined by a multiplication sign, equalling a four-cell grid labelled NP times LF, NP times HF, P times LF and P times HF. DV: macroinvertebrate species count."
+#| fig-asp: 0.36
+#| out-width: "100%"
+
+design_crossed("Pollution (categorical) × Flow rate (categorical)",
+               c("No Pollution", "Pollution"), c("Low Flow", "High Flow"),
+               "Macroinvertebrate species count",
+               "Does the effect of pollution depend on flow rate?",
+               note = "5 stream channels in every condition (20 total)")
+```
+
+Two IVs, two levels each, so you should already be able to name this design: it's a 2x2. Reading the schematic left to right also shows why the notation works the way it does. Crossing two levels with two levels *is* the multiplication that gives four conditions, and "fully crossed" simply means no cell is left empty. @fig-10setup shows those same four conditions as a grid, with what gets measured in each.
+
+That four-cell grid resembles the chi-square table from Chapter 7, and the difference between them is worth pinning down. There, the cells held **counts** of stream sites that already had a given land use and *E. coli* level; nobody put them there. Here, the cells are **conditions we assign channels to**, and within each one we then measure something else entirely, the species count. Same shape, opposite direction: one counts where units landed, the other measures an outcome where we placed them.
 
 **Predictions.** No pollution plus high flow should support the most species; pollution plus low flow should support the fewest. The other two combinations are the interesting ones, and a one-factor study could never distinguish them: does pollution matter only when flow is low, with fast water washing its effect away entirely? Or does pollution hurt a stream no matter how fast the water moves? That's exactly what an interaction test in a factorial experiment can tell us.
 
 ```{r}
 #| label: fig-10setup
-#| fig-cap: "The 2x2 experimental design. Two pollution conditions crossed with two flow rates gives four stream-channel conditions. In every condition we count how many macroinvertebrate species are present, pollution is present or absent (the factory icon), and flow rate is marked by the number of water drops."
-#| fig-alt: "A two-by-two grid. Columns are labeled No Pollution and Pollution; rows are labeled Low Flow and High Flow. Each of the four cells notes five stream channels, shows a factory icon only in the two Pollution cells, and shows one water drop in the two Low Flow cells and three water drops in the two High Flow cells."
+#| fig-cap: "The 2x2 experimental design. Two pollution conditions crossed with two flow rates gives four stream-channel conditions. In every condition we count how many macroinvertebrate species are present, and each cell is labelled with its pollution condition and flow rate."
+#| fig-alt: "A two-by-two grid. Columns are labeled No Pollution and Pollution; rows are labeled Low Flow and High Flow. Each of the four cells notes five stream channels and is labelled with its pollution condition and flow rate."
 #| out-width: "90%"
 #| fig-asp: 0.62
 
@@ -127,17 +140,12 @@ cells <- expand.grid(
   Flow      = factor(c("Low Flow", "High Flow"),     levels = c("Low Flow", "High Flow"))
 )
 cells$fill <- c("#F5E2C8", "#F7DDD6", "#CFE3F2", "#DCEEDD")
-cells$pollution_icon <- ifelse(cells$Pollution == "Pollution", "\U0001F3ED", "")
-cells$flow_icon <- ifelse(cells$Flow == "Low Flow",
-                           "\U0001F4A7", "\U0001F4A7\U0001F4A7\U0001F4A7")
 
 p_setup <- ggplot(cells, aes(Pollution, Flow)) +
   geom_tile(aes(fill = I(fill)), color = "grey30", linewidth = 0.6, width = 0.92, height = 0.92) +
   geom_text(aes(label = paste0(Pollution, "\n", Flow)),
             fontface = "bold", size = 4.0, vjust = -0.8, color = "grey15") +
-  geom_text(aes(label = pollution_icon), size = 7, vjust = 1.0) +
-  geom_text(aes(label = flow_icon), size = 5, vjust = 2.4) +
-  geom_text(aes(label = "5 channels each; count species present"), size = 3.0, vjust = 4.4, color = "grey30") +
+  geom_text(aes(label = "5 channels each;\ncount species present"), size = 3.0, vjust = 1.6, color = "grey30") +
   labs(x = "Pollution condition", y = "Flow rate") +
   coord_cartesian(clip = "off") +
   theme_classic(base_size = 13) +
@@ -430,6 +438,8 @@ $$
 
 The question it answers is narrower: of the variation this effect could plausibly account for, once the other factors are held out, how much does it account for? Because each effect gets its own denominator, partial values do not sum to 1 and are always at least as large as the corresponding $\eta^2$.
 
+This is also why the distinction never came up in Chapter 8. A one-way ANOVA has only one effect, so there are no other factors to set aside, and $SS_\text{Effect} + SS_\text{Error}$ *is* $SS_\text{Total}$. The two formulas give the same number there. They only diverge once a design has more than one factor.
+
 ```{r}
 #| label: tbl-10etasq
 #| tbl-cap: "Eta-squared and partial eta-squared for each effect in the 2x2 design."
@@ -583,7 +593,7 @@ It's convenient to think of a main effect as one manipulation's consistent influ
 -   Report the pattern using simple effects: e.g., "Pollution reduced species count sharply under low flow, and only slightly under high flow."
 -   If you must report a main effect, qualify it: "There was a main effect of pollution, but it varied by flow rate."
 
-:::: {.callout-important title="Important: Results reporting"}
+:::: {.callout-important title="Results reporting: factorial ANOVA"}
 Lead with the interaction, then give the simple effects, then report the main effects only with their qualification attached. Every effect gets its own effect size, labeled so the reader knows whether it is partialed.
 
 > The effect of pollution on macroinvertebrate species count depended on flow rate, *F*(1, 16) = 9.03, *p* = .008, $\eta_p^2 = 0.36$. Under low flow, polluted channels supported 6.0 fewer species than unpolluted ones (3.6 vs. 9.6); under high flow that gap narrowed to 2.6 species (10.0 vs. 12.6). Both main effects were also significant, pollution *F*(1, 16) = 57.78, *p* \< .001, $\eta_p^2 = 0.78$, and flow *F*(1, 16) = 69.03, *p* \< .001, $\eta_p^2 = 0.81$, but each should be read in light of the interaction: pollution costs a stream far more species when the water is moving slowly.

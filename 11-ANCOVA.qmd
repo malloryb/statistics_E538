@@ -212,21 +212,29 @@ Most of these are ones ANOVA already needed; two are new because a covariate has
 
 ### Question
 
-Imagine we're environmental scientists studying the impact of **air pollution** (a continuous variable) on **bird species density** (our dependent variable).
+Imagine we're environmental scientists studying the impact of air pollution on bird species density, and we want to know whether that relationship differs between urban and rural areas. @fig-11design lays out the design.
 
-We want to know whether this relationship differs between **urban** and **rural** areas (our categorical variable).
+```{r}
+#| label: fig-11design
+#| fig-cap: "An ANCOVA design: one continuous predictor and one categorical factor. Compare it with the factorial design in Chapter 10, which has the same shape with a second set of levels in place of the gradient."
+#| fig-alt: "Study design schematic. Two predictors: area type with levels Rural and Urban, crossed with air pollution as a continuous gradient from low to high, across 200 observations. DV: bird species density."
+#| fig-asp: 0.36
+#| out-width: "100%"
 
-Specifically, we want to know: Does the effect of air pollution on bird density differ between **urban** and **rural** areas?
+design_mixed("Air pollution (continuous) × Area type (categorical)",
+             "low", "high", "200 observations", c("Rural", "Urban"),
+             "Bird species density",
+             "Does the pollution–density relationship differ between rural and urban?",
+             note = "full pollution range measured in BOTH groups")
+```
 
-We might expect that air pollution will have a stronger negative effect in urban areas than in rural areas: urban habitat is already fragmented and offers birds fewer clean patches to retreat to, so added pollution has less of a buffer to work against than it would in a rural area with more intact habitat nearby.
+Set that beside the factorial design in Chapter 10 and the family resemblance is the point: both cross two predictors and ask whether one changes the effect of the other. The only difference is that factorial's second predictor has levels, while ANCOVA's is a continuous range. Note also that both groups span the full pollution range. Rural sites are not simply the clean ones, which is exactly what makes an adjusted comparison possible.
+
+We might expect pollution to have a stronger negative effect in urban areas: urban habitat is already fragmented and offers birds fewer clean patches to retreat to, so added pollution has less of a buffer to work against than it would in a rural area with more intact habitat nearby.
 
 ### Model
 
-We'll fit an ANCOVA model to test whether location type influences bird density **after accounting for** air pollution.
-
-The categorical variable (urban vs. rural) is represented as a dummy variable, and air pollution enters as a covariate.
-
--   **Dataset Overview:** 200 observations of bird density across urban and rural sites, each with a measured level of air pollution.
+We'll fit an ANCOVA model to test whether location type influences bird density **after accounting for** air pollution. The categorical variable is represented as a dummy variable, and air pollution enters as a covariate.
 
 ### Null and Alternative Hypotheses in our example ANCOVA
 
@@ -295,7 +303,7 @@ Let's start with the response variable, **bird density**, in @fig-11birddensity.
 #| echo: true
 
 ggplot(data, aes(AreaType, BirdDensity)) +
-  geom_boxplot() + theme_classic(base_size = 12) +
+  geom_boxplot(aes(fill = AreaType), show.legend = FALSE) + theme_classic(base_size = 12) +
   labs(x = "Area Type", y = "Bird Density")
 ```
 
@@ -310,7 +318,7 @@ Next, check the **covariate**, air pollution. If the covariate differs sharply b
 #| echo: true
 
 ggplot(data, aes(AreaType, AirPollution)) +
-  geom_boxplot() + theme_classic(base_size = 12) +
+  geom_boxplot(aes(fill = AreaType), show.legend = FALSE) + theme_classic(base_size = 12) +
   labs(x = "Area Type", y = "Air Pollution")
 ```
 
@@ -479,7 +487,7 @@ Because the interaction is significant, we focus on these **different slopes**, 
 
 If the interaction had **not** been significant, we would instead drop the interaction term and interpret the **parallel slopes model**, comparing adjusted means between groups.
 
-:::: {.callout-important title="Important: Results reporting"}
+:::: {.callout-important title="Results reporting: ANCOVA"}
 
 > Results from the ANCOVA indicated that air pollution's effect on bird density depended on area type, *F*(1, 196) = 10.91, *p* = .001. Bird density declined with increasing pollution in both settings, but the decline was roughly twice as steep at urban sites (slope -0.13) as at rural ones (slope -0.07). These findings suggest that **urbanization intensifies the pollution-bird density relationship** and may point toward the need for area-specific conservation strategies.
 ::::

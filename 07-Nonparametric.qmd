@@ -80,7 +80,7 @@ $t(11) = 2.57$, $p = .026$. Significant. Restoration looks like it increased soi
 #| fig-cap: "Change in soil moisture per plot. Three plots showed no change at all, and the positive changes stretch out much further than the negative ones: not the symmetric, bell-shaped pattern a paired t-test assumes."
 
 ggplot(tibble(differences = differences), aes(x = differences)) +
-  geom_histogram(binwidth = 1, color = "white", fill = "#0072B2", boundary = -0.5) +
+  geom_histogram(binwidth = 1, color = "white", fill = "#63b8ff", boundary = -0.5) +
   theme_classic(base_size = 13) +
   labs(x = "Change in soil moisture (percentage points)", y = "Number of plots")
 ```
@@ -166,12 +166,12 @@ crit_hi <- quantile(sim_V, .975)
 obs_V   <- as.numeric(wilcox_out$statistic)
 
 ggplot(tibble(V = sim_V), aes(x = V)) +
-  geom_histogram(binwidth = 2, color = "white", fill = "grey70", boundary = 0) +
-  annotate("rect", xmin = -Inf, xmax = crit_lo, ymin = 0, ymax = Inf, alpha = 0.3, fill = "#D55E00") +
-  annotate("rect", xmin = crit_hi, xmax = Inf, ymin = 0, ymax = Inf, alpha = 0.3, fill = "#D55E00") +
+  geom_histogram(binwidth = 2, color = "white", fill = "#63b8ff", boundary = 0) +
+  annotate("rect", xmin = -Inf, xmax = crit_lo, ymin = 0, ymax = Inf, alpha = 0.15, fill = "#b22222") +
+  annotate("rect", xmin = crit_hi, xmax = Inf, ymin = 0, ymax = Inf, alpha = 0.15, fill = "#b22222") +
   geom_vline(xintercept = obs_V, color = "#1446a0", linewidth = 1) +
   annotate("text", x = crit_lo, y = Inf, label = paste0("critical value: ", crit_lo),
-           color = "#D55E00", vjust = 3, hjust = 1.05, size = 3.3) +
+           color = "#b22222", vjust = 3, hjust = 1.05, size = 3.3) +
   annotate("text", x = obs_V, y = Inf, label = paste0("observed V = critical value = ", obs_V),
            color = "#1446a0", vjust = 1.5, hjust = 1.02, size = 3.3) +
   theme_classic(base_size = 13) +
@@ -206,7 +206,20 @@ That's not an argument that nonparametric tests are worse. The $t$-test's answer
 
 ## Nonparametric alternative to the independent-samples t-test: the Mann-Whitney-Wilcoxon test
 
-Now let's run through the same kind of example for the independent-samples case. Researchers surveyed **plant species richness** (the number of distinct plant species found) at 8 restored wetland plots and 8 unrestored reference plots, to see whether restoration increased plant diversity.
+Now let's run through the same kind of example for the independent-samples case. Researchers surveyed **plant species richness**, the number of distinct plant species found, at restored and unrestored wetland plots, to see whether restoration increased plant diversity. @fig-8mwwdesign gives the design.
+
+```{r}
+#| label: fig-8mwwdesign
+#| fig-cap: "An independent-groups design. Unlike the paired design earlier in this chapter, the two boxes hold different plots, so there is nothing to subtract within a unit."
+#| fig-alt: "Study design schematic. IV: restoration status, categorical. Two boxes labelled Restored and Unrestored, each with n = 8 plots. DV: plant species richness, a count."
+#| fig-asp: 0.34
+#| out-width: "100%"
+
+design_groups("Restoration status (categorical)", c("Restored", "Unrestored"),
+              8, "plots", "Plant species richness (count)",
+              "Do the two groups differ by more than chance?")
+```
+
 
 ```{r}
 restored   <- c(21, 16, 22, 16, 17, 16, 17, 34)
@@ -252,7 +265,7 @@ outlier_row <- plot_df |> filter(Richness == max(Richness))
 
 ggplot(plot_df, aes(x = x_jit, y = Richness)) +
   geom_boxplot(aes(x = GroupNum, group = Group), outlier.shape = NA, width = 0.5, fill = "grey90") +
-  geom_point(size = 2.5, color = "#0072B2") +
+  geom_point(size = 2.5, color = "#1446a0") +
   geom_point(data = outlier_row, shape = 21, size = 9, color = "#b22222", stroke = 1.3) +
   scale_x_continuous(breaks = c(1, 2), labels = c("Restored", "Unrestored"), limits = c(0.6, 2.4)) +
   theme_classic(base_size = 13) +
@@ -334,14 +347,14 @@ crit_hi <- quantile(sim_U, .975)
 obs_U   <- as.numeric(wilcox.test(restored, unrestored)$statistic)
 
 ggplot(tibble(U = sim_U), aes(x = U)) +
-  geom_histogram(binwidth = 2, color = "white", fill = "grey70", boundary = 0) +
-  annotate("rect", xmin = -Inf, xmax = crit_lo, ymin = 0, ymax = Inf, alpha = 0.3, fill = "#D55E00") +
-  annotate("rect", xmin = crit_hi, xmax = Inf, ymin = 0, ymax = Inf, alpha = 0.3, fill = "#D55E00") +
+  geom_histogram(binwidth = 2, color = "white", fill = "#63b8ff", boundary = 0) +
+  annotate("rect", xmin = -Inf, xmax = crit_lo, ymin = 0, ymax = Inf, alpha = 0.15, fill = "#b22222") +
+  annotate("rect", xmin = crit_hi, xmax = Inf, ymin = 0, ymax = Inf, alpha = 0.15, fill = "#b22222") +
   geom_vline(xintercept = obs_U, color = "#1446a0", linewidth = 1) +
   annotate("text", x = crit_lo, y = Inf, label = paste0("critical value: ", crit_lo),
-           color = "#D55E00", vjust = 3, hjust = 1.05, size = 3.3) +
+           color = "#b22222", vjust = 3, hjust = 1.05, size = 3.3) +
   annotate("text", x = crit_hi, y = Inf, label = paste0("critical value: ", crit_hi),
-           color = "#D55E00", vjust = 3, hjust = -0.05, size = 3.3) +
+           color = "#b22222", vjust = 3, hjust = -0.05, size = 3.3) +
   annotate("text", x = obs_U, y = Inf, label = paste0("observed U = ", obs_U),
            color = "#1446a0", vjust = 1.5, hjust = 1.1, size = 3.3) +
   theme_classic(base_size = 13) +
@@ -368,7 +381,7 @@ df3 <- tibble(x = x3, density = dchisq(x3, 3))
 
 ggplot(df3, aes(x, density)) +
   geom_line(linewidth = 1) +
-  geom_area(data = filter(df3, x >= crit), fill = "#b22222", alpha = 0.4) +
+  geom_area(data = filter(df3, x >= crit), fill = "#b22222", alpha = 0.15) +
   geom_vline(xintercept = crit, linetype = 2) +
   geom_vline(xintercept = 5.4, color = "#1446a0", linewidth = 1) +
   annotate("text", x = crit, y = max(df3$density) * 0.9, label = "critical value\n7.81", hjust = -0.1) +
@@ -387,7 +400,23 @@ There are two versions of the chi-square test, depending on the question you're 
 
 The name comes straight from what the test does: it checks how well ("goodness") your observed counts match ("fit") a specific pattern you'd expect, whether that expectation comes from a historical baseline, a theory, or an assumption of "equally likely." A small chi-square statistic means a good fit (observed counts close to expected); a large one means a poor fit (observed counts far from expected).
 
-A state wildlife agency has historically found fish evenly distributed across four zones of a lake: 25% of fish in each zone. This year's survey of 200 fish gives a different picture:
+A state wildlife agency has historically found fish evenly distributed across four zones of a lake, 25% in each. This year's survey of 200 fish gives a different picture. @fig-8gofdesign lays out the structure, and note how it differs from every design so far in this book.
+
+```{r}
+#| label: fig-8gofdesign
+#| fig-cap: "A goodness-of-fit design. There is no dependent variable measured on each unit: the counts themselves are the data, and they are compared against an expected pattern rather than against another group."
+#| fig-alt: "Study design schematic. Variable: lake zone, four zones. A row of observed counts, 38, 61, 52 and 49, compared against a dashed row of expected counts of 50 each. What is counted: 200 fish sorted into zones."
+#| fig-asp: 0.40
+#| out-width: "100%"
+
+design_gof("Lake zone (4 zones)",
+           c("Zone A", "Zone B", "Zone C", "Zone D"), c("38", "61", "52", "49"),
+           rep("50", 4), "200 fish, sorted into zones",
+           "Do the observed counts match the expected pattern?")
+```
+
+The labels changed for a reason. Everywhere else in this book we have had an independent variable splitting units into groups and a dependent variable measured on each unit. Here there is only one variable, lake zone, and nothing is measured on the fish beyond which zone they turned up in. The counts *are* the data, and the comparison is against an expectation rather than against another group.
+
 
 ```{r}
 observed_gof <- c(A = 38, B = 61, C = 52, D = 49)
@@ -437,7 +466,23 @@ Summing the last column: $2.88+2.42+0.08+0.02 = 5.4$, matching R's statistic abo
 
 ### Chi-square test of independence: are two categorical variables related?
 
-Now suppose researchers classify 150 stream sites by **land use** (Forested, Agricultural, Urban) and whether each site's *E. coli* level **exceeds** a recreational safety threshold:
+Now suppose researchers classify 150 stream sites by **land use** and by whether each site's *E. coli* level **exceeds** a recreational safety threshold. Every site falls into exactly one cell of @fig-8indepdesign.
+
+```{r}
+#| label: fig-8indepdesign
+#| fig-cap: "A test-of-independence design. Two categorical variables are crossed, but unlike a factorial experiment the cells hold counts of units that landed there, not conditions units were assigned to."
+#| fig-alt: "Study design schematic. Variables: land use with three levels crossed with whether the site exceeds the E. coli threshold. A three by two table of counts totalling 150 stream sites."
+#| fig-asp: 0.42
+#| out-width: "100%"
+
+design_contingency("Land use (3) \u00d7 Exceeds E. coli threshold (2)",
+                   c("Forested", "Agricultural", "Urban"), c("No", "Yes"),
+                   c(42, 25, 20, 8, 25, 30), "150 stream sites",
+                   "Are the two variables related, or independent?")
+```
+
+One thing to notice about that table: nobody assigned anything. The sites already had their land use and their *E. coli* level before the researchers arrived, and the cells simply count how many turned out each way. That makes this an observational design, and it is why the cells hold counts of sites rather than measurements taken on them.
+
 
 ```{r}
 tab <- matrix(c(42, 8,
@@ -487,7 +532,7 @@ Summing all six cells: $5.83+8.05+0.55+0.76+2.79+3.86 = 21.84$, matching R's sta
 
 **Interpretation.** $\chi^2(2) = 21.84$, $p < .001$: significant. *E. coli* exceedance is not independent of land use: forested sites exceed the threshold far less often (8 of 50) than agricultural (25 of 50) or urban (30 of 50) sites. Note what this test does *not* tell you: it says the two variables are related, but, just like correlation, it doesn't by itself establish that land use *causes* the exceedance.
 
-:::: {.callout-important title="Important: Results reporting"}
+:::: {.callout-important title="Results reporting: rank-based tests"}
 These tests report differently from a $t$-test, and the difference matters: there is no mean difference to quote, because none of them used the means. Give the test's own statistic, the $p$-value, and a **median** rather than a mean.
 
 Wilcoxon signed-rank, on the restoration differences:

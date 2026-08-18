@@ -15,6 +15,23 @@ library(dplyr)
 library(broom)
 
 fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = "f"))
+
+# Histogram helpers for the simulation section, so those figures match the
+# rest of the book instead of falling back to base graphics.
+hist_t <- function(ts, title = NULL) {
+  ggplot(data.frame(t = ts), aes(x = t)) +
+    geom_histogram(bins = 30) +
+    labs(x = "Simulated t", y = "Count", title = title) +
+    theme_classic(base_size = 13)
+}
+
+hist_p <- function(ps, title = NULL) {
+  ggplot(data.frame(p = ps), aes(x = p)) +
+    geom_histogram(breaks = seq(0, 1, .05)) +
+    scale_x_continuous(breaks = seq(0, 1, .1)) +
+    labs(x = "Simulated p-value", y = "Count", title = title) +
+    theme_classic(base_size = 13)
+}
 ```
 
 # t-tests
@@ -180,7 +197,9 @@ t_vals <- replicate(1000, {
   s <- rnorm(10, 0, 1)
   (mean(s) - 0) / (sd(s) / sqrt(length(s)))
 })
-hist(t_vals, breaks = 30, main = "", xlab = "t values")
+ggplot(data.frame(t_vals), aes(x = t_vals)) +
+  geom_histogram(bins = 30, color = "white", linewidth = 0.2) +
+  labs(x = "t values", y = "Count")
 ```
 
 **Takeaway:** $t$ measures how far the sample mean is from the null expectation, scaled by its uncertainty. It behaves predictably under $H_0$, allowing us to decide whether a difference is likely due to chance.
@@ -201,7 +220,7 @@ x  <- mean(scores)
 s  <- sd(scores)
 SE <- s / sqrt(n)
 
-tt <- t.test(scores, mu = 50)  # Welch one-sample t
+tt <- t.test(scores, mu = 50)
 ci_lo <- round(tt$conf.int[[1]], 2)
 ci_hi <- round(tt$conf.int[[2]], 2)
 ```
@@ -455,7 +474,22 @@ Why $n-1$ and not $n$? Because $t$ uses the sample SD to estimate the standard e
 
 When the **same units** are measured twice (before/after, matched pairs), the question is whether they **changed**. The natural data unit is the **within-unit difference**.
 
-**Design in this worked example.** Ecologists measured **soil moisture (%)** at 20 paired field plots before and after wetland restoration. Each plot was measured twice: once during the dry season before restoration work began, and again one year later. We care whether restoration **increased** soil moisture, which would support plant reestablishment and carbon sequestration.
+**Design in this worked example.** Ecologists measured soil moisture at 20 field plots before wetland restoration and again one year later, to see whether restoration **increased** moisture enough to support plant reestablishment and carbon sequestration. @fig-7paireddesign shows the design.
+
+```{r}
+#| label: fig-7paireddesign
+#| fig-cap: "A paired design. The dashed boxes and the note underneath mark the feature that defines it: there is one set of 20 plots, measured on two occasions, not two separate samples."
+#| fig-alt: "Study design schematic. IV: restoration, before versus after. Two dashed boxes labelled Before and After, each n = 20 plots, with a note that these are the same 20 plots measured on both occasions. DV: soil moisture, percent."
+#| fig-asp: 0.34
+#| out-width: "100%"
+
+design_groups("Restoration (before vs. after)", c("Before", "After"), 20, "plots",
+              "Soil moisture (%)", "Did moisture change within each plot?",
+              kind = "Paired", dashed = TRUE,
+              note = "the same 20 plots, measured on both occasions")
+```
+
+The dashed boxes are doing real work there. In every design so far the boxes held *different* units, and the test compared one set against another. Here both boxes hold the same 20 plots, which is what makes the design paired and what lets us subtract.
 
 **Define differences and their meaning.** Choose an order and stick to it:
 
@@ -593,6 +627,8 @@ $$
 
 The example below computes $t$ for two small groups by following that formula step by step in R, then checks it against `t.test()`.
 
+Everywhere else this book formats test results into a clean table. Here we deliberately print R's raw console output instead, because this is the block you will actually be looking at in lab, and it is worth seeing that the number you built by hand is the same number sitting in it.
+
 ```{r, echo=TRUE }
 
 ## By "hand" using R
@@ -615,16 +651,16 @@ sp <- sqrt(sp_numerator/sp_denominator) # compute sp
 
 t <- mean_difference / ( sp * sqrt( (1/5) +(1/5) ) )
 
-t # print results
+t # our hand-computed t
 
 
-# using the R function t.test
+# the same test via R's built-in function: compare the "t = " value
 t.test(a,b, paired=FALSE, var.equal = TRUE)
 
 
 ```
 
-:::: {.callout-important title="Important: Results reporting"}
+:::: {.callout-important title="Results reporting: t-tests"}
 All three forms report the same four things: the direction in plain language, the effect size, the test statistic with its df, and $p$. What changes is what counts as the effect.
 
 One-sample, where the effect is the sample mean against the reference value:
@@ -677,15 +713,14 @@ for (i in 1:1000) {
 #| label: fig-7nullt
 #| fig-cap: "The distribution of $t$-values under the null. These are the $t$ values that are produced by chance alone."
 
-#plot histograms of t and p values for 1000 simulations
-hist(save_ts)
+hist_t(save_ts)
 ```
 
 ```{r}
 #| label: fig-7flatp
 #| fig-cap: "The distribution of $p$-values that are observed is flat under the null."
 
-hist(save_ps)
+hist_p(save_ps)
 ```
 
 The simulated $t$ distribution looks like a $t$ distribution should, and it shows us how often we get $t$ values of particular sizes. The $p$-distribution is flat under the null, which we are simulating here. This means you have the same chance of getting a $t$ with a p-value between 0 and 0.05 as you would of getting one between .90 and .95. Those ranges are both ranges of 5%, so there are an equal amount of $t$ values in them by definition.
@@ -719,14 +754,14 @@ for ( i in 1:1000 ){
 ```{r}
 #| label: fig-7simts1000
 #| fig-cap: "1000 simulated ts from the null distribution"
-hist(save_ts)
+hist_t(save_ts)
 
 ```
 
 ```{r}
 #| label: fig-7simps1000
 #| fig-cap: "1000 simulated ps from the null distribution"
-hist(save_ps)
+hist_p(save_ps)
 
 ```
 
@@ -761,7 +796,7 @@ for ( i in 1:1000 ){
 ```{r}
 #| label: fig-7simtrueps
 #| fig-cap: "1000 ps when there is a true difference"
-hist(save_ps)
+hist_p(save_ps)
 ```
 
 Now you can see that the $p$-value distribution is skewed to the left. This is because when there is a true effect, you will get p-values that are less than .05 more often. Or, rather, you get larger $t$ values than you normally would if there were no differences.
@@ -795,7 +830,7 @@ for ( i in 1:1000 ){
 ```{r}
 #| label: fig-7simpsB
 #| fig-cap: "1000 ps for n =100, when there is a true effect"
-hist(save_ps)
+hist_p(save_ps)
 
 
 length(save_ps[save_ps<.05])
@@ -825,7 +860,7 @@ for ( i in 1:1000 ){
 ```{r}
 #| label: fig-7simpsC
 #| fig-cap: "1000 ps for the independent-samples null, n=10 per group"
-hist(save_ps)
+hist_p(save_ps)
 
 
 length(save_ps[save_ps<.05])
