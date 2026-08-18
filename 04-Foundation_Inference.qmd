@@ -9,7 +9,7 @@ source("global_stuff.R")
 set.seed(538)
 ```
 
-# Foundations for inference
+# Inference and Hypothesis Testing
 
 > *Data and data sets are not objective; they are creations of human design. We give numbers their voice, draw inferences from them, and define their meaning through our interpretations.*
 >
@@ -17,270 +17,129 @@ set.seed(538)
 
 **Inferential statistics** is the branch of statistics concerned with drawing conclusions about populations or causal relationships from sample data. It provides the tools to answer questions like: did our manipulation actually cause a change, or could the pattern we observed have arisen by random chance alone?
 
-This chapter builds the conceptual foundations for inference using simulation, no formulas yet. The goal is to make the underlying logic explicit and visible before it gets formalized in later chapters.
+This chapter does that in two parts. The first half builds the logic by simulation, with no formulas: we work out what chance alone can produce, then compare a real result against it. The second half replaces the simulation with the standard hypothesis testing machinery, because once you can assume a known reference distribution you no longer have to rebuild the chance window from scratch every time.
+
+By the end of this chapter you should be able to:
+
+-   **Explain why two groups can differ when nothing caused it**, and describe what chance alone is capable of producing.
+-   **Define the key players** in a hypothesis test: null and alternative, population and sampling distributions.
+-   **Test** $H_0$ three equivalent ways: a test statistic against a critical value, a confidence interval, and a $p$-value.
+-   **Choose between a one-tailed and two-tailed test** and justify the choice.
+
+```{r, include=FALSE}
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(kableExtra)
+
+plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd, true_mean, true_sd) {
+  x_vals <- seq(-6, 6, by=0.01)
+  
+  h0 <- dnorm(x_vals, mean=null_mean, sd=null_sd)
+  sampling_mean <- dnorm(x_vals, mean=sample_mean, sd=sample_sd)
+  inferred_parent <- dnorm(x_vals, mean=inferred_mean, sd=inferred_sd)
+  true_parent <- dnorm(x_vals, mean=true_mean, sd=true_sd)
+  CI_left <- qnorm(0.025, mean=sample_mean, sd=sample_sd)
+  CI_right <- qnorm(0.975, mean=sample_mean, sd=sample_sd)
+  y_intersect = dnorm(null_mean, mean=null_mean, sd=null_sd)
+
+  
+  p <- ggplot() + 
+    geom_line(aes(x=x_vals, y=h0, color="Null Distribution"), size=1.5) +
+    geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) +
+    geom_line(aes(x=x_vals, y=inferred_parent, color="Estimated Population Distribution"), linetype="dashed", size=1.5) +
+    geom_line(aes(x=x_vals, y=true_parent, color="True Population Distribution"), size=1.5) +
+    geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) +
+    geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dashed", color="magenta", size=1) +
+    theme_classic() + 
+    theme(legend.position='bottom', 
+          axis.text = element_blank(), 
+          axis.title = element_blank(), 
+          axis.ticks = element_blank(), 
+          legend.text = element_text(size = 12)) + 
+    guides(color=guide_legend(title=NULL, nrow=2)) +
+    scale_color_manual(values=c("Null Distribution"="blue", 
+                                "Sampling Distribution of the Sample Mean"="darkgreen", 
+                                "Estimated Population Distribution"="green3", 
+                                "True Population Distribution"="orange"))
+
+  return(p)
+}
+
+plot_distributions_no_error <- function(
+  null_mean, null_sd,
+  sample_mean, sample_sd,     # sample_sd here is the SE used for the sampling dist + CI
+  inferred_mean, inferred_sd,
+  show_ci = TRUE
+){
+  x_vals <- seq(-6, 6, by = 0.01)
+
+  h0              <- dnorm(x_vals, mean = null_mean,    sd = null_sd)
+  sampling_mean   <- dnorm(x_vals, mean = sample_mean,  sd = sample_sd)
+  inferred_parent <- dnorm(x_vals, mean = inferred_mean, sd = inferred_sd)
+
+  # 95% CI for the sample mean (normal approx)
+  CI_left  <- qnorm(0.025, mean = sample_mean, sd = sample_sd)
+  CI_right <- qnorm(0.975, mean = sample_mean, sd = sample_sd)
+
+  # height at mu0 for the magenta reference drop line
+  y_intersect <- dnorm(null_mean, mean = null_mean, sd = null_sd)
+
+  p <- ggplot() +
+    geom_line(aes(x = x_vals, y = h0,             color = "Null Distribution"), size = 1.5) +
+    geom_line(aes(x = x_vals, y = sampling_mean,  color = "Sampling Distribution of the Sample Mean"),
+              linetype = "dotdash", size = 1) +
+    geom_line(aes(x = x_vals, y = inferred_parent, color = "Estimated Population Distribution"),
+              linetype = "dashed", size = 1.5) +
+    # mu0 (magenta dashed)
+    geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0),
+                 linetype = "dashed", color = "magenta", size = 1) +
+    # CI bar (thick dark green): keep this!
+    { if (show_ci) geom_segment(aes(x = CI_left, xend = CI_right, y = 0, yend = 0),
+                                color = "darkgreen", size = 1.8) } +
+    theme_classic() +
+    theme(
+      legend.position = "bottom",
+      axis.text = element_blank(),
+      axis.title = element_blank(),
+      axis.ticks = element_blank(),
+      legend.text = element_text(size = 12)
+    ) +
+    guides(color = guide_legend(title = NULL, nrow = 2)) +
+    scale_color_manual(values = c(
+      "Null Distribution" = "blue",
+      "Sampling Distribution of the Sample Mean" = "darkgreen",
+      "Estimated Population Distribution" = "green3"
+    ))
+
+  p
+}
+
+```
 
 ## Brief review of Experiments
 
-A controlled experiment is a structured method of data collection designed to support inferences about causality. Experiments involve deliberately manipulating one condition while holding others constant, then measuring the response.
+A controlled experiment is a structured method of data collection designed to support inferences about causality. Experiments involve deliberately manipulating one condition while holding others constant, then measuring the response. Every experiment has two core components: the **independent variable**, the condition under experimental control, and the **dependent variable**, what is measured. Causal forces produce detectable change. If the independent variable truly affects the dependent variable, then a well-designed experiment should detect that change. 
 
-Every experiment has two core components: the **independent variable**, the condition under experimental control, and the **dependent variable**, what is measured.
+The central question becomes: how do we know if a measured difference between conditions reflects a real causal effect? Data always contain variability; measurements fluctuate even when nothing has changed. To decide whether a difference is real, we need tools that can distinguish meaningful change from background noise.
 
-For example, a researcher studying the effects of wastewater discharge on stream health might compare dissolved oxygen (DO) levels at sites downstream of a discharge point against levels at unaffected reference sites, expecting DO to be lower downstream if the discharge is having an effect (wastewater typically consumes oxygen as it decomposes). Distance from discharge (affected vs. reference) is the independent variable; DO is the dependent variable.
-
-Causal forces produce detectable change. If the discharge is truly reducing dissolved oxygen, then measurements from affected sites should differ systematically from measurements at reference sites. The experiment is designed to detect that change.
-
-The central question becomes: how do we know if a measured difference between conditions reflects a real causal effect? Data always contain variability: measurements fluctuate even when nothing has changed. To decide whether a difference is real, we need tools that can distinguish meaningful change from background noise.
-
-## The data came from a distribution
-
-Understanding where data come from is foundational to inference. This section returns to sampling and distributions, but now to ask what they reveal about the process that generated our data, not just to describe them.
-
-A **distribution** specifies what numbers are likely to occur and how often. It sets the constraints on what we can expect to see when we take measurements.
-
-### Uniform distribution
-
-As a reminder from last chapter, @fig-5unifagain shows that the shape of a uniform distribution is completely flat.
-
-```{r}
-#| label: fig-5unifagain
-#| fig-cap: "Uniform distribution showing that the numbers from 1 to 10 have an equal probability of being sampled"
-
-library(ggplot2)
-library(dplyr)
-
-df <- data.frame(a=1:10,b=seq(.1,1,.1))
-df$a <- as.factor(df$a)
-
-ggplot(df,aes(x=a,y=b))+
-  geom_point(color="white")+
-  geom_hline(yintercept=.1)+
-  scale_y_continuous(limits=c(0,1), breaks=seq(0,1, by = .1))+
-  theme_classic(base_size = 18)+
-  ylab("Probability")+
-  xlab("Number")+
-  ggtitle("Uniform distribution for numbers 1 to 10")
-
-
-```
-
-The flat line is the whole point: every value from 1 to 10 has the same probability of occurring, $1/10 = 0.1$. That is what makes a distribution uniform.
-
-Treat it as a number-generating process. Run it repeatedly and it produces each value about 10% of the time. Let's draw 100 numbers from it.
-
-```{r}
-#| echo: true
-a <- sample(1:10, 100, replace = TRUE)
-```
-
-Drawing a subset of observations from a process is **sampling**, and the full set of values that process could produce is the **population** (Chapter 3). Here we know the source because we chose it. But if someone handed you these 100 numbers cold, the way to check them against a uniform distribution would be to count how often each value shows up: all ten should appear about equally often, roughly 10 times each.
-
-```{r}
-#| label: fig-5histunif
-#| fig-cap: "Histogram of 100 numbers randomly sampled from the uniform distribution containing the integers from 1 to 10."
-
-ggplot(data.frame(a = a), aes(x = a)) +
-  geom_histogram(binwidth = 1) +
-  scale_x_continuous(breaks = 1:10) +
-  labs(x = "Number", y = "Count")
-```
-
-They don't. The bars in @fig-5histunif vary in height even though every value had the same probability. That is **sampling variability**, and the gap between what a sample shows and what its distribution predicts is **sampling error**.
-
-### Not all samples are the same, they are usually quite different
-
-Let's look at sampling error more closely. We will sample 20 numbers from the uniform distribution. We should expect that each number between 1 and 10 occurs about two times each. As before, this expectation can be visualized in a histogram. To get a better sense of sampling error, let's repeat the above process ten times. @fig-5manysamples has 10 histograms, each showing what 10 different samples of twenty numbers looks like:
-
-```{r}
-#| label: fig-5manysamples
-#| fig-cap: "Histograms for 10 different samples from the uniform distribution. Each sample contains 20 numbers. The histograms all look quite different. The differences between the samples are due to sampling error or random chance."
-#| out-width: "100%"
-
-possible_integers <- sample(1:10,20*10,replace=TRUE)
-df <- data.frame(possible_integers, sample=rep(1:10,each=20))
-
-ggplot(df,aes(x=possible_integers))+
-  geom_histogram(bins=10)+
-  scale_x_continuous(breaks=seq(1,10,1))+
-  facet_wrap(~sample, nrow=2)
-
-```
-
-You might notice right away that none of the histograms are the same. Even though we are randomly taking 20 numbers from the very same uniform distribution, each sample of 20 numbers comes out different. That's our sampling variability.
-
-@fig-5expectedUnif shows an animated version of the process of repeatedly choosing 20 new random numbers and plotting a histogram. The horizontal line shows the flat-line shape of the uniform distribution. The line crosses the y-axis at 2; and, we expect that each number (from 1 to 10) should occur about 2 times each in a sample of 20. However, each sample bounces around quite a bit, due to random chance.
-
-::: {.content-visible when-format="html"}
-```{r}
-#| label: fig-5expectedUnif
-#| fig-cap: "Animated histograms of repeated samples of 20 from a uniform distribution. The black line marks the expected count of 2 per number; the bars rarely match it."
-
-knitr::include_graphics(path="imgs/gifs/sampleUnifExpected-1.gif")
-```
-:::
-
-::: {.content-visible when-format="pdf"}
-![Animated histograms of repeated samples of 20 from a uniform distribution. The black line marks the expected count of 2 per number; the bars rarely match it. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/sampleUnifExpected-1.png){#fig-5expectedUnif width="75%"}
-:::
-
-Small samples show high variability because random chance can produce very uneven counts even when every value is equally likely. This variability is sampling error, and it makes it harder to identify the true distribution from a single sample.
-
-### Large samples are more like the distribution they came from
-
-Let's refresh the question. Which of the two samples in @fig-5whichone do you think came from a uniform distribution?
-
-```{r}
-#| label: fig-5whichone
-#| fig-cap: "Which of these two samples came from a uniform distribution?"
-
-a<-sample(1:10,20*2,replace=TRUE)
-df<-data.frame(a,sample=rep(paste("Distribution",1:2),each=20))
-
-ggplot(df,aes(x=a))+
-  geom_histogram(bins=10)+
-  facet_wrap(~sample)+
-  theme_classic(base_size = 16)+
-  theme(panel.border = element_rect(color = "grey40", fill = NA))+
-  scale_x_continuous(breaks=seq(1,10,1))
-
-```
-
-Trick question. Both samples came from the uniform distribution, yet neither histogram looks flat. Sampling error can obscure the true shape of a distribution, even with a sample of this size.
-
-Increasing the **sample size** makes it easier to see whether a sample came from a uniform distribution. We'll often use the letter `n` for sample size: the number of observations in a sample.
-
-Increasing each sample from 20 to 100 observations, and again creating 10 samples drawn from the same uniform distribution, we'd now expect each number from 1 to 10 to occur about 10 times per sample. The histograms are shown in @fig-5unifsamp100.
-
-```{r}
-#| label: fig-5unifsamp100
-#| fig-cap: "Histograms for different samples from a uniform distribution. N = 100 for each sample."
-#| out-width: "100%"
-
-a<-sample(1:10,100*10,replace=T)
-df<-data.frame(a,sample=rep(1:10,each=100))
-
-ggplot(df,aes(x=a))+
-  geom_histogram(bins=10)+
-  facet_wrap(~sample, nrow=2)+
-  ylim(0,20)+
-  scale_x_continuous(breaks=seq(1,10,1))
-
-```
-
-Again, most of these histograms don't look very flat: the bars still vary up and down instead of sitting exactly at 10 each. Sampling error is still there, and it always will be, at any sample size.
-
-Increasing $N$ from 100 to 1000 observations per sample, we'd now expect every number to appear about 100 times each.
-
-```{r}
-#| label: fig-5unifsamp1000
-#| fig-cap: "Histograms for different samples from a uniform distribution. N = 1000 for each sample."
-#| out-width: "100%"
-
-a<-sample(1:10,1000*10,replace=T)
-df<-data.frame(a,sample=rep(1:10,each=1000))
-
-ggplot(df,aes(x=a))+
- geom_histogram(bins=10)+
-  facet_wrap(~sample, nrow=2)+
-  ylim(0,200)+
-  scale_x_continuous(breaks=seq(1,10,1))
-
-```
-
-@fig-5unifsamp1000 shows the histograms starting to flatten out. The bars are still not perfectly at 100, because there is still sampling error, but a flat-looking histogram from a large sample gives more confidence that the numbers came from a uniform distribution.
-
-Pushing sample size further, to 100,000 observations per sample, we'd expect each number to occur about 10,000 times each.
-
-```{r}
-#| label: fig-5sampunifALOT
-#| fig-cap: "Histograms for different samples from a uniform distribution. N = 100,000 for each sample."
-#| out-width: "100%"
-
-a<-sample(1:10,100000*10,replace=T)
-df<-data.frame(a,sample=rep(1:10,each=100000))
-
-ggplot(df,aes(x=a))+
-  geom_histogram(bins=10)+
-  facet_wrap(~sample, nrow=2)+
-  ylim(0,20000)+
-  scale_x_continuous(breaks=seq(1,10,1))
-
-```
-
-@fig-5sampunifALOT shows the histograms for each sample starting to look the same. With 100,000 observations each, chance has enough opportunity to distribute the numbers evenly, so the bars all land very close to 10,000, right where they should be for a uniform distribution.
-
-:::: {.callout-tip title="Tip: Key pattern"}
-The pattern behind a sample will tend to stabilize as sample size increases. Small samples show a wider variety of patterns because of sampling error (chance).
-::::
-
-Before returning to experiments, one more comparison, and this time it isn't a trick question: in @fig-5whichoneB, one of the two 20-observation samples really did come from a different distribution than the other.
-
-```{r}
-#| label: fig-5whichoneB
-#| fig-cap: "Which of these samples came from a uniform distribution?"
-
-a<-c(sample(1:10,20,replace=T),pmin(pmax(round(rnorm(20,5.5,1.6)),1),10))
-df<-data.frame(a,sample=rep(paste("Distribution",1:2),each=20))
-
-ggplot(df,aes(x=a))+
-  geom_histogram(bins=10)+
-  facet_wrap(~sample)+
-  theme_classic(base_size = 16)+
-  theme(panel.border = element_rect(color = "grey40", fill = NA))+
-  scale_x_continuous(breaks=seq(1,10,1))
-
-```
-
-If you're not confident in the answer, that's because **sampling error** (randomness) is obscuring the histograms, even though the two samples really do come from different distributions this time.
-
-Here's the same question again, this time with 1,000 observations per sample. Which histogram in @fig-5whichoneC do you think came from a uniform distribution, and which did not?
-
-```{r}
-#| label: fig-5whichoneC
-#| fig-cap: "Which of these samples came from a uniform distribution?"
-
-a<-c(sample(1:10,1000,replace=T),pmin(pmax(round(rnorm(1000,5.5,1.25)),1),10))
-df<-data.frame(a,sample=rep(paste("Distribution",1:2),each=1000))
-
-ggplot(df,aes(x=a))+
-  geom_histogram(bins=10)+
-  facet_wrap(~sample)+
-  theme_classic(base_size = 16)+
-  theme(panel.border = element_rect(color = "grey40", fill = NA))+
-  scale_x_continuous(breaks=seq(1,10,1))
-
-```
-
-Now that we have increased N, we can see the pattern in each sample becomes more obvious. Distribution 1 has bars near 100, not perfectly flat, but it resembles a uniform distribution. Distribution 2 is not flat looking at all.
-
-By comparing the two histograms, we've already performed a basic statistical inference: Distribution 2 did not come from a uniform distribution. This is the same logic underlying the formal tests covered in later chapters: arrange the data to make the source distribution visible, then judge whether the observed pattern is consistent with a hypothesized one.
-
-```{=html}
-<!--
-## Playing with distributions
-
-talk about a few different distribution. Embed shiny app
-
-SHINY APP here
-
--->
-```
 ## Is there a difference?
 
 Back to experiments. We want to know if an independent variable (our manipulation) causes a change in a dependent variable (measurement); if it does, we should see differences in the measurement as a function of the manipulation.
 
-A few manipulations are so overwhelming that no statistics are required to see them. Flip a light switch up and the light comes on; flip it down and it goes off, every time, with no exceptions to weigh. Nobody runs a $t$-test on a light switch.
+Some manipulations are so overwhelming that no statistics are required to see them. Flip a light switch up and the light comes on; flip it down and it goes off, every time. You don't need a $t$-test to tell you that flipping the light switch is the cause of the change in brightness. 
 
-That case is worth naming precisely because nothing in environmental science behaves like it. Your effects are real signals buried in noisy, variable measurements, where flipping the switch changes the outcome *on average* and not in every instance. Inference is the machinery for that situation, and the rest of this chapter builds it.
+Nothing in environmental science behaves like this. Effects are real signals buried in noisy, variable measurements, where flipping the switch changes the outcome *on average*. Not in every instance, and not by the same amount every time.
 
 ### Chance can produce differences
 
 Random chance can produce apparent differences between groups even when no real difference exists. We have already seen this with sampling: two samples from the same distribution come out differently. The same principle applies when we compare group means. This is a fundamental problem for inference.
 
-To make this concrete, consider a scenario where we expect to find no real difference. A researcher surveys 10 caves for white-nose syndrome, a fungal disease that has killed millions of North American bats, capturing 20 bats at each cave and counting how many show visible signs of infection. @fig-5batdesign lays out the design.
+Consider a scenario where we expect to find no real difference. A researcher surveys 10 caves for white-nose syndrome, a fungal disease that has killed millions of North American bats, capturing 20 bats at each cave and counting how many show visible signs of infection. @fig-5batdesign lays out the design.
 
 ```{r}
 #| label: fig-5batdesign
-#| fig-cap: "The bat-cave scenario as a study design. The split into two groups is arbitrary, which is the whole point: there is no real difference for the test to find."
+#| fig-cap: "The bat-cave scenario study design. The split into two groups is arbitrary, which is the whole point: there is no real difference for the test to find."
 #| fig-alt: "Study design schematic. IV: group assignment, arbitrary. Two boxes labelled Group A and Group B, each with n = 5 caves. DV: infected bats out of 20 captured."
 #| fig-asp: 0.34
 #| out-width: "100%"
@@ -290,7 +149,7 @@ design_groups("Group assignment (arbitrary)", c("Group A", "Group B"), 5, "caves
               "With no real difference, what can chance alone produce?")
 ```
 
-The crucial feature is that all 10 caves are drawn from the same population: no treatment, no environmental gradient, nothing systematic separating them, so the true infection rate is identical everywhere. Splitting them into two groups of 5 is arbitrary. Any difference we see between those groups therefore *has* to be sampling error, which makes this the cleanest possible look at what chance alone can manufacture.
+The key feature is that all 10 caves are drawn from the same population. There is no treatment, no environmental gradient, nothing systematic separating them, so the true infection rate is identical everywhere. Splitting them into two groups of 5 is arbitrary. Any difference we see between those groups therefore *has* to be sampling error, which makes this the cleanest possible look at what chance alone can manufacture.
 
 Here is data from one run of this scenario:
 
@@ -302,7 +161,7 @@ df <- data.frame(group, infected)
 knitr::kable(df, col.names = c("Group", "Infected bats (of 20)"))
 ```
 
-This is a long-format table. Each row is one site. The first column shows the group assignment, and the second shows how many of the 20 captured bats were infected. Did Group A have more infected bats on average than Group B?
+Each row in the table is one site. The first column shows the group assignment, and the second shows how many of the 20 captured bats were infected. Did Group A have more infected bats on average than Group B?
 
 It is easier to see the comparison in a bar graph (@fig-5gumballA), which shows the mean count for each group.
 
@@ -375,7 +234,7 @@ ggplot(dif_df, aes(y = differences, x = experiment)) +
   ylab("Difference in mean count (A - B)")
 ```
 
-A bar at zero means the two groups had the same mean count in that replication. Positive values indicate Group A was higher; negative values indicate Group B was higher. The signs of the differences would flip if we reversed the subtraction order.
+A bar at zero means the two groups had the same mean count in that replication. Positive values indicate Group A was higher; negative values indicate Group B was higher.
 
 The differences in these 10 replications mostly fall in a narrow range. To better characterize what chance can do, we run 100 replications. The results are shown in @fig-5manydiffs.
 
@@ -405,7 +264,7 @@ ggplot(dif_df, aes(y = differences, x = experiment)) +
 
 The x-axis just indexes the 100 replications; the information is on the y-axis. Many different difference sizes occur, but the range is bounded: the bars stay within a limited band around zero, and differences several times larger never show up. This begins to define the window of what chance can produce.
 
-To get a clearer picture, we now run 10,000 replications and plot the distribution of difference scores as a histogram. This gives a precise view of which differences happen often and which are extremely rare.
+To get an even clearer picture, we now run 10,000 replications and plot the distribution of difference scores as a histogram. This gives a precise view of which differences happen often and which are extremely rare.
 
 ```{r}
 #| label: fig-5histdiffgumball
@@ -421,51 +280,45 @@ differences <- mean_df[mean_df$group == "A", ]$infected -
   mean_df[mean_df$group == "B", ]$infected
 
 ggplot(data.frame(differences), aes(x = differences)) +
-  geom_histogram(bins = 50, color = "white", linewidth = 0.2) +
+  geom_histogram(bins = 50, color = "white", linewidth = 0.2, binwidth = 1) +
   labs(x = "Difference in mean count (A - B)", y = "Count")
 ```
 
-This histogram is the **chance window** for this study design. It shows that chance most often produces a difference near zero, the tallest bar in the center. Larger differences in either direction occur less and less frequently. The distribution has a clear boundary: extreme differences are possible but very rare.
+This histogram is the **chance window** for this study design. It shows that chance most often produces a difference near zero, the tallest bar in the center. Larger differences in either direction occur less and less frequently. We can see that differences larger than +/- 3-ish are possible, but very rare.
 
-We can use this window to evaluate any observed difference. If a study found a difference of 1 infected bat between two groups, that falls well inside the chance window: differences of that size occur frequently by random sampling alone. If the study found a difference of 6 bats, that would fall far outside the window; chance produced a difference that large 0 times out of 10,000. When an observed result almost never happens by chance, we have grounds to conclude that something other than chance produced it.
+We can use this window to evaluate any observed difference. If a study found a difference of 1 infected bat between two groups, that falls well inside the chance window: differences of that size occur frequently by random sampling alone. If the study found a difference of 6 bats, that would fall far outside the window; chance produced a difference that large 0 times out of 10,000. When an observed result almost never happens by chance, we have grounds to conclude that *something other than chance* produced it.
 
 ## Simulation-Based Inference
 
-Most of the inference done throughout the rest of this course comes down to one question: did chance produce the difference in the data? In an experiment, we want to know if our manipulation caused a difference in our measurement. But everything we measure has natural variability, so we'll always find *some* difference between conditions, whether the manipulation matters or not. What we want to know is whether that difference could plausibly have been produced by chance alone. If chance is a very unlikely explanation, we infer that something about the manipulation, not chance, produced the difference.
+Most of the inference done throughout the rest of this course comes down to one question: did chance produce the difference in the data? If chance is a very unlikely explanation, we infer that something about the manipulation, not chance, produced the difference.
 
-:::: {.callout-caution title="Warning: Beyond ruling out chance"}
-Everything in this chapter asks one question: could chance alone have produced this result? That is the question this course answers, and it is the question behind every test in the chapters ahead. It is not the only question available. Other methods start from two or more candidate explanations, say a steady linear decline versus a sharp threshold response, and ask which one the data support better. Ruling out chance tells you that *something* is going on. Comparing models tries to tell you *what*. Those methods are beyond this book, but it is worth knowing the difference, because "significant" only ever answers the first question.
-::::
+::: {.callout-caution title="Warning: Beyond ruling out chance"}
+Every hypothesis test in this book asks one question: could chance alone have produced this result? It is not the only question available. 
 
-The simulation-based approach here answers that question the same way every formal test in later chapters does. The advantage of starting with simulation is that every step is visible before any formulas are introduced.
+Other methods start from two or more candidate explanations, say a steady linear decline versus a sharp threshold response, and ask which one the data support better. 
 
-### Intuitive methods
+Ruling out chance tells you that *something* is going on, but not always *what*. It is worth knowing the difference, because "significant" only ever answers the first question.
+:::
 
-The approach in this section uses only simple arithmetic operations that you already understand to build a tool for inference. Specifically, we will use:
+The simulation-based approach here answers that question the same way every formal test does. 
 
-1.  Sampling numbers randomly from a distribution
-2.  Adding and subtracting
-3.  Division, to find the mean
-4.  Counting
-5.  Graphing and drawing lines
-6.  No formulas
-
-### Part 1: Frequency-based intuition about occurrence
+### How rare is rare enough?
 
 **Question**: How many times does something need to happen for it to happen "a lot"? How rare does something need to be before you stop worrying about it?
 
-Environmental scientists already have a working vocabulary for this: the **100-year flood**. A "100-year flood" doesn't mean floods that size happen once a century on a schedule; it means that in any given year, there's about a 1-in-100 chance of a flood that severe. Would you build a house in that floodplain? Many people do, and often regret it, because a 1% annual chance still adds up over a 30-year mortgage (roughly a 26% chance of at least one such flood in that span). A location with a 1-in-10,000 annual flood risk is very different: over the same 30 years, the cumulative chance is under 0.3%. Same underlying logic, wildly different practical decisions.
+Environmental scientists already have a working vocabulary for this: the **100-year flood**. A "100-year flood" doesn't mean floods that size happen once a century on a schedule; it means that in any given year, there's about a 1-in-100 chance of a flood that severe. Would you build a house in that floodplain? Many people do, and often regret it, because a 1% annual chance still adds up over a 30-year mortgage (roughly a 26% chance of at least one such flood in that span). A location with a 1-in-10,000 annual flood risk is very different: over the same 30 years, the cumulative chance is under 0.3%. 
 
 That's the intuition we need going forward: **rare events still happen, but how rare something is changes what you're willing to conclude from seeing it.** Later in this chapter, we'll use 1-in-10,000 as our own working definition of "rare enough to call surprising."
 
-### Part 2: Judgment and Decision-making
+### Drawing the line: chance vs. not chance
 
 We already have everything we need to make this concrete: the bat simulation above gave us 10,000 mean differences that chance alone can produce when there is no real difference between groups. That histogram (@fig-5histdiffgumball) *is* our reference distribution. Now we use it to make a decision.
 
 Let's draw some lines on that same histogram and label two kinds of regions:
 
-1.  **Region of chance.** Chance did it. Chance could have done it.
-2.  **Region of not chance.** Chance didn't do it. Chance couldn't have done it.
+1.  **Region of chance.** Chance did it. 
+
+2.  **Region of not chance.** Chance didn't do it. 
 
 The boundaries are the minimum and maximum values chance actually produced across the 10,000 replications. @fig-5simdecision shows this applied to our count differences.
 
@@ -500,335 +353,473 @@ ggplot(data.frame(differences), aes(x = differences)) +
 
 ```
 
-Here's how the decision works. The grey band in the middle is the chance window: our 10,000 simulated replications produced differences from roughly `r round(diff_min,1)` to `r round(diff_max,1)` bats, and a result sitting well inside it, close to 0, is exactly what chance turns out routinely. No grounds for suspicion. The red zones on either side are the ones chance never reached, so a difference out there would give real grounds to suspect something beyond sampling error. Red marks the same thing here that it will in every later chapter: the region where you would reject chance as the explanation.
+Here's how the decision works. The grey band in the middle is the chance window: our 10,000 simulated replications produced differences from roughly `r round(diff_min,1)` to `r round(diff_max,1)` bats, and a result sitting well inside it, close to 0, is exactly what chance turns out routinely. No grounds for suspicion. The red zones on either side are the ones chance never reached, so a difference out there would give real grounds to suspect something beyond sampling error. This is the region where you would reject chance as the explanation.
 
-The gold bands are the honest part: differences near the edge of what chance can do, but not quite past it. Chance *could* produce something in the gold zone, it is technically still inside the window, but it does so rarely. That's not a clean yes/no; it's a "probably not chance, but I can't rule it out," and how you handle that ambiguity is a judgment call, not a fact. More conservative researchers shrink the gold zone (fewer false alarms, more missed real effects); more permissive researchers expand it (the reverse trade-off). Chapter 5 formalizes this trade-off with a standard convention ($\alpha = .05$) so that researchers aren't each inventing their own boundary from scratch.
+The gold bands are the honest part: differences *near the edge* of what chance can do, but not quite past it. Chance *could* produce something in the gold zone, it is technically still inside the window, but it does so rarely. That's not a clean yes/no; it's a "probably not chance, but I can't rule it out," and how you handle that ambiguity is a judgment call. More conservative researchers would shrink the gold zone (fewer false alarms, more missed real effects); more permissive researchers would expand it (the reverse trade-off). All of science formalizes this trade-off with a standard convention ($\alpha = .05$), which we'll discuss more later in this chapter, so that researchers aren't each inventing their own boundary from scratch.
 
-**Making decisions and being wrong.**
+## From simulation to formal hypothesis tests
 
-No matter how you plan to make decisions about your data, you will always be prone to making some mistakes. You might call one finding real, when in fact it was caused by chance. This is called a **type I** error, or a false positive. You might ignore one finding, calling it chance, when in fact it wasn't chance (even though it was in the window). This is called a **type II** error, or a false negative.
+Everything so far was built by brute force: split the sites into groups at random ten thousand times, collect the difference each time, and look at where a real result falls against that pile. As you can imagine, this is not practical most of the time.
 
-How you make decisions influences how often you make errors over time. A researcher who only accepts results as real when they fall in the strict "no chance" zone will make few type I errors, but will also make more type II errors, missing real effects that the decision criterion happened to call chance. A researcher who accepts results in the grey zone as real will make more type I errors but fewer type II errors. Using cutoff regions for decision-making forces this trade-off. The Bayesian view sidesteps it somewhat: rather than a binary real/not-real decision, it treats confidence as continuous, updated by each new experiment, which avoids committing to a fixed trade-off between the two error types.
+The rest of this chapter is how we actually conduct statistical inference in practice. Once we are willing to assume a known reference distribution, the simulated chance window can be replaced by a curve we already know the shape of, and the decision becomes a calculation rather than a simulation. The logic does not change, only the bookkeeping does.
 
-There's also a way to reduce both error types, and increase confidence in your results, before you even run the experiment: designing the study well in the first place.
+## Core Players (distributions)
 
-### Part 3: Study Design and Sensitivity
+To make sense of hypothesis testing, it helps to picture four kinds of distributions. Later in the chapter we'll put them together, but first we define them one at a time:
 
-Study design directly controls how sensitive an analysis is. It's often possible, and important, to choose a design that can actually detect the size of effect you care about.
+1.  **Null Distribution** - The hypothesized population distribution under the assumption that the null hypothesis $H_0$ is true.
 
-Two forces govern whether a study can detect a real effect: the size of the effect, and the amount of noise in the data. The main design choice under your control is sample size, which determines how much that noise obscures the signal.
+2.  **Estimated Population Distribution** - The distribution we infer from our sample. This represents what the data suggest about $H_a$. (Sometimes called the *inferred parent distribution*.)
 
-Recall what happens to the sampling distribution of the mean as sample size increases: it narrows. The same is true for the distribution of mean differences. As $n$ increases, the range of differences that chance alone produces shrinks. This means that with enough sites or plots, even a small real effect can be reliably distinguished from noise, while with too few, even a fairly large real effect can get lost in it.
+3.  **True Population Distribution** - The actual distribution from which our sample was drawn. We never know this perfectly, but it's the reality we're trying to approximate.
 
-Let's return to the bat-cave scenario, but now vary the number of sites surveyed per group: 5 (what we started with), 10, 20, and 40.
+4.  **Sampling Distribution of the Sample Mean** - The distribution we'd get if we took many samples and calculated $\bar{X}$ each time. This is key for connecting sample evidence back to the population.
+
+**Null value notation.** We'll write the hypothesized population mean as $\mu_0$. Hypotheses compare the population mean $\mu$ to this constant $\mu_0$. The sample mean $\bar{X}$ is never part of $H_0$ or $H_a$; it's the evidence we bring to test them.
+
+*Note on terms.* In this chapter, you'll sometimes see the phrase **parent distribution** in the prose. This is just a metaphor: a sample is like a "child" drawn from a "parent" distribution. The standard statistical term is **population distribution**. Both terms mean the same thing here. For clarity, we'll use *population distribution* in figures and definitions, and you can think of *parent* as a memory aid.
+
+## Terms for Decision Rules
+
+When running a hypothesis test, three terms guide our decision:
+
+**Significance level (**$\alpha$). Chosen *before* the test. $\alpha$ is the long-run probability of a Type I error (rejecting a true $H_0$; more on error types next chapter). A common choice is $\alpha = 0.05$. Smaller $\alpha$ makes tests more cautious and produces wider confidence intervals.
+
+$p$-value. Assuming $H_0$ is true, the $p$-value is the probability of seeing a test statistic at least as extreme as what we observed. Small $p$ means our data look unusual under $H_0$.
+
+**Confidence level.** Confidence level is the long-run proportion of confidence intervals that contain the true parameter when we repeat the entire data collection and interval procedure.
+
+$$
+\text{Confidence Level} = 1 - \alpha
+$$
+
+With $\alpha=0.05$, about 95% of intervals constructed this way will capture the true value.
+
+::: {.callout-caution title="Warning: Don't misread a confidence interval"}
+Do **not** say:
+
+> "There is a 95% probability this interval contains $\mu$."
+
+Instead say:
+
+> "We used a procedure that captures $\mu$ about 95% of the time in the long run."
+:::
+
+## Three equivalent ways to test $H_0$
+
+1.  **Test statistic / critical values.** Choose $\alpha$, find the corresponding **critical value(s)** for your test statistic, and compute your observed statistic. Reject $H_0$ if the statistic falls in the **rejection region**.
+
+2.  **Confidence interval (two-sided).** Build a $(1-\alpha)$ CI for the parameter. Reject $H_0$ if $\mu_0$ lies **outside** the CI; fail to reject if it lies **inside**.
+
+3.  $p$-value (probability). Compute the $p$-value for your observed statistic under $H_0$ and compare to $\alpha$. Reject $H_0$ if $p<\alpha$.
+
+**Note.** Methods 1--2 yield a yes/no at $\alpha$; method 3 yields a yes/no plus a graded measure of evidence (exact $p$).
+
+### Test statistic/critical values
+
+@fig-rejection-region shows how these ideas come together in a two-sided test. The blue curve is the sampling distribution of the test statistic if the null hypothesis $H_0$ is true. The dashed magenta line marks the expected center at $\mu_0$. The red vertical lines are the **critical values** for $\alpha = 0.05$. They cut off the most extreme 5% of the distribution: 2.5% in each tail. Those shaded tails are the **rejection regions**.
+
+Here's the decision rule:
+
+-   If the observed test statistic falls inside the central region, we **fail to reject** $H_0$ because the result is consistent with chance variation.
+-   If it falls in either rejection region, we **reject** $H_0$ because the result is too extreme to attribute to chance alone at the 5% level.
+
+This picture makes clear why $\alpha$ and the $p$-value are linked. $\alpha$ sets the cutoff for how extreme is "too extreme," while the $p$-value tells us how far into the tails our actual result lies.
 
 ```{r}
-#| label: fig-5sampleDistNormal
-#| fig-cap: "The width of the chance window for mean count differences shrinks as the number of sites per group increases."
+#| label: fig-rejection-region
+#| fig-cap: 'Two-sided test: blue curve is the sampling distribution under $H_0$ (centered at $\mu_0$). Magenta dashed line marks $\mu_0$. Red vertical lines mark the critical values for $\alpha=0.05$; shaded tails are the rejection regions.'
+#| fig-width: 7
+#| fig-height: 5
 
-ns <- c(5, 10, 20, 40)
-sims <- 5000
-all_df <- data.frame(
-  sample = c(sapply(ns, function(x) replicate(sims, mean(rbinom(x, 20, 0.40)) - mean(rbinom(x, 20, 0.40))))),
-  sample_size = rep(ns, each = sims)
+library(tidyverse)
+
+# Parameters (edit alpha if needed)
+mu0   <- 0
+sigma <- 1
+alpha <- 0.05
+crit  <- qnorm(1 - alpha/2, mean = mu0, sd = sigma)
+# Curve data
+df <- tibble::tibble(
+  x = seq(mu0 - 4*sigma, mu0 + 4*sigma, length.out = 2000),
+  y = dnorm(x, mean = mu0, sd = sigma)
 )
 
-ggplot(all_df, aes(x = sample)) +
-  geom_histogram(binwidth = 0.2, center = 0, color = "white") +
-  facet_wrap(~sample_size) +
-  theme_classic(base_size = 13) +
-  ggtitle("Chance window for mean count differences, by sites per group") +
-  ylab("Count") +
-  xlab("Difference in mean count (Group A - Group B)")
+y_peak <- dnorm(mu0, mu0, sigma)
+
+ggplot(df, aes(x, y)) +
+  # Shade rejection regions (now mapping x and y explicitly)
+  geom_area(
+    data = df %>% filter(x <= -crit),
+    aes(x = x, y = y),
+    inherit.aes = FALSE, fill = "red", alpha = 0.15
+  ) +
+  geom_area(
+    data = df %>% filter(x >=  crit),
+    aes(x = x, y = y),
+    inherit.aes = FALSE, fill = "red", alpha = 0.15
+  ) +
+  # Blue normal curve
+  geom_line(color = "blue", linewidth = 1.2) +
+  # Magenta dashed line at mu0 (use annotate to avoid recycling warning)
+  annotate("segment",
+           x = mu0, xend = mu0, y = 0, yend = y_peak,
+           colour = "magenta", linetype = "dashed", linewidth = 1) +
+  # Red critical value lines
+  geom_vline(xintercept = c(-crit, crit), color = "red", linewidth = 0.9) +
+  # Labels
+  annotate("text", x =  crit, y = y_peak*0.95,
+           label = "critical value", color = "black", hjust = -0.05, size = 3.6) +
+  annotate("text", x = -crit, y = y_peak*0.95,
+           label = "critical value", color = "black", hjust =  1.05, size = 3.6) +
+  annotate("text", x = mu0 + 2.6*sigma, y = dnorm(crit, mu0, sigma)*0.55,
+           label = "rejection region", color = "black", size = 3.6) +
+  annotate("text", x = mu0 - 2.6*sigma, y = dnorm(crit, mu0, sigma)*0.55,
+           label = "rejection region", color = "black", size = 3.6) +
+  labs(x = "x", y = "Density") +
+  coord_cartesian(ylim = c(0, y_peak*1.05)) +
+  theme_classic(base_size = 12)
 
 ```
 
-```{r}
-#| label: tbl-5minmax
-#| tbl-cap: "Smallest and largest mean count differences produced by chance, by sites per group."
+### Confidence intervals
 
-the_range <- all_df %>%
-  group_by(sample_size) %>%
-  summarize(smallest = round(min(sample), 2),
-            largest  = round(max(sample), 2))
+@fig-ci-lens-illustrative shows another way to make the same decision. The **blue curve** is the null distribution ($H_0$ true), and the **dark green curve** is the sampling distribution of the mean based on our sample. The **dashed green curve** is the estimated population distribution we infer from the sample.
 
-knitr::kable(the_range, col.names = c("Sites per group", "Smallest", "Largest"))
-```
+The **thick dark green bar** at the bottom is the 95% confidence interval around the sample mean $\bar{X}$. The **magenta dashed line** marks $\mu_0$, the hypothesized mean under $H_0$.
 
-The pattern is clear: the chance window is wide with only 5 sites per group and narrows steadily as sites are added. Consider what this means for a real study. Suppose a treatment applied inside the caves is expected to reduce infections by about 2 bats per site. With only 5 sites per group, that effect size sits well inside the chance window in the table above, so a real 2-bat effect could easily be mistaken for sampling noise, or a sampling-noise result could be mistaken for a real effect. With 40 sites per group, the same 2-bat difference sits outside the window chance can produce, and you could detect it with real confidence.
+Decision rule:
 
-**The design of a study determines the size of effect it can reliably detect.** Sample size is the main lever, but not the only one: taking repeated measurements at each site (reducing measurement noise) and choosing conditions with a genuinely strong contrast both help too. This idea, how sensitive a given design is to a real effect of a given size, has a name, **statistical power**, which Chapter 5 develops formally alongside the standard $\alpha = .05$ convention.
-
-### Summary of Simulation-Based Inference
-
-We built the core logic of inference using nothing but sampling, arithmetic, and histograms: simulate what chance alone can produce, compare an observed result to that simulated distribution, and use where it falls to judge whether chance is a plausible explanation. The comparison isn't perfectly clean. There's a grey zone near the edges where judgment has to do the work, and the width of the chance window itself depends on how much data you collect.
-
-## The randomization test (permutation test)
-
-This is the first formal inferential statistic in this textbook. Everything so far has built the intuition; now we formalize it into a **randomization test**, which uses random chance to judge whether an experimental finding was likely due to chance or not. The ideas behind it are exactly the ideas already developed in this chapter, now assembled and given a name.
-
-When you run an experiment and collect data, you find out what happened that one time. Because you ran it only once, you don't find out what **could have happened**. The randomization test gives you that missing half, so you can compare **what did happen** in your experiment against it.
-
-### Pretend example: does distance from a highway affect NO₂ levels?
-
-Let's say you are monitoring nitrogen dioxide (NO₂) concentrations at air quality sites near a major highway. Sites within 50 m of the highway go in the "near" group, and sites 500 m or more away go in the "far" group. If highway traffic is a meaningful source of NO₂, the near group should average higher concentrations. @fig-5no2design gives the design.
+-   If $\mu_0$ lies **inside** the CI bar, we **fail to reject** $H_0$.
+-   If $\mu_0$ lies **outside** the CI bar, we **reject** $H_0$ at $\alpha=0.05$.
 
 ```{r}
-#| label: fig-5no2design
-#| fig-cap: "The highway NO2 study as a design schematic. Compare it with @fig-5batdesign: the same two-group structure, but here the grouping is a real difference rather than an arbitrary split."
-#| fig-alt: "Study design schematic. IV: site position, categorical. Two boxes labelled Near highway and Far from highway, each with n = 20 sites. DV: NO2 concentration in ppb."
-#| fig-asp: 0.34
+#| label: fig-ci-lens-illustrative
+#| fig-cap: 'Confidence-interval lens: null (blue), sampling distribution of $\bar{X}$ (dark green), estimated population (light-green dashed). The thick bar is the $(1-\alpha)$ CI around $\bar{X}$; the magenta dashed line marks $\mu_0$. Decision uses whether $\mu_0$ is inside or outside the CI.'
 #| out-width: "100%"
 
-design_groups("Site position (categorical)", c("Near highway", "Far from highway"),
-              20, "sites", "NO2 concentration (ppb)",
-              "Do the two means differ by more than chance?")
+library(ggplot2)
+library(dplyr)
+library(tibble)
+
+# Parameters you can edit ---
+null_mean    <- 0
+null_sd      <- 1
+sample_mean  <- 0.42   # \bar{X}
+SE           <- 0.4   # standard error for sampling dist + CI
+inferred_sd  <- 1      # for the light-green "estimated population"
+alpha        <- 0.05
+
+# Derived quantities
+x_vals   <- seq(-6, 6, by = 0.01)
+h0       <- dnorm(x_vals, mean = null_mean, sd = null_sd)
+samp     <- dnorm(x_vals, mean = sample_mean, sd = SE)
+inferred <- dnorm(x_vals, mean = sample_mean, sd = inferred_sd)
+
+zcrit   <- qnorm(1 - alpha/2)
+ci_lo   <- sample_mean - zcrit * SE
+ci_hi   <- sample_mean + zcrit * SE
+y_mu0   <- dnorm(null_mean, mean = null_mean, sd = null_sd)
+inside  <- (null_mean >= ci_lo) && (null_mean <= ci_hi)
+
+df <- tibble(x = x_vals, y_h0 = h0, y_samp = samp, y_inf = inferred)
+
+# Helpful y-levels for placing labels
+y_top   <- max(h0, samp, inferred)
+y_mid   <- dnorm(sample_mean, sample_mean, SE)
+
+ggplot() +
+  # Curves
+  geom_line(data = df, aes(x, y_h0),    color = "blue",      linewidth = 1.2) +
+  geom_line(data = df, aes(x, y_samp),  color = "darkgreen", linewidth = 1.0, linetype = "dotdash") +
+  geom_line(data = df, aes(x, y_inf),   color = "green3",    linewidth = 1.0, linetype = "dashed") +
+
+  # mu0 reference (magenta dashed down from the peak of H0)
+  annotate("segment",
+           x = null_mean, xend = null_mean, y = 0, yend = y_mu0,
+           colour = "magenta", linetype = "dashed", linewidth = 1) +
+
+  # CI bar and ticks on baseline
+  annotate("segment",
+           x = ci_lo, xend = ci_hi, y = 0, yend = 0,
+           colour = "darkgreen", linewidth = 2.8) +
+  annotate("segment", x = ci_lo, xend = ci_lo, y = -0.01, yend = 0.03) +
+  annotate("segment", x = ci_hi, xend = ci_hi, y = -0.01, yend = 0.03) +
+
+  # xbar marker
+  annotate("point", x = sample_mean, y = 0, size = 2) +
+  annotate("text",  x = sample_mean, y = 0.06, label = expression(bar(X)), size = 4) +
+
+  # Bracket and label for (1 - alpha) CI
+  annotate("segment", x = ci_lo, xend = ci_lo, y = -0.06, yend = -0.01) +
+  annotate("segment", x = ci_hi, xend = ci_hi, y = -0.06, yend = -0.01) +
+  annotate("segment", x = ci_lo, xend = ci_hi, y = -0.06, yend = -0.06) +
+  annotate("text",   x = (ci_lo + ci_hi)/2, y = -0.095,
+           label = expression(paste("(1 - ", alpha, ") CI")), size = 3.8) +
+
+  # Labels for the three curves (inline, color-matched)
+  annotate("text", x = -3.2, y = dnorm(-3.2, null_mean, null_sd) + 0.015,
+           label = "Null distribution", color = "blue", size = 3.6, hjust = 0, vjust=-0.4) +
+  annotate("text", x = sample_mean + 1.6, y = dnorm(sample_mean + 1.6, sample_mean, SE) + 0.015,
+           label = expression("Sampling dist. of " * bar(X)), color = "darkgreen", size = 3.6, hjust = 0, vjust=0.4) +
+  annotate("text", x = sample_mean - 1.8, y = dnorm(sample_mean - 1.8, sample_mean, inferred_sd) + 0.015,
+           label = "Estimated population", color = "green3", size = 3.6, hjust = 0) +
+
+  # mu0 label
+  annotate("text", x = null_mean, y = y_mu0 + 0.08, label = expression(mu[0]),
+           colour = "magenta", size = 5) +
+
+  # Decision banner
+  annotate("label",
+           x = sample_mean, y = y_top * 0.92,
+           label = ifelse(inside,
+                          paste0("Fail to reject at \u03B1 = ", alpha),
+                          paste0("Reject at \u03B1 = ", alpha)),
+           size = 3.7, fill = "white", label.size = 0.2) +
+
+  # Axes and theme
+  coord_cartesian(ylim = c(-0.12, y_top * 1.05)) +
+  labs(x = NULL, y = NULL) +
+  theme_classic(base_size = 12) +
+  theme(
+    axis.text  = element_blank(),
+    axis.ticks = element_blank()
+  )
 ```
 
-That structure is worth pausing on, because it is identical to the bat-cave design in @fig-5batdesign: two groups, one measurement each, one question about the difference between their means. The only thing that changed is that the grouping now corresponds to something real. Everything this chapter does with the bats applies here unchanged.
+For common models, a two-sided level-$\alpha$ test of $H_0:\ \mu=\mu_0$ is equivalent to checking whether $\mu_0$ lies inside the $100(1-\alpha)\%$ confidence interval. The **CI** is often the most intuitive way to see this: it shows both the decision (reject or not) *and* the range of parameter values still consistent with the data.
 
-Let's say the data looked like this:
+### p-values
+
+The $p$-value is the probability, **under** $H_0$, of obtaining a test statistic **at least as extreme** as the one you observed. In practice, you compute it from your observed statistic using software or a table. Reject if $p<\alpha$.
 
 ```{r}
+#| label: fig-pvalue-lens
+#| fig-cap: 'p-value lens: compute the $p$-value from the observed statistic (vertical line) under the null.'
+#| out-width: "100%"
 
-near <- round(runif(20, 35, 65))
-far  <- round(runif(20, 10, 40))
+library(tidyverse)
 
-no2_df <- data.frame(site = seq(1:20), near_ppb = near, far_ppb = far)
+alpha <- 0.05
+z_obs <- 1.85     # observed z (edit this)
+p_two <- 2*pnorm(-abs(z_obs))   # two-sided p under N(0,1)
 
-no2_df <- no2_df %>%
-  rbind(c("Sums", colSums(no2_df[, 2:3]))) %>%
-  rbind(c("Means", colMeans(no2_df[, 2:3])))
-knitr::kable(no2_df)
-
-```
-
-So, did the near-highway sites have higher NO₂ than the far sites? The mean for near sites was `r mean(near)` ppb, and for far sites was `r mean(far)` ppb. Just looking at the means, it looks like proximity to the highway matters.
-
-But could this just be chance? Maybe the near sites happened to be in a windier or more industrialized area, so their higher readings reflect those conditions rather than the highway itself, or maybe the difference arose simply from random sampling variation. That's a legitimate concern worth taking seriously. We already know how the data came out; what we want to know is how they *could have* come out, across all the possibilities.
-
-The data would have come out a bit different if some sites from the near group had been placed in the far group, and vice versa. There are many ways the 40 sites could have been assigned to two groups, and the group means would come out differently depending on the assignment.
-
-It's not practical to run the experiment every possible way, that would take too long, but we can estimate how those experiments might have turned out using simulation.
-
-We take all 40 NO₂ readings from both groups, pool them together, then randomly assign 20 to a "near" group and 20 to a "far" group, as if the original assignment had been done differently. We compute the new group means and their difference, and repeat this process many times to build up a picture of what the difference could have been under random assignment.
-
-**Doing the randomization.**
-
-Before we do that, let's show how the randomization part works. We'll use fewer numbers to make the process easier to look at. Here are the first 5 NO₂ readings from each group.
-
-```{r}
-no2_df_small <- no2_df[1:5, ]
-no2_df_small$near_ppb <- as.numeric(no2_df_small$near_ppb)
-no2_df_small$far_ppb  <- as.numeric(no2_df_small$far_ppb)
-
-no2_df_small <- no2_df_small %>%
-  rbind(c("Sums", colSums(no2_df_small[, 2:3]))) %>%
-  rbind(c("Means", colMeans(no2_df_small[, 2:3])))
-knitr::kable(no2_df_small)
-
-```
-
-Things could have turned out differently if some of the near-highway sites had landed in the far group instead, and vice versa. Shuffling the readings between groups is how we find out what "differently" looks like. The shuffle enacts the null hypothesis directly: if being near a highway makes no difference to NO₂, then the label on each reading is arbitrary, and we could swap the labels around without disturbing anything real. Every difference we get after shuffling is therefore a difference chance alone can produce.
-
-```{r, echo=TRUE}
-all_readings      <- c(near[1:5], far[1:5])
-randomize_scores  <- sample(all_readings)
-new_near          <- randomize_scores[1:5]
-new_far           <- randomize_scores[6:10]
-print(new_near)
-print(new_far)
-```
-
-`sample()` does the shuffling; the two lines after it simply deal the shuffled readings back out into groups of five. Notice that the ten readings themselves never change. All that changes is which group each one is assigned to, which is exactly the thing we are claiming does not matter.
-
-Repeating this a couple of times and putting the results in a table shows the group means shifting each time the sites are shuffled around:
-
-```{r, echo=FALSE}
-no2_df_small <- no2_df[1:5, ]
-no2_df_small$near_ppb <- as.numeric(no2_df_small$near_ppb)
-no2_df_small$far_ppb  <- as.numeric(no2_df_small$far_ppb)
-
-all_readings     <- c(near[1:5], far[1:5])
-randomize_scores <- sample(all_readings)
-near2 <- randomize_scores[1:5]
-far2  <- randomize_scores[6:10]
-
-no2_df_small <- cbind(no2_df_small, near2, far2)
-
-all_readings     <- c(near[1:5], far[1:5])
-randomize_scores <- sample(all_readings)
-near3 <- randomize_scores[1:5]
-far3  <- randomize_scores[6:10]
-
-no2_df_small <- cbind(no2_df_small, near3, far3)
-
-no2_df_small <- no2_df_small %>%
-  rbind(c("Sums", colSums(no2_df_small[, 2:7]))) %>%
-  rbind(c("Means", colMeans(no2_df_small[, 2:7])))
-knitr::kable(no2_df_small)
-
-```
-
-**Simulating the mean differences across the different randomizations.**
-
-In our pretend study we found that the mean NO₂ for near-highway sites was `r mean(near)` ppb, and for far sites was `r mean(far)` ppb. The mean difference (near − far) was `r mean(near) - mean(far)` ppb. This is a pretty big difference. This is **what did happen**. But, **what could have happened**? If we tried out all the possible ways to assign 40 sites to two groups, what does the distribution of the possible mean differences look like? Let's find out. This is what the randomization test is all about.
-
-When we do our randomization test we will measure the mean difference in NO₂ between the near and far groups. Every time we randomize we will save the mean difference.
-
-@fig-5randtest animates what's happening in a randomization test, using data from a different fake study (we'll return to the NO₂ example after). The purple dots show the original mean of each group (lower-exposure vs. higher-exposure sites); since one sits below the other, we want to know whether chance could produce a difference that size. The light green and red dots are the individual readings from each of 10 sites per group, the raw data the purple means are built from. As the animation randomizes, those readings shuffle between groups, and the moving yellow dots show the resulting new group means after each shuffle. The spread of the yellow dots shows the range of differences chance alone could produce.
-
-::: {.content-visible when-format="html"}
-```{r}
-#| label: fig-5randtest
-#| fig-cap: "Animation of a randomization test. Purple dots are the original condition means, yellow dots the means after each reshuffle, and the light green and red dots track how individual scores move between groups."
-
-knitr::include_graphics(path="imgs/gifs/randomizationTest-1.gif")
-```
-:::
-
-::: {.content-visible when-format="pdf"}
-![Animation of a randomization test. Purple dots are the original condition means, yellow dots the means after each reshuffle, and the light green and red dots track how individual scores move between groups. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/randomizationTest-1.png){#fig-5randtest width="75%"}
-:::
-
-```{r rtestGif, eval=F}
-study <- round(runif(10, 80, 100))
-no_study <- round(runif(10, 40, 90))
-
-study_df <- data.frame(student = seq(1:10), study, no_study)
-mean_original <- data.frame(IV = c("studied", "didnt_study"),
-                            means = c(mean(study), mean(no_study)))
-t_df <- data.frame(
-  sims = rep(1, 20),
-  IV = rep(c("studied", "didnt_study"), each = 10),
-  values = c(study, no_study),
-  rand_order = rep(c(0, 1), each = 10)
+x <- tibble(
+  x = seq(-4, 4, length.out = 2000),
+  y = dnorm(x)
 )
 
-raw_df <- t_df
-for (i in 2:10) {
-  #all<-sample(c(study,no_study))
-  #mean_study[i]<-mean(all[1:20])
-  #mean_no_study[i]<-mean(all[21:40])
-  #t_df<-data.frame(sims=rep(i,20),
-  #                 IV=rep(c("studied","didnt_study"),each=10),
-  #                 values=c(all[1:20],all[21:40]))
-  new_index <- sample(1:20)
-  t_df$values <- t_df$values[new_index]
-  t_df$rand_order <- t_df$rand_order[new_index]
-  t_df$sims <- rep(i, 20)
-  raw_df <- rbind(raw_df, t_df)
-}
-
-raw_df$rand_order <- as.factor(raw_df$rand_order)
-rand_df <- aggregate(values ~ sims * IV, raw_df, mean)
-names(rand_df) <- c("sims", "IV", "means")
-
-#rand_df <- data.frame(sims=rep(1:10,2),means=c(mean_study,mean_no_study),
-#  IV=rep(c("studied","didnt_study"),each=10))
-
-a <- ggplot(raw_df, aes(
-  x = IV,
-  y = values,
-  color = rand_order,
-  size = 3
-)) +
-  geom_point(stat = "identity", alpha = .5) +
-  geom_point(
-    data = mean_original,
-    aes(x = IV, y = means),
-    stat = "identity",
-    shape = 21,
-    size = 6,
-    color = "black",
-    fill = "mediumorchid2"
-  ) +
-  geom_point(
-    data = rand_df,
-    aes(x = IV, y = means),
-    stat = "identity",
-    shape = 21,
-    size = 6,
-    color = "black",
-    fill = "gold"
-  ) +
-  theme_classic(base_size = 15) +
-  coord_cartesian(ylim = c(40, 100)) +
-  theme(legend.position = "none") +
-  ggtitle(
-    "Randomization test: Original Means (purple),
-          \n Randomized means (yellow)
-          \n Original scores (red,greenish)"
-  ) +
-  transition_states(sims,
-                    transition_length = 1,
-                    state_length = 2) + enter_fade() +
-  exit_shrink() +
-  ease_aes('sine-in-out')
-
-animate(a, nframes = 100, fps = 5)
-
+ggplot(x, aes(x, y)) +
+  geom_line(color = "blue", linewidth = 1.2) +
+  # observed statistic (black)
+  geom_vline(xintercept = z_obs, color = "black", linewidth = 0.9) +
+  # mu0 reference (magenta dashed at 0)
+  annotate("segment", x = 0, xend = 0, y = 0, yend = dnorm(0),
+           linetype = "dashed", colour = "magenta", linewidth = 1) +
+  annotate("text", x = z_obs, y = dnorm(0)*0.95,
+           label = expression(paste("observed ", z)),
+           hjust = ifelse(z_obs > 0, -0.05, 1.05), size = 3.6) +
+  annotate("text", x = 2.9, y = dnorm(0)*0.35,
+           label = paste0("two-sided p ≈ ", sprintf("%.3f", p_two),
+                          ifelse(p_two < alpha, "  (reject)", "  (fail to reject)")),
+           size = 4.2) +
+  labs(x = "z", y = "Density") +
+  coord_cartesian(ylim = c(0, dnorm(0)*1.05)) +
+  theme_classic(base_size = 12)
 ```
 
-We are engaging in some visual statistical inference. By looking at the range of motion of the yellow dots, we are watching what kind of differences chance can produce. In this animation, the purple dots, representing the original difference, are generally outside of the range of chance. The yellow dots don't move past the purple dots, as a result chance is an unlikely explanation of the difference.
+## One- and Two-Tailed Tests
 
-If the purple dots were inside the range of the yellow dots, we would know that chance is capable of producing the difference we observed, and that it does so fairly often. As a result, we should not conclude the manipulation caused the difference, because it could have easily occurred by chance.
-
-Let's return to the NO₂ example. After we randomize our readings many times and compute the new means and mean differences, we will have loads of mean differences to look at, which we can plot in a histogram. The histogram gives a picture of **what could have happened**. Then, we can compare **what did happen** with **what could have happened**.
-
-Here's the histogram of the mean differences from the randomization test. For this simulation, we randomized the results from the original study 10,000 times. This is what could have happened. The blue line in @fig-5randhist shows where the observed difference lies on the x-axis.
+Two-tailed tests allow for differences in *either* direction:
 
 ```{r}
-#| label: fig-5randhist
-#| fig-cap: "A histogram of simulated mean differences in NO₂ (ppb) for a randomization test. The blue vertical line marks the observed difference from our study."
+#| label: fig-5-5.twotailed
+#| fig-cap: 'Two-sided test: $H_0:\ \mu=\mu_0$ vs $H_a:\ \mu\neq\mu_0$; estimated population distributions shifted left and right of the null.'
+#| out-width: "100%"
 
-mean_differences <- length(10000)
-for (i in 1:10000) {
-  all <- sample(c(near, far))
-  mean_differences[i] <- mean(all[1:20]) - mean(all[21:40])
-}
+# Define the data and functions
+x_vals <- seq(-6, 6, by=0.01)
+ha_left <- dnorm(x_vals, mean=-3, sd=0.75)
+h0 <- dnorm(x_vals, mean=0, sd=0.75)
+ha_right <- dnorm(x_vals, mean=3, sd=0.75)
 
-rand_df <- data.frame(sims = 1:10000, mean_differences)
+# Plot
+p <- ggplot() + 
+  geom_line(aes(x_vals, ha_left, color="Estimated Population Distribution"), linetype="dashed", size=1.2) +
+  geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1.2) +
+  geom_line(aes(x_vals, ha_right, color="Estimated Population Distribution"), linetype="dashed", size=1.2) +
+  annotate("text", x = 0, y = 0.62, label = expression(H[0] * ": " * mu == mu[0] ~ "   " ~ H[a] * ": " * mu != mu[0]),
+  size = 5) +
+  scale_color_manual(values=c("Null Distribution"="blue", "Estimated Population Distribution"="green3"))+
+  theme_classic() + 
+  ylim(0,0.8)+
+  theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) 
 
-ggplot(rand_df, aes(x = mean_differences)) +
-  geom_histogram(color = "white") +
-  xlab(expression("Mean difference in NO"[2]*" (ppb)")) +
-  geom_vline(color = "#1446a0", xintercept = (mean(near) - mean(far)))
+print(p)
 
 ```
 
-This histogram is another window of chance: the mean differences that could have occurred if the 40 sites had been assigned to the near and far groups differently. The differences range from negative to positive, symmetric around a most-frequent value of 0, and grow less frequent the larger they get in either direction. The blue line, **the observed difference** from our study, sits well out to the right, outside the histogram entirely.
-
-So could the observed difference have been caused by chance? Probably not. It is rare under chance alone, which makes it more consistent with a real effect of highway proximity on NO₂.
-
-**Important:** **what could have happened** always means what could have happened **by chance**. That comparison is the whole test.
-
-Now suppose we'd gotten a much smaller mean difference when we first ran the study. New lines (blue and red) represent smaller differences we might have found instead.
+One-tailed tests only look in *one* direction (smaller or larger than $\mu_0$):
 
 ```{r}
-#| label: fig-5randquestion
-#| fig-cap: "Would you expect a mean difference represented by the blue line to occur more or less often by chance compared to the mean difference represented by the red line?"
+#| label: fig-5-5.onetailed
+#| fig-cap: 'One-sided tests: $H_a:\ \mu<\mu_0$ (left) and $H_a:\ \mu>\mu_0$ (right), compared to the null.'
+#| out-width: "100%"
 
-ggplot(rand_df, aes(x = mean_differences)) +
-  geom_histogram(color = "white") +
-  xlab(expression("Mean difference in NO"[2]*" (ppb)")) +
-  geom_vline(color = "#1446a0", xintercept = 10) +
-  geom_vline(color = "#b22222", xintercept = 5)
+# Define the data and functions for the one-tailed alternatives
+x_vals <- seq(-10, 10, by=0.01)
+ha_left <- dnorm(x_vals, mean=-5, sd=2)  # Adjusted standard deviation for wider curve
+h0 <- dnorm(x_vals, mean=0, sd=2)       # Adjusted standard deviation for wider curve
+ha_right <- dnorm(x_vals, mean=4, sd=2) # Adjusted standard deviation for wider curve
+
+# First Plot: Ha: µ < X
+p1 <- ggplot() + 
+  geom_line(aes(x_vals, ha_left, color="Estimated Population Distribution"), linetype="dashed", size=1.2) +
+  geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1.2) +
+    ylim(0, 0.25)+
+  annotate("text", x = 0, y = 0.22, label = expression("H"[a] ~ ": " ~ mu < mu[0]), size = 5) + # adjusted y value
+scale_color_manual(values=c("Null Distribution"="blue", "Estimated Population Distribution"="green3"))+
+  theme_classic() + 
+  theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
+
+# Second Plot: Ha: µ > X
+p2 <- ggplot() + 
+  geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1.2) +
+  geom_line(aes(x_vals, ha_right, color="Estimated Population Distribution"), linetype="dashed", size=1.2) +
+  annotate("text", x = 0, y = 0.22, label = expression("H"[a] ~ ": " ~ mu > mu[0]), size = 5) + # adjusted y value
+scale_color_manual(values=c("Null Distribution"="blue", "Estimated Population Distribution"="green3"))+
+    ylim(0, 0.25)+
+  theme_classic() + 
+  theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
+
+# Plot them side by side
+grid.arrange(p1, p2, ncol=2)
+```
+
+### One- vs. Two-Sided: which and why?
+
+**Use this rule of thumb:**
+
+-   Two-sided (default): You care whether $\mu$ differs from $\mu_0$ **in either direction**.
+-   One-sided (only if justified): Differences in the opposite direction are **scientifically irrelevant** and **would not change your decision or action**.
+
+## Putting it all together
+
+Let's bring the key players together. These are the elements we'll use throughout the chapter:
+
+-   **Blue solid line** = Null distribution ($H_0$).
+-   **Orange solid line** = True population distribution (what actually generated the data).
+-   **Light green dashed line** = Estimated population distribution (inferred from the sample; our stand-in for $H_a$).
+-   **Dark green dot-dashed line** = Sampling distribution of the sample mean, $\bar{X}$.
+-   **Magenta dashed line** = Hypothesized mean $\mu_0$ (under $H_0$).\
+-   **Thick dark green bar** = 95% confidence interval (CI) around the sample mean $\bar{X}$.
+
+Up to now we've introduced each distribution separately. Let's layer them one at a time to see how they connect, building up to @fig-5-5.keyfig, which serves as the legend for every graph after it.
+
+**1. Null vs. true population.**
+
+In an idealized world where $H_0$ is exactly true, the true population (orange) and the null distribution (blue) are identical. In reality, we never know the orange curve. It's shown here for illustration.
+
+```{r}
+#| label: fig-5-5.null_identical_sample
+#| fig-cap: 'True population distribution equals the null distribution ($H_0$ true): $\mu=\mu_0$.'
+#| out-width: "100%"
+
+# Define the data and functions
+x_vals <- seq(-4.5, 4.5, by=0.01)
+h0 <- dnorm(x_vals, mean=0, sd=1)
+
+# Plot: Two identical distributions
+p3 <- ggplot() + 
+  geom_line(aes(x_vals, h0, color="True Population Distribution"), linetype="solid", size=4, alpha=1) +
+  geom_line(aes(x_vals, h0, color="Null Distribution"), linetype="solid", size=1) +
+  annotate("text", x = -2.5, y = 0.35, label = expression("H"[0] ~ ": " ~ mu == mu[0]), size = 5) +
+  geom_vline(aes(xintercept=0), linetype="dashed", color="magenta", size=0.5) +
+scale_color_manual(values=c("Null Distribution"="blue", "True Population Distribution"="orange"))+
+  theme_classic() + 
+  theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
+
+print(p3)
+```
+
+**2. Adding the sampling distribution.** We never know the true parent distribution directly. What we do have is a sample, and from that we can construct the **sampling distribution of the mean** (dark-green dot-dash). This distribution underlies our ability to estimate a CI (dark green horizontal line).
+
+```{r}
+#| label: fig-5-5.perfectly_representative_sample
+#| fig-cap: 'Perfectly representative sample: estimated population, null, and true population distributions align; the CI for $\bar{X}$ includes $\mu_0$.'
+#| out-width: "100%"
+
+p4 <-  plot_distributions(null_mean=0.5, null_sd=1, sample_mean=0.52, sample_sd=0.3, inferred_mean=0.52, inferred_sd=1, true_mean=0.54, true_sd=1)
+print(p4)
 
 ```
 
-Look at the blue line in @fig-5randquestion, a mean difference of 10 ppb. It sits inside the chance window: differences that size do happen sometimes by chance. You might lean toward "probably not chance" since it's near the edge, but with some real skepticism. The red line, a difference of +5 ppb, sits well inside the chance window, and differences that size happen fairly often, so it would take more evidence before concluding highway proximity was driving it.
+**3. Adding the estimated population distribution.**
+
+From our sample we also infer an **estimated population distribution** (light-green dashed). In the best case, this lines up closely with the true population (orange). The CI bar shows that the sample mean is consistent with $\mu_0$.
+
+```{r}
+#| label: fig-5-5.sample_imperfect_convenient
+#| fig-cap: 'Imperfect but convenient sample: estimated population close to the null; the two-sided CI for $\bar{X}$ includes $\mu_0$ (fail to reject $H_0$).'
+#| out-width: "100%"
+
+p7 <- plot_distributions(null_mean=-0.2, null_sd=1, sample_mean=0.5, sample_sd=0.5, inferred_mean=0.5, inferred_sd=1, true_mean=0.6, true_sd=1)
+
+print(p7)
+
+```
+
+Putting everything together, you'll see graphs moving forward that are all variations on the figure below. By now you should recognize each element.
+
+Key reminder: $\mu_0$ (pink dashed line) comes from the null hypothesis. The unknown $\mu$ is what we're trying to learn about, and we approximate it from the sample through the estimated population distribution and the sampling distribution of $\bar{X}$.
+
+```{r}
+#| label: fig-5-5.keyfig
+#| fig-cap: 'Key elements of hypothesis testing graphs: null (blue), true population (orange), estimated population (light-green dashed), sampling distribution of $\bar{X}$ (dark-green dot-dash), null mean $\mu_0$ (magenta dashed), and CI for $\bar{X}$ (thick dark-green bar).'
+#| out-width: "100%"
+
+pkey <-  plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=0.5, sample_sd=0.3, inferred_mean=0.5, inferred_sd=1, true_mean=0.75, true_sd=1)
+print(pkey)
+```
+
+### Decision Outcomes
+
+Test outcomes are **binary**: we either **reject** $H_0$ or **fail to reject** $H_0$. We never *accept* $H_0$, because sampling variability means we can't prove it's true, only that the data are consistent with it. Similarly, we don't formally *accept* $H_a$, but we can say the results provide **support for** $H_a$ when $H_0$ is rejected.
+
+If the observed statistic falls in either tail beyond the critical value(s), reject $H_0$. Otherwise, fail to reject $H_0$. Report the exact $p$ and an effect size or CI.
+
+Here are our options (for a two tailed test).
+
+1.  **Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean (magenta line). In this example, the mean is more than 3 standard errors from $\mu_0$, which is typically considered significant for common choices of $\alpha$.
+
+```{r}
+#| label: fig-5-5.reject_2_two_tailed
+#| fig-cap: 'Two-sided test, reject $H_0$: sample mean far from $\mu_0$ in either direction.'
+#| out-width: "100%"
+
+plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-1.5, sample_sd=0.3, inferred_mean=-1.5, inferred_sd=1)
+
+```
+
+2.  **Fail to Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls in the non-rejection region, and the confidence interval includes the null mean. In this case, the evidence is consistent with chance variation, so we fail to reject $H_0$.
+
+```{r}
+#| label: fig-5-5.reject_1
+#| fig-cap: 'Two-sided test, fail to reject $H_0$: sample mean not greater than critical value (within $3\,SE$ from $\mu_0$).'
+#| out-width: "100%"
+
+plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-0.4, sample_sd=0.7, inferred_mean=-0.4, inferred_sd=1)
+```
 
 ## Chapter Summary
 
-**Why it matters.** This chapter is the conceptual hinge of the course. Every formal test that follows is a shortcut for what we did here by hand: work out what chance alone could produce, then check whether your result sits inside that range.
+**Why it matters.** This chapter is the hinge between describing data and drawing conclusions from it. Everything after this point is a variation on one move: work out what chance alone could produce, then ask whether your result is something chance can comfortably explain.
 
 **Core ideas**
 
--   **The question inference actually asks.** Not "is there a difference," but "where did this difference come from?" Chance alone produces differences between groups all the time, so the real question is whether chance is a sufficient explanation for yours.
--   **Simulate what chance can do.** Randomly reshuffling your data breaks any real relationship while keeping everything else intact. Doing that many times builds a picture of the differences chance alone can generate for a dataset your size.
--   **Then compare.** If your observed difference sits comfortably inside that chance window, chance remains a plausible explanation. If it sits far outside, chance becomes hard to defend as the whole story.
--   **The grey zone is real.** Results near the edge of the chance window are genuinely ambiguous, and where you draw the line is a judgment call rather than a fact. The next chapter adopts a convention ($\alpha = .05$) so researchers aren't each inventing their own boundary.
--   **Design determines what you can detect.** Sample size is the main lever, but repeated measurements and a stronger contrast between conditions matter too. A study can fail to find a real effect simply because it was never built to see one.
--   **The picture becomes a number.** From here on we replace the histogram with a single summary, the probability that chance could have produced your result. That number is the $p$-value, and the next few chapters build toward it.
-
+-   **Chance produces differences on its own.** Split one population into two arbitrary groups and their means will differ anyway. The question is never "is there a difference," it is "is this difference bigger than chance can account for."
+-   **The chance window is buildable.** Repeat a study thousands of times under conditions where you know nothing real is going on, collect the differences, and you have a picture of exactly what chance is capable of for a design your size.
+-   **Rarity is a judgment, and it needs a convention.** The 100-year flood shows the reasoning already exists outside statistics: a 1% annual chance is not zero, but it changes what you build. $\alpha = .05$ is that same judgment, standardized so researchers aren't each drawing their own line.
+-   **A hypothesis test is the practical shortcut.** Once you can assume a known reference distribution, the simulated window becomes a curve, and the decision becomes a calculation. The logic is unchanged.
+-   **Three routes, one decision.** A test statistic against a critical value, a confidence interval, and a $p$-value are three ways of asking the same question. For a given $\alpha$ they always agree.
+-   **Commit to one- or two-tailed in advance.** A one-tailed test is only justified when theory rules out the other direction. Choosing after seeing the data quietly raises your real error rate above the $\alpha$ you claimed.
