@@ -287,7 +287,7 @@ knitr::kable(data.frame(
 Under low flow, the Pollution effect (no-pollution mean minus pollution mean) is `r pollution_effect_low`. Under high flow, it's `r pollution_effect_high`. Those two numbers aren't the same, so the Pollution effect isn't constant across Flow conditions, which is exactly what an interaction means. The gap between them, `r diff_of_diffs`, is a first, informal look at the interaction itself. Whether a gap that size is more than chance would produce is what the formal test below settles.
 
 :::: {.callout-caution title="Warning: If your design were repeated measures instead"}
-Here each condition uses a different set of stream channels, a **between-subjects** design. Had the *same* channels been measured under all four conditions, this identical interaction test could be computed as a paired $t$-test on difference scores, agreeing exactly with a repeated-measures ANOVA ($t^2=F$). That walkthrough lives in the out-of-sequence [meta-narration a nd they don't currently hvae access to that anyway] *Repeated Measures ANOVA* chapter in this book's repository.
+Here each condition uses a different set of stream channels, a **between-subjects** design. Had the *same* channels been measured under all four conditions, this identical interaction test could be computed as a paired $t$-test on difference scores, agreeing exactly with a repeated-measures ANOVA ($t^2=F$).
 ::::
 
 ## Computing a factorial ANOVA by hand
@@ -300,12 +300,22 @@ The tables below build up each piece the same way the one-way ANOVA chapter did:
 
 ### SS Total
 
-$SS_\text{Total}$ captures all of the variation in the data: the difference between each channel's score and the grand mean, squared and summed [Are these giant tables necessary in full? Could i just do the first few rows and then like (etc. etc.) and hte final row? It just seems unecessary].
+$SS_\text{Total}$ captures all of the variation in the data: the difference between each channel's score and the grand mean, squared and summed. The table shows the first few channels and the last, since the pattern is the same all the way down.
 
 ```{r}
 
 # Helper function
 rsum <- function(x) round(sum(x), 2)
+
+# Show the first few rows of a per-channel table and the last, with "..." standing
+# in for the rest, since every row follows the same pattern.
+truncate_rows <- function(df, keep_first = 3) {
+  n <- nrow(df)
+  if (n <= keep_first + 1) return(df)
+  ellipsis <- as.data.frame(as.list(rep("...", ncol(df))), stringsAsFactors = FALSE)
+  names(ellipsis) <- names(df)
+  rbind(df[1:keep_first, ], ellipsis, df[n, ])
+}
 
 species <- c(A, B, C, D)
 pollution <- rep(c("No Pollution", "Pollution", "No Pollution", "Pollution"), each = 5)
@@ -316,10 +326,11 @@ diff <- round(species - gm, 2)
 diff_sq <- round(diff^2, 2)
 
 df_total <- data.frame(Pollution = pollution, Flow = flow, Species = species, Diff = diff, `Diff Squared` = diff_sq, check.names = FALSE)
+df_total <- truncate_rows(df_total)
 df_total <- rbind(df_total, c("Sums", "", sum(species), rsum(diff), sum(diff_sq)))
 df_total <- rbind(df_total, c("Means", "", round(mean(species), 2), "", ""))
 
-knitr::kable(df_total)
+knitr::kable(df_total, row.names = FALSE)
 ```
 
 The mean of all 20 scores is the **grand mean**, `r round(gm,2)`. The `Diff` column holds every channel's distance from it; `Diff Squared` squares those distances so they don't cancel (the same reason we squared deviations for the one-way ANOVA). Summing the squared column gives $SS_\text{Total} = `r round(sum(diff_sq),2)`$.
@@ -338,9 +349,10 @@ diff_sq <- round(diff^2, 2)
 
 df_poll <- data.frame(Pollution = pollution, Flow = flow, Species = species,
                        `Group Mean` = round(group_mean, 2), Diff = diff, `Diff Squared` = diff_sq, check.names = FALSE)
+df_poll <- truncate_rows(df_poll)
 df_poll <- rbind(df_poll, c("Sums", "", sum(species), "", rsum(diff), sum(diff_sq)))
 
-knitr::kable(df_poll)
+knitr::kable(df_poll, row.names = FALSE)
 ```
 
 Every no-pollution channel is replaced by the no-pollution mean, `r round(nopoll_mean,2)`; every pollution channel by the pollution mean, `r round(poll_mean,2)`. Squaring and summing those means' distances from the grand mean gives $SS_\text{Pollution} = `r round(sum(diff_sq),2)`$: the variation explained by pollution condition alone.
@@ -359,9 +371,10 @@ diff_sq <- round(diff^2, 2)
 
 df_flow <- data.frame(Pollution = pollution, Flow = flow, Species = species,
                        `Group Mean` = round(group_mean_flow, 2), Diff = diff, `Diff Squared` = diff_sq, check.names = FALSE)
+df_flow <- truncate_rows(df_flow)
 df_flow <- rbind(df_flow, c("Sums", "", sum(species), "", rsum(diff), sum(diff_sq)))
 
-knitr::kable(df_flow)
+knitr::kable(df_flow, row.names = FALSE)
 ```
 
 Every low-flow channel is replaced by `r round(low_mean,2)`; every high-flow channel by `r round(high_mean,2)`. This gives $SS_\text{Flow} = `r round(sum(diff_sq),2)`$.
@@ -383,9 +396,10 @@ diff_sq <- round(diff^2, 2)
 
 df_int <- data.frame(Pollution = pollution, Flow = flow, Species = species,
                       `Condition Mean` = round(cond_mean, 2), Diff = diff, `Diff Squared` = diff_sq, check.names = FALSE)
+df_int <- truncate_rows(df_int)
 df_int <- rbind(df_int, c("Sums", "", sum(species), "", rsum(diff), sum(diff_sq)))
 
-knitr::kable(df_int)
+knitr::kable(df_int, row.names = FALSE)
 ```
 
 Squaring and summing gives $SS_\text{Interaction} = `r round(sum(diff_sq),2)`$.

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -13,10 +13,13 @@
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -95,10 +98,10 @@ div.csl-indent {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-5ccb035bea26c1e21f80f44cf7c27909.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-d3f7f8e73c8d287b30bcf59c2b563615.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -128,7 +131,7 @@ div.csl-indent {
 }</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -159,9 +162,8 @@ window.Quarto = {
 
 <meta property="og:title" content="11&nbsp; Analysis of Covariance (ANCOVA) – Answering questions with data">
 <meta property="og:description" content="">
-<meta property="og:image" content="11-ANCOVA_files/figure-html/fig-11onevstwo-1.png">
+<meta property="og:image" content="11-ANCOVA_files/figure-html/fig-simpson-covid-overall-1.png">
 <meta property="og:site_name" content="Answering questions with data">
-<meta property="og:image:alt" content="Three scatter plots, each with two colored groups of points. In the first, a single line runs through both groups. In the second, two parallel lines sit at different heights. In the third, two lines with visibly different slopes diverge from left to right.">
 <meta name="twitter:title" content="11&nbsp; Analysis of Covariance (ANCOVA) – Answering questions with data">
 <meta name="twitter:description" content="A free textbook teaching introductory statistics for environmental science graduate students, including a lab manual, and course website. Licensed on CC BY SA 4.0">
 <meta name="twitter:image" content="imgs/TextbookCover.png">
@@ -245,7 +247,7 @@ window.Quarto = {
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./06-ttests.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Histogram helpers for the simulation section, so those figures match the</span></span></a>
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">t-tests</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -288,23 +290,24 @@ window.Quarto = {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#terminology" id="toc-terminology" class="nav-link active" data-scroll-target="#terminology"><span class="header-section-number">11.1</span> Terminology</a></li>
-  <li><a href="#what-ancova-is" id="toc-what-ancova-is" class="nav-link" data-scroll-target="#what-ancova-is"><span class="header-section-number">11.2</span> What ANCOVA Is</a>
+  <li><a href="#why-adjust-for-anything" id="toc-why-adjust-for-anything" class="nav-link active" data-scroll-target="#why-adjust-for-anything"><span class="header-section-number">11.1</span> Why adjust for anything?</a></li>
+  <li><a href="#terminology" id="toc-terminology" class="nav-link" data-scroll-target="#terminology"><span class="header-section-number">11.2</span> Terminology</a></li>
+  <li><a href="#what-ancova-is" id="toc-what-ancova-is" class="nav-link" data-scroll-target="#what-ancova-is"><span class="header-section-number">11.3</span> What ANCOVA Is</a>
   <ul class="collapse">
-  <li><a href="#indicator-dummy-variables-and-how-they-work" id="toc-indicator-dummy-variables-and-how-they-work" class="nav-link" data-scroll-target="#indicator-dummy-variables-and-how-they-work"><span class="header-section-number">11.2.1</span> Indicator (dummy) variables and how they work</a></li>
-  <li><a href="#the-null-hypothesis-in-ancova" id="toc-the-null-hypothesis-in-ancova" class="nav-link" data-scroll-target="#the-null-hypothesis-in-ancova"><span class="header-section-number">11.2.2</span> The Null Hypothesis in ANCOVA</a></li>
-  <li><a href="#one-more-piece-of-vocabulary-the-omnibus-test" id="toc-one-more-piece-of-vocabulary-the-omnibus-test" class="nav-link" data-scroll-target="#one-more-piece-of-vocabulary-the-omnibus-test"><span class="header-section-number">11.2.3</span> One More Piece of Vocabulary: the Omnibus Test</a></li>
-  <li><a href="#checking-ancovas-assumptions" id="toc-checking-ancovas-assumptions" class="nav-link" data-scroll-target="#checking-ancovas-assumptions"><span class="header-section-number">11.2.4</span> Checking ANCOVA’s assumptions</a></li>
+  <li><a href="#indicator-dummy-variables-and-how-they-work" id="toc-indicator-dummy-variables-and-how-they-work" class="nav-link" data-scroll-target="#indicator-dummy-variables-and-how-they-work"><span class="header-section-number">11.3.1</span> Indicator (dummy) variables and how they work</a></li>
+  <li><a href="#the-null-hypothesis-in-ancova" id="toc-the-null-hypothesis-in-ancova" class="nav-link" data-scroll-target="#the-null-hypothesis-in-ancova"><span class="header-section-number">11.3.2</span> The Null Hypothesis in ANCOVA</a></li>
+  <li><a href="#one-more-piece-of-vocabulary-the-omnibus-test" id="toc-one-more-piece-of-vocabulary-the-omnibus-test" class="nav-link" data-scroll-target="#one-more-piece-of-vocabulary-the-omnibus-test"><span class="header-section-number">11.3.3</span> One More Piece of Vocabulary: the Omnibus Test</a></li>
+  <li><a href="#checking-ancovas-assumptions" id="toc-checking-ancovas-assumptions" class="nav-link" data-scroll-target="#checking-ancovas-assumptions"><span class="header-section-number">11.3.4</span> Checking ANCOVA’s assumptions</a></li>
   </ul></li>
-  <li><a href="#full-ancova-example" id="toc-full-ancova-example" class="nav-link" data-scroll-target="#full-ancova-example"><span class="header-section-number">11.3</span> Full ANCOVA Example</a>
+  <li><a href="#full-ancova-example" id="toc-full-ancova-example" class="nav-link" data-scroll-target="#full-ancova-example"><span class="header-section-number">11.4</span> Full ANCOVA Example</a>
   <ul class="collapse">
-  <li><a href="#question" id="toc-question" class="nav-link" data-scroll-target="#question"><span class="header-section-number">11.3.1</span> Question</a></li>
-  <li><a href="#model" id="toc-model" class="nav-link" data-scroll-target="#model"><span class="header-section-number">11.3.2</span> Model</a></li>
-  <li><a href="#null-and-alternative-hypotheses-in-our-example-ancova" id="toc-null-and-alternative-hypotheses-in-our-example-ancova" class="nav-link" data-scroll-target="#null-and-alternative-hypotheses-in-our-example-ancova"><span class="header-section-number">11.3.3</span> Null and Alternative Hypotheses in our example ANCOVA</a></li>
-  <li><a href="#analysis" id="toc-analysis" class="nav-link" data-scroll-target="#analysis"><span class="header-section-number">11.3.4</span> Analysis</a></li>
-  <li><a href="#results-of-the-ancova-model" id="toc-results-of-the-ancova-model" class="nav-link" data-scroll-target="#results-of-the-ancova-model"><span class="header-section-number">11.3.5</span> Results of the ANCOVA Model</a></li>
+  <li><a href="#question" id="toc-question" class="nav-link" data-scroll-target="#question"><span class="header-section-number">11.4.1</span> Question</a></li>
+  <li><a href="#model" id="toc-model" class="nav-link" data-scroll-target="#model"><span class="header-section-number">11.4.2</span> Model</a></li>
+  <li><a href="#null-and-alternative-hypotheses-in-our-example-ancova" id="toc-null-and-alternative-hypotheses-in-our-example-ancova" class="nav-link" data-scroll-target="#null-and-alternative-hypotheses-in-our-example-ancova"><span class="header-section-number">11.4.3</span> Null and Alternative Hypotheses in our example ANCOVA</a></li>
+  <li><a href="#analysis" id="toc-analysis" class="nav-link" data-scroll-target="#analysis"><span class="header-section-number">11.4.4</span> Analysis</a></li>
+  <li><a href="#results-of-the-ancova-model" id="toc-results-of-the-ancova-model" class="nav-link" data-scroll-target="#results-of-the-ancova-model"><span class="header-section-number">11.4.5</span> Results of the ANCOVA Model</a></li>
   </ul></li>
-  <li><a href="#chapter-summary" id="toc-chapter-summary" class="nav-link" data-scroll-target="#chapter-summary"><span class="header-section-number">11.4</span> Chapter Summary</a></li>
+  <li><a href="#chapter-summary" id="toc-chapter-summary" class="nav-link" data-scroll-target="#chapter-summary"><span class="header-section-number">11.5</span> Chapter Summary</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/malloryb/statistics_E538/edit/master/11-ANCOVA.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li></ul></div></nav>
     </div>
@@ -356,13 +359,65 @@ window.Quarto = {
 <p>Here <span class="math inline">\(\beta_0\)</span> is the intercept, <span class="math inline">\(\beta_1\)</span> is the slope, and <span class="math inline">\(\varepsilon\)</span> is the error: one intercept, one slope, one line.</p>
 <p>ANCOVA adds a categorical factor to that equation, and the whole chapter comes down to one question: does every group follow that same line, or does each group need its own slope and intercept?</p>
 <p>We answer it in two steps: first test whether groups have different <strong>slopes</strong>, then, only if slopes are parallel, test whether groups differ in <strong>adjusted means</strong>.</p>
-<section id="terminology" class="level2" data-number="11.1">
-<h2 data-number="11.1" class="anchored" data-anchor-id="terminology"><span class="header-section-number">11.1</span> Terminology</h2>
+<section id="why-adjust-for-anything" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="why-adjust-for-anything"><span class="header-section-number">11.1</span> Why adjust for anything?</h2>
+<p>Before defining ANCOVA, it helps to see the problem it solves. The cleanest illustration is a result called <strong>Simpson’s paradox</strong>, where a pattern in combined data reverses once you split the data into meaningful groups.</p>
+<p>Here’s a recent example. During the COVID-19 pandemic, early data showed that Italy’s overall case fatality rate was higher than China’s. But, once researchers <em>disaggregated by age group,</em> the trend flipped: within every age group, the fatality rate was actually higher in China. The apparent contradiction was explained by differences in the age distribution of cases <span class="citation" data-cites="vonkugelgen2021">(<a href="#ref-vonkugelgen2021" role="doc-biblioref"><span class="nocase">von Kügelgen et al.</span> 2021</a>)</span>.</p>
+<p>Using case fatality rate (CFR), here are some illustrative numbers (made up for teaching).</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-simpson-covid-overall" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-simpson-covid-overall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="11-ANCOVA_files/figure-html/fig-simpson-covid-overall-1.png" class="img-fluid figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-simpson-covid-overall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.1: Crude case fatality rates. Italy appears to have a higher fatality rate than China when all cases are combined.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>At face value, Italy looks worse. But what happens when we stratify by age group? Because older people are much more likely to die from COVID than younger people, splitting cases into 10-year bands reveals a different picture. When we do, China’s fatality rate is higher in every band.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-simpson-by-age-group" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-simpson-by-age-group-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="11-ANCOVA_files/figure-html/fig-simpson-by-age-group-1.png" class="img-fluid figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-simpson-by-age-group-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.2: Fatality rates by age group (same made-up numbers). Within each age band, China’s CFR exceeds Italy’s.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The reversal happens because Italy’s population skews older while China’s skews younger. Italy therefore had a greater proportion of older people getting sick, which pulls Italy’s overall average up. Similarly, China’s average is pulled down because a greater proportion of younger people are getting sick. Aggregating without adjusting for age hid the within-group pattern entirely. Once we asked a more specific question, the answer reversed.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-age-distributions" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-age-distributions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="11-ANCOVA_files/figure-html/fig-age-distributions-1.png" class="img-fluid figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-age-distributions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.3: Case age distribution by country. Italy’s cases are older on average; China’s are younger.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>That reversal is not a trick or a data error. It happens because the groups differ in the <em>composition</em> of a third variable, and the combined number silently averages over that difference. Once you condition on the third variable, the real pattern reappears.</p>
+<p>ANCOVA is the tool for exactly this situation when the third variable is continuous rather than a set of bands: it compares groups while holding a covariate fixed, so the comparison is not quietly distorted by the groups differing on that covariate to begin with.</p>
+</section>
+<section id="terminology" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="terminology"><span class="header-section-number">11.2</span> Terminology</h2>
 <p><strong>Covariate:</strong> a continuous variable that changes alongside the response and helps explain part of its variation. In environmental studies, common covariates include temperature, rainfall, soil moisture, or pollution concentration: factors that may influence the outcome but aren’t the main treatment of interest. Including one lets us <strong>adjust for its influence</strong>, giving a clearer test of the categorical effect once that continuous background variation is accounted for.</p>
 <p>The categorical predictor itself, in every example this chapter uses, is what’s called a <strong>fixed factor</strong>: specific, intentional levels chosen by the researcher (urban vs.&nbsp;rural, shaded vs.&nbsp;open canopy), not a random sample of possible groups. That distinction matters more once you’re building mixed-effects models, which is beyond where this course goes. A random factor, by contrast, would be something like the specific counties your streams happen to sit in: you aren’t interested in those ten counties for their own sake, they stand in for a larger population of possible counties, and you’d want your conclusions to generalize beyond just the ones you sampled.</p>
 </section>
-<section id="what-ancova-is" class="level2" data-number="11.2">
-<h2 data-number="11.2" class="anchored" data-anchor-id="what-ancova-is"><span class="header-section-number">11.2</span> What ANCOVA Is</h2>
+<section id="what-ancova-is" class="level2" data-number="11.3">
+<h2 data-number="11.3" class="anchored" data-anchor-id="what-ancova-is"><span class="header-section-number">11.3</span> What ANCOVA Is</h2>
 <p>ANCOVA helps us answer: does a <em>relationship</em> hold up across groups? That framing fits environmental work particularly well, because you usually can’t experimentally strip out a covariate like temperature, rainfall, or season anyway. Often you wouldn’t want to. It may be the reason you designed the study in the first place. In the examples in this chapter, the covariate is what we care about and the interaction is the result we’re testing for.</p>
 <div class="callout callout-style-default callout-caution callout-titled" title="Warning: The other way you'll see ANCOVA">
 <div class="callout-header d-flex align-content-center">
@@ -385,8 +440,8 @@ window.Quarto = {
 <li>At least one continuous independent variable (covariate)</li>
 <li>At least one categorical independent variable (which can be either a fixed or random factor)</li>
 </ol>
-<section id="indicator-dummy-variables-and-how-they-work" class="level3" data-number="11.2.1">
-<h3 data-number="11.2.1" class="anchored" data-anchor-id="indicator-dummy-variables-and-how-they-work"><span class="header-section-number">11.2.1</span> Indicator (dummy) variables and how they work</h3>
+<section id="indicator-dummy-variables-and-how-they-work" class="level3" data-number="11.3.1">
+<h3 data-number="11.3.1" class="anchored" data-anchor-id="indicator-dummy-variables-and-how-they-work"><span class="header-section-number">11.3.1</span> Indicator (dummy) variables and how they work</h3>
 <p>Before we can read real coefficients off an ANCOVA table, it helps to see exactly how one equation can represent two different groups at once.</p>
 <p>Categorical predictors get into a linear model by being coded as <strong>indicator variables</strong>. For a factor with <span class="math inline">\(k\)</span> groups you include <span class="math inline">\(k-1\)</span> indicators; the omitted group becomes the <strong>reference</strong>, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:</p>
 <p><span class="math display">\[x_c = \begin{cases} 0 &amp; \text{group 1 (the reference group)} \\ 1 &amp; \text{group 2} \end{cases}\]</span></p>
@@ -422,11 +477,11 @@ window.Quarto = {
 </div>
 </div>
 </section>
-<section id="the-null-hypothesis-in-ancova" class="level3" data-number="11.2.2">
-<h3 data-number="11.2.2" class="anchored" data-anchor-id="the-null-hypothesis-in-ancova"><span class="header-section-number">11.2.2</span> The Null Hypothesis in ANCOVA</h3>
+<section id="the-null-hypothesis-in-ancova" class="level3" data-number="11.3.2">
+<h3 data-number="11.3.2" class="anchored" data-anchor-id="the-null-hypothesis-in-ancova"><span class="header-section-number">11.3.2</span> The Null Hypothesis in ANCOVA</h3>
 <p><strong>Model.</strong> For one covariate (<span class="math inline">\(x\)</span>) and a two-level group indicator <span class="math inline">\(x_c\in\{0,1\}\)</span>,</p>
 <p><span class="math inline">\(y=\beta_0+\beta_1 x+\beta_2 x_c+\beta_3(x\times x_c)+\varepsilon .\)</span></p>
-<p><a href="#fig-11onevstwo" class="quarto-xref">Figure&nbsp;<span>11.1</span></a> shows the three possibilities this model can produce, and it’s worth keeping this picture in mind for the two steps below.</p>
+<p><a href="#fig-11onevstwo" class="quarto-xref">Figure&nbsp;<span>11.4</span></a> shows the three possibilities this model can produce, and it’s worth keeping this picture in mind for the two steps below.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-11onevstwo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Three scatter plots, each with two colored groups of points. In the first, a single line runs through both groups. In the second, two parallel lines sit at different heights. In the third, two lines with visibly different slopes diverge from left to right.">
@@ -435,7 +490,7 @@ window.Quarto = {
 <img src="11-ANCOVA_files/figure-html/fig-11onevstwo-1.png" class="img-fluid figure-img" style="width:100.0%" alt="Three scatter plots, each with two colored groups of points. In the first, a single line runs through both groups. In the second, two parallel lines sit at different heights. In the third, two lines with visibly different slopes diverge from left to right.">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-11onevstwo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;11.1: The question ANCOVA answers. Left: one line describes both groups. Middle: the groups need different intercepts but share a slope, so the lines are parallel. Right: the groups need different slopes, so the lines are not parallel and the gap between them depends on where you look.
+Figure&nbsp;11.4: The question ANCOVA answers. Left: one line describes both groups. Middle: the groups need different intercepts but share a slope, so the lines are parallel. Right: the groups need different slopes, so the lines are not parallel and the gap between them depends on where you look.
 </figcaption>
 </figure>
 </div>
@@ -473,13 +528,13 @@ Figure&nbsp;11.1: The question ANCOVA answers. Left: one line describes both gro
 <li>Treating adjusted means as meaningful when slopes are not parallel.</li>
 </ul>
 </section>
-<section id="one-more-piece-of-vocabulary-the-omnibus-test" class="level3" data-number="11.2.3">
-<h3 data-number="11.2.3" class="anchored" data-anchor-id="one-more-piece-of-vocabulary-the-omnibus-test"><span class="header-section-number">11.2.3</span> One More Piece of Vocabulary: the Omnibus Test</h3>
+<section id="one-more-piece-of-vocabulary-the-omnibus-test" class="level3" data-number="11.3.3">
+<h3 data-number="11.3.3" class="anchored" data-anchor-id="one-more-piece-of-vocabulary-the-omnibus-test"><span class="header-section-number">11.3.3</span> One More Piece of Vocabulary: the Omnibus Test</h3>
 <p>R’s ANCOVA output is built around an <strong>omnibus F-test</strong>: a single test of whether there’s any difference in adjusted group means once the covariate is accounted for. It’s the same idea as a significant one-way ANOVA telling you <em>some</em> group differs without saying which, and it’s exactly why we still decompose it into the interaction-then-adjusted-means steps above rather than stopping at one <span class="math inline">\(p\)</span>-value.</p>
 <p>As always, statistical significance doesn’t guarantee ecological or practical importance. Interpret a rejected null in light of the study’s design, measurement precision, and the actual size of the effect, not just its <span class="math inline">\(p\)</span>-value.</p>
 </section>
-<section id="checking-ancovas-assumptions" class="level3" data-number="11.2.4">
-<h3 data-number="11.2.4" class="anchored" data-anchor-id="checking-ancovas-assumptions"><span class="header-section-number">11.2.4</span> Checking ANCOVA’s assumptions</h3>
+<section id="checking-ancovas-assumptions" class="level3" data-number="11.3.4">
+<h3 data-number="11.3.4" class="anchored" data-anchor-id="checking-ancovas-assumptions"><span class="header-section-number">11.3.4</span> Checking ANCOVA’s assumptions</h3>
 <p>Most of these are ones ANOVA already needed; two are new because a covariate has entered the model.</p>
 <ul>
 <li><p>Independent observations <em>(same as ANOVA)</em></p></li>
@@ -490,11 +545,11 @@ Figure&nbsp;11.1: The question ANCOVA answers. Left: one line describes both gro
 </ul>
 </section>
 </section>
-<section id="full-ancova-example" class="level2" data-number="11.3">
-<h2 data-number="11.3" class="anchored" data-anchor-id="full-ancova-example"><span class="header-section-number">11.3</span> Full ANCOVA Example</h2>
-<section id="question" class="level3" data-number="11.3.1">
-<h3 data-number="11.3.1" class="anchored" data-anchor-id="question"><span class="header-section-number">11.3.1</span> Question</h3>
-<p>Imagine we’re environmental scientists studying the impact of air pollution on bird species density, and we want to know whether that relationship differs between urban and rural areas. <a href="#fig-11design" class="quarto-xref">Figure&nbsp;<span>11.2</span></a> lays out the design.</p>
+<section id="full-ancova-example" class="level2" data-number="11.4">
+<h2 data-number="11.4" class="anchored" data-anchor-id="full-ancova-example"><span class="header-section-number">11.4</span> Full ANCOVA Example</h2>
+<section id="question" class="level3" data-number="11.4.1">
+<h3 data-number="11.4.1" class="anchored" data-anchor-id="question"><span class="header-section-number">11.4.1</span> Question</h3>
+<p>Imagine we’re environmental scientists studying the impact of air pollution on bird species density, and we want to know whether that relationship differs between urban and rural areas. <a href="#fig-11design" class="quarto-xref">Figure&nbsp;<span>11.5</span></a> lays out the design.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-11design" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Study design schematic. Two predictors: area type with levels Rural and Urban, crossed with air pollution as a continuous gradient from low to high, across 200 observations. DV: bird species density.">
@@ -503,7 +558,7 @@ Figure&nbsp;11.1: The question ANCOVA answers. Left: one line describes both gro
 <img src="11-ANCOVA_files/figure-html/fig-11design-1.png" class="img-fluid figure-img" style="width:100.0%" alt="Study design schematic. Two predictors: area type with levels Rural and Urban, crossed with air pollution as a continuous gradient from low to high, across 200 observations. DV: bird species density.">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-11design-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;11.2: An ANCOVA design: one continuous predictor and one categorical factor. Compare it with the factorial design in Chapter 10, which has the same shape with a second set of levels in place of the gradient.
+Figure&nbsp;11.5: An ANCOVA design: one continuous predictor and one categorical factor. Compare it with the factorial design in Chapter 10, which has the same shape with a second set of levels in place of the gradient.
 </figcaption>
 </figure>
 </div>
@@ -512,12 +567,12 @@ Figure&nbsp;11.2: An ANCOVA design: one continuous predictor and one categorical
 <p>Set that beside the factorial design in Chapter 10 and the family resemblance is the point: both cross two predictors and ask whether one changes the effect of the other. The only difference is that factorial’s second predictor has levels, while ANCOVA’s is a continuous range. Note also that both groups span the full pollution range. Rural sites are not simply the clean ones, which is exactly what makes an adjusted comparison possible.</p>
 <p>We might expect pollution to have a stronger negative effect in urban areas: urban habitat is already fragmented and offers birds fewer clean patches to retreat to, so added pollution has less of a buffer to work against than it would in a rural area with more intact habitat nearby.</p>
 </section>
-<section id="model" class="level3" data-number="11.3.2">
-<h3 data-number="11.3.2" class="anchored" data-anchor-id="model"><span class="header-section-number">11.3.2</span> Model</h3>
+<section id="model" class="level3" data-number="11.4.2">
+<h3 data-number="11.4.2" class="anchored" data-anchor-id="model"><span class="header-section-number">11.4.2</span> Model</h3>
 <p>We’ll fit an ANCOVA model to test whether location type influences bird density <strong>after accounting for</strong> air pollution. The categorical variable is represented as a dummy variable, and air pollution enters as a covariate.</p>
 </section>
-<section id="null-and-alternative-hypotheses-in-our-example-ancova" class="level3" data-number="11.3.3">
-<h3 data-number="11.3.3" class="anchored" data-anchor-id="null-and-alternative-hypotheses-in-our-example-ancova"><span class="header-section-number">11.3.3</span> Null and Alternative Hypotheses in our example ANCOVA</h3>
+<section id="null-and-alternative-hypotheses-in-our-example-ancova" class="level3" data-number="11.4.3">
+<h3 data-number="11.4.3" class="anchored" data-anchor-id="null-and-alternative-hypotheses-in-our-example-ancova"><span class="header-section-number">11.4.3</span> Null and Alternative Hypotheses in our example ANCOVA</h3>
 <p>First, we state our hypotheses:</p>
 <ol start="0" type="1">
 <li><p><strong>Omnibus (adjusted means) hypothesis</strong> After adjusting for air pollution, do urban and rural sites differ in mean bird density?</p>
@@ -536,10 +591,10 @@ Figure&nbsp;11.2: An ANCOVA design: one continuous predictor and one categorical
 <p>Rejecting <span class="math inline">\(H_{0,2}\)</span> indicates an inherent group difference in bird density that is independent of pollution.</p></li>
 </ol>
 </section>
-<section id="analysis" class="level3" data-number="11.3.4">
-<h3 data-number="11.3.4" class="anchored" data-anchor-id="analysis"><span class="header-section-number">11.3.4</span> Analysis</h3>
+<section id="analysis" class="level3" data-number="11.4.4">
+<h3 data-number="11.4.4" class="anchored" data-anchor-id="analysis"><span class="header-section-number">11.4.4</span> Analysis</h3>
 <p>Before we look at the model results, it’s always good practice to <strong>look at the data first</strong>.</p>
-<p>Let’s start with the response variable, <strong>bird density</strong>, in <a href="#fig-11birddensity" class="quarto-xref">Figure&nbsp;<span>11.3</span></a>. This gives us a quick visual sense of whether urban and rural areas differ in their average values.</p>
+<p>Let’s start with the response variable, <strong>bird density</strong>, in <a href="#fig-11birddensity" class="quarto-xref">Figure&nbsp;<span>11.6</span></a>. This gives us a quick visual sense of whether urban and rural areas differ in their average values.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(data, <span class="fu">aes</span>(AreaType, BirdDensity)) <span class="sc">+</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="fu">aes</span>(<span class="at">fill =</span> AreaType), <span class="at">show.legend =</span> <span class="cn">FALSE</span>) <span class="sc">+</span> <span class="fu">theme_classic</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
@@ -551,7 +606,7 @@ Figure&nbsp;11.2: An ANCOVA design: one continuous predictor and one categorical
 <img src="11-ANCOVA_files/figure-html/fig-11birddensity-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Boxplot of bird density for rural and urban area types. The rural box is centered higher than the urban box, with overlapping ranges.">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-11birddensity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;11.3: Bird density by area type. Rural sites sit higher than urban ones.
+Figure&nbsp;11.6: Bird density by area type. Rural sites sit higher than urban ones.
 </figcaption>
 </figure>
 </div>
@@ -570,7 +625,7 @@ Figure&nbsp;11.3: Bird density by area type. Rural sites sit higher than urban o
 <img src="11-ANCOVA_files/figure-html/fig-11airpollution-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Boxplot of air pollution for rural and urban area types. The two boxes overlap substantially with similar centers.">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-11airpollution-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;11.4: Air pollution by area type. The two groups look broadly similar, so there is no large covariate imbalance for the model to adjust away.
+Figure&nbsp;11.7: Air pollution by area type. The two groups look broadly similar, so there is no large covariate imbalance for the model to adjust away.
 </figcaption>
 </figure>
 </div>
@@ -578,8 +633,8 @@ Figure&nbsp;11.4: Air pollution by area type. The two groups look broadly simila
 </div>
 <p>Air pollution looks fairly similar between urban and rural sites, with no obvious systematic difference. This isn’t diagnostic, but it helps us <strong>anticipate what the model might show</strong>: we may find that group differences in bird density aren’t explained by air pollution alone.</p>
 </section>
-<section id="results-of-the-ancova-model" class="level3" data-number="11.3.5">
-<h3 data-number="11.3.5" class="anchored" data-anchor-id="results-of-the-ancova-model"><span class="header-section-number">11.3.5</span> Results of the ANCOVA Model</h3>
+<section id="results-of-the-ancova-model" class="level3" data-number="11.4.5">
+<h3 data-number="11.4.5" class="anchored" data-anchor-id="results-of-the-ancova-model"><span class="header-section-number">11.4.5</span> Results of the ANCOVA Model</h3>
 <p>Now that we’ve explored the data visually, we can test our hypotheses formally using ANCOVA.</p>
 <p><strong>Step 1: Fit the ANCOVA model</strong>.</p>
 <p>Notice this is the same <code>aov()</code> call we’ve been using for one-way and factorial ANOVA all along. R doesn’t need a special “ANCOVA function”: once <code>AirPollution</code> is numeric instead of a factor, <code>aov()</code> handles the continuous covariate automatically.</p>
@@ -716,7 +771,7 @@ Figure&nbsp;11.4: Air pollution by area type. The two groups look broadly simila
 </ul>
 <p><strong>Step 4: Visualize the interaction</strong></p>
 <p>As always, plotting helps confirm what the model tells us.</p>
-<p>A scatter plot with fitted regression lines (<a href="#fig-11ancovalines" class="quarto-xref">Figure&nbsp;<span>11.5</span></a>) lets us see how air pollution relates to bird density for each area type.</p>
+<p>A scatter plot with fitted regression lines (<a href="#fig-11ancovalines" class="quarto-xref">Figure&nbsp;<span>11.8</span></a>) lets us see how air pollution relates to bird density for each area type.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-11ancovalines" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Scatter plot of bird density against air pollution, colored by area type, with separate straight fitted lines for rural and urban sites. Both slope downward, and the urban line is noticeably steeper, so the two lines diverge as pollution increases.">
@@ -725,7 +780,7 @@ Figure&nbsp;11.4: Air pollution by area type. The two groups look broadly simila
 <img src="11-ANCOVA_files/figure-html/fig-11ancovalines-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Scatter plot of bird density against air pollution, colored by area type, with separate straight fitted lines for rural and urban sites. Both slope downward, and the urban line is noticeably steeper, so the two lines diverge as pollution increases.">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-11ancovalines-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;11.5: Bird density against air pollution, with a separate fitted line for each area type. Both lines slope down, but the urban line falls about twice as steeply, which is what the interaction term tests.
+Figure&nbsp;11.8: Bird density against air pollution, with a separate fitted line for each area type. Both lines slope down, but the urban line falls about twice as steeply, which is what the interaction term tests.
 </figcaption>
 </figure>
 </div>
@@ -807,8 +862,8 @@ Figure&nbsp;11.5: Bird density against air pollution, with a separate fitted lin
 </div>
 </section>
 </section>
-<section id="chapter-summary" class="level2" data-number="11.4">
-<h2 data-number="11.4" class="anchored" data-anchor-id="chapter-summary"><span class="header-section-number">11.4</span> Chapter Summary</h2>
+<section id="chapter-summary" class="level2" data-number="11.5">
+<h2 data-number="11.5" class="anchored" data-anchor-id="chapter-summary"><span class="header-section-number">11.5</span> Chapter Summary</h2>
 <p><strong>Why it matters.</strong> Environmental relationships rarely play out identically everywhere. ANCOVA is the tool for a specific, recurring question: does a continuous relationship, like pollution’s effect on some outcome, hold the same way across different groups, or change from one group to the next?</p>
 <p><strong>Core ideas</strong></p>
 <ul>
@@ -823,6 +878,9 @@ Figure&nbsp;11.5: Bird density against air pollution, with a separate fitted lin
 <div id="refs" class="references csl-bib-body hanging-indent" role="list">
 <div id="ref-mallory_barnes" class="csl-entry" role="listitem">
 Barnes, Mallory L. 2023. <em>Statistics for Environmental Science</em>.
+</div>
+<div id="ref-vonkugelgen2021" class="csl-entry" role="listitem">
+<span class="nocase">von Kügelgen, Julius, Luigi Gresele, and Bernhard Schölkopf</span>. 2021. <span>“Simpson’s Paradox in COVID-19 Case Fatality Rates: A Mediation Analysis of Age-Related Causal Effects.”</span> <em>IEEE Transactions on Artificial Intelligence</em> 2 (1): 18–27. <a href="https://doi.org/10.1109/TAI.2021.3073088">https://doi.org/10.1109/TAI.2021.3073088</a>.
 </div>
 </div>
 </section>

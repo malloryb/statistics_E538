@@ -20,7 +20,7 @@ library(broom)
 fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = "f"))
 ```
 
-Some history first [@salsburg2001lady]. Sir Ronald Fisher invented the ANOVA and wanted to publish it in the journal Biometrika. The editor at the time was Karl Pearson, of Pearson's $r$, and the two men disliked each other, so Pearson refused to publish the new test. Fisher published it in the Journal of Agricultural Science instead. The feud carried into the next generation: years later, Karl Pearson's son Egon Pearson, working with Jerzy Neyman, revamped Fisher's ideas and re-cast them into what we now call null vs. alternative hypothesis testing. Fisher objected to that too. \[noticing over-use of "genuinely" in text in this chapter\]
+Some history first [@salsburg2001lady]. Sir Ronald Fisher invented the ANOVA and wanted to publish it in the journal Biometrika. The editor at the time was Karl Pearson, of Pearson's $r$, and the two men disliked each other, so Pearson refused to publish the new test. Fisher published it in the Journal of Agricultural Science instead. The feud carried into the next generation: years later, Karl Pearson's son Egon Pearson, working with Jerzy Neyman, revamped Fisher's ideas and re-cast them into what we now call null vs. alternative hypothesis testing. Fisher objected to that too.
 
 We present the ANOVA in the Fisherian sense, and at the end describe the Neyman-Pearson approach that invokes the concept of null vs. alternative hypotheses.
 
@@ -263,7 +263,8 @@ plot_df <- data.frame(sims = 1:10000, save_F)
 plot_df <- plot_df[plot_df$save_F < 10, ]
 
 ggplot(plot_df, aes(x = save_F)) +
-  geom_histogram(color = "white", bins = 100)
+  geom_histogram(color = "white", bins = 100) +
+  labs(x = "F", y = "Count")
 
 ```
 
@@ -278,7 +279,7 @@ We can use this null distribution of $F$ to decide when a real experiment's resu
 1.  Set an alpha criterion of $p$ = 0.05
 2.  Find the critical value of $F$ for our design's numerator and denominator $df$s.
 
-@fig-9criticalF marks that critical value on the histogram \[text is huge and why "save_F" doesn't make sense as x label\]:
+@fig-9criticalF marks that critical value on the histogram:
 
 ```{r}
 #| label: fig-9criticalF
@@ -304,11 +305,13 @@ ggplot(plot_df, aes(x = save_F)) +
     label = round(qf(.95, 2, 27), digits = 2)
   ), aes(x = x, y = y, label = label)) +
   geom_label(data = data.frame(x = 7.5, y = 500, label = "5% of F-values"),
-             aes(x = x, y = y, label = label))
+             aes(x = x, y = y, label = label)) +
+  theme_classic(base_size = 12) +
+  labs(x = "F", y = "Count")
 
 ```
 
-Only 5% of $F$-values from this null distribution are 3.35 or larger. That gives us a decision rule: if we ran the same design for real (30 plots, 10 per site type) and site type genuinely affected abundance, we could treat $F\geq3.35$ as evidence the differences aren't just chance. An observed $F$ of 3.4, for instance, would occur less than 5% of the time under the null, so seeing it would give us reasonably good grounds to conclude that site type actually mattered.
+Only 5% of $F$-values from this null distribution are 3.35 or larger. That gives us a decision rule: if we ran the same design for real (30 plots, 10 per site type) and site type actually affected abundance, we could treat $F\geq3.35$ as evidence the differences aren't just chance. An observed $F$ of 3.4, for instance, would occur less than 5% of the time under the null, so seeing it would give us reasonably good grounds to conclude that site type actually mattered.
 
 ### F and the means
 
@@ -627,7 +630,7 @@ knitr::kable(
 
 Levene's test gives $F(2,21) = 0.52$, $p = .60$: no evidence of unequal variance across forest types. The Shapiro-Wilk test on the model's residuals gives $W = 0.93$, $p = .078$: no strong evidence against normality either. Both checks are consistent with the boxplot and dot plot we already looked at in @fig-9salamanderData: similar spread across groups, no glaring outliers.
 
-**A word of caution about formal assumption tests.** It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." Resist that. These tests have an awkward property: with a small sample (exactly when a violated assumption matters most), they have low power and will often say "no problem" even when there is one; with a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." A formal test is one piece of evidence, not the whole verdict, so look at the diagnostic plots too and use judgment. In practice, one-way ANOVA is moderately robust to mild departures from these assumptions, especially with balanced group sizes like we have here (8 plots per forest type). The situation to genuinely worry about is the combination of small, unbalanced samples with visibly skewed data or wildly different spreads, and that's exactly when the nonparametric alternative below becomes the better choice.
+**A word of caution about formal assumption tests.** It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." Resist that. These tests have an awkward property: with a small sample (exactly when a violated assumption matters most), they have low power and will often say "no problem" even when there is one; with a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." A formal test is one piece of evidence, not the whole verdict, so look at the diagnostic plots too and use judgment. In practice, one-way ANOVA is moderately robust to mild departures from these assumptions, especially with balanced group sizes like we have here (8 plots per forest type). The situation to really worry about is the combination of small, unbalanced samples with visibly skewed data or wildly different spreads, and that's exactly when the nonparametric alternative below becomes the better choice.
 
 ### Post-hoc comparisons with Tukey HSD
 
@@ -687,7 +690,7 @@ The pattern here is ecologically interpretable: old-growth forest supports the h
 
 Our assumption checks above came back clean, so the ANOVA result stands as-is. But suppose they hadn't: visibly unequal spread across groups, or clearly skewed residuals, especially with small or unbalanced samples. The **Kruskal-Wallis test** is the nonparametric alternative to one-way ANOVA, in exactly the same relationship that the Mann-Whitney-Wilcoxon test has to the independent-samples $t$-test (in fact, Kruskal-Wallis *is* the Mann-Whitney-Wilcoxon logic extended to more than two groups).
 
-**How it works, conceptually.** Rank every observation across all groups together, from smallest to largest, ignoring group membership. Then check whether the average rank differs more across groups than chance alone would produce. If forest type genuinely matters, one group's observations should occupy systematically higher or lower ranks than the others.
+**How it works, conceptually.** Rank every observation across all groups together, from smallest to largest, ignoring group membership. Then check whether the average rank differs more across groups than chance alone would produce. If forest type truly matters, one group's observations should occupy systematically higher or lower ranks than the others.
 
 **Its assumption.** Kruskal-Wallis does not require normality. Like the Mann-Whitney-Wilcoxon test, it's cleanest to interpret as a test of differences in **location** (median) when the groups' distributions have similar shape; if the shapes differ a lot, a significant result tells you the groups differ somehow, but not cleanly whether that's a difference in location, spread, or shape.
 

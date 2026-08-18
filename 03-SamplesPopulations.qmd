@@ -564,11 +564,11 @@ The sample mean is just the most important case, because it underpins much of cl
 
 all_df<-data.frame()
 for(i in 1:10000){
-  sample<-rnorm(50,100,20)
-  sample_mean<-mean(sample)
-  sample_sd<-sd(sample)
-  sample_max<-max(sample)
-  sample_median<-median(sample)
+  one_sample<-rnorm(50,100,20)
+  sample_mean<-mean(one_sample)
+  sample_sd<-sd(one_sample)
+  sample_max<-max(one_sample)
+  sample_median<-median(one_sample)
   t_df<-data.frame(i,sample_mean,sample_sd,sample_max,sample_median)
   all_df<-rbind(all_df,t_df)
 }
@@ -580,14 +580,14 @@ a<-ggplot(all_df,aes(x=sample_mean))+
 b<-ggplot(all_df,aes(x=sample_sd))+
   geom_histogram(color="white")+
   theme_classic(base_size=20)
-c<-ggplot(all_df,aes(x=sample_max))+
+p_max<-ggplot(all_df,aes(x=sample_max))+
   geom_histogram(color="white")+
   theme_classic(base_size=20)
 d<-ggplot(all_df,aes(x=sample_median))+
   geom_histogram(color="white")+
   theme_classic(base_size=20)
 
-ggarrange(a,b,c,d,
+ggarrange(a,b,p_max,d,
           ncol = 2, nrow = 2)
 
 ```
@@ -602,25 +602,25 @@ Intuitively:
 
 - Large samples → sample means are more stable → narrow sampling distribution.
 
-@fig-4samplingmean animates this idea [the top of the label is cut off here, and don't know that the title needs to be on animations anyway necessarily, it's already said in prose and in the figure caption]. Each panel shows samples of size 10, 50, 100, or 1000 drawn from a normal distribution (red line). Grey bars show the sample itself, the red line marks that sample's mean, and the blue histogram shows the distribution of sample means across many repetitions. Notice how the blue distribution shrinks around the population mean as $n$ increases.
+@fig-4samplingmean animates this idea. Each panel shows samples of size 10, 50, 100, or 1000 drawn from a normal distribution (orange line). Grey bars show the sample itself, the red line marks that sample's mean, and the blue histogram shows the distribution of sample means across many repetitions. Notice how the blue distribution shrinks around the population mean as $n$ increases.
 
 ::: {.content-visible when-format="html"}
 ```{r}
 #| label: fig-4samplingmean
-#| fig-cap: "Simulation of samples (grey), their means (red line), and the sampling distribution of the mean (blue). As sample size grows, the distribution of sample means narrows and centers on the population mean."
+#| fig-cap: "Simulation of samples (grey), their means (dark green line), and the sampling distribution of the mean (dark green). As sample size grows, the distribution of sample means narrows and centers on the population mean."
 
 knitr::include_graphics(path="imgs/gifs/sampleDistNormal-1.gif")
 ```
 :::
 
 ::: {.content-visible when-format="pdf"}
-![Simulation of samples (grey), their means (red line), and the sampling distribution of the mean (blue). As sample size grows, the distribution of sample means narrows and centers on the population mean. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/sampleDistNormal-1.png){#fig-4samplingmean width="75%"}
+![Simulation of samples (grey), their means (dark green line), and the sampling distribution of the mean (dark green). As sample size grows, the distribution of sample means narrows and centers on the population mean. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/sampleDistNormal-1.png){#fig-4samplingmean width="75%"}
 :::
 
 ```{r, eval=F}
 
 get_sampling_means<-function(m,sd,s_size){
-  save_means<-length(s_size)
+  save_means<-numeric(s_size)
   for(i in 1:s_size){
     save_means[i]<-mean(rnorm(s_size,m,sd))
   }
@@ -630,13 +630,10 @@ get_sampling_means<-function(m,sd,s_size){
 all_df<-data.frame()
 for(sims in 1:10){
   for(n in c(10,50,100,1000)){
-    sample<-rnorm(n,0,1)
     sample_means<-get_sampling_means(0,1,n)
     t_df<-data.frame(sims=rep(sims,n),
-                     sample,
                      sample_means,
                      sample_size=rep(n,n),
-                     sample_mean=rep(mean(sample),n),
                      sampling_mean=rep(mean(sample_means),n)
                      )
     all_df<-rbind(all_df,t_df)
@@ -644,17 +641,17 @@ for(sims in 1:10){
 }
 
 
-ggplot(all_df, aes(x=sample))+
+ggplot(all_df, aes(x=sample_means))+
   geom_histogram(aes(y=(..density..)/max(..density..)^.8),color="white",fill="grey")+
-  geom_histogram(aes(x=sample_means,y=(..density..)/max(..density..)),fill="#63b8ff",color="white",alpha=.5)+
+  geom_histogram(aes(y=(..density..)/max(..density..)),fill="darkgreen",color="white",alpha=.5)+
   stat_function(fun = dnorm, 
                 args = list(mean = 0, sd = 1), 
                 lwd = .75, 
-                col = 'red')+
-  geom_vline(aes(xintercept=sample_mean,frame=sims),color="#b22222")+
+                col = 'orange')+
+  geom_vline(aes(xintercept=sample_mean,frame=sims),color="darkgreen")+
   geom_vline(aes(xintercept=sampling_mean,frame=sims),color="#1446a0")+
   facet_wrap(~sample_size)+xlim(-3,3)+
-  ggtitle("Population (red), Samples (grey), \n and Sampling distribution of the mean (blue)")+ylab("Rough likelihoods")+
+  ylab("Rough likelihoods")+
   xlab("value")+
   transition_states(
     sims,
@@ -682,14 +679,14 @@ Together, these three facts form our practical version of the **central limit th
 
 The full CLT is mathematically more general and has a complicated proof, but for our purposes these three results capture what we need. To see the third point in action, let's look at histograms of **sample means** drawn from different underlying distributions. Remember: these are distributions of *sample means*, not of individual observations.
 
-In @fig-4sampledistmeannorm, we are sampling from a *normal* distribution (red line). The sampling distribution of the mean (blue bars) is also normal.
+In @fig-4sampledistmeannorm, we are sampling from a *normal* distribution (orange line). The sampling distribution of the mean (green bars) is also normal.
 
 ```{r}
 #| label: fig-4sampledistmeannorm
 #| fig-cap: "Sampling distributions of the mean from a normal population. As sample size increases, the distribution tightens around the population mean."
 
 get_sampling_means<-function(m,sd,s_size,iter){
-  save_means<-length(iter)
+  save_means<-numeric(iter)
   for(i in 1:iter){
     save_means[i]<-mean(rnorm(s_size,m,sd))
   }
@@ -701,32 +698,29 @@ sims<-1
 n<-50
 
 for(n in c(10,50)){
-    sample<-rnorm(n,0,1)
     sample_means<-get_sampling_means(0,1,n,1000)
     t_df<-data.frame(sims=rep(sims,1000),
-                     sample,
                      sample_means,
                      sample_size=rep(n,1000),
-                     sample_mean=rep(mean(sample),1000),
                      sampling_mean=rep(mean(sample_means),1000)
                      )
     all_df<-rbind(all_df,t_df)
 }
 
-ggplot(all_df, aes(x=sample))+
-  geom_histogram(aes(x=sample_means,y=(..density..)/max(..density..)),fill="#63b8ff",color="white",alpha=.5,bins=75)+
-  stat_function(fun = dnorm, 
-                args = list(mean = 0, sd = 1), 
-                lwd = .75, 
-                col = 'red')+
+ggplot(all_df, aes(x=sample_means))+
+  geom_histogram(aes(y=(..density..)/max(..density..)),fill="darkgreen",color="white",alpha=.5,bins=75)+
+  stat_function(fun = dnorm,
+                args = list(mean = 0, sd = 1),
+                lwd = .75,
+                col = 'orange')+
   #geom_vline(aes(xintercept=sampling_mean,frame=sims),color="blue")+
   facet_wrap(~sample_size)+xlim(-3,3)+
-  ggtitle("Sampling distribution of mean \n for Normal Distribution")+ylab("Rough likelihoods")+
+  ylab("Rough likelihoods")+
   xlab("value")
 
 ```
 
-Let's try sampling from a uniform population: the parent distribution is flat (red), but the sampling distribution of the mean is bell-shaped (@fig-4samplemeanunif).[Why is base size 20 here, it looks huge?]
+Let's try sampling from a uniform population: the parent distribution is flat (orange), but the sampling distribution of the mean is bell-shaped (@fig-4samplemeanunif).
 
 ```{r}
 #| label: fig-4samplemeanunif
@@ -734,7 +728,7 @@ Let's try sampling from a uniform population: the parent distribution is flat (r
 #| out-width: "100%"
 
 get_sampling_means<-function(mn,mx,s_size,iter){
-  save_means<-length(iter)
+  save_means<-numeric(iter)
   for(i in 1:iter){
     save_means[i]<-mean(runif(s_size,mn,mx))
   }
@@ -746,30 +740,25 @@ sims<-1
 n<-50
 
 for(n in c(10,50)){
-    sample<-rnorm(n,0,1)
     sample_means<-get_sampling_means(0,1,n,1000)
     t_df<-data.frame(sims=rep(sims,1000),
-                     sample,
                      sample_means,
                      sample_size=rep(n,1000),
-                     sample_mean=rep(mean(sample),1000),
                      sampling_mean=rep(mean(sample_means),1000)
                      )
     all_df<-rbind(all_df,t_df)
 }
 
-ggplot(all_df, aes(x=sample))+
-  geom_histogram(aes(x=sample_means,y=(..density..)/max(..density..)),fill="#63b8ff",color="white",alpha=.5,bins=75)+
-  geom_hline(yintercept=.1,color="#b22222")+
+ggplot(all_df, aes(x=sample_means))+
+  geom_histogram(aes(y=(..density..)/max(..density..)),fill="darkgreen",color="white",alpha=.5,bins=75)+
+  geom_hline(yintercept=.1,color="orange")+
   facet_wrap(~sample_size)+xlim(0,1)+
-  theme_classic(base_size = 20)+
-  ggtitle("Sampling distribution of mean \n for samples taken from Uniform Distribution")+
   ylab("Rough likelihoods")+
   xlab("value")
 
 ```
 
-Sampling from an exponential population: the parent distribution is skewed, but the sampling distribution of the mean still looks normal (@fig-4samplemeanExp). [Thinking these ggtitles are unnecessary]
+Sampling from an exponential population: the parent distribution is skewed, but the sampling distribution of the mean still looks normal (@fig-4samplemeanExp).
 
 ```{r}
 #| label: fig-4samplemeanExp
@@ -777,7 +766,7 @@ Sampling from an exponential population: the parent distribution is skewed, but 
 # code omitted
 
 get_sampling_means<-function(s_size,r,iter){
-  save_means<-length(iter)
+  save_means<-numeric(iter)
   for(i in 1:iter){
     save_means[i]<-mean(rexp(s_size,r))
   }
@@ -789,27 +778,24 @@ sims<-1
 n<-50
 
 for(n in c(10,50)){
-    sample<-rnorm(n,0,1)
     sample_means<-get_sampling_means(n,2,1000)
     t_df<-data.frame(sims=rep(sims,1000),
-                     sample,
                      sample_means,
                      sample_size=rep(n,1000),
-                     sample_mean=rep(mean(sample),1000),
                      sampling_mean=rep(mean(sample_means),1000)
                      )
     all_df<-rbind(all_df,t_df)
 }
 
-ggplot(all_df, aes(x=sample))+
-  geom_histogram(aes(x=sample_means,y=(..density..)/max(..density..)),fill="#63b8ff",color="white",alpha=.5,bins=75)+
+ggplot(all_df, aes(x=sample_means))+
+  geom_histogram(aes(y=(..density..)/max(..density..)),fill="darkgreen",color="white",alpha=.5,bins=75)+
   stat_function(fun = dexp, 
                 args = list(rate=2), 
                 lwd = .75, 
-                col = 'red')+
+                col = 'orange')+
   #geom_vline(aes(xintercept=sampling_mean,frame=sims),color="blue")+
   facet_wrap(~sample_size)+xlim(0,1)+
-  ggtitle("Sampling distribution of mean \n for samples from exponential Distribution")+ylab("Rough likelihoods")+
+  ylab("Rough likelihoods")+
   xlab("value")
 
 ```
@@ -826,7 +812,7 @@ The CLT also explains why the normal curve appears so often in practice. Wheneve
 
 A **z-score** is a standardized way to express how far a value is from its mean, measured in units of standard deviation. Z-scores are useful because (i) areas under the normal curve translate directly into probabilities, and (ii) by the CLT, many averages (e.g., sample means) are approximately normal, so z-scores let us read off probabilities for those, too.
 
-First, recall the geometry of the normal curve. In @fig-4normalSDspercents we draw vertical lines at 0, ±1, ±2, and ±3 standard deviations for a standard normal ($\mu=0,\sigma=1$). The labels show familiar areas: about 34.1% between 0 and 1, 13.6% between 1 and 2, and so on. Altogether, about 68.2% of values lie between −1 and +1 SD. [the labels are smushed together and don't track thefemiliar areas very well, another way to do this?]
+First, recall the geometry of the normal curve. In @fig-4normalSDspercents we draw vertical lines at 0, ±1, ±2, and ±3 standard deviations for a standard normal ($\mu=0,\sigma=1$). The labels show familiar areas: about 34.1% between 0 and 1, 13.6% between 1 and 2, and so on. Altogether, about 68.2% of values lie between −1 and +1 SD.
 
 ```{r}
 #| label: fig-4normalSDspercents
@@ -843,33 +829,33 @@ ggplot(t_df, aes(x=x_range,y=dnorm_vec))+
   ylab("Density")+
   xlab("score") +
   scale_x_continuous(breaks=seq(-5,5,1))+
-  geom_label(data = data.frame(x=-.5, y=.3,
-            label=round(pnorm(c(0,1),0,1)[2]-pnorm(c(0,1),0,1)[1], digits=3)), 
+  geom_label(data = data.frame(x=-.5, y=.02,
+            label=round(pnorm(c(0,1),0,1)[2]-pnorm(c(0,1),0,1)[1], digits=3)),
             aes(x = x, y = y, label = label))+
-  geom_label(data = data.frame(x=.5, y=.3,
-            label=round(pnorm(c(0,1),0,1)[2]-pnorm(c(0,1),0,1)[1], digits=3)), 
+  geom_label(data = data.frame(x=.5, y=.02,
+            label=round(pnorm(c(0,1),0,1)[2]-pnorm(c(0,1),0,1)[1], digits=3)),
             aes(x = x, y = y, label = label))+
-    geom_label(data = data.frame(x=-1.5, y=.3,
-            label=round(pnorm(c(1,2),0,1)[2]-pnorm(c(1,2),0,1)[1], digits=3)), 
+    geom_label(data = data.frame(x=-1.5, y=.02,
+            label=round(pnorm(c(1,2),0,1)[2]-pnorm(c(1,2),0,1)[1], digits=3)),
             aes(x = x, y = y, label = label))+
-  geom_label(data = data.frame(x=1.5, y=.3,
-            label=round(pnorm(c(1,2),0,1)[2]-pnorm(c(1,2),0,1)[1], digits=3)), 
-            aes(x = x, y = y, label = label)) + 
-  geom_label(data = data.frame(x=-2.5, y=.3,
-            label=round(pnorm(c(2,3),0,1)[2]-pnorm(c(2,3),0,1)[1], digits=3)), 
+  geom_label(data = data.frame(x=1.5, y=.02,
+            label=round(pnorm(c(1,2),0,1)[2]-pnorm(c(1,2),0,1)[1], digits=3)),
+            aes(x = x, y = y, label = label)) +
+  geom_label(data = data.frame(x=-2.5, y=.02,
+            label=round(pnorm(c(2,3),0,1)[2]-pnorm(c(2,3),0,1)[1], digits=3)),
             aes(x = x, y = y, label = label))+
-  geom_label(data = data.frame(x=2.5, y=.3,
-            label=round(pnorm(c(2,3),0,1)[2]-pnorm(c(2,3),0,1)[1], digits=3)), 
-            aes(x = x, y = y, label = label))+ 
-  geom_label(data = data.frame(x=-3.5, y=.3,
-            label=round(pnorm(c(3,4),0,1)[2]-pnorm(c(3,4),0,1)[1], digits=3)), 
+  geom_label(data = data.frame(x=2.5, y=.02,
+            label=round(pnorm(c(2,3),0,1)[2]-pnorm(c(2,3),0,1)[1], digits=3)),
             aes(x = x, y = y, label = label))+
-  geom_label(data = data.frame(x=3.5, y=.3,
-            label=round(pnorm(c(3,4),0,1)[2]-pnorm(c(3,4),0,1)[1], digits=3)), 
+  geom_label(data = data.frame(x=-3.5, y=.02,
+            label=round(pnorm(c(3,4),0,1)[2]-pnorm(c(3,4),0,1)[1], digits=3)),
+            aes(x = x, y = y, label = label))+
+  geom_label(data = data.frame(x=3.5, y=.02,
+            label=round(pnorm(c(3,4),0,1)[2]-pnorm(c(3,4),0,1)[1], digits=3)),
             aes(x = x, y = y, label = label))
 ```
 
-Those same proportions hold for any normal distribution, regardless of its mean or SD. In @fig-4normalSDspercentsB (with $\mu=100,\ \sigma=25$), the region from 100 to 125 (one SD above the mean) still contains about 34.1% of values.[labels actually look fine here at least]
+Those same proportions hold for any normal distribution, regardless of its mean or SD. In @fig-4normalSDspercentsB (with $\mu=100,\ \sigma=25$), the region from 100 to 125 (one SD above the mean) still contains about 34.1% of values.
 
 ```{r}
 #| label: fig-4normalSDspercentsB
@@ -937,7 +923,7 @@ Example: generate ten observations from a $N(100, 25^2)$ distribution, then stan
 
 ```{r}
 scores <- round(rnorm(10,100,25),digits=2)
-tibble(Observation=1:10, Score=scores)
+knitr::kable(data.frame(Observation=1:10, Score=scores))
 ```
 
 Using the known population values:
@@ -945,12 +931,12 @@ Using the known population values:
 $(scores - 100)/25$
 
 ```{r}
-tibble(Observation = 1:10,
+knitr::kable(data.frame(Observation = 1:10,
        Score = scores,
-       Zscore = round((scores - 100)/25, 2))
+       Zscore = round((scores - 100)/25, 2)))
 ```
 
-[This is raw output, should be kable not tibble it's ugly]. Once standardized, areas under the normal curve tell you how unusual a score is. z between −1 and 1 is common (\~68% of cases), between 1 and 2 is less common (\~13.6% on each side), and beyond ±2 is relatively rare (\~2.1% in each tail segment between 2 and 3, even less beyond 3).
+Once standardized, areas under the normal curve tell you how unusual a score is. z between −1 and 1 is common (\~68% of cases), between 1 and 2 is less common (\~13.6% on each side), and beyond ±2 is relatively rare (\~2.1% in each tail segment between 2 and 3, even less beyond 3).
 
 Finally, z-scores are also called **standardized scores** because they express distance from the mean in SD units.
 
@@ -1004,7 +990,7 @@ Estimating the population mean was straightforward: the sample mean $\bar X$ is 
 
 Here we encounter **bias**. An estimator is biased if its expected value systematically differs from the true population parameter. The sample standard deviation $sd$ is such a case: it tends to underestimate $\sigma$, especially when $N$ is small.
 
-That is why back in Chapter 1 we saw two formulas for the standard deviation, one dividing by $N$ and one by $N-1$. We can now explain why.
+Chapter 2 built the standard deviation dividing by $N$ and noted in passing that R divides by $n-1$ instead. That difference is what we can now explain.
 
 ### Simulating bias
 
@@ -1072,7 +1058,7 @@ ggplot(df_bias, aes(x = n, y = avg_sd)) +
   ylab("Average sample standard deviation")
 ```
 
-### Why variance needs a small correction [can this part cover for what I had in Ch 1? It's stated twice I think = yeah it's in 1.10.5 also]
+### Why variance needs a small correction
 
 We just saw *that* the sample standard deviation is biased. Here is *why*, and why the fix takes the particular form it does.
 

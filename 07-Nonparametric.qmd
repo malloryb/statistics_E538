@@ -149,11 +149,11 @@ $$E[V] = \frac{9 \times 10}{4} = 22.5, \qquad \text{Var}(V) = \frac{9 \times 10 
 
 That's an SD of about 8.4. Our observed $V=39$ sits about 1.96 SDs above that expectation ($\frac{39-22.5}{8.4} \approx 1.96$), which is where R's $p=.057$ comes from: a normal approximation to this exact distribution (with a ties and zeros adjustment). For small, tie-free samples with no zeros, R can instead read the exact enumerated distribution directly.
 
-Where do the critical values actually come from? The same place they always do in this book: we build the null distribution ourselves, by simulating 20,000 experiments where each of the 9 nonzero ranks independently gets a random $+$ or $-$ sign, exactly what $H_0$ says should happen, and adding up the positive ranks each time.[This graph doesn't look right, it says critical value: 6 and it says critical value is 57, why both labels? And our prose says the critical value is 39?]
+Where do the critical values actually come from? The same place they always do in this book: we build the null distribution ourselves, by simulating 20,000 experiments where each of the 9 nonzero ranks independently gets a random $+$ or $-$ sign, exactly what $H_0$ says should happen, and adding up the positive ranks each time.
 
 ```{r}
 #| label: fig-8wilcoxon-null
-#| fig-cap: "Simulated null distribution of the Wilcoxon signed-rank statistic V, built from 20,000 random sign-flips of the 9 nonzero ranked differences. Shaded regions mark the two-tailed 5% rejection region; our observed V = 39 lands right on the boundary."
+#| fig-cap: "Simulated null distribution of the Wilcoxon signed-rank statistic V, built from 20,000 random sign-flips of the 9 nonzero ranked differences. Shaded regions mark the two-tailed 5% rejection region; our observed V = 39 lands right on the upper boundary."
 
 set.seed(123)
 sim_V <- replicate(20000, {
@@ -172,8 +172,10 @@ ggplot(tibble(V = sim_V), aes(x = V)) +
   geom_vline(xintercept = obs_V, color = "#1446a0", linewidth = 1) +
   annotate("text", x = crit_lo, y = Inf, label = paste0("critical value: ", crit_lo),
            color = "#b22222", vjust = 3, hjust = 1.05, size = 3.3) +
-  annotate("text", x = obs_V, y = Inf, label = paste0("observed V = critical value = ", obs_V),
-           color = "#1446a0", vjust = 1.5, hjust = 1.02, size = 3.3) +
+  annotate("text", x = crit_hi, y = Inf, label = paste0("critical value: ", crit_hi),
+           color = "#b22222", vjust = 3, hjust = -0.05, size = 3.3) +
+  annotate("text", x = obs_V, y = Inf, label = paste0("observed V = ", obs_V),
+           color = "#1446a0", vjust = 5.5, hjust = 1.1, size = 3.3) +
   theme_classic(base_size = 13) +
   labs(x = "V (sum of positive ranks)", y = "Count out of 20,000 simulations")
 ```
@@ -200,7 +202,7 @@ knitr::kable(
 
 Six of the 9 nonzero plots increased. $p=.508$: nowhere close to significant.
 
-**The full picture.** $t$-test: $p=.026$, significant. Wilcoxon signed-rank: $p=.057$, not quite. Sign test: $p=.508$, not close. Same 12 plots, three tests, three different verdicts [This soudns AI-y].
+**The full picture.** $t$-test: $p=.026$, significant. Wilcoxon signed-rank: $p=.057$, not quite. Sign test: $p=.508$, not close. Same 12 plots, but the three tests don't agree with each other.
 
 Each test uses less of the data than the one before it. The $t$-test uses the full magnitude of every difference, Wilcoxon keeps the ranks but drops the zeros, and the sign test keeps only direction. Less information going in means weaker evidence coming out.
 
@@ -300,7 +302,7 @@ Both groups fail the Shapiro-Wilk test, the restored group badly ($p=.002$), dri
 
 **How it works, conceptually.** Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups truly don't differ, ranks should be well mixed between them; if one group tends to have higher values, its ranks should be systematically higher too. Critically, that outlier plot still gets *a* rank, but only one rank, the highest one, no matter how far above the pack it sits. Its magnitude, which is what distorted the $t$-test, can't distort the Mann-Whitney-Wilcoxon test the same way.
 
-**Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions [ah so we do say parent again ehre] have the **same shape**: it does *not* require normality, and the assumption is **not** "equal variance," even though same-shape distributions happen to have equal variance as a side effect. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as "the medians differ" becomes murkier, since it could be a difference in location, shape, or both. Our two groups are both right-skewed by roughly the same amount, so that's a reasonable assumption here.
+**Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the **same shape**: it does *not* require normality, and the assumption is **not** "equal variance," even though same-shape distributions happen to have equal variance as a side effect. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as "the medians differ" becomes murkier, since it could be a difference in location, shape, or both. Our two groups are both right-skewed by roughly the same amount, so that's a reasonable assumption here.
 
 ```{r}
 mww_out <- wilcox.test(restored, unrestored)
@@ -326,7 +328,7 @@ $$E[U] = \frac{8 \times 8}{2} = 32, \qquad \text{Var}(U) = \frac{8 \times 8 \tim
 
 That's an SD of about 9.5. Our observed $U=50$ sits about 1.9 SDs above that expectation ($\frac{50-32}{9.5} \approx 1.9$), which is where R's $p=.063$ comes from: a normal approximation to this exact distribution (with a small ties adjustment), same mechanism as the Wilcoxon case. For small samples without ties, R can instead read the exact permutation distribution directly, no approximation needed.
 
-Same question as before: where do the critical values come from? We build them the same way, by simulation. Under $H_0$, group membership is random with respect to rank, so we pool the richness values, then repeatedly shuffle which 8 ranks land in the restored group:[Don't think the criti cal values were clearly created here, and "we build them teh same wya, by simulation" is not how they are generally built right, that's the simulation logic from before but we will eventually have a known distribution won't we? Or maybe not actually nevermind, but shoudl clarify that in the text]
+Same question as before: where do the critical values come from? They come from that same permutation distribution we just described, the $\binom{16}{8}$ equally likely ways to split 16 pooled ranks into two groups of 8. Rather than enumerate every one of those splits by hand, we approximate that distribution the same way as before, by simulation: pool the richness values, then repeatedly shuffle which 8 ranks land in the restored group:
 
 ```{r}
 #| label: fig-8mww-null

@@ -44,6 +44,120 @@ ANCOVA adds a categorical factor to that equation, and the whole chapter comes d
 
 We answer it in two steps: first test whether groups have different **slopes**, then, only if slopes are parallel, test whether groups differ in **adjusted means**.
 
+## Why adjust for anything?
+
+Before defining ANCOVA, it helps to see the problem it solves. The cleanest illustration is a result called **Simpson's paradox**, where a pattern in combined data reverses once you split the data into meaningful groups.
+
+Here's a recent example. During the COVID-19 pandemic, early data showed that Italy's overall case fatality rate was higher than China's. But, once researchers *disaggregated by age group,* the trend flipped: within every age group, the fatality rate was actually higher in China. The apparent contradiction was explained by differences in the age distribution of cases [@vonkugelgen2021].
+
+Using case fatality rate (CFR), here are some illustrative numbers (made up for teaching).
+
+```{r}
+#| label: fig-simpson-covid-overall
+#| fig-cap: "Crude case fatality rates. Italy appears to have a higher fatality rate than China when all cases are combined."
+library(ggplot2)
+library(tibble)
+library(tidyverse)
+
+age_levels <- c("0–9","10–19","20–29","30–39","40–49","50–59","60–69","70–79","80+")
+
+dat <- tibble::tribble(
+  ~Country, ~Age,     ~Cases, ~Deaths,  ~CFR_band_pct,
+  "Italy",  "0–9",       500,   0.05,     0.01,
+  "Italy",  "10–19",     500,   0.10,     0.02,
+  "Italy",  "20–29",     800,   0.32,     0.04,
+  "Italy",  "30–39",    1000,   1.50,     0.15,
+  "Italy",  "40–49",    2000,   8.00,     0.40,
+  "Italy",  "50–59",    2000,  20.00,     1.00,
+  "Italy",  "60–69",    1500,  37.50,     2.50,
+  "Italy",  "70–79",    1200,  72.00,     6.00,
+  "Italy",  "80+",      1500, 225.00,    15.00,
+
+  "China",  "0–9",      8000,   1.60,     0.02,
+  "China",  "10–19",    8000,   2.40,     0.03,
+  "China",  "20–29",    8000,   4.00,     0.05,
+  "China",  "30–39",    7000,  14.00,     0.20,
+  "China",  "40–49",    7000,  42.00,     0.60,
+  "China",  "50–59",    3000,  45.00,     1.50,
+  "China",  "60–69",    1000,  35.00,     3.50,
+  "China",  "70–79",     700,  56.00,     8.00,
+  "China",  "80+",       300,  54.00,    18.00
+) %>%
+  mutate(
+    Age = factor(Age, levels = age_levels),
+    CFR_band_calc = 100 * Deaths / Cases  # sanity check, should match CFR_band_pct
+  )
+
+# Quick checks
+dat %>% group_by(Country) %>% summarise(Total_cases = sum(Cases), Total_deaths = sum(Deaths),
+                                        CFR_crude_pct = 100*Total_deaths/Total_cases) %>%
+  invisible()
+# Italy ~ 3.31%, China ~ 0.59%
+
+fig1_df <- dat %>%
+  group_by(Country) %>%
+  summarise(
+    Cases = sum(Cases),
+    Deaths = sum(Deaths),
+    CFR_crude_pct = 100 * Deaths / Cases
+  ) %>%
+  invisible()
+
+ggplot(fig1_df, aes(x = Country, y = CFR_crude_pct, fill = Country)) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = sprintf("%.1f%%", CFR_crude_pct)),
+            vjust = -0.4, size = 4.2) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  labs(title = "Crude fatality rate (all ages combined)",
+       y = "Fatality rate (%)", x = NULL) +
+  theme_classic(base_size = 13) +
+  theme(legend.position = "none")
+```
+
+At face value, Italy looks worse. But what happens when we stratify by age group? Because older people are much more likely to die from COVID than younger people, splitting cases into 10-year bands reveals a different picture. When we do, China's fatality rate is higher in every band.
+
+```{r}
+#| label: fig-simpson-by-age-group
+#| fig-cap: "Fatality rates by age group (same made-up numbers). Within each age band, China's CFR exceeds Italy's."
+
+fig2_df <- dat %>%
+  select(Country, Age, CFR_band_pct)
+
+ggplot(fig2_df, aes(x = Age, y = CFR_band_pct, fill = Country)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+  labs(title = "Within every age band, China’s fatality rate is higher",
+       x = "Age band", y = "Fatality rate (%)", fill = NULL) +
+  theme_classic(base_size = 13) +
+  theme(legend.position = "top")
+```
+
+The reversal happens because Italy's population skews older while China's skews younger. Italy therefore had a greater proportion of older people getting sick, which pulls Italy's overall average up. Similarly, China's average is pulled down because a greater proportion of younger people are getting sick. Aggregating without adjusting for age hid the within-group pattern entirely. Once we asked a more specific question, the answer reversed.
+
+```{r}
+#| label: fig-age-distributions
+#| fig-cap: "Case age distribution by country. Italy’s cases are older on average; China’s are younger."
+
+fig3_df <- dat %>%
+  group_by(Country, Age) %>%
+  summarise(Cases = sum(Cases), .groups = "drop") %>%
+  group_by(Country) %>%
+  mutate(Prop = Cases / sum(Cases))
+
+
+ggplot(fig3_df, aes(x = Age, y = Prop, fill = Country, group=Country)) +
+  geom_col(position = position_dodge(width = 0.4), width = 0.7) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  facet_wrap(~Country)+
+  labs(title = "Case ages: Italy skewed older, China skewed younger",
+       x = "Age band", y = "Share of cases", fill = NULL) +
+  theme_classic(base_size = 13) +
+  theme(legend.position = "none", panel.border = element_rect(linewidth = 1, fill=NA), axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+That reversal is not a trick or a data error. It happens because the groups differ in the *composition* of a third variable, and the combined number silently averages over that difference. Once you condition on the third variable, the real pattern reappears.
+
+ANCOVA is the tool for exactly this situation when the third variable is continuous rather than a set of bands: it compares groups while holding a covariate fixed, so the comparison is not quietly distorted by the groups differing on that covariate to begin with.
+
 ## Terminology
 
 **Covariate:** a continuous variable that changes alongside the response and helps explain part of its variation. In environmental studies, common covariates include temperature, rainfall, soil moisture, or pollution concentration: factors that may influence the outcome but aren't the main treatment of interest. Including one lets us **adjust for its influence**, giving a clearer test of the categorical effect once that continuous background variation is accounted for.

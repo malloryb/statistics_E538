@@ -34,7 +34,7 @@ hist_p <- function(ps, title = NULL) {
 }
 ```
 
-# t-tests [note: chapter title rendering incorrectly in sidebar table of contents]
+# t-tests
 
 ## Intro
 
@@ -61,25 +61,13 @@ Always report:
 Example: "Mean change was -0.42 units (95% CI \[-0.73, -0.11\]; *t*(11) = -2.92; p = 0.014)."
 :::
 
-## From mean & SD to "signal over noise"
+## Signal over noise, for a mean
 
-A mean tells you where the center is; the SD tells you how spread out the data are. A mean of 50 could be very representative (if SD is tiny) or nearly meaningless (if SD is huge). You need both.
+Chapter 4 introduced the general shape of a test statistic: the effect you observed, divided by an estimate of how much it could move by chance.
 
-A simple way to combine them is a ratio:
+$$\text{statistic}=\frac{\text{effect}}{\text{error}}$$
 
-$$\frac{\text{mean}}{\text{SD}}$$
-
-- Big numerator, small denominator → big ratio (more confidence that the mean reflects the data).
-
-- Small numerator or big denominator → small ratio (less confidence).
-
-For instance, mean = 50 with SD = 1 gives 50; mean = 50 with SD = 100 gives 0.5. Same mean, very different stories.
-
-This "signal over noise" pattern shows up everywhere in inference. In general,
-
-$$\text{statistic}=\frac{\text{effect}}{\text{error}}.$$
-
-For $t$-tests, we won't actually use SD in the denominator, we use the **standard error** $SE$, which is the SD of the sample mean. But the logic is the same: measure a signal, scale it by its uncertainty, and see whether the resulting ratio is unusually large or small under the right $t$ distribution.
+The $t$-test is the first place we fill that in with real quantities. The effect is the distance between the sample mean and the value $H_0$ names. The error is not the raw standard deviation, though: it is the **standard error**, $s/\sqrt{n}$, because what varies from study to study is the *mean*, not an individual observation.
 
 $$t = \frac{\text{effect}}{\text{standard error}} = \frac{\bar{X} - \mu_0}{s / \sqrt{n}}$$
 
@@ -170,7 +158,7 @@ $t$ expresses how far a sample mean is from the hypothesized mean, in **standard
 $$t = \frac{\bar{X}-\mu_0}{s/\sqrt{n}}$$
 
 $t$ can be positive or negative depending on direction. Under $H_0$, $t \sim t_{(df=n-1)}$.\
-**Rule of thumb:** at $\alpha=.05$ two-tailed, $|t|\gtrsim 2$ is uncommon when $df\approx 20$.[Is it really a "rule of thumb" if it's just for n = 20? Seems ewird to say that]
+**A useful anchor:** at $\alpha=.05$ two-tailed and $df\approx 20$, $|t|\gtrsim 2$ is already uncommon under $H_0$; smaller $df$ pushes that threshold higher, as the critical-value table above shows.
 
 ::: {.callout-note title="Note: Standard error, again"}
 Remember that $s/\sqrt{n}$ is the **standard error (SE)**, the standard deviation of the sampling distribution of the mean.
@@ -215,15 +203,15 @@ ci_hi <- round(tt$conf.int[[2]], 2)
 
 By hand, the standard error of the mean is the sample SD divided by the square root of $n$:
 
-$$\text{SEM} = \frac{s}{\sqrt{n}} = \frac{`r round(s,2)`}{\sqrt{`r n`}} = `r round(SE,2)`$$
+$$\text{SE} = \frac{s}{\sqrt{n}} = \frac{`r round(s,2)`}{\sqrt{`r n`}} = `r round(SE,2)`$$
 
-And $t$ is the difference between the sample mean (`r round(x,2)`) and the reference value (50, chance level), divided by that SEM:
+And $t$ is the difference between the sample mean (`r round(x,2)`) and the reference value (50, chance level), divided by that SE:
 
-$$t = \frac{\bar{X}-\mu_0}{SEM} = \frac{`r round(x,2)`-50}{`r round(SE,2)`} = `r round(tt$statistic,2)`$$
+$$t = \frac{\bar{X}-\mu_0}{SE} = \frac{`r round(x,2)`-50}{`r round(SE,2)`} = `r round(tt$statistic,2)`$$
 
 We can confirm this with a single R command, `t.test(scores, mu = 50)`:
 
-**Results:** $t(9)=`r round(tt$statistic,2)`$, $p=`r signif(tt$p.value,3)`$; mean $=`r round(tt$estimate,2)`$ (95% CI \[`r ci_lo`,`r ci_hi\`\]).
+**Results:** $t(9)=`r round(tt$statistic,2)`$, $p=`r signif(tt$p.value,3)`$; mean $=`r round(tt$estimate,2)`$ (95% CI \[`r ci_lo`, `r ci_hi`\]).
 
 **Interpretation:** The mean (`r round(x,0)`%) is above chance (50%), but the difference is not statistically significant at $\alpha=.05$.
 
@@ -243,15 +231,14 @@ Every test in this book rests on assumptions. Assumptions are conditions that ne
 
 ### How does t behave?
 
-Extreme sample means are unlikely if $H_0$ is true, which is why large $|t|$ values are rare. Returning to the rule of thumb above [rule of thumb seems weird here], values of $t$ beyond roughly $-2$ or $+2$ occur less than 5% of the time under the null when $df \approx 20$. That's the foundation of the decision rule for $t$ tests: if your observed $t$ lies in those rare tails, you reject $H_0$.
+Extreme sample means are unlikely if $H_0$ is true, which is why large $|t|$ values are rare. Returning to that anchor point, values of $t$ beyond roughly $-2$ or $+2$ occur less than 5% of the time under the null when $df \approx 20$. That's the foundation of the decision rule for $t$ tests: if your observed $t$ lies in those rare tails, you reject $H_0$.
 
-Remember, if we obtained a single $t$ from one sample we collected, we could consult the chance window in @fig-7-t-rejection below to find out whether the $t$ we obtained from the sample was likely or unlikely to occur by chance.[This renders weird, all of blue says "critical values", and the shading is inconsistent on the two sides of the graph]
+Remember, if we obtained a single $t$ from one sample we collected, we could consult the chance window in @fig-7-t-rejection below to find out whether the $t$ we obtained from the sample was likely or unlikely to occur by chance.
 
 ```{r}
 #| label: fig-7-t-rejection
 #| fig-cap: 'Two-tailed rejection regions at $\alpha=.05$ for $t_{(df=9)}$. Shaded tails mark unlikely values under $H_0$.'
 #| out-width: "80%"
-
 
 library(tidyverse)
 
@@ -262,15 +249,18 @@ dens <- dt(xs, df)
 crit <- qt(c(.025, .975), df)
 
 t_tibble <- tibble(x = xs, y = dens,
-                   tail = case_when(x <= crit[1] ~ "Left tail",
-                                    x >= crit[2] ~ "Right tail",
-                                    TRUE ~ "Center"))
+                   tail = ifelse(x <= crit[1] | x >= crit[2], "Rejection region", "Retain"),
+                   region = ifelse(x <= crit[1], "left",
+                             ifelse(x >= crit[2], "right", "mid")))
 
-ggplot(t_tibble, aes(x, y, fill = tail)) +
+ggplot(t_tibble, aes(x, y, fill = tail, group = region)) +
   geom_area(alpha = 0.4, color = NA) +
-  geom_line(aes(y = y), linewidth = 0.9, color = "black") +
+  geom_line(aes(group = 1), color = "black", linewidth = 0.9) +
   geom_vline(xintercept = crit, linetype = 2) +
-  annotate("text", x = mean(crit), y = 0.02, label = "critical values", vjust = -0.7) +
+  annotate("text", x = -3.2, y = 0.05, label = "rejection\nregion", size = 3.4, color = "grey20") +
+  annotate("text", x = 3.2, y = 0.05, label = "rejection\nregion", size = 3.4, color = "grey20") +
+  annotate("text", x = 0, y = 0.2, label = "retain H0", size = 3.6, color = "grey20") +
+  scale_fill_manual(values = c("Rejection region" = "#F8766D", "Retain" = "#7FCFCB")) +
   labs(x = "t", y = "Density") +
   theme_classic(base_size = 12) +
   theme(legend.position = "none")
@@ -313,7 +303,7 @@ That symmetry gives us a few basic probabilities for free:
 2.  $p(t \geq 0) = .5$: half of all $t$-values are zero or greater.
 3.  $p(t \leq 0) = .5$: half are zero or smaller.
 
-We can get more precise than a 50/50 split. @fig-7percentregions divides the same distribution into ten regions, each containing 10% of the distribution [labels not matching up to regions and x-axis crowded label-wise]. Notice the regions get wider out in the tails: since most $t$-values cluster near 0, it takes a wider interval out there to capture the same 10%.
+We can get more precise than a 50/50 split. @fig-7percentregions divides the same distribution into ten regions, each containing 10% of the distribution. Notice the regions get wider out in the tails: since most $t$-values cluster near 0, it takes a wider interval out there to capture the same 10%.
 
 ```{r}
 #| label: fig-7percentregions
@@ -333,11 +323,11 @@ ggplot(plot_df, aes(x = range, y = null_distribution)) +
   geom_vline(xintercept = t_ps) +
   theme_classic(base_size = 15) +
   theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
-  scale_x_continuous(breaks = round(t_ps, digits = 1)) +
-  geom_label(data = data.frame(x = -2, y = .2, label = "10%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = -1.13, y = .2, label = "10%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = 2, y = .2, label = "10%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = 1.13, y = .2, label = "10%"), aes(x = x, y = y, label = label))
+  scale_x_continuous(breaks = seq(-3, 3, 1)) +
+  geom_label(data = data.frame(x = mean(c(-3, t_ps[1])), y = .2, label = "10%"), aes(x = x, y = y, label = label)) +
+  geom_label(data = data.frame(x = mean(t_ps[1:2]), y = .12, label = "10%"), aes(x = x, y = y, label = label)) +
+  geom_label(data = data.frame(x = mean(t_ps[2:3]), y = .28, label = "10%"), aes(x = x, y = y, label = label)) +
+  geom_label(data = data.frame(x = mean(c(t_ps[9], 3)), y = .2, label = "10%"), aes(x = x, y = y, label = label))
 
 
 ```
@@ -410,9 +400,9 @@ ggplot(plot_df, aes(x = range, y = null_distribution)) +
 
 Applied to our actual result, $t(9) = 1.94$: the one-tailed $p$ is .042, the two-tailed $p$ is .084, exactly double, since a two-tailed test counts the matching extreme region on both sides instead of just one. Here the choice actually changes the decision: one-tailed, this result is significant at $\alpha=.05$; two-tailed, it isn't. That's exactly why a one-tailed test has to be justified by your theory *before* you see the data, not chosen afterward because it gives the answer you wanted.
 
-### Which one should you use? [This is nice and succinct - consider for Chapter 4? But otherwise feels like too much of a reminder, like too much space? Maybe it's fine]
+### Which one should you use?
 
-Use a one-tailed test only when your theory already rules out the opposite direction; default to two-tailed otherwise (Chapter 4's rule). There's a second reason two-tailed is the safer default: a one-tailed critical value is always closer to 0 than a two-tailed one, so routinely running one-tailed tests inflates your long-run Type I error rate above your stated $\alpha$ (recall from Chapter 5: a Type I error means rejecting $H_0$ when it's actually true). That's why most researchers default to two-tailed tests even when they do have a directional prediction, and why it's worth being able to justify your choice rather than picking whichever gives the smaller $p$-value.
+The rule is Chapter 4's, unchanged: default to two-tailed, and go one-tailed only when your theory already rules out the opposite direction. What the $t$-test adds is that you can now see the cost directly in the critical value, since $t_{crit}$ for a one-tailed test sits closer to 0 than the two-tailed one at the same $\alpha$.
 
 ### Degrees of freedom
 
@@ -420,9 +410,9 @@ You've probably noticed a number in parentheses every time we report a $t$-test,
 
 For one-sample and paired $t$-tests, $df = n-1$. In our quiz example, $n=10$ students, so $df=9$.
 
-Degrees of freedom is both a concept and a correction [don't think prose follows up explicitly on how this is a correction]. The concept: once you've estimated something from your data, like the mean, that estimate constrains how many of the numbers are still free to vary. Consider three numbers with a mean of 2: pick the first two freely, say 51 and $-3$, and the third number is no longer free. It has to be $-42$ for the mean to come out to 2. Two of the three numbers had freedom; the third didn't. That's $df=n-1=2$ for three numbers.
+Degrees of freedom is both a concept and a correction. The concept: once you've estimated something from your data, like the mean, that estimate constrains how many of the numbers are still free to vary. Consider three numbers with a mean of 2: pick the first two freely, say 51 and $-3$, and the third number is no longer free. It has to be $-42$ for the mean to come out to 2. Two of the three numbers had freedom; the third didn't. That's $df=n-1=2$ for three numbers.
 
-The same logic applies to the sample standard deviation. Computing it requires the sample mean first, which uses up one degree of freedom, exactly why the sample SD divides by $n-1$ rather than $n$ (Chapter 1).
+The correction: the same logic applies to the sample standard deviation. Computing it requires the sample mean first, which uses up one degree of freedom, exactly why the sample SD divides by $n-1$ rather than $n$ (Chapter 3). That $n-1$ is the correction, and it is what shows up as the $df$ in every $t$-test you run.
 
 **Simulating how degrees of freedom affects the** $t$ distribution.
 
@@ -491,11 +481,7 @@ t = \frac{\bar d - 0}{s_d/\sqrt{n}}, \quad df=n-1.$$
 
 The **sign of** $t$ matches $\bar d$ and your difference direction.
 
-**Mini walk-through (first 5 plots).** Using the first five plots, $\bar d = 2.8$ and $s_d = 3.42$. Then
-$$t=\frac{2.8}{3.42/\sqrt{5}} \approx 1.83,\qquad df=4,$$
-which (two-tailed) is **not** significant. That's expected with $n=5$. [This seems.a little far away from the "calculate t" table at this point? Or repetitive with it? Why are we saying it twice?]
-
-**Full sample effect.** With all 20 plots, $\bar d$ is similar but $s_d/\sqrt{n}$ gets smaller, so $t$ increases and the result becomes significant. This is the payoff of pairing: more power from the same number of plots.
+**Full sample effect.** With all 20 plots, $\bar d$ is similar to the pattern in a smaller subset, but $s_d/\sqrt{n}$ gets smaller as $n$ grows, so $t$ increases. This is the payoff of pairing: more power from the same number of plots.
 
 **What to report.** $\bar d$ (the mean change), a 95% CI, $t(df)$, and $p$. Optionally add a standardized effect (Cohen's $d=\bar d/s_d$).
 
@@ -535,7 +521,7 @@ paired_sample_df <- paired_sample_df %>%
   rbind(c("Sums",  colSums(paired_sample_df[1:5, 2:6]))) %>%
   rbind(c("Means", colMeans(paired_sample_df[1:5, 2:6]))) %>%
   rbind(c(" ", " ", " ", " ", "sd",  round(sd(paired_sample_df[1:5, 4]), digits=3))) %>%
-  rbind(c(" ", " ", " ", " ", "SEM", round(sd(paired_sample_df[1:5, 4])/sqrt(5), digits=3))) %>%
+  rbind(c(" ", " ", " ", " ", "SE",  round(sd(paired_sample_df[1:5, 4])/sqrt(5), digits=3))) %>%
   rbind(c(" ", " ", " ", " ", "t",   mean(differences)/round(sd(paired_sample_df[1:5, 4])/sqrt(5), digits=3)))
 paired_sample_df[6, 5] <- 0
 paired_sample_df[7, 5] <- 0
@@ -589,9 +575,9 @@ Use an independent-samples $t$-test for a **between-subjects** design: different
 
 The numerator works the same way it always has: the mean difference between groups. The denominator is where independent groups differ from the paired case, since now we need a single estimate of variability built from two separate samples instead of one.
 
-A natural first guess is to average the two groups' standard errors: [Why are we saying "SEM" notation in instead of "SE" like in the rest of the book?]
+A natural first guess is to average the two groups' standard errors:
 
-$$t = \frac{\bar{A}-\bar{B}}{\left(\dfrac{SEM_A+SEM_B}{2}\right)}$$
+$$t = \frac{\bar{A}-\bar{B}}{\left(\dfrac{SE_A+SE_B}{2}\right)}$$
 
 That average, however, is a biased estimator of the variability under the null. Instead, the independent-samples $t$-test **pools** the two groups' variances, weighted by their degrees of freedom, into a single estimate for the denominator:
 
@@ -603,7 +589,7 @@ $$s_p = \sqrt{\frac{(n_A-1)s_A^2 + (n_B-1)s_B^2}{n_A+n_B-2}}$$
 
 The example below computes $t$ for two small groups by following that formula step by step in R, then checks it against `t.test()`.
 
-Everywhere else this book formats test results into a clean table. [I don't need this meta-narration for the studnets] Here we deliberately print R's raw console output instead, because this is the block you will actually be looking at in lab, and it is worth seeing that the number you built by hand is the same number sitting in it.
+Here we deliberately print R's raw console output instead of a formatted table, because this is the block you will actually be looking at in lab, and it is worth seeing that the number you built by hand is the same number sitting in it.
 
 ```{r, echo=TRUE }
 
@@ -654,13 +640,13 @@ Independent-samples, where the effect is the difference between two group means:
 Note the paired write-up never mentions the before and after means separately. The difference score *is* the unit of analysis, so that single number plus its CI is the whole result.
 :::
 
-## Simulating data for t-tests [How much of htis is helpful and/or necessary given Chatper 4's simulation points? Or at least do we need all of them?]
+## Simulating data for t-tests
 
 We can also use R to simulate data for $t$-tests, which is worth knowing how to do.
 
-Recall that $t$ is a property of a sample: we calculate it from the sample we collected. If we took thousands of samples and calculated $t$ for each one, the distribution of those values would be the sampling distribution of $t$.
+Chapter 4 simulated *group mean differences* to build a chance window. Here we simulate the **test statistic itself**, which shows two things the earlier simulation could not: what the null distribution of $t$ actually looks like, and what happens to $p$-values when $H_0$ is true.
 
-Simulating data under conditions you choose builds intuition for how sampling error influences your results, given the specific parameters of your design: sample size, the size of the mean difference you expect, and the amount of variation. The same methods can be used formally to conduct power analyses, or informally for data sense.
+Simulating under conditions you choose builds intuition for how sampling error affects your results given your design: sample size, the size of the difference you expect, and the amount of variation. The same methods run formal power analyses.
 
 ### Simulating a one-sample t-test
 
@@ -675,8 +661,8 @@ Let's do this a couple different times. First, let's simulate samples with N = 3
 ```{r}
 # steps to create fake data from a distribution
 # and conduct t-tests on the simulated data
-save_ps <- length(1000)
-save_ts <- length(1000)
+save_ps <- numeric(1000)
+save_ts <- numeric(1000)
 for (i in 1:1000) {
   my_sample <- rnorm(n = 30, mean = 50, sd = 25)
   t_test <- t.test (my_sample, mu = 50)
@@ -708,56 +694,27 @@ simulated_ts <- replicate(1000, t.test(rnorm(30, 50, 25), mu = 50)$statistic)
 simulated_ps <- replicate(1000, t.test(rnorm(30, 50, 25), mu = 50)$p.value)
 ```
 
-### Simulating a paired samples t-test
+### The same machinery, other designs
 
-The code below is set up to sample 10 scores for condition A and B from the same normal distribution. The simulation is conducted 1000 times, and the $t$s and $p$s are saved and plotted for each.
+The paired and independent-samples cases behave identically, because they *are* the same machinery on different inputs. A paired test runs a one-sample $t$ on the difference scores; an independent-samples test swaps in the pooled standard error. Simulate either one under $H_0$ and you get the same two pictures: a $t$ distribution centered on zero, and a flat $p$ distribution.
 
-```{r, echo=TRUE}
+To adapt the code above, change only the line that generates the data:
 
-save_ps <- length(1000)
-save_ts <- length(1000)
-for ( i in 1:1000 ){
-  condition_A <- rnorm(10,10,5)
-  condition_B <- rnorm(10,10,5)
-  differences <- condition_A - condition_B
-  t_test <- t.test(differences, mu=0)
-  save_ps[i] <- t_test$p.value
-  save_ts[i] <- t_test$statistic
-}
+```{r, echo=TRUE, eval=FALSE}
+# paired: one sample of difference scores
+d <- rnorm(10, 0, 5) - rnorm(10, 0, 5)
+t.test(d, mu = 0)$p.value
 
+# independent samples: two separate groups
+t.test(rnorm(10, 10, 5), rnorm(10, 10, 5), var.equal = TRUE)$p.value
 ```
-
-```{r}
-#| label: fig-7simts1000
-#| fig-cap: "1000 simulated ts from the null distribution"
-hist_t(save_ts)
-
-```
-
-```{r}
-#| label: fig-7simps1000
-#| fig-cap: "1000 simulated ps from the null distribution"
-hist_p(save_ps)
-
-```
-
-According to the simulation, when there are no differences between the conditions, and the samples are being pulled from the very same distribution, you get these two distributions for $t$ and $p$. These again show how the null distribution of no differences behaves.
-
-For any of these simulations, if you rejected the null-hypothesis (that your difference was only due to chance), you would be making a type I error. If you set your alpha criteria to $\alpha = .05$, we can ask how many type I errors were made in these 1000 simulations. The answer is:
-
-```{r, echo=TRUE}
-length(save_ps[save_ps<.05])
-length(save_ps[save_ps<.05])/1000
-```
-
-We happened to make `r length(save_ps[save_ps<.05])` type I errors. The expectation over the long run is a 5% type I error rate (if your alpha is .05).
 
 What happens if there actually is a difference in the simulated data, let's set one condition to have a larger mean than the other:
 
 ```{r, echo=TRUE}
 
-save_ps <- length(1000)
-save_ts <- length(1000)
+save_ps <- numeric(1000)
+save_ts <- numeric(1000)
 for ( i in 1:1000 ){
   condition_A <- rnorm(10,10,5)
   condition_B <- rnorm(10,13,5)
@@ -790,8 +747,8 @@ The most direct lever is $n$, the number of subjects. Let's increase $n$ from 10
 
 ```{r, echo=TRUE}
 
-save_ps <- length(1000)
-save_ts <- length(1000)
+save_ps <- numeric(1000)
+save_ts <- numeric(1000)
 for ( i in 1:1000 ){
   condition_A <- rnorm(100,10,5)
   condition_B <- rnorm(100,13,5)
@@ -814,36 +771,6 @@ length(save_ps[save_ps<.05])/1000
 ```
 
 Now almost all of the experiments show a $p$-value of less than .05 (using a two-tailed test, the default in R). You can use this simulation process to determine how many subjects you need to reliably detect your effect.
-
-### Simulating an independent samples t-test
-
-The setup is the same, you just change what goes into `t.test()`. Here's the null case, assuming no difference between two independent groups of $n=10$:
-
-```{r, echo=TRUE}
-
-save_ps <- length(1000)
-save_ts <- length(1000)
-for ( i in 1:1000 ){
-  group_A <- rnorm(10,10,5)
-  group_B <- rnorm(10,10,5)
-  t_test <- t.test(group_A, group_B, paired=FALSE, var.equal=TRUE)
-  save_ps[i] <- t_test$p.value
-  save_ts[i] <- t_test$statistic
-}
-
-```
-
-```{r}
-#| label: fig-7simpsC
-#| fig-cap: "1000 ps for the independent-samples null, n=10 per group"
-hist_p(save_ps)
-
-
-length(save_ps[save_ps<.05])
-length(save_ps[save_ps<.05])/1000
-```
-
-Same story as before: about 5% of these simulated experiments come out "significant" by chance alone. And the same two levers we saw for the paired test still apply here, giving `group_A` and `group_B` different means will pull power up, and so will increasing $n$. Try editing the code above to see it for yourself.
 
 ## Chapter Summary
 

@@ -136,10 +136,22 @@ Ch8 computes eta-squared as `ss_between / (ss_between + ss_within)`. Numerically
 
 I first fixed Ch3's sd-bias simulation by making it sample the actual 21-even-number population the narrative describes. It was correct and the pedagogical pattern held, but the n=3 panels came out comb-like, because sample SDs from a 21-value discrete population take a limited set of values and alias against the bins. That artifact distracted from the point of the figure. I reverted to the normal-population simulation and fixed the **prose** instead: it now says plainly that the simulation draws from a normal population with the same mu and sigma so the histograms read cleanly, and that the bias is a general property rather than a quirk of one population.
 
-## OPEN (deliberately not done)
+## OPEN — status as of 2026-08-18
 
-- **Non-palette colour literals**: now 42, down from ~50. Ch1 (29), Ch10 (8), Ch6 (3), Ch9 (2). Still deferred per your standing instruction; Ch5 excluded entirely.
-- **~30 figures defined but never `@fig-` referenced**, largest cluster the five `fig-10outbreak*` in Ch9. On a closer read these are lower priority than I first rated them: the prose flows into each figure naturally ("the residuals-versus-fitted plot tells a different story") and the figure sits right there. Converting them to explicit cross-references would tighten discipline but means touching prose you have already style-passed.
-- **Teaching-code hygiene**: `x <- length(0)` used as vector preallocation (7+ places, Ch2-Ch3-Ch6), and `sample <- rnorm(...)` / `c <- ggplot(...)` shadowing base R functions in Ch3. All harmless at runtime, all bad habits to model in code students copy.
-- **Ch4's NO2 data are laid out wide** (20 rows, near/far columns), which reads as paired, while the analysis is an independent-groups randomization test. Restructuring means rewriting the table and three chunks around it.
-- **Ch5 power curves are computed with `qnorm`/`pnorm` but captioned as t-test power.** The SE bug is fixed; this remains. At n=10 the z-approximation gives 0.20 where exact t-based power is 0.18, and "about 380 per group" is 394 exactly. Small, but the captions do say t-test.
+Re-verified after the Ch4/Ch5 restructure, the Ch4 pacing pass, and the Ch1/Ch2/Ch11 redistribution.
+
+### Closed since the audit
+
+- **Ch4's wide NO2 table** — *resolved by restructure.* The randomization test was cut from Ch4, and the table went with it. Nothing to restructure.
+- **Ch5 power curves captioned as t-test but computed with `qnorm`/`pnorm`** — *fixed 2026-08-18.* Both curves now use `power.t.test` (noncentral t), so the captions are true. Walkthrough numbers corrected to the exact values: d=0.5 gives 0.18 not 0.20, d=0.8 gives 0.40 not "about half", and 80% power at d=0.2 needs **394** per group, not 380.
+- **Teaching-code hygiene** — *fixed 2026-08-18.* `sample <- rnorm(...)` (5 places) and `c <- ggplot(...)` no longer shadow base R functions in Ch3; `x <- length(0)` preallocation replaced with `numeric()` in Ch2 (3) and Ch6 (10); `save_means <- length(iter)` fixed in the CLT helpers.
+- **Dead `sample` column in three CLT chunks** (flagged in the original audit as a minor item) — *fixed 2026-08-18.* The column and the matching `sample_mean` column were built and never plotted, since the base `aes(x=sample)` was overridden by each geom's own aes. Both removed and the base aes made honest.
+
+### Still open
+
+- **Non-palette colour literals**: now **42**, unchanged in count but redistributed by the Ch1 moves. Ch1 (25, down from 29), Ch10 (8), Ch2 (4, up from 0 — inherited with the variance and Anscombe blocks), Ch6 (3), Ch9 (2). Ch5 excluded per standing instruction. **Still deferred; needs an explicit go-ahead before starting.**
+- **~30 figures defined but never `@fig-` referenced**, largest cluster the five `fig-10outbreak*` in Ch9. Low priority: the prose flows into each figure naturally and the figure sits right there. Converting them means touching already style-passed prose.
+
+### Verified still fixed after three restructures
+
+Ch2 slope denominator (`7*200`), the Ch1 summation subscript (moved to Ch2 with the variance block), the Anscombe table (2 dp plus the `cor_xy` column, moved to Ch2), the Ch4 decision-boundary caption, and the Ch6 ggplot histograms. All surviving `round(runif(...))` calls are legitimate continuous scales (0-100 rating, 10-24 C, 25-150 ppb), not integer-uniform sampling.

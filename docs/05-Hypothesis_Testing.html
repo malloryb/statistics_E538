@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -13,10 +13,13 @@
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -96,10 +99,10 @@ div.csl-indent {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-5ccb035bea26c1e21f80f44cf7c27909.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-d3f7f8e73c8d287b30bcf59c2b563615.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -129,7 +132,7 @@ div.csl-indent {
 }</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -245,7 +248,7 @@ window.Quarto = {
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./06-ttests.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Histogram helpers for the simulation section, so those figures match the</span></span></a>
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">t-tests</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -357,8 +360,8 @@ window.Quarto = {
 </ul>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 28%">
-<col style="width: 35%">
+<col style="width: 29%">
+<col style="width: 34%">
 <col style="width: 36%">
 </colgroup>
 <thead>
@@ -423,6 +426,7 @@ Figure&nbsp;5.2: Type II error: <span class="math inline">\(H_0\)</span> is fals
 <h3 data-number="5.1.1" class="anchored" data-anchor-id="effect-of-sample-size-on-errors"><span class="header-section-number">5.1.1</span> Effect of Sample Size on Errors</h3>
 <p>With fixed <span class="math inline">\(\alpha\)</span> and correct assumptions, the long-run Type I error rate is <span class="math inline">\(\alpha\)</span> for any <span class="math inline">\(n\)</span>. <strong>Sample size mainly affects Type II error:</strong> with small <span class="math inline">\(n\)</span>, the sampling distribution is wide, true effects are harder to detect, and <span class="math inline">\(\beta\)</span> increases (power decreases). As <span class="math inline">\(n\)</span> grows, the sampling distribution tightens, <span class="math inline">\(\beta\)</span> falls, and power rises. Apparent changes in the Type I rate at small <span class="math inline">\(n\)</span> usually reflect <strong>assumption violations</strong> (e.g., non-normality, poor variance estimates, multiple looks), not <span class="math inline">\(n\)</span> itself.</p>
 <p><strong>Takeaway:</strong> Increasing <span class="math inline">\(n\)</span> improves estimation precision and <strong>power</strong> (reduces <span class="math inline">\(\beta\)</span>); <strong>Type I error remains at</strong> <span class="math inline">\(\alpha\)</span> when assumptions hold.</p>
+<p><strong>The one-tailed cost, made precise.</strong> Chapter 4 said that habitually running one-tailed tests makes you reject more often than your stated <span class="math inline">\(\alpha\)</span> implies. Here is what that means: a one-tailed test at <span class="math inline">\(\alpha = .05\)</span> puts the whole 5% in one tail, so if you pick the tail <em>after</em> seeing which way the data went, you have effectively run a two-tailed test at <span class="math inline">\(\alpha = .10\)</span> and doubled your Type I error rate. The test itself is not wrong. Choosing its direction from the data is.</p>
 </section>
 <section id="how-to-interpret-p-values" class="level3" data-number="5.1.2">
 <h3 data-number="5.1.2" class="anchored" data-anchor-id="how-to-interpret-p-values"><span class="header-section-number">5.1.2</span> How to interpret <span class="math inline">\(p\)</span>-values</h3>
@@ -509,10 +513,12 @@ Figure&nbsp;5.2: Type II error: <span class="math inline">\(H_0\)</span> is fals
 </ul>
 <p>These statements are easy to interpret, but they don’t travel well across contexts or measures.</p>
 <p><strong>Standardized (unitless).</strong> When units are unfamiliar or scales differ, standardize by typical variability. The most common standardized effect size metric is <em>Cohen’s d</em>. For two means with a common SD <span class="math inline">\(\sigma\)</span>,</p>
-<p><span class="math display">\[
-d = \frac{\mu_1 - \mu_2}{\sigma}
-\]</span></p>
-<p>Now “how big?” is expressed in <strong>SD units</strong>. If you notice, this is just a kind of z-score. It is a way to standardize the mean difference in terms of the population standard deviation.</p>
+<p><span class="math display">\[d = \frac{\mu_1 - \mu_2}{\sigma}\]</span></p>
+<p>Now “how big?” is expressed in <strong>SD units</strong>.</p>
+<p><strong>This is the same ratio as a test statistic, with one part swapped.</strong> Chapter 4 gave the general shape, effect over error, and the <span class="math inline">\(t\)</span>-test filled it in as</p>
+<p><span class="math display">\[t = \frac{\bar{X}-\mu_0}{s/\sqrt{n}} \qquad \text{versus} \qquad d = \frac{\mu_1-\mu_2}{\sigma}\]</span></p>
+<p>Same numerator: the effect. Different denominator, and that difference is the whole point. The <span class="math inline">\(t\)</span> statistic divides by the <strong>standard error</strong>, which shrinks as <span class="math inline">\(n\)</span> grows, so <span class="math inline">\(t\)</span> gets larger with more data even when the effect stays exactly the same. Cohen’s <span class="math inline">\(d\)</span> divides by the <strong>standard deviation</strong>, which does not shrink with <span class="math inline">\(n\)</span>, so <span class="math inline">\(d\)</span> reports the size of the effect itself.</p>
+<p>That is why a large <span class="math inline">\(t\)</span> does not mean a large effect, and why the two numbers answer different questions. Collect enough data and you can drive <span class="math inline">\(t\)</span> as high as you like off a trivial difference. You cannot do that to <span class="math inline">\(d\)</span>.</p>
 <p><strong>Environmental example (biodiversity index).</strong> Suppose an index increases from 3 to 4 after reforestation.</p>
 <ul>
 <li><p>In <strong>raw units</strong>: +1 index point.</p></li>
@@ -645,9 +651,9 @@ Figure&nbsp;5.4: Power vs.&nbsp;effect size (Cohen’s <span class="math inline"
 </div>
 <p><strong>Walkthrough.</strong></p>
 <ul>
-<li>With <span class="math inline">\(n=10\)</span>, the design only detects a medium effect (<span class="math inline">\(d=0.5\)</span>) about 20% of the time.</li>
-<li>A larger effect (<span class="math inline">\(d=0.8\)</span>) is caught about half the time.</li>
-<li>Very large effects (<span class="math inline">\(d=2\)</span>) are detected almost every time.</li>
+<li>With <span class="math inline">\(n=10\)</span>, the design only detects a medium effect (<span class="math inline">\(d=0.5\)</span>) about 18% of the time.</li>
+<li>A larger effect (<span class="math inline">\(d=0.8\)</span>) is caught about 40% of the time.</li>
+<li>Very large effects (<span class="math inline">\(d=2\)</span>) are detected almost every time (about 99%).</li>
 </ul>
 <p>This shows that small samples are only sensitive to big, obvious effects.</p>
 <p>Now suppose prior research suggests the effect size is small (<span class="math inline">\(d=0.2\)</span>). Instead of varying the effect, we can ask: <em>how many subjects per group do we need to have decent power?</em></p>
@@ -669,7 +675,7 @@ Figure&nbsp;5.5: Power vs.&nbsp;sample size for detecting <span class="math inli
 <p><strong>Walkthrough.</strong></p>
 <ul>
 <li>At <span class="math inline">\(n=10\)</span> per group, power to detect <span class="math inline">\(d=0.2\)</span> is near zero.</li>
-<li>To reach 80% power, we need about <strong>380 per group</strong>.</li>
+<li>To reach 80% power, we need about <strong>394 per group</strong>.</li>
 <li>Even then, 20% of studies would still fail to reject <span class="math inline">\(H_0\)</span> just by chance.</li>
 </ul>
 <p><strong>Takeaway:</strong></p>
@@ -1145,8 +1151,8 @@ Barnes, Mallory L. 2023. <em>Statistics for Environmental Science</em>.
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./06-ttests.html" class="pagination-link" aria-label="Histogram helpers for the simulation section, so those figures match the">
-        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Histogram helpers for the simulation section, so those figures match the</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="./06-ttests.html" class="pagination-link" aria-label="t-tests">
+        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">t-tests</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

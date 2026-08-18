@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -13,10 +13,13 @@
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -61,10 +64,10 @@ div.csl-indent {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-5ccb035bea26c1e21f80f44cf7c27909.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-d3f7f8e73c8d287b30bcf59c2b563615.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -94,7 +97,7 @@ div.csl-indent {
 }</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -210,7 +213,7 @@ window.Quarto = {
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./06-ttests.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Histogram helpers for the simulation section, so those figures match the</span></span></a>
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">t-tests</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -329,17 +332,13 @@ window.Quarto = {
 <h3 data-number="8.1.1" class="anchored" data-anchor-id="why-not-just-run-multiple-t-tests"><span class="header-section-number">8.1.1</span> Why not just run multiple t-tests?</h3>
 <p>Suppose we’re comparing three restoration treatments for vegetation cover: <strong>compost</strong>, <strong>mulch</strong>, and a bare-soil <strong>control</strong>. With three groups, there are three possible pairwise comparisons: compost vs.&nbsp;mulch, compost vs.&nbsp;control, and mulch vs.&nbsp;control.</p>
 <p>We could run a separate <span class="math inline">\(t\)</span>-test for each. The problem is that every test carries its own 5% chance of a false positive, and those chances accumulate across tests. This is the independence multiplication rule from Chapter 3 doing its work: if we run <span class="math inline">\(m\)</span> independent tests at <span class="math inline">\(\alpha=.05\)</span>, the probability of at least one false positive across all of them is</p>
-<p><span class="math display">\[
-P(\text{at least one false positive}) = 1-(1-\alpha)^m.
-\]</span></p>
+<p><span class="math display">\[P(\text{at least one false positive}) = 1-(1-\alpha)^m.\]</span></p>
 <p>With three groups, that’s three tests and a familywise error rate of 14%, not 5%:</p>
-<p><span class="math display">\[
-1-(1-.05)^3 = .14.
-\]</span></p>
+<p><span class="math display">\[1-(1-.05)^3 = .14.\]</span></p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
+<col style="width: 34%">
+<col style="width: 31%">
 <col style="width: 33%">
 </colgroup>
 <thead>
@@ -383,9 +382,7 @@ Figure&nbsp;8.1: Familywise Type I error rate as the number of independent t-tes
 </div>
 </div>
 <p>ANOVA solves this by replacing many separate <span class="math inline">\(t\)</span>-tests with <strong>one</strong> test that controls the overall error rate. It asks a single question:</p>
-<p><span class="math display">\[
-H_0: \mu_1=\mu_2=\mu_3 \qquad H_a: \text{at least one mean differs}
-\]</span></p>
+<p><span class="math display">\[H_0: \mu_1=\mu_2=\mu_3 \qquad H_a: \text{at least one mean differs}\]</span></p>
 <p>Just like the <span class="math inline">\(t\)</span>-test, different research designs call for different kinds of ANOVA: a one-factor (between-subjects) ANOVA when every unit is measured once, and a repeated-measures ANOVA when the same units are measured under multiple conditions. We start with the one-factor case.</p>
 </section>
 </section>
@@ -393,24 +390,16 @@ H_0: \mu_1=\mu_2=\mu_3 \qquad H_a: \text{at least one mean differs}
 <h2 data-number="8.2" class="anchored" data-anchor-id="one-factor-anova"><span class="header-section-number">8.2</span> One-factor ANOVA</h2>
 <p>The one-factor ANOVA (also called a between-subjects, independent-factor, or one-way ANOVA) is the simplest version of the test: one independent variable with two or more levels, and every unit measured once.</p>
 <p>With exactly two groups, a <span class="math inline">\(t\)</span>-test and a one-factor ANOVA give the same answer: <span class="math inline">\(t^2=F\)</span>. Both compare the size of an effect to the amount of variation you’d expect from sampling error alone; the <span class="math inline">\(t\)</span>-test expresses that comparison as <span class="math inline">\(t\)</span>, and the ANOVA expresses the same underlying ratio as <span class="math inline">\(F\)</span> (named for Fisher, its inventor).</p>
-<p><span class="math display">\[
-F = \frac{\text{measure of effect}}{\text{measure of error}}
-\]</span></p>
+<p><span class="math display">\[F = \frac{\text{measure of effect}}{\text{measure of error}}\]</span></p>
 <p>The difference is that <span class="math inline">\(F\)</span> uses <strong>variances</strong> for both the numerator and the denominator, so <span class="math inline">\(F\)</span> is a ratio of two variances: the variance you can explain (differences between group means) over the variance you can’t (leftover noise within each group).</p>
-<p><span class="math display">\[
-F = \frac{\text{Can explain}}{\text{Can't explain}}
-\]</span></p>
+<p><span class="math display">\[F = \frac{\text{Can explain}}{\text{Can't explain}}\]</span></p>
 <p>When the two are about the same size, <span class="math inline">\(F\approx 1\)</span>: group differences are no bigger than ordinary sampling noise. When explained variance is much larger than unexplained variance, <span class="math inline">\(F\)</span> climbs well above 1, evidence that the groups really differ; when it’s smaller, <span class="math inline">\(F\)</span> drops below 1. An <span class="math inline">\(F\)</span> of 5 means the groups explain five times more variance than they leave unexplained, a substantial effect. An <span class="math inline">\(F\)</span> of 0.6 means the opposite, mostly unexplained noise.</p>
 <section id="computing-the-f-value" class="level3" data-number="8.2.1">
 <h3 data-number="8.2.1" class="anchored" data-anchor-id="computing-the-f-value"><span class="header-section-number">8.2.1</span> Computing the <span class="math inline">\(F\)</span>-value</h3>
 <p>ANOVA splits the total variation in the data into two sources: variation caused by group membership (the manipulation), and variation left over as sampling error. If we can measure those two parts separately, we can turn them into a ratio and get an <span class="math inline">\(F\)</span>-value.</p>
-<p><span class="math display">\[
-\text{Total variation} = \text{Variation between groups} + \text{Variation within groups}
-\]</span></p>
+<p><span class="math display">\[\text{Total variation} = \text{Variation between groups} + \text{Variation within groups}\]</span></p>
 <p>To make that precise we need an actual measure of variation. As in Chapter 1, that’s the <strong>sums of squares</strong>:</p>
-<p><span class="math display">\[
-SS_\text{Total} = SS_\text{Between} + SS_\text{Within}
-\]</span></p>
+<p><span class="math display">\[SS_\text{Total} = SS_\text{Between} + SS_\text{Within}\]</span></p>
 </section>
 <section id="ss-total" class="level3" data-number="8.2.2">
 <h3 data-number="8.2.2" class="anchored" data-anchor-id="ss-total"><span class="header-section-number">8.2.2</span> SS Total</h3>
@@ -501,9 +490,7 @@ SS_\text{Total} = SS_\text{Between} + SS_\text{Within}
 <p>The data are in long format, so each row is a single score. The mean of all of the scores is the <strong>Grand Mean</strong>, calculated in the table as 7.</p>
 <p>The <code>diff</code> column holds every score’s distance from the grand mean; <code>diff_squared</code> squares those distances. Squaring matters because the raw differences sum to zero (the mean is the balancing point of the data), so working with them directly wouldn’t tell us anything. Squaring turns every deviation positive and, as a side effect, weights larger deviations more heavily.</p>
 <p>Adding up all of the squared deviations gives the sums of squares, which is where the name comes from. That’s the first piece of our answer:</p>
-<p><span class="math display">\[
-SS_\text{Total} = SS_\text{Between} + SS_\text{Within}, \qquad 302 = SS_\text{Between} + SS_\text{Within}.
-\]</span></p>
+<p><span class="math display">\[SS_\text{Total} = SS_\text{Between} + SS_\text{Within}, \qquad 302 = SS_\text{Between} + SS_\text{Within}.\]</span></p>
 <p>We only need to compute one of the two remaining pieces directly; the other follows by subtraction.</p>
 </section>
 <section id="ss-between" class="level3" data-number="8.2.3">
@@ -612,9 +599,7 @@ SS_\text{Total} = SS_\text{Between} + SS_\text{Within}, \qquad 302 = SS_\text{Be
 <section id="ss-within" class="level3" data-number="8.2.4">
 <h3 data-number="8.2.4" class="anchored" data-anchor-id="ss-within"><span class="header-section-number">8.2.4</span> SS Within</h3>
 <p>We already have <span class="math inline">\(SS_\text{Total} = 302\)</span> and <span class="math inline">\(SS_\text{Between} = 72\)</span>, so we can solve for <span class="math inline">\(SS_\text{Within}\)</span> by subtraction:</p>
-<p><span class="math display">\[
-SS_\text{Within} = SS_\text{Total} - SS_\text{Between} = 302 - 72 = 230.
-\]</span></p>
+<p><span class="math display">\[SS_\text{Within} = SS_\text{Total} - SS_\text{Between} = 302 - 72 = 230.\]</span></p>
 <p>It’s worth calculating <span class="math inline">\(SS_\text{Within}\)</span> directly from the data too, both to see where it comes from and to double-check that the subtraction was right.</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -722,20 +707,14 @@ SS_\text{Within} = SS_\text{Total} - SS_\text{Between} = 302 - 72 = 230.
 <h3 data-number="8.2.6" class="anchored" data-anchor-id="mean-squares"><span class="header-section-number">8.2.6</span> Mean Squares</h3>
 <p>We’re building toward <span class="math inline">\(F=\dfrac{\text{measure of effect}}{\text{measure of error}}\)</span>, and it’s tempting to just divide <span class="math inline">\(SS_\text{Between}\)</span> by <span class="math inline">\(SS_\text{Within}\)</span> directly. The problem is that <span class="math inline">\(SS_\text{Within}\)</span> sums over all 9 individual scores while <span class="math inline">\(SS_\text{Between}\)</span> sums over only 3 group means, so <span class="math inline">\(SS_\text{Within}\)</span> is almost always the much larger number, and the raw ratio wouldn’t be interpretable the way <span class="math inline">\(t\)</span> or <span class="math inline">\(z\)</span> are.</p>
 <p>The fix is to convert each sum of squares into an average, or <strong>mean square</strong>, by dividing by its degrees of freedom (rather than its raw count, since these are estimated quantities):</p>
-<p><span class="math display">\[
-MS_\text{Between} = \frac{SS_\text{Between}}{df_\text{Between}} = \frac{72}{2} = 36
-\]</span></p>
-<p><span class="math display">\[
-MS_\text{Within} = \frac{SS_\text{Within}}{df_\text{Within}} = \frac{230}{6} = 38.33
-\]</span></p>
+<p><span class="math display">\[MS_\text{Between} = \frac{SS_\text{Between}}{df_\text{Between}} = \frac{72}{2} = 36\]</span></p>
+<p><span class="math display">\[MS_\text{Within} = \frac{SS_\text{Within}}{df_\text{Within}} = \frac{230}{6} = 38.33\]</span></p>
 <p>Both are variances: <span class="math inline">\(MS_\text{Between}\)</span> measures how much the group means vary, and <span class="math inline">\(MS_\text{Within}\)</span> measures how much individual scores vary around their own group’s mean.</p>
 </section>
 <section id="calculate-f" class="level3" data-number="8.2.7">
 <h3 data-number="8.2.7" class="anchored" data-anchor-id="calculate-f"><span class="header-section-number">8.2.7</span> Calculate F</h3>
 <p>With <span class="math inline">\(MS_\text{Between}\)</span> and <span class="math inline">\(MS_\text{Within}\)</span> in hand, <span class="math inline">\(F\)</span> is their ratio:</p>
-<p><span class="math display">\[
-F = \frac{MS_\text{Between}}{MS_\text{Within}} = \frac{36}{38.33} = 0.94
-\]</span></p>
+<p><span class="math display">\[F = \frac{MS_\text{Between}}{MS_\text{Within}} = \frac{36}{38.33} = 0.94\]</span></p>
 </section>
 <section id="the-anova-table" class="level3" data-number="8.2.8">
 <h3 data-number="8.2.8" class="anchored" data-anchor-id="the-anova-table"><span class="header-section-number">8.2.8</span> The ANOVA table</h3>
@@ -821,7 +800,7 @@ Figure&nbsp;8.3: The critical value for <span class="math inline">\(F\)</span> w
 </div>
 </div>
 </div>
-<p>Only 5% of <span class="math inline">\(F\)</span>-values from this null distribution are 3.35 or larger. That gives us a decision rule: if we ran the same design for real (30 plots, 10 per site type) and site type genuinely affected abundance, we could treat <span class="math inline">\(F\geq3.35\)</span> as evidence the differences aren’t just chance. An observed <span class="math inline">\(F\)</span> of 3.4, for instance, would occur less than 5% of the time under the null, so seeing it would give us reasonably good grounds to conclude that site type actually mattered.</p>
+<p>Only 5% of <span class="math inline">\(F\)</span>-values from this null distribution are 3.35 or larger. That gives us a decision rule: if we ran the same design for real (30 plots, 10 per site type) and site type actually affected abundance, we could treat <span class="math inline">\(F\geq3.35\)</span> as evidence the differences aren’t just chance. An observed <span class="math inline">\(F\)</span> of 3.4, for instance, would occur less than 5% of the time under the null, so seeing it would give us reasonably good grounds to conclude that site type actually mattered.</p>
 </section>
 <section id="f-and-the-means" class="level3" data-number="8.3.2">
 <h3 data-number="8.3.2" class="anchored" data-anchor-id="f-and-the-means"><span class="header-section-number">8.3.2</span> F and the means</h3>
@@ -996,9 +975,7 @@ Table&nbsp;8.1: One-way ANOVA table for salamander abundance by forest type.
 <h3 data-number="8.4.2" class="anchored" data-anchor-id="effect-size-eta-squared"><span class="header-section-number">8.4.2</span> Effect size: eta-squared</h3>
 <p>The <span class="math inline">\(F\)</span>-test answers whether the group means differ by more than chance would produce. It says nothing about <em>how much</em> of the variation in salamander abundance forest type actually accounts for, and those are separate questions. Chapter 6 made the same distinction for the <span class="math inline">\(t\)</span>-test, where <span class="math inline">\(p\)</span> told us whether a difference was detectable and Cohen’s <span class="math inline">\(d\)</span> told us how large it was.</p>
 <p>ANOVA’s effect size is <strong>eta-squared</strong> (<span class="math inline">\(\eta^2\)</span>), and we already computed both of its ingredients when we partitioned the sums of squares:</p>
-<p><span class="math display">\[
-\eta^2 = \frac{SS_\text{Between}}{SS_\text{Total}} = \frac{SS_\text{Between}}{SS_\text{Between} + SS_\text{Within}}
-\]</span></p>
+<p><span class="math display">\[\eta^2 = \frac{SS_\text{Between}}{SS_\text{Total}} = \frac{SS_\text{Between}}{SS_\text{Between} + SS_\text{Within}}\]</span></p>
 <p><span class="math inline">\(SS_\text{Between}\)</span> is the variation the group means can account for and <span class="math inline">\(SS_\text{Total}\)</span> is all the variation there is, so <span class="math inline">\(\eta^2\)</span> is the proportion of the total variation attributable to the grouping variable. It runs from 0 to 1.</p>
 <div class="cell">
 <div id="tbl-9etasq" class="cell quarto-float quarto-figure quarto-figure-center anchored">
@@ -1085,7 +1062,7 @@ Table&nbsp;8.2: Eta-squared for the effect of forest type on salamander abundanc
 </div>
 </div>
 <p>Levene’s test gives <span class="math inline">\(F(2,21) = 0.52\)</span>, <span class="math inline">\(p = .60\)</span>: no evidence of unequal variance across forest types. The Shapiro-Wilk test on the model’s residuals gives <span class="math inline">\(W = 0.93\)</span>, <span class="math inline">\(p = .078\)</span>: no strong evidence against normality either. Both checks are consistent with the boxplot and dot plot we already looked at in <a href="#fig-9salamanderData" class="quarto-xref">Figure&nbsp;<span>8.8</span></a>: similar spread across groups, no glaring outliers.</p>
-<p><strong>A word of caution about formal assumption tests.</strong> It’s tempting to treat Levene’s test as a strict gate, where significant means “stop” and not significant means “proceed.” Resist that. These tests have an awkward property: with a small sample (exactly when a violated assumption matters most), they have low power and will often say “no problem” even when there is one; with a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as “significant.” A formal test is one piece of evidence, not the whole verdict, so look at the diagnostic plots too and use judgment. In practice, one-way ANOVA is moderately robust to mild departures from these assumptions, especially with balanced group sizes like we have here (8 plots per forest type). The situation to genuinely worry about is the combination of small, unbalanced samples with visibly skewed data or wildly different spreads, and that’s exactly when the nonparametric alternative below becomes the better choice.</p>
+<p><strong>A word of caution about formal assumption tests.</strong> It’s tempting to treat Levene’s test as a strict gate, where significant means “stop” and not significant means “proceed.” Resist that. These tests have an awkward property: with a small sample (exactly when a violated assumption matters most), they have low power and will often say “no problem” even when there is one; with a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as “significant.” A formal test is one piece of evidence, not the whole verdict, so look at the diagnostic plots too and use judgment. In practice, one-way ANOVA is moderately robust to mild departures from these assumptions, especially with balanced group sizes like we have here (8 plots per forest type). The situation to really worry about is the combination of small, unbalanced samples with visibly skewed data or wildly different spreads, and that’s exactly when the nonparametric alternative below becomes the better choice.</p>
 </section>
 <section id="post-hoc-comparisons-with-tukey-hsd" class="level3" data-number="8.4.4">
 <h3 data-number="8.4.4" class="anchored" data-anchor-id="post-hoc-comparisons-with-tukey-hsd"><span class="header-section-number">8.4.4</span> Post-hoc comparisons with Tukey HSD</h3>
@@ -1144,7 +1121,7 @@ Table&nbsp;8.3: Tukey HSD post-hoc comparisons for salamander abundance by fores
 <li><strong>p adj</strong> is the <span class="math inline">\(p\)</span>-value <em>after</em> adjusting for the fact that you are making three comparisons at once. This adjustment is the whole point of Tukey HSD: it is why running the three comparisons here does not carry the 14% familywise error rate we computed at the start of the chapter.</li>
 </ul>
 <p><strong>Watch the sign.</strong> This is the single easiest thing to get backwards. The row <code>Secondary-Old-growth</code> has a diff of <span class="math inline">\(-6.875\)</span>, and that negative sign does <strong>not</strong> mean secondary forest has more salamanders. It means secondary <em>minus</em> old-growth is negative, so old-growth is the higher of the two, by 6.88 individuals per plot. Always translate the sign back into a sentence naming which group is larger before you write anything down.</p>
-<p><strong>The confidence interval and the <span class="math inline">\(p\)</span>-value say the same thing.</strong> A pair differs significantly at <span class="math inline">\(\alpha = .05\)</span> exactly when its 95% interval excludes zero. Check both columns against each other as a habit: <code>Secondary-Old-growth</code> runs from <span class="math inline">\(-11.00\)</span> to <span class="math inline">\(-2.75\)</span>, entirely below zero, and its <span class="math inline">\(p\)</span> is .0011. <code>Managed-Secondary</code> runs from <span class="math inline">\(-5.50\)</span> to <span class="math inline">\(2.75\)</span>, straddling zero, and its <span class="math inline">\(p\)</span> is .68. The two columns can never disagree, so if they seem to, you have misread a row.</p>
+<p><strong>The confidence interval and the</strong> <span class="math inline">\(p\)</span>-value say the same thing. A pair differs significantly at <span class="math inline">\(\alpha = .05\)</span> exactly when its 95% interval excludes zero. Check both columns against each other as a habit: <code>Secondary-Old-growth</code> runs from <span class="math inline">\(-11.00\)</span> to <span class="math inline">\(-2.75\)</span>, entirely below zero, and its <span class="math inline">\(p\)</span> is .0011. <code>Managed-Secondary</code> runs from <span class="math inline">\(-5.50\)</span> to <span class="math inline">\(2.75\)</span>, straddling zero, and its <span class="math inline">\(p\)</span> is .68. The two columns can never disagree, so if they seem to, you have misread a row.</p>
 <p>So the three comparisons give:</p>
 <ul>
 <li><strong>Old-growth vs.&nbsp;Secondary</strong>: old-growth is higher by 6.88 individuals/plot, <span class="math inline">\(p = .001\)</span>. Significant.</li>
@@ -1173,7 +1150,7 @@ Figure&nbsp;8.9: Mean salamander abundance with Tukey letters. Old-growth carrie
 <section id="nonparametric-alternative-the-kruskal-wallis-test" class="level3" data-number="8.4.5">
 <h3 data-number="8.4.5" class="anchored" data-anchor-id="nonparametric-alternative-the-kruskal-wallis-test"><span class="header-section-number">8.4.5</span> Nonparametric alternative: the Kruskal-Wallis test</h3>
 <p>Our assumption checks above came back clean, so the ANOVA result stands as-is. But suppose they hadn’t: visibly unequal spread across groups, or clearly skewed residuals, especially with small or unbalanced samples. The <strong>Kruskal-Wallis test</strong> is the nonparametric alternative to one-way ANOVA, in exactly the same relationship that the Mann-Whitney-Wilcoxon test has to the independent-samples <span class="math inline">\(t\)</span>-test (in fact, Kruskal-Wallis <em>is</em> the Mann-Whitney-Wilcoxon logic extended to more than two groups).</p>
-<p><strong>How it works, conceptually.</strong> Rank every observation across all groups together, from smallest to largest, ignoring group membership. Then check whether the average rank differs more across groups than chance alone would produce. If forest type genuinely matters, one group’s observations should occupy systematically higher or lower ranks than the others.</p>
+<p><strong>How it works, conceptually.</strong> Rank every observation across all groups together, from smallest to largest, ignoring group membership. Then check whether the average rank differs more across groups than chance alone would produce. If forest type truly matters, one group’s observations should occupy systematically higher or lower ranks than the others.</p>
 <p><strong>Its assumption.</strong> Kruskal-Wallis does not require normality. Like the Mann-Whitney-Wilcoxon test, it’s cleanest to interpret as a test of differences in <strong>location</strong> (median) when the groups’ distributions have similar shape; if the shapes differ a lot, a significant result tells you the groups differ somehow, but not cleanly whether that’s a difference in location, spread, or shape.</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -1215,17 +1192,17 @@ Figure&nbsp;8.9: Mean salamander abundance with Tukey letters. Old-growth carrie
 <tr class="odd">
 <td style="text-align: left;">Secondary</td>
 <td style="text-align: left;">Old-growth</td>
-<td style="text-align: left;">0.007</td>
+<td style="text-align: left;">0.011</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Managed</td>
 <td style="text-align: left;">Old-growth</td>
-<td style="text-align: left;">0.001</td>
+<td style="text-align: left;">0.004</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Managed</td>
 <td style="text-align: left;">Secondary</td>
-<td style="text-align: left;">0.477</td>
+<td style="text-align: left;">0.486</td>
 </tr>
 </tbody>
 </table>
@@ -1239,11 +1216,11 @@ Figure&nbsp;8.9: Mean salamander abundance with Tukey letters. Old-growth carrie
 <p><strong>Why it matters.</strong> Comparing more than two groups with a stack of <span class="math inline">\(t\)</span>-tests inflates your false-positive rate fast. ANOVA solves that by asking one omnibus question first, and its variance-partitioning logic is the same idea that reappears in regression, factorial designs, and ANCOVA.</p>
 <p><strong>Core ideas</strong></p>
 <ul>
-<li><strong>Why not just run more <span class="math inline">\(t\)</span>-tests.</strong> Each comparison carries its own chance of a false positive, and they accumulate: with <span class="math inline">\(m\)</span> comparisons the familywise error rate is <span class="math inline">\(1-(1-\alpha)^m\)</span>, which is already 14% for three groups.</li>
+<li><strong>Why not just run more</strong> <span class="math inline">\(t\)</span>-tests. Each comparison carries its own chance of a false positive, and they accumulate: with <span class="math inline">\(m\)</span> comparisons the familywise error rate is <span class="math inline">\(1-(1-\alpha)^m\)</span>, which is already 14% for three groups.</li>
 <li><strong>Partition the variation.</strong> Total variation splits into a piece explained by group membership (<span class="math inline">\(SS_\text{Between}\)</span>) and unexplained residual variation (<span class="math inline">\(SS_\text{Within}\)</span>). That split is the whole idea.</li>
-<li><strong><span class="math inline">\(F\)</span> is a ratio of the two.</strong> After adjusting each sum of squares for its degrees of freedom, <span class="math inline">\(F = MS_\text{Between} / MS_\text{Within}\)</span>. A large <span class="math inline">\(F\)</span> means between-group differences are large relative to within-group noise.</li>
+<li><span class="math inline">\(F\)</span> is a ratio of the two. After adjusting each sum of squares for its degrees of freedom, <span class="math inline">\(F = MS_\text{Between} / MS_\text{Within}\)</span>. A large <span class="math inline">\(F\)</span> means between-group differences are large relative to within-group noise.</li>
 <li><strong>Two steps, always in order.</strong> First the omnibus test: do <em>any</em> group means differ? Only if that is significant do you run post-hoc comparisons (Tukey HSD) to find out <em>which</em> pairs differ.</li>
-<li><strong><span class="math inline">\(\eta^2\)</span> is the effect size.</strong> <span class="math inline">\(SS_\text{Between}/SS_\text{Total}\)</span> is the proportion of variation the grouping variable accounts for. It is the same quantity as regression’s <span class="math inline">\(R^2\)</span>, and it does not depend on sample size the way <span class="math inline">\(p\)</span> does, so report it alongside <span class="math inline">\(F\)</span>.</li>
+<li><span class="math inline">\(\eta^2\)</span> is the effect size. <span class="math inline">\(SS_\text{Between}/SS_\text{Total}\)</span> is the proportion of variation the grouping variable accounts for. It is the same quantity as regression’s <span class="math inline">\(R^2\)</span>, and it does not depend on sample size the way <span class="math inline">\(p\)</span> does, so report it alongside <span class="math inline">\(F\)</span>.</li>
 <li><strong>Check the assumptions.</strong> ANOVA needs approximately equal variances across groups (Levene’s test) and roughly normal residuals. Treat formal tests as evidence rather than a gate, since they have least power exactly when small samples make violations matter most.</li>
 <li><strong>When assumptions fail.</strong> The <strong>Kruskal-Wallis</strong> test is the rank-based alternative, with <code>pairwise.wilcox.test()</code> as its post-hoc counterpart.</li>
 </ul>
