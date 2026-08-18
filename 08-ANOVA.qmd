@@ -20,7 +20,7 @@ library(broom)
 fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = "f"))
 ```
 
-Some history first [@salsburg2001lady]. Sir Ronald Fisher invented the ANOVA and wanted to publish it in the journal Biometrika. The editor at the time was Karl Pearson, of Pearson's $r$, and the two men disliked each other, so Pearson refused to publish the new test. Fisher published it in the Journal of Agricultural Science instead. The feud carried into the next generation: years later, Karl Pearson's son Egon Pearson, working with Jerzy Neyman, revamped Fisher's ideas and re-cast them into what we now call null vs. alternative hypothesis testing. Fisher objected to that too.
+Some history first [@salsburg2001lady]. Sir Ronald Fisher invented the ANOVA and wanted to publish it in the journal Biometrika. The editor at the time was Karl Pearson, of Pearson's $r$, and the two men disliked each other, so Pearson refused to publish the new test. Fisher published it in the Journal of Agricultural Science instead. The feud carried into the next generation: years later, Karl Pearson's son Egon Pearson, working with Jerzy Neyman, revamped Fisher's ideas and re-cast them into what we now call null vs. alternative hypothesis testing. Fisher objected to that too. \[noticing over-use of "genuinely" in text in this chapter\]
 
 We present the ANOVA in the Fisherian sense, and at the end describe the Neyman-Pearson approach that invokes the concept of null vs. alternative hypotheses.
 
@@ -36,21 +36,17 @@ Suppose we're comparing three restoration treatments for vegetation cover: **com
 
 We could run a separate $t$-test for each. The problem is that every test carries its own 5% chance of a false positive, and those chances accumulate across tests. This is the independence multiplication rule from Chapter 3 doing its work: if we run $m$ independent tests at $\alpha=.05$, the probability of at least one false positive across all of them is
 
-$$
-P(\text{at least one false positive}) = 1-(1-\alpha)^m.
-$$
+$$P(\text{at least one false positive}) = 1-(1-\alpha)^m.$$
 
 With three groups, that's three tests and a familywise error rate of 14%, not 5%:
 
-$$
-1-(1-.05)^3 = .14.
-$$
+$$1-(1-.05)^3 = .14.$$
 
 | Number of groups ($k$) | Pairwise tests ($m$) | Familywise error rate |
-|---|---|---|
-| 3 | 3 | $1-.95^3=.14$ |
-| 4 | 6 | $1-.95^6=.26$ |
-| 5 | 10 | $1-.95^{10}=.40$ |
+|------------------------|----------------------|-----------------------|
+| 3                      | 3                    | $1-.95^3=.14$         |
+| 4                      | 6                    | $1-.95^6=.26$         |
+| 5                      | 10                   | $1-.95^{10}=.40$      |
 
 Even with only five groups, there's a 40% chance of turning up at least one "significant" difference somewhere purely by chance, even if every population mean is identical. @fig-9multiplet shows this inflation directly: as the number of independent $t$-tests grows, so does the chance that at least one is a false positive.
 
@@ -74,9 +70,7 @@ ggplot(data.frame(m, familywise), aes(x = m, y = familywise)) +
 
 ANOVA solves this by replacing many separate $t$-tests with **one** test that controls the overall error rate. It asks a single question:
 
-$$
-H_0: \mu_1=\mu_2=\mu_3 \qquad H_a: \text{at least one mean differs}
-$$
+$$H_0: \mu_1=\mu_2=\mu_3 \qquad H_a: \text{at least one mean differs}$$
 
 Just like the $t$-test, different research designs call for different kinds of ANOVA: a one-factor (between-subjects) ANOVA when every unit is measured once, and a repeated-measures ANOVA when the same units are measured under multiple conditions. We start with the one-factor case.
 
@@ -86,15 +80,11 @@ The one-factor ANOVA (also called a between-subjects, independent-factor, or one
 
 With exactly two groups, a $t$-test and a one-factor ANOVA give the same answer: $t^2=F$. Both compare the size of an effect to the amount of variation you'd expect from sampling error alone; the $t$-test expresses that comparison as $t$, and the ANOVA expresses the same underlying ratio as $F$ (named for Fisher, its inventor).
 
-$$
-F = \frac{\text{measure of effect}}{\text{measure of error}}
-$$
+$$F = \frac{\text{measure of effect}}{\text{measure of error}}$$
 
 The difference is that $F$ uses **variances** for both the numerator and the denominator, so $F$ is a ratio of two variances: the variance you can explain (differences between group means) over the variance you can't (leftover noise within each group).
 
-$$
-F = \frac{\text{Can explain}}{\text{Can't explain}}
-$$
+$$F = \frac{\text{Can explain}}{\text{Can't explain}}$$
 
 When the two are about the same size, $F\approx 1$: group differences are no bigger than ordinary sampling noise. When explained variance is much larger than unexplained variance, $F$ climbs well above 1, evidence that the groups really differ; when it's smaller, $F$ drops below 1. An $F$ of 5 means the groups explain five times more variance than they leave unexplained, a substantial effect. An $F$ of 0.6 means the opposite, mostly unexplained noise.
 
@@ -102,15 +92,11 @@ When the two are about the same size, $F\approx 1$: group differences are no big
 
 ANOVA splits the total variation in the data into two sources: variation caused by group membership (the manipulation), and variation left over as sampling error. If we can measure those two parts separately, we can turn them into a ratio and get an $F$-value.
 
-$$
-\text{Total variation} = \text{Variation between groups} + \text{Variation within groups}
-$$
+$$\text{Total variation} = \text{Variation between groups} + \text{Variation within groups}$$
 
 To make that precise we need an actual measure of variation. As in Chapter 1, that's the **sums of squares**:
 
-$$
-SS_\text{Total} = SS_\text{Between} + SS_\text{Within}
-$$
+$$SS_\text{Total} = SS_\text{Between} + SS_\text{Within}$$
 
 ### SS Total
 
@@ -141,9 +127,7 @@ The `diff` column holds every score's distance from the grand mean; `diff_square
 
 Adding up all of the squared deviations gives the sums of squares, which is where the name comes from. That's the first piece of our answer:
 
-$$
-SS_\text{Total} = SS_\text{Between} + SS_\text{Within}, \qquad 302 = SS_\text{Between} + SS_\text{Within}.
-$$
+$$SS_\text{Total} = SS_\text{Between} + SS_\text{Within}, \qquad 302 = SS_\text{Between} + SS_\text{Within}.$$
 
 We only need to compute one of the two remaining pieces directly; the other follows by subtraction.
 
@@ -183,9 +167,7 @@ $SS_\text{Between}$ can never be larger than $SS_\text{Total}$, and indeed 72 is
 
 We already have $SS_\text{Total} = 302$ and $SS_\text{Between} = 72$, so we can solve for $SS_\text{Within}$ by subtraction:
 
-$$
-SS_\text{Within} = SS_\text{Total} - SS_\text{Between} = 302 - 72 = 230.
-$$
+$$SS_\text{Within} = SS_\text{Total} - SS_\text{Between} = 302 - 72 = 230.$$
 
 It's worth calculating $SS_\text{Within}$ directly from the data too, both to see where it comes from and to double-check that the subtraction was right.
 
@@ -222,13 +204,9 @@ We're building toward $F=\dfrac{\text{measure of effect}}{\text{measure of error
 
 The fix is to convert each sum of squares into an average, or **mean square**, by dividing by its degrees of freedom (rather than its raw count, since these are estimated quantities):
 
-$$
-MS_\text{Between} = \frac{SS_\text{Between}}{df_\text{Between}} = \frac{72}{2} = 36
-$$
+$$MS_\text{Between} = \frac{SS_\text{Between}}{df_\text{Between}} = \frac{72}{2} = 36$$
 
-$$
-MS_\text{Within} = \frac{SS_\text{Within}}{df_\text{Within}} = \frac{230}{6} = 38.33
-$$
+$$MS_\text{Within} = \frac{SS_\text{Within}}{df_\text{Within}} = \frac{230}{6} = 38.33$$
 
 Both are variances: $MS_\text{Between}$ measures how much the group means vary, and $MS_\text{Within}$ measures how much individual scores vary around their own group's mean.
 
@@ -236,9 +214,7 @@ Both are variances: $MS_\text{Between}$ measures how much the group means vary, 
 
 With $MS_\text{Between}$ and $MS_\text{Within}$ in hand, $F$ is their ratio:
 
-$$
-F = \frac{MS_\text{Between}}{MS_\text{Within}} = \frac{36}{38.33} = 0.94
-$$
+$$F = \frac{MS_\text{Between}}{MS_\text{Within}} = \frac{36}{38.33} = 0.94$$
 
 ### The ANOVA table
 
@@ -302,7 +278,7 @@ We can use this null distribution of $F$ to decide when a real experiment's resu
 1.  Set an alpha criterion of $p$ = 0.05
 2.  Find the critical value of $F$ for our design's numerator and denominator $df$s.
 
-@fig-9criticalF marks that critical value on the histogram:
+@fig-9criticalF marks that critical value on the histogram \[text is huge and why "save_F" doesn't make sense as x label\]:
 
 ```{r}
 #| label: fig-9criticalF
@@ -575,11 +551,11 @@ summary_out  <- summary(aov_out)
 knitr::kable(xtable(summary_out), digits = c(0, 0, 2, 2, 2, 4))
 ```
 
-:::: {.callout-important title="Results reporting: one-way ANOVA"}
+::: {.callout-important title="Results reporting: one-way ANOVA"}
 Report the direction in plain language, the test statistic with both degrees of freedom, the error term, $p$, and the effect size.
 
 > There was a significant effect of forest type on salamander abundance, $F(2, 21) = 14.60$, $MSE = 10.70$, $p < .001$, $\eta^2 = 0.58$.
-::::
+:::
 
 The F-value of 14.60 falls far into the tail of the null F distribution for df(2, 21): values this large arise by chance less than 0.1% of the time. We reject the null hypothesis that all three group means are equal.
 
@@ -589,9 +565,7 @@ The $F$-test answers whether the group means differ by more than chance would pr
 
 ANOVA's effect size is **eta-squared** ($\eta^2$), and we already computed both of its ingredients when we partitioned the sums of squares:
 
-$$
-\eta^2 = \frac{SS_\text{Between}}{SS_\text{Total}} = \frac{SS_\text{Between}}{SS_\text{Between} + SS_\text{Within}}
-$$
+$$\eta^2 = \frac{SS_\text{Between}}{SS_\text{Total}} = \frac{SS_\text{Between}}{SS_\text{Between} + SS_\text{Within}}$$
 
 $SS_\text{Between}$ is the variation the group means can account for and $SS_\text{Total}$ is all the variation there is, so $\eta^2$ is the proportion of the total variation attributable to the grouping variable. It runs from 0 to 1.
 
@@ -669,19 +643,19 @@ knitr::kable(round(tukey_out$forest_type, 4))
 
 **Reading the table, column by column.** Each row is one pairwise comparison, and there are three of them because three groups make three pairs.
 
--   **diff** is the difference in group means, computed as *the second group listed minus the first*. Read the row label right to left.
--   **lwr** and **upr** are the lower and upper bounds of the 95% confidence interval for that difference.
--   **p adj** is the $p$-value *after* adjusting for the fact that you are making three comparisons at once. This adjustment is the whole point of Tukey HSD: it is why running the three comparisons here does not carry the 14% familywise error rate we computed at the start of the chapter.
+- **diff** is the difference in group means, computed as *the second group listed minus the first*. Read the row label right to left.
+- **lwr** and **upr** are the lower and upper bounds of the 95% confidence interval for that difference.
+- **p adj** is the $p$-value *after* adjusting for the fact that you are making three comparisons at once. This adjustment is the whole point of Tukey HSD: it is why running the three comparisons here does not carry the 14% familywise error rate we computed at the start of the chapter.
 
 **Watch the sign.** This is the single easiest thing to get backwards. The row `Secondary-Old-growth` has a diff of $-6.875$, and that negative sign does **not** mean secondary forest has more salamanders. It means secondary *minus* old-growth is negative, so old-growth is the higher of the two, by 6.88 individuals per plot. Always translate the sign back into a sentence naming which group is larger before you write anything down.
 
-**The confidence interval and the $p$-value say the same thing.** A pair differs significantly at $\alpha = .05$ exactly when its 95% interval excludes zero. Check both columns against each other as a habit: `Secondary-Old-growth` runs from $-11.00$ to $-2.75$, entirely below zero, and its $p$ is .0011. `Managed-Secondary` runs from $-5.50$ to $2.75$, straddling zero, and its $p$ is .68. The two columns can never disagree, so if they seem to, you have misread a row.
+**The confidence interval and the** $p$-value say the same thing. A pair differs significantly at $\alpha = .05$ exactly when its 95% interval excludes zero. Check both columns against each other as a habit: `Secondary-Old-growth` runs from $-11.00$ to $-2.75$, entirely below zero, and its $p$ is .0011. `Managed-Secondary` runs from $-5.50$ to $2.75$, straddling zero, and its $p$ is .68. The two columns can never disagree, so if they seem to, you have misread a row.
 
 So the three comparisons give:
 
--   **Old-growth vs. Secondary**: old-growth is higher by 6.88 individuals/plot, $p = .001$. Significant.
--   **Old-growth vs. Managed**: old-growth is higher by 8.25 individuals/plot, $p < .001$. Significant.
--   **Secondary vs. Managed**: they differ by 1.38 individuals/plot, $p = .68$. Not significant.
+- **Old-growth vs. Secondary**: old-growth is higher by 6.88 individuals/plot, $p = .001$. Significant.
+- **Old-growth vs. Managed**: old-growth is higher by 8.25 individuals/plot, $p < .001$. Significant.
+- **Secondary vs. Managed**: they differ by 1.38 individuals/plot, $p = .68$. Not significant.
 
 **"Not significant" does not mean "the same."** Secondary and managed plantation differ by 1.38 salamanders per plot in this sample. That difference is real in the data; what the test says is that with eight plots per group we cannot distinguish it from sampling noise. A larger study might well separate them. Report it as "we did not detect a difference," never as "there is no difference."
 
@@ -750,11 +724,10 @@ The pattern matches Tukey HSD exactly: Old-growth differs significantly from bot
 
 **Core ideas**
 
--   **Why not just run more $t$-tests.** Each comparison carries its own chance of a false positive, and they accumulate: with $m$ comparisons the familywise error rate is $1-(1-\alpha)^m$, which is already 14% for three groups.
--   **Partition the variation.** Total variation splits into a piece explained by group membership ($SS_\text{Between}$) and unexplained residual variation ($SS_\text{Within}$). That split is the whole idea.
--   **$F$ is a ratio of the two.** After adjusting each sum of squares for its degrees of freedom, $F = MS_\text{Between} / MS_\text{Within}$. A large $F$ means between-group differences are large relative to within-group noise.
--   **Two steps, always in order.** First the omnibus test: do *any* group means differ? Only if that is significant do you run post-hoc comparisons (Tukey HSD) to find out *which* pairs differ.
--   **$\eta^2$ is the effect size.** $SS_\text{Between}/SS_\text{Total}$ is the proportion of variation the grouping variable accounts for. It is the same quantity as regression's $R^2$, and it does not depend on sample size the way $p$ does, so report it alongside $F$.
--   **Check the assumptions.** ANOVA needs approximately equal variances across groups (Levene's test) and roughly normal residuals. Treat formal tests as evidence rather than a gate, since they have least power exactly when small samples make violations matter most.
--   **When assumptions fail.** The **Kruskal-Wallis** test is the rank-based alternative, with `pairwise.wilcox.test()` as its post-hoc counterpart.
-
+- **Why not just run more** $t$-tests. Each comparison carries its own chance of a false positive, and they accumulate: with $m$ comparisons the familywise error rate is $1-(1-\alpha)^m$, which is already 14% for three groups.
+- **Partition the variation.** Total variation splits into a piece explained by group membership ($SS_\text{Between}$) and unexplained residual variation ($SS_\text{Within}$). That split is the whole idea.
+- $F$ is a ratio of the two. After adjusting each sum of squares for its degrees of freedom, $F = MS_\text{Between} / MS_\text{Within}$. A large $F$ means between-group differences are large relative to within-group noise.
+- **Two steps, always in order.** First the omnibus test: do *any* group means differ? Only if that is significant do you run post-hoc comparisons (Tukey HSD) to find out *which* pairs differ.
+- $\eta^2$ is the effect size. $SS_\text{Between}/SS_\text{Total}$ is the proportion of variation the grouping variable accounts for. It is the same quantity as regression's $R^2$, and it does not depend on sample size the way $p$ does, so report it alongside $F$.
+- **Check the assumptions.** ANOVA needs approximately equal variances across groups (Levene's test) and roughly normal residuals. Treat formal tests as evidence rather than a gate, since they have least power exactly when small samples make violations matter most.
+- **When assumptions fail.** The **Kruskal-Wallis** test is the rank-based alternative, with `pairwise.wilcox.test()` as its post-hoc counterpart.
