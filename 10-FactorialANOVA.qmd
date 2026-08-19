@@ -475,9 +475,13 @@ Flow accounts for the largest share of the total variation, pollution is close b
 
 **Which one to report.** Most statistical software, including SPSS and R's `effectsize` package, gives you partial $\eta_p^2$ by default, and it is the more common choice in published work. Either is defensible, but say which you used, because the two can differ substantially: pollution is $\eta^2 = `r round(ss_poll/ss_total, 2)`$ but $\eta_p^2 = `r round(ss_poll/(ss_poll+ss_error), 2)`$ here. Reporting the larger number without labeling it overstates the effect. Never compare a partial value from one study against an unpartialed value from another.
 
-## Reading patterns in a 2x2
+## Interpreting main effects and interactions
 
 Having computed one ANOVA table by hand, we can stop doing arithmetic and start doing the part that actually determines whether you get the science right: reading the result.
+
+It's convenient to think of a main effect as one manipulation's consistent influence. An interaction complicates that picture: it means the effect of one IV depends on another, so by definition, some main effect isn't behaving consistently across conditions.
+
+### Reading patterns in a 2x2
 
 In any 2x2 ANOVA, there are eight general outcome patterns, different combinations of main effects and interactions. You don't need to memorize all eight, but you should learn to **read them in a line plot**:
 
@@ -585,27 +589,19 @@ In the line graphs, interactions are easiest to see:
 -   **Crossing lines** mean an interaction (the pollution effect differs by flow).
 -   **Vertical shifts** between the two lines reflect a main effect of flow.
 
-**Order of interpretation.** When we conduct a two-way ANOVA, we always begin by testing the **interaction** term.
-
--   If the null hypothesis of *no interaction* is **rejected**, we **do not** interpret the main effects in isolation, because they are not consistent across conditions. Instead, we focus on the simple effects that describe how one factor behaves at each level of the other. Report simple effects (A at each level of B, or vice versa) rather than standalone main effects.
-
--   If the interaction is **not significant**, we then examine the two main effects separately, interpreting each as an overall difference averaged across the other factor.
-
 ::: {.callout-tip title="Tip: Which factor goes on the x-axis?"}
 The statistics are identical either way, since the same condition means get plotted regardless. Two rules of thumb make the picture easier to read. Put the factor with more levels on the x-axis, since one long line is easier to follow than several short, crowded ones. And put whichever factor is your main scientific interest there too, since readers compare points along an axis more naturally than separate colored lines.
 :::
 
-## Interpreting main effects and interactions
+### Order of interpretation
 
-It's convenient to think of a main effect as one manipulation's consistent influence. An interaction complicates that picture: it means the effect of one IV depends on another, so by definition, some main effect isn't behaving consistently across conditions.
+When we conduct a two-way ANOVA, we always begin by testing the **interaction** term. In our stream example, pollution reduces species count most under low flow and less under high flow. The pollution effect is not constant across flow rates, so the average "main effect" of pollution can mislead if read without context.
 
-**Why interactions matter.** In our stream example, pollution reduces species count most under low flow and less under high flow. The pollution effect is not constant across flow rates, so the average "main effect" of pollution can mislead if read without context.
+-   If the interaction is **significant**, we **do not** interpret the main effects in isolation, because they are not consistent across conditions. Instead, we report simple effects: how one factor behaves at each level of the other. "Pollution reduced species count sharply under low flow, and only slightly under high flow" is a simple-effects sentence; "there was a main effect of pollution" on its own is not enough. If you report a main effect at all here, qualify it: "There was a main effect of pollution, but it varied by flow rate."
 
-**How to read it.**
+-   If the interaction is **not significant**, we then examine the two main effects separately, interpreting each as an overall difference averaged across the other factor.
 
--   Look for non-parallel or crossing lines. That signals that simple effects differ across levels of the other factor.
--   Report the pattern using simple effects: e.g., "Pollution reduced species count sharply under low flow, and only slightly under high flow."
--   If you must report a main effect, qualify it: "There was a main effect of pollution, but it varied by flow rate."
+-   If **neither** the interaction nor either main effect is significant, there is nothing to follow up on. Do not run, or interpret, post-hoc tests on a result that never cleared the omnibus test in the first place.
 
 ::: {.callout-important title="Results reporting: factorial ANOVA"}
 Lead with the interaction, then give the simple effects, then report the main effects only with their qualification attached. Every effect gets its own effect size, labeled so the reader knows whether it is partialed.
@@ -613,7 +609,7 @@ Lead with the interaction, then give the simple effects, then report the main ef
 > The effect of pollution on macroinvertebrate species count depended on flow rate, *F*(1, 16) = 9.03, *p* = .008, $\eta_p^2 = 0.36$. Under low flow, polluted channels supported 6.0 fewer species than unpolluted ones (3.6 vs. 9.6); under high flow that gap narrowed to 2.6 species (10.0 vs. 12.6). Both main effects were also significant, pollution *F*(1, 16) = 57.78, *p* \< .001, $\eta_p^2 = 0.78$, and flow *F*(1, 16) = 69.03, *p* \< .001, $\eta_p^2 = 0.81$, but each should be read in light of the interaction: pollution costs a stream far more species when the water is moving slowly.
 :::
 
-Here are two generalized examples to help you make sense of these issues:
+Here are three generalized examples to help you make sense of these issues:
 
 ### A consistent main effect and an interaction
 
@@ -666,6 +662,74 @@ ggplot(p_inconsistent, aes(x = Flow, y = mean_count, color = Pollution, group = 
 Yet an ANOVA run on this data can still report a significant main effect of pollution. Averaged across flow rates, unpolluted channels give $(10+5)/2=7.5$ species and polluted channels give $5$, a main-effect difference of 2.5. That number is real, but it doesn't describe what pollution actually does: it removes 5 species under low flow and none under high flow, not 2.5 everywhere. The "main effect" here is an artifact of averaging over a strong interaction, not a description of anything pollution is doing in general.
 
 There was a main effect of pollution, but it was entirely qualified by a Pollution × Flow interaction: the pollution effect was large under low flow and effectively zero under high flow. In a case like this, it's fair to doubt whether pollution has a *general* effect on species count at all. It may only do damage under specific conditions, in combination with other factors, rather than on its own.
+
+### A main effect masked by an interaction
+
+```{r}
+#| label: fig-10mainintMasked
+#| fig-cap: "Pollution's effect reverses direction between flow rates, so the main effect averages to zero even though pollution matters at both."
+#| out-width: "100%"
+#| fig-asp: 0.5
+
+p_masked <- data.frame(
+  Flow       = c("Low Flow", "High Flow", "Low Flow", "High Flow"),
+  Pollution  = c("No Pollution", "No Pollution", "Pollution", "Pollution"),
+  mean_count = c(8, 8, 4, 12)
+)
+
+ggplot(p_masked, aes(x = Flow, y = mean_count, color = Pollution, group = Pollution)) +
+  geom_point() +
+  geom_line() +
+  ylab("Mean species count") +
+  theme(legend.position = "top")
+```
+
+@fig-10mainintMasked shows the most misleading pattern of the three. Under low flow, pollution *reduces* species count (8 vs. 4). Under high flow, pollution *increases* it (8 vs. 12). Both are real, sizable effects, just pointed in opposite directions.
+
+Average across flow rates to get a main effect, and they cancel: unpolluted channels give $(8+8)/2=8$, polluted channels give $(4+12)/2=8$, a main-effect difference of exactly $0$. An ANOVA on this data would report no main effect of pollution at all, not because pollution doesn't matter, but because its two real, opposite effects average each other out.
+
+This is the case the "read the interaction first" rule exists for. A non-significant main effect here would be true and completely misleading in the same breath: pollution has no effect *on average*, and a large effect *in every single condition*. Reporting only the main effect would say less than nothing; it would suggest pollution is irrelevant when it's actually the whole story, just one that runs in different directions depending on flow.
+
+### Testing a simple effect
+
+Saying "pollution reduced species count under low flow, but not under high flow" is a claim about a simple effect, and like any claim in this book, it needs its own test, not just a look at the plot.
+
+A simple effect asks whether pollution's effect holds at one specific level of flow, so it looks like a two-sample comparison: no pollution vs. pollution, at low flow only. The temptation is to pull out just the low-flow rows and run a fresh two-sample test on them. Don't. That throws away the high-flow channels entirely when estimating the error variance, using half the data and half the degrees of freedom to estimate noise you already estimated better once, from all 20 channels, when you computed $SS_\text{Error}$ for the omnibus ANOVA above.
+
+The fix is to reuse that pooled estimate. $MS_\text{Error}$ and its 16 degrees of freedom already describe the noise in this design better than any subset could, so the simple-effects test just plugs them into a two-sample $t$:
+
+$$t = \frac{\bar{x}_1 - \bar{x}_2}{\sqrt{MS_\text{Error}\left(\dfrac{1}{n_1}+\dfrac{1}{n_2}\right)}}, \qquad df = df_\text{Error}$$
+
+At low flow, no-pollution channels average 9.6 species and polluted channels average 3.6, a gap of 6.0. At high flow the gap narrows to 2.6 (12.6 vs. 10.0). Using $MS_\text{Error}=1.60$ and $df=16$ from the omnibus table computed earlier:
+
+```{r}
+#| label: tbl-10simpleeffects
+#| tbl-cap: "Simple effects of pollution, tested separately within each flow rate, using the pooled error term from the full model."
+
+mse <- 1.60
+edf <- 16
+n_cell <- 5
+se_pooled <- sqrt(mse * (1/n_cell + 1/n_cell))
+
+diffs <- c(6.0, 2.6)
+ts <- diffs / se_pooled
+ps <- 2 * pt(-abs(ts), df = edf)
+
+knitr::kable(
+  data.frame(
+    `Simple effect` = c("Pollution, within Low Flow", "Pollution, within High Flow"),
+    Difference = diffs,
+    t = round(ts, 2),
+    df = edf,
+    p = ifelse(ps < .001, "< .001", round(ps, 3)),
+    check.names = FALSE
+  )
+)
+```
+
+Both comparisons clear the critical value, $t_\text{crit}(16) = 2.12$ at $\alpha=.05$, two-tailed. So the interaction here isn't "pollution matters at low flow but not at all at high flow," that would show up as one significant row and one not. It's "pollution matters everywhere, but far more at low flow," now backed by a number instead of just a plot.
+
+When a factor has only two levels, as Pollution does here, the simple-effects test is the full answer; there's nothing left to compare. When a factor has three or more levels, a significant simple effect only tells you that *some* pair differs within that level, and the next step is Tukey HSD run separately within each level of the other factor, the same logic from Chapter 8's post-hoc section, just applied inside one slice of the design instead of across the whole sample.
 
 ## More complicated designs
 
