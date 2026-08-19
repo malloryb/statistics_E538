@@ -49,7 +49,7 @@ Gosset set out to quantify the extra uncertainty introduced by **small** samples
 
 1.  **One-sample t-test.** Compare a sample mean to a target ($\mu_0$).
 2.  **Paired t-test.** Compare before/after (or matched) measurements on the same units by running a one-sample t on the *differences*.
-3.  **Independent-samples t-test (also called two-sample t-test)** Compare means from two groups measured on different units. Use Welch's test by default when variances differ.
+3.  **Independent-samples t-test (also called two-sample t-test)** Compare means from two groups measured on different units. Use Welch's test [@Welch1947] by default when variances differ.
 
 ::: {.callout-tip title="Tip: What you will report"}
 Always report:
@@ -70,7 +70,7 @@ $$\text{statistic}=\frac{\text{effect}}{\text{error}}$$
 
 The $t$-test is the first place we fill that in with real quantities. The effect is the distance between the sample mean and the value $H_0$ names. The error is not the raw standard deviation, though: it is the **standard error**, $s/\sqrt{n}$, because what varies from study to study is the *mean*, not an individual observation.
 
-$$t = \frac{\text{effect}}{\text{standard error}} = \frac{\bar{X} - \mu_0}{s / \sqrt{n}}$$
+$$t = \frac{\text{effect}}{\text{standard error}} = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}$$
 
 We now turn that ratio into a test statistic for a *single mean*.
 
@@ -78,7 +78,7 @@ We now turn that ratio into a test statistic for a *single mean*.
 
 Use a one-sample $t$ when you want to test whether a sample mean differs from a reference value ($\mu_0$). The question: is the observed difference bigger than you'd expect from sampling variability, given $n$ and your sample SD $s$?
 
-$$t = \frac{\bar{X}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1$$
+$$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1$$
 
 After calculating $t$ from our data, we compare the observed $t$ to a $t$ distribution with $n-1$ degrees of freedom to get a $p$-value and a decision at $\alpha$.
 
@@ -86,9 +86,9 @@ After calculating $t$ from our data, we compare the observed $t$ to a $t$ distri
 
 When the population SD is known (or we have a large enough sample to assume convergence), the ratio is called $z$; when it's estimated from the data, it's $t$.
 
-Under a known population SD ($\sigma$), the standardized mean uses the $z$ statistic: $$z = \frac{\bar{X}-\mu_0}{\sigma/\sqrt{n}}$$
+Under a known population SD ($\sigma$), the standardized mean uses the $z$ statistic: $$z = \frac{\bar{x}-\mu_0}{\sigma/\sqrt{n}}$$
 
-When $\sigma$ is **unknown** (the usual case), we estimate it with the sample SD ($s$) and use the $t$ statistic: $$t = \frac{\bar{X}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1$$
+When $\sigma$ is **unknown** (the usual case), we estimate it with the sample SD ($s$) and use the $t$ statistic: $$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1$$
 
 Because $s$ varies from sample to sample, the $t$ distribution has **heavier tails** than the standard normal. As $n$ grows, $s$ stabilizes and $t$ **converges** to $z$.
 
@@ -154,7 +154,7 @@ Either way, the ratio asks the same question: how far is the mean from the refer
 
 $t$ expresses how far a sample mean is from the hypothesized mean, in **standard error units** (signal over noise):
 
-$$t = \frac{\bar{X}-\mu_0}{s/\sqrt{n}}$$
+$$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}$$
 
 $t$ can be positive or negative depending on direction. Under $H_0$, $t \sim t_{(df=n-1)}$.\
 **A useful anchor:** at $\alpha=.05$ two-tailed and $df\approx 20$, $|t|\gtrsim 2$ is already uncommon under $H_0$; smaller $df$ pushes that threshold higher, as the critical-value table above shows.
@@ -206,7 +206,7 @@ $$\text{SE} = \frac{s}{\sqrt{n}} = \frac{`r round(s,2)`}{\sqrt{`r n`}} = `r roun
 
 And $t$ is the difference between the sample mean (`r round(x,2)`) and the reference value (50, chance level), divided by that SE:
 
-$$t = \frac{\bar{X}-\mu_0}{SE} = \frac{`r round(x,2)`-50}{`r round(SE,2)`} = `r round(tt$statistic,2)`$$
+$$t = \frac{\bar{x}-\mu_0}{SE} = \frac{`r round(x,2)`-50}{`r round(SE,2)`} = `r round(tt$statistic,2)`$$
 
 We can confirm this with a single R command, `t.test(scores, mu = 50)`:
 
@@ -580,7 +580,7 @@ $$t = \frac{\bar{A}-\bar{B}}{\left(\dfrac{SE_A+SE_B}{2}\right)}$$
 
 That average, however, is a biased estimator of the variability under the null. Instead, the independent-samples $t$-test **pools** the two groups' variances, weighted by their degrees of freedom, into a single estimate for the denominator:
 
-$$t = \frac{\bar{X}_A-\bar{X}_B}{s_p\sqrt{\dfrac{1}{n_A}+\dfrac{1}{n_B}}}$$
+$$t = \frac{\bar{x}_A-\bar{x}_B}{s_p\sqrt{\dfrac{1}{n_A}+\dfrac{1}{n_B}}}$$
 
 where the pooled standard deviation $s_p$ is (note $s_A^2$ and $s_B^2$ here are variances, not standard deviations):
 
@@ -783,3 +783,8 @@ Now almost all of the experiments show a $p$-value of less than .05 (using a two
 -   **Assumptions come in two kinds.** *Independence and a sound study design* apply to every test in this book and are assumed from here on. The *test-specific* assumption for these tests is approximate normality, of the outcome for a one-sample test or of the difference scores for a paired test.
 -   **How worried to be depends on** $n$. Thanks to the Central Limit Theorem, $t$-tests are fairly robust to non-normality once samples are reasonably large. The danger zone is small *and* skewed, which describes a lot of environmental field data. Plot your data first; treat a Shapiro-Wilk result as evidence rather than a gate, since it has least power exactly when you need it most.
 -   **Choose your tails before you look.** Default to two-tailed. Reserve one-tailed tests for cases where theory rules out the opposite direction, and decide before seeing the result.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

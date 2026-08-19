@@ -188,33 +188,33 @@ Before we can read real coefficients off an ANCOVA table, it helps to see exactl
 
 Categorical predictors get into a linear model by being coded as **indicator variables**. For a factor with $k$ groups you include $k-1$ indicators; the omitted group becomes the **reference**, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:
 
-$$x_c = \begin{cases} 0 & \text{group 1 (the reference group)} \\ 1 & \text{group 2} \end{cases}$$
+$$G = \begin{cases} 0 & \text{group 1 (the reference group)} \\ 1 & \text{group 2} \end{cases}$$
 
 In R, `lm(y ~ x + Group)` creates these indicators for you automatically.
 
 **Indicator variables in action.** When an indicator variable is turned on (set to 1), it activates the terms multiplied by that variable. Depending on where the indicator appears in the model, that can change the intercept, the slope, or both.
 
-Consider two predictors: a continuous variable $x_l$ and an indicator $x_c$ (0 or 1). The numbers below are arbitrary, chosen to make the arithmetic clean; the worked example later in this chapter plugs in real coefficients for air pollution and area type. Use this model:
+Consider two predictors: a continuous variable $x$ and an indicator $G$ (0 or 1). The numbers below are arbitrary, chosen to make the arithmetic clean; the worked example later in this chapter plugs in real coefficients for air pollution and area type. Use this model:
 
-$$y = 2x_l + 1(x_l x_c) - 7x_c + 3$$
+$$y = 2x + 1(x G) - 7G + 3$$
 
-**When** $x_c = 0$ (indicator off), only the baseline terms are active:
+**When** $G = 0$ (indicator off), only the baseline terms are active:
 
-$$y = 2x_l + 3 \qquad \text{slope} = 2, \ \text{intercept} = 3$$
+$$y = 2x + 3 \qquad \text{slope} = 2, \ \text{intercept} = 3$$
 
-**When** $x_c = 1$ (indicator on), the new terms activate:
+**When** $G = 1$ (indicator on), the new terms activate:
 
-$$y = (2x_l + 3) + (1x_l - 7) = 3x_l - 4 \qquad \text{slope} = 3, \ \text{intercept} = -4$$
+$$y = (2x + 3) + (1x - 7) = 3x - 4 \qquad \text{slope} = 3, \ \text{intercept} = -4$$
 
 Turning on the indicator adds **+1 to the slope** and **−7 to the intercept**. One equation, two different lines, with the indicator deciding which one applies.
 
-This is how linear models represent different groups: the indicator ($x_c$) and its interaction with $x_l$ let a single equation shift the intercept and the slope for each group. ANCOVA uses exactly this logic to test, in order, whether the **slopes differ** between groups (the $x_l x_c$ term) and, if they don't, whether the **adjusted means** differ (the $x_c$ term).
+This is how linear models represent different groups: the indicator ($G$) and its interaction with $x$ let a single equation shift the intercept and the slope for each group. ANCOVA uses exactly this logic to test, in order, whether the **slopes differ** between groups (the $x G$ term) and, if they don't, whether the **adjusted means** differ (the $G$ term).
 
 **Naming the pieces.** Write that same equation in the general form and each coefficient now has a job:
 
-$$y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x_l}_{\text{reference slope}} + \underbrace{\beta_2 x_c}_{\text{intercept shift}} + \underbrace{\beta_3 x_l x_c}_{\text{slope shift}} + \varepsilon$$
+$$y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x}_{\text{reference slope}} + \underbrace{\beta_2 G}_{\text{intercept shift}} + \underbrace{\beta_3 x G}_{\text{slope shift}} + \varepsilon$$
 
--   $\beta_0$ and $\beta_1$ describe the line for the **reference group** ($x_c=0$).
+-   $\beta_0$ and $\beta_1$ describe the line for the **reference group** ($G=0$).
 -   $\beta_2$ is how much the **intercept** moves for the other group.
 -   $\beta_3$ is how much the **slope** changes for the other group. This is the interaction term.
 
@@ -226,9 +226,9 @@ Every coefficient you will read out of an ANCOVA table is one of these four. Wit
 
 ### The Null Hypothesis in ANCOVA
 
-**Model.** For one covariate ($x$) and a two-level group indicator $x_c\in\{0,1\}$,
+**Model.** For one covariate ($x$) and a two-level group indicator $G\in\{0,1\}$,
 
-$y=\beta_0+\beta_1 x+\beta_2 x_c+\beta_3(x\times x_c)+\varepsilon .$
+$y=\beta_0+\beta_1 x+\beta_2 G+\beta_3(x\times G)+\varepsilon .$
 
 @fig-11onevstwo shows the three possibilities this model can produce, and it's worth keeping this picture in mind for the two steps below.
 
@@ -278,7 +278,7 @@ ANCOVA works right to left across that figure: first it asks whether the rightmo
 
 **Step 2: Are adjusted means equal?** *(only if Step 1 retained parallel slopes)* Fit the model without the interaction,
 
-$y=\beta_0+\beta_1 x+\beta_2 x_c+\varepsilon .$
+$y=\beta_0+\beta_1 x+\beta_2 G+\varepsilon .$
 
 -   Null: $H_{0,\text{group}}:\beta_2=0$ (no difference in adjusted means)
 -   Alternative: $H_{A,\text{group}}:\beta_2\neq 0$
@@ -293,8 +293,8 @@ $y=\beta_0+\beta_1 x+\beta_2 x_c+\varepsilon .$
 
 **What to report.**
 
--   If $x\times x_c$ is significant: "The effect of $x$ differs by group," then provide the two line equations and a figure with separate fitted lines.
--   If $x\times x_c$ is not significant: report the common slope $\beta_1$ and the adjusted group difference $\beta_2$, with a figure showing parallel lines.
+-   If $x\times G$ is significant: "The effect of $x$ differs by group," then provide the two line equations and a figure with separate fitted lines.
+-   If $x\times G$ is not significant: report the common slope $\beta_1$ and the adjusted group difference $\beta_2$, with a figure showing parallel lines.
 
 **Common pitfalls.**
 
@@ -518,7 +518,7 @@ caption = "Linear Model Coefficients"
 )
 ```
 
-R automatically converts the categorical `AreaType` variable into a 0/1 indicator behind the scenes, exactly the $x_c$ switch from the detour earlier in this chapter. It picks one level (here, "Rural," alphabetically first) as the **reference**, and every coefficient involving `AreaType` is interpreted relative to that reference. That's why you see a coefficient called `AreaTypeUrban` but no separate `AreaTypeRural` term.
+R automatically converts the categorical `AreaType` variable into a 0/1 indicator behind the scenes, exactly the $G$ switch from the detour earlier in this chapter. It picks one level (here, "Rural," alphabetically first) as the **reference**, and every coefficient involving `AreaType` is interpreted relative to that reference. That's why you see a coefficient called `AreaTypeUrban` but no separate `AreaTypeRural` term.
 
 These coefficients give the *direction* and *magnitude* of each effect:
 
@@ -616,3 +616,8 @@ If the interaction had **not** been significant, we would instead drop the inter
 -   **A significant interaction means report the two lines, not one number.** If slopes differ, describe how the relationship changes by group instead of collapsing to a single adjusted-mean comparison, which assumes parallel lines that don't actually hold here.
 -   **If slopes are parallel, compare adjusted means.** Drop the interaction term and test whether the groups' intercepts differ once the covariate is accounted for.
 -   **Center the covariate when the intercept should mean something.** Left uncentered, the intercept describes the groups at covariate = 0, a value the data may never actually contain.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

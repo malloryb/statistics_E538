@@ -39,8 +39,8 @@ A general **linear model** is the common framework that includes ANOVA, regressi
 ### Model Statements:
 
 -   **No Groups/Relationships:** $y \sim N(\mu, \sigma^2)$
--   **Categories with Different Means:** $y_{i,j} = \mu + \tau_i + \epsilon$ (t-test allows for unequal variance: $y_{i,j} = \mu + \tau_i + \epsilon_i$)
--   **Linear Relationship:** $y = \beta_0 + \beta_1x + \epsilon$
+-   **Categories with Different Means:** $y_{i,j} = \mu + \tau_i + \varepsilon$ (t-test allows for unequal variance: $y_{i,j} = \mu + \tau_i + \varepsilon_i$)
+-   **Linear Relationship:** $y = \beta_0 + \beta_1x + \varepsilon$
 
 Linear models handle continuous $y$; for counts or non-Gaussian $y$, we use generalized linear models (not covered here).
 
@@ -77,7 +77,7 @@ When conducting an ANOVA, we're essentially fitting a linear model with categori
 
 We test each term with an $F$-test. The F-statistic is a ratio that compares the amount of variance explained by a particular factor to the variance not explained by the model (within-group variance or error). A higher F-statistic indicates that the factor explains a significant portion of the variability in the outcome variable, while a lower F-statistic suggests that the factor does not contribute much to our understanding of the outcome variable.
 
-$F = \frac{MS_{Treatment}}{MS_{Error}}$.
+$F = \frac{MS_{Between}}{MS_{Within}}$.
 
 In an ANOVA with two factors, we calculate the F-statistic for each factor and their interaction. Significance is tested with $F$; interpretation focuses on planned factors and interactions. If $F$ is significant, we keep the beta coefficient in our model. If not, we may consider omitting it for a simpler model.
 
@@ -111,22 +111,22 @@ In R, `lm(y ~ Treatment)` creates these indicators automatically.
 
 When an indicator variable is turned on (set to 1), it activates the terms multiplied by that variable. This can change the intercept, the slope, or both, depending on where the indicator appears in the model.
 
-Consider two predictors: a continuous variable $x_l$ and an indicator $x_c$ (0 or 1). Use this model:
+Consider two predictors: a continuous variable $x$ and an indicator $G$ (0 or 1). Use this model:
 
-$y = 2x_l + 1(x_l x_c) - 7x_c + 3$
+$y = 2x + 1(x G) - 7G + 3$
 
-**When** $x_c = 0$ (indicator off), only baseline terms are active: $y = 2x_l + 3$ Slope = 2, intercept = 3.
+**When** $G = 0$ (indicator off), only baseline terms are active: $y = 2x + 3$ Slope = 2, intercept = 3.
 
-**When** $x_c = 1$ (indicator on), new terms activate: $y = (2x_l + 3) + (1x_l - 7) = 3x_l - 4$ Slope = 3, intercept = −4.
+**When** $G = 1$ (indicator on), new terms activate: $y = (2x + 3) + (1x - 7) = 3x - 4$ Slope = 3, intercept = −4.
 
 Turning on the indicator adds **+1 to the slope** and **--7 to the intercept**.
 
-This is how linear models represent different groups: the indicator ($x_c$) and its interaction with $x_l$ let the equation shift the intercept and slope for each group.
+This is how linear models represent different groups: the indicator ($G$) and its interaction with $x$ let the equation shift the intercept and slope for each group.
 
 Later, ANCOVA will use this same logic to formally test:
 
--   whether the **slopes differ** between groups (the $x_lx_c$ term), and
--   if not, whether the **adjusted means** differ (the $x_c$ term).
+-   whether the **slopes differ** between groups (the $xG$ term), and
+-   if not, whether the **adjusted means** differ (the $G$ term).
 
 #### Visualizing the Effect
 
@@ -140,9 +140,9 @@ The R plots below demonstrate the change in the regression line when the indicat
 
 *Equation Modified:* `y = (2xl + 3) + (1xl - 7)`
 
-The left plot shows the line when the indicator is **off** ($x_c = 0$). The categorical variable has no influence here, so we see only the baseline slope and intercept.
+The left plot shows the line when the indicator is **off** ($G = 0$). The categorical variable has no influence here, so we see only the baseline slope and intercept.
 
-The right plot shows the line when the indicator is **on** ($x_c = 1$). The extra terms activate, and the categorical variable now changes both the slope and intercept, producing a different line for the second group.
+The right plot shows the line when the indicator is **on** ($G = 1$). The extra terms activate, and the categorical variable now changes both the slope and intercept, producing a different line for the second group.
 
 ```{r}
 # Graph for when xc = 0
@@ -184,36 +184,36 @@ p2 <- ggplot(data_xc1, aes(x = xl, y = y)) +
 ggpubr::ggarrange(p1,p2, ncol=2)
 ```
 
-**Key idea:** to change only intercepts, include $x_c$; to change slopes, include $x_l x_c$; to change both, include both. The corresponding parameters in a general model $y=\beta_0+\beta_1 x_l+\beta_2 x_c+\beta_3(x_l x_c)+\varepsilon$ are $\beta_2$ (intercept shift) and $\beta_3$ (slope difference).
+**Key idea:** to change only intercepts, include $G$; to change slopes, include $x G$; to change both, include both. The corresponding parameters in a general model $y=\beta_0+\beta_1 x+\beta_2 G+\beta_3(x G)+\varepsilon$ are $\beta_2$ (intercept shift) and $\beta_3$ (slope difference).
 
 ### Interaction Term in Linear Models
 
 **Interaction terms** tell us whether the relationship between one predictor and the response changes across levels of another predictor.
 
-In other words: does the slope of $x_l$ depend on $x_c$?"
+In other words: does the slope of $x$ depend on $G$?"
 
 **Model Equation Explained:**
 
 Let's break down a typical equation:
 
 $$
-y = \beta_0 + \beta_1x_l + \beta_2x_c + \beta_3x_lx_c + \epsilon
+y = \beta_0 + \beta_1x + \beta_2G + \beta_3xG + \varepsilon
 $$
 
-the term $x_l x_c$ is the **interaction**, and $\beta_3$ is its coefficient.
+the term $x G$ is the **interaction**, and $\beta_3$ is its coefficient.
 
 | Term              | Meaning                                                                    |
 |----------------|-------------------------------------------------------|
 | $y$               | response variable (e.g., plant growth)                                     |
-| $\beta_0$         | intercept: expected value when $x_l$ and $x_c$ are zero                    |
-| $\beta_1 x_l$     | effect of the continuous predictor (main effect of $x_l$)                  |
-| $\beta_2 x_c$     | effect of the categorical predictor (main effect of $x_c$)                 |
-| $\beta_3 x_l x_c$ | **interaction:** how the slope of $x_l$ changes across categories of $x_c$ |
+| $\beta_0$         | intercept: expected value when $x$ and $G$ are zero                    |
+| $\beta_1 x$     | effect of the continuous predictor (main effect of $x$)                  |
+| $\beta_2 G$     | effect of the categorical predictor (main effect of $G$)                 |
+| $\beta_3 x G$ | **interaction:** how the slope of $x$ changes across categories of $G$ |
 | $\varepsilon$     | residual variation not explained by the model                              |
 
-If $\beta_3$ is significant, the slope of $x_l$ differs across groups.
+If $\beta_3$ is significant, the slope of $x$ differs across groups.
 
-If $\beta_3$ is not significant, the relationship between $x_l$ and $y$ is consistent across groups, and the lines are parallel.
+If $\beta_3$ is not significant, the relationship between $x$ and $y$ is consistent across groups, and the lines are parallel.
 
 ### Five Versions of the Linear Model
 
@@ -221,35 +221,35 @@ This is our most complex version of the linear model so far. Remember what we ju
 
 1.  **Full model with interaction (**$\beta_0, \beta_1, \beta_2, \beta_3$)
 
-    -   When both the categorical ($x_c$) and continuous ($x_l$) predictors are included, and the interaction term ($\beta_3$) is significant, the model produces **different slopes and intercepts** for each group.
+    -   When both the categorical ($G$) and continuous ($x$) predictors are included, and the interaction term ($\beta_3$) is significant, the model produces **different slopes and intercepts** for each group.
 
     -   Equations:
 
-        -   For $x_c = 0$: $y = \beta_0 + \beta_1x_l$
-        -   For $x_c = 1$: $y = (\beta_0 + \beta_2) + (\beta_1 + \beta_3)x_l$
+        -   For $G = 0$: $y = \beta_0 + \beta_1x$
+        -   For $G = 1$: $y = (\beta_0 + \beta_2) + (\beta_1 + \beta_3)x$
 
 2.  **Model without interaction (**$\beta_0, \beta_1, \beta_2$)
 
-    -   If both predictors are significant but the interaction is not, the model simplifies to **parallel lines**---the slope of $x_l$ is the same across categories of $x_c$, but intercepts differ.
+    -   If both predictors are significant but the interaction is not, the model simplifies to **parallel lines**---the slope of $x$ is the same across categories of $G$, but intercepts differ.
 
     -   Equations:
 
-        -   For $x_c = 0$: $y = \beta_0 + \beta_1x_l$
-        -   For $x_c = 1$: $y = (\beta_0 + \beta_2) + \beta_1x_l$
+        -   For $G = 0$: $y = \beta_0 + \beta_1x$
+        -   For $G = 1$: $y = (\beta_0 + \beta_2) + \beta_1x$
 
 3.  **Simple linear regression (**$\beta_0, \beta_1$)
 
-    -   If only the continuous variable ($x_l$) matters, the model reduces to a single regression line.
-    -   Equation: $y = \beta_0 + \beta_1x_l$
+    -   If only the continuous variable ($x$) matters, the model reduces to a single regression line.
+    -   Equation: $y = \beta_0 + \beta_1x$
 
 4.  **Two different means (t-test equivalent) (**$\beta_0, \beta_2$)
 
-    -   If only the categorical variable ($x_c$) matters, the model compares two means---just like a t-test.
+    -   If only the categorical variable ($G$) matters, the model compares two means---just like a t-test.
 
     -   Equations:
 
-        -   For $x_c = 0$: $y = \beta_0$
-        -   For $x_c = 1$: $y = \beta_0 + \beta_2$
+        -   For $G = 0$: $y = \beta_0$
+        -   For $G = 1$: $y = \beta_0 + \beta_2$
 
 5.  **Single mean (one-sample model) (**$\beta_0$)
 

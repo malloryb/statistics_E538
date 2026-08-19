@@ -8,7 +8,7 @@
 
 <meta name="author" content="Mallory L. Barnes">
 
-<title>11&nbsp; Analysis of Covariance (ANCOVA) – Answering questions with data</title>
+<title>11&nbsp; Analysis of Covariance (ANCOVA) – Statistics for Environmental Science</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -160,15 +160,10 @@ window.Quarto = {
 };
 </script>
 
-<meta property="og:title" content="11&nbsp; Analysis of Covariance (ANCOVA) – Answering questions with data">
+<meta property="og:title" content="11&nbsp; Analysis of Covariance (ANCOVA) – Statistics for Environmental Science">
 <meta property="og:description" content="">
 <meta property="og:image" content="11-ANCOVA_files/figure-html/fig-simpson-covid-overall-1.png">
-<meta property="og:site_name" content="Answering questions with data">
-<meta name="twitter:title" content="11&nbsp; Analysis of Covariance (ANCOVA) – Answering questions with data">
-<meta name="twitter:description" content="A free textbook teaching introductory statistics for environmental science graduate students, including a lab manual, and course website. Licensed on CC BY SA 4.0">
-<meta name="twitter:image" content="imgs/TextbookCover.png">
-<meta name="twitter:site" content="@mallory_barnes">
-<meta name="twitter:card" content="summary">
+<meta property="og:site_name" content="Statistics for Environmental Science">
 </head>
 
 <body class="nav-sidebar floating quarto-light">
@@ -195,7 +190,7 @@ window.Quarto = {
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
-      <a href="./">Answering questions with data</a> 
+      <a href="./">Statistics for Environmental Science</a> 
         <div class="sidebar-tools-main">
     <a href="https://github.com/malloryb/statistics_E538" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
 </div>
@@ -308,6 +303,7 @@ window.Quarto = {
   <li><a href="#results-of-the-ancova-model" id="toc-results-of-the-ancova-model" class="nav-link" data-scroll-target="#results-of-the-ancova-model"><span class="header-section-number">11.4.5</span> Results of the ANCOVA Model</a></li>
   </ul></li>
   <li><a href="#chapter-summary" id="toc-chapter-summary" class="nav-link" data-scroll-target="#chapter-summary"><span class="header-section-number">11.5</span> Chapter Summary</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/malloryb/statistics_E538/edit/master/11-ANCOVA.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li></ul></div></nav>
     </div>
@@ -362,7 +358,7 @@ window.Quarto = {
 <section id="why-adjust-for-anything" class="level2" data-number="11.1">
 <h2 data-number="11.1" class="anchored" data-anchor-id="why-adjust-for-anything"><span class="header-section-number">11.1</span> Why adjust for anything?</h2>
 <p>Before defining ANCOVA, it helps to see the problem it solves. The cleanest illustration is a result called <strong>Simpson’s paradox</strong>, where a pattern in combined data reverses once you split the data into meaningful groups.</p>
-<p>Here’s a recent example. During the COVID-19 pandemic, early data showed that Italy’s overall case fatality rate was higher than China’s. But, once researchers <em>disaggregated by age group,</em> the trend flipped: within every age group, the fatality rate was actually higher in China. The apparent contradiction was explained by differences in the age distribution of cases <span class="citation" data-cites="vonkugelgen2021">(<a href="#ref-vonkugelgen2021" role="doc-biblioref"><span class="nocase">von Kügelgen et al.</span> 2021</a>)</span>.</p>
+<p>Here’s a recent example. During the COVID-19 pandemic, early data showed that Italy’s overall case fatality rate was higher than China’s. But, once researchers <em>disaggregated by age group,</em> the trend flipped: within every age group, the fatality rate was actually higher in China. The apparent contradiction was explained by differences in the age distribution of cases <span class="citation" data-cites="vonkugelgen2021">(<a href="01-Data_Description.html#ref-vonkugelgen2021" role="doc-biblioref"><span class="nocase">von Kügelgen et al.</span> 2021</a>)</span>.</p>
 <p>Using case fatality rate (CFR), here are some illustrative numbers (made up for teaching).</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -444,21 +440,21 @@ Figure&nbsp;11.3: Case age distribution by country. Italy’s cases are older on
 <h3 data-number="11.3.1" class="anchored" data-anchor-id="indicator-dummy-variables-and-how-they-work"><span class="header-section-number">11.3.1</span> Indicator (dummy) variables and how they work</h3>
 <p>Before we can read real coefficients off an ANCOVA table, it helps to see exactly how one equation can represent two different groups at once.</p>
 <p>Categorical predictors get into a linear model by being coded as <strong>indicator variables</strong>. For a factor with <span class="math inline">\(k\)</span> groups you include <span class="math inline">\(k-1\)</span> indicators; the omitted group becomes the <strong>reference</strong>, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:</p>
-<p><span class="math display">\[x_c = \begin{cases} 0 &amp; \text{group 1 (the reference group)} \\ 1 &amp; \text{group 2} \end{cases}\]</span></p>
+<p><span class="math display">\[G = \begin{cases} 0 &amp; \text{group 1 (the reference group)} \\ 1 &amp; \text{group 2} \end{cases}\]</span></p>
 <p>In R, <code>lm(y ~ x + Group)</code> creates these indicators for you automatically.</p>
 <p><strong>Indicator variables in action.</strong> When an indicator variable is turned on (set to 1), it activates the terms multiplied by that variable. Depending on where the indicator appears in the model, that can change the intercept, the slope, or both.</p>
-<p>Consider two predictors: a continuous variable <span class="math inline">\(x_l\)</span> and an indicator <span class="math inline">\(x_c\)</span> (0 or 1). The numbers below are arbitrary, chosen to make the arithmetic clean; the worked example later in this chapter plugs in real coefficients for air pollution and area type. Use this model:</p>
-<p><span class="math display">\[y = 2x_l + 1(x_l x_c) - 7x_c + 3\]</span></p>
-<p><strong>When</strong> <span class="math inline">\(x_c = 0\)</span> (indicator off), only the baseline terms are active:</p>
-<p><span class="math display">\[y = 2x_l + 3 \qquad \text{slope} = 2, \ \text{intercept} = 3\]</span></p>
-<p><strong>When</strong> <span class="math inline">\(x_c = 1\)</span> (indicator on), the new terms activate:</p>
-<p><span class="math display">\[y = (2x_l + 3) + (1x_l - 7) = 3x_l - 4 \qquad \text{slope} = 3, \ \text{intercept} = -4\]</span></p>
+<p>Consider two predictors: a continuous variable <span class="math inline">\(x\)</span> and an indicator <span class="math inline">\(G\)</span> (0 or 1). The numbers below are arbitrary, chosen to make the arithmetic clean; the worked example later in this chapter plugs in real coefficients for air pollution and area type. Use this model:</p>
+<p><span class="math display">\[y = 2x + 1(x G) - 7G + 3\]</span></p>
+<p><strong>When</strong> <span class="math inline">\(G = 0\)</span> (indicator off), only the baseline terms are active:</p>
+<p><span class="math display">\[y = 2x + 3 \qquad \text{slope} = 2, \ \text{intercept} = 3\]</span></p>
+<p><strong>When</strong> <span class="math inline">\(G = 1\)</span> (indicator on), the new terms activate:</p>
+<p><span class="math display">\[y = (2x + 3) + (1x - 7) = 3x - 4 \qquad \text{slope} = 3, \ \text{intercept} = -4\]</span></p>
 <p>Turning on the indicator adds <strong>+1 to the slope</strong> and <strong>−7 to the intercept</strong>. One equation, two different lines, with the indicator deciding which one applies.</p>
-<p>This is how linear models represent different groups: the indicator (<span class="math inline">\(x_c\)</span>) and its interaction with <span class="math inline">\(x_l\)</span> let a single equation shift the intercept and the slope for each group. ANCOVA uses exactly this logic to test, in order, whether the <strong>slopes differ</strong> between groups (the <span class="math inline">\(x_l x_c\)</span> term) and, if they don’t, whether the <strong>adjusted means</strong> differ (the <span class="math inline">\(x_c\)</span> term).</p>
+<p>This is how linear models represent different groups: the indicator (<span class="math inline">\(G\)</span>) and its interaction with <span class="math inline">\(x\)</span> let a single equation shift the intercept and the slope for each group. ANCOVA uses exactly this logic to test, in order, whether the <strong>slopes differ</strong> between groups (the <span class="math inline">\(x G\)</span> term) and, if they don’t, whether the <strong>adjusted means</strong> differ (the <span class="math inline">\(G\)</span> term).</p>
 <p><strong>Naming the pieces.</strong> Write that same equation in the general form and each coefficient now has a job:</p>
-<p><span class="math display">\[y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x_l}_{\text{reference slope}} + \underbrace{\beta_2 x_c}_{\text{intercept shift}} + \underbrace{\beta_3 x_l x_c}_{\text{slope shift}} + \varepsilon\]</span></p>
+<p><span class="math display">\[y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x}_{\text{reference slope}} + \underbrace{\beta_2 G}_{\text{intercept shift}} + \underbrace{\beta_3 x G}_{\text{slope shift}} + \varepsilon\]</span></p>
 <ul>
-<li><span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span> describe the line for the <strong>reference group</strong> (<span class="math inline">\(x_c=0\)</span>).</li>
+<li><span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span> describe the line for the <strong>reference group</strong> (<span class="math inline">\(G=0\)</span>).</li>
 <li><span class="math inline">\(\beta_2\)</span> is how much the <strong>intercept</strong> moves for the other group.</li>
 <li><span class="math inline">\(\beta_3\)</span> is how much the <strong>slope</strong> changes for the other group. This is the interaction term.</li>
 </ul>
@@ -479,8 +475,8 @@ Figure&nbsp;11.3: Case age distribution by country. Italy’s cases are older on
 </section>
 <section id="the-null-hypothesis-in-ancova" class="level3" data-number="11.3.2">
 <h3 data-number="11.3.2" class="anchored" data-anchor-id="the-null-hypothesis-in-ancova"><span class="header-section-number">11.3.2</span> The Null Hypothesis in ANCOVA</h3>
-<p><strong>Model.</strong> For one covariate (<span class="math inline">\(x\)</span>) and a two-level group indicator <span class="math inline">\(x_c\in\{0,1\}\)</span>,</p>
-<p><span class="math inline">\(y=\beta_0+\beta_1 x+\beta_2 x_c+\beta_3(x\times x_c)+\varepsilon .\)</span></p>
+<p><strong>Model.</strong> For one covariate (<span class="math inline">\(x\)</span>) and a two-level group indicator <span class="math inline">\(G\in\{0,1\}\)</span>,</p>
+<p><span class="math inline">\(y=\beta_0+\beta_1 x+\beta_2 G+\beta_3(x\times G)+\varepsilon .\)</span></p>
 <p><a href="#fig-11onevstwo" class="quarto-xref">Figure&nbsp;<span>11.4</span></a> shows the three possibilities this model can produce, and it’s worth keeping this picture in mind for the two steps below.</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -504,7 +500,7 @@ Figure&nbsp;11.4: The question ANCOVA answers. Left: one line describes both gro
 </ul>
 <p><strong>Interpretation if rejected.</strong> Report the two fitted lines and describe how the slope differs by group. Do not test adjusted means, because the idea of a single adjusted mean per group assumes parallel slopes.</p>
 <p><strong>Step 2: Are adjusted means equal?</strong> <em>(only if Step 1 retained parallel slopes)</em> Fit the model without the interaction,</p>
-<p><span class="math inline">\(y=\beta_0+\beta_1 x+\beta_2 x_c+\varepsilon .\)</span></p>
+<p><span class="math inline">\(y=\beta_0+\beta_1 x+\beta_2 G+\varepsilon .\)</span></p>
 <ul>
 <li>Null: <span class="math inline">\(H_{0,\text{group}}:\beta_2=0\)</span> (no difference in adjusted means)</li>
 <li>Alternative: <span class="math inline">\(H_{A,\text{group}}:\beta_2\neq 0\)</span></li>
@@ -518,8 +514,8 @@ Figure&nbsp;11.4: The question ANCOVA answers. Left: one line describes both gro
 <p><strong>Intercepts and centering.</strong> Intercepts are evaluated at <span class="math inline">\(x=0\)</span>. Compare intercepts only if you center the covariate, for example <span class="math inline">\(\tilde x=x-\bar x\)</span>, so that the intercepts represent group means at the average covariate value.</p>
 <p><strong>What to report.</strong></p>
 <ul>
-<li>If <span class="math inline">\(x\times x_c\)</span> is significant: “The effect of <span class="math inline">\(x\)</span> differs by group,” then provide the two line equations and a figure with separate fitted lines.</li>
-<li>If <span class="math inline">\(x\times x_c\)</span> is not significant: report the common slope <span class="math inline">\(\beta_1\)</span> and the adjusted group difference <span class="math inline">\(\beta_2\)</span>, with a figure showing parallel lines.</li>
+<li>If <span class="math inline">\(x\times G\)</span> is significant: “The effect of <span class="math inline">\(x\)</span> differs by group,” then provide the two line equations and a figure with separate fitted lines.</li>
+<li>If <span class="math inline">\(x\times G\)</span> is not significant: report the common slope <span class="math inline">\(\beta_1\)</span> and the adjusted group difference <span class="math inline">\(\beta_2\)</span>, with a figure showing parallel lines.</li>
 </ul>
 <p><strong>Common pitfalls.</strong></p>
 <ul>
@@ -761,7 +757,7 @@ Figure&nbsp;11.7: Air pollution by area type. The two groups look broadly simila
 </table>
 </div>
 </div>
-<p>R automatically converts the categorical <code>AreaType</code> variable into a 0/1 indicator behind the scenes, exactly the <span class="math inline">\(x_c\)</span> switch from the detour earlier in this chapter. It picks one level (here, “Rural,” alphabetically first) as the <strong>reference</strong>, and every coefficient involving <code>AreaType</code> is interpreted relative to that reference. That’s why you see a coefficient called <code>AreaTypeUrban</code> but no separate <code>AreaTypeRural</code> term.</p>
+<p>R automatically converts the categorical <code>AreaType</code> variable into a 0/1 indicator behind the scenes, exactly the <span class="math inline">\(G\)</span> switch from the detour earlier in this chapter. It picks one level (here, “Rural,” alphabetically first) as the <strong>reference</strong>, and every coefficient involving <code>AreaType</code> is interpreted relative to that reference. That’s why you see a coefficient called <code>AreaTypeUrban</code> but no separate <code>AreaTypeRural</code> term.</p>
 <p>These coefficients give the <em>direction</em> and <em>magnitude</em> of each effect:</p>
 <ul>
 <li><strong>(Intercept):</strong> estimated mean bird density for rural sites (the reference group) when air pollution is zero.</li>
@@ -873,16 +869,16 @@ Figure&nbsp;11.8: Bird density against air pollution, with a separate fitted lin
 <li><strong>If slopes are parallel, compare adjusted means.</strong> Drop the interaction term and test whether the groups’ intercepts differ once the covariate is accounted for.</li>
 <li><strong>Center the covariate when the intercept should mean something.</strong> Left uncentered, the intercept describes the groups at covariate = 0, a value the data may never actually contain.</li>
 </ul>
-
-
-<div id="refs" class="references csl-bib-body hanging-indent" role="list">
-<div id="ref-mallory_barnes" class="csl-entry" role="listitem">
-Barnes, Mallory L. 2023. <em>Statistics for Environmental Science</em>.
-</div>
+</section>
+<section id="references" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
 <div id="ref-vonkugelgen2021" class="csl-entry" role="listitem">
 <span class="nocase">von Kügelgen, Julius, Luigi Gresele, and Bernhard Schölkopf</span>. 2021. <span>“Simpson’s Paradox in COVID-19 Case Fatality Rates: A Mediation Analysis of Age-Related Causal Effects.”</span> <em>IEEE Transactions on Artificial Intelligence</em> 2 (1): 18–27. <a href="https://doi.org/10.1109/TAI.2021.3073088">https://doi.org/10.1109/TAI.2021.3073088</a>.
 </div>
 </div>
+
+
 </section>
 
 </main> <!-- /main -->

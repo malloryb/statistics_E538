@@ -8,7 +8,7 @@
 
 <meta name="author" content="Mallory Barnes">
 
-<title>6&nbsp; t-tests – Answering questions with data</title>
+<title>6&nbsp; t-tests – Statistics for Environmental Science</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -161,15 +161,10 @@ window.Quarto = {
 };
 </script>
 
-<meta property="og:title" content="6&nbsp; t-tests – Answering questions with data">
+<meta property="og:title" content="6&nbsp; t-tests – Statistics for Environmental Science">
 <meta property="og:description" content="">
 <meta property="og:image" content="06-ttests_files/figure-html/fig-6-z-vs-t-linear-log-1.png">
-<meta property="og:site_name" content="Answering questions with data">
-<meta name="twitter:title" content="6&nbsp; t-tests – Answering questions with data">
-<meta name="twitter:description" content="A free textbook teaching introductory statistics for environmental science graduate students, including a lab manual, and course website. Licensed on CC BY SA 4.0">
-<meta name="twitter:image" content="imgs/TextbookCover.png">
-<meta name="twitter:site" content="@mallory_barnes">
-<meta name="twitter:card" content="summary">
+<meta property="og:site_name" content="Statistics for Environmental Science">
 </head>
 
 <body class="nav-sidebar floating quarto-light">
@@ -196,7 +191,7 @@ window.Quarto = {
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
-      <a href="./">Answering questions with data</a> 
+      <a href="./">Statistics for Environmental Science</a> 
         <div class="sidebar-tools-main">
     <a href="https://github.com/malloryb/statistics_E538" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
 </div>
@@ -318,6 +313,7 @@ window.Quarto = {
   <li><a href="#the-same-machinery-other-designs" id="toc-the-same-machinery-other-designs" class="nav-link" data-scroll-target="#the-same-machinery-other-designs"><span class="header-section-number">6.6.2</span> The same machinery, other designs</a></li>
   </ul></li>
   <li><a href="#chapter-summary" id="toc-chapter-summary" class="nav-link" data-scroll-target="#chapter-summary"><span class="header-section-number">6.7</span> Chapter Summary</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/malloryb/statistics_E538/edit/master/06-ttests.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li></ul></div></nav>
     </div>
@@ -358,13 +354,13 @@ window.Quarto = {
 <section id="intro" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="intro"><span class="header-section-number">6.1</span> Intro</h2>
 <p>In the early 1900s, William Sealy Gosset joined <strong>Guinness</strong>, then the world’s largest brewery. Guinness hired scientifically trained brewers and gave them latitude to pursue research that improved the product. As production scaled, quality control mattered: a pint should taste the same in Dublin as in Detroit. Until then, hop quality was judged mostly by appearance and smell, which was unreliable. Chemical assays could measure ingredients, but the core problem was statistical. Inference relied on the normal (Z) distribution, which works well when samples are large enough for a normal approximation. In practice, Guinness could not destroy large volumes of beer or ingredients just to test them.</p>
-<p>Gosset set out to quantify the extra uncertainty introduced by <strong>small</strong> samples. How much wider is the error around an estimate when <span class="math inline">\(n=10\)</span> instead of <span class="math inline">\(n=1000\)</span>? He derived a new sampling distribution that accounts for small-sample variability, now known as the <strong>Student’s</strong> <span class="math inline">\(t\)</span> distribution. Because Guinness restricted external publications, he published the 1908 paper under the pseudonym <strong>“Student”</strong> <span class="citation" data-cites="Student1908">(<a href="#ref-Student1908" role="doc-biblioref">Student 1908</a>)</span>. That is why we still say <strong>Student’s</strong> <span class="math inline">\(t\)</span>-test. The core idea you will use today is the same: measure a signal, scale it by its standard error, and compare the resulting <span class="math inline">\(t\)</span> to the appropriate <span class="math inline">\(t\)</span> distribution for your <span class="math inline">\(n-1\)</span> degrees of freedom.</p>
+<p>Gosset set out to quantify the extra uncertainty introduced by <strong>small</strong> samples. How much wider is the error around an estimate when <span class="math inline">\(n=10\)</span> instead of <span class="math inline">\(n=1000\)</span>? He derived a new sampling distribution that accounts for small-sample variability, now known as the <strong>Student’s</strong> <span class="math inline">\(t\)</span> distribution. Because Guinness restricted external publications, he published the 1908 paper under the pseudonym <strong>“Student”</strong> <span class="citation" data-cites="Student1908">(<a href="01-Data_Description.html#ref-Student1908" role="doc-biblioref">Student 1908</a>)</span>. That is why we still say <strong>Student’s</strong> <span class="math inline">\(t\)</span>-test. The core idea you will use today is the same: measure a signal, scale it by its standard error, and compare the resulting <span class="math inline">\(t\)</span> to the appropriate <span class="math inline">\(t\)</span> distribution for your <span class="math inline">\(n-1\)</span> degrees of freedom.</p>
 <p><strong>Why this matters.</strong> We often compare a sample mean to a reference (drinking-water standard, historical average) or compare two conditions (before/after, site A vs site B). A t-test asks whether the observed difference is larger than you would expect from sampling variation alone, given your <span class="math inline">\(n\)</span> and variability.</p>
 <p><strong>Three common t-tests you will use.</strong></p>
 <ol type="1">
 <li><strong>One-sample t-test.</strong> Compare a sample mean to a target (<span class="math inline">\(\mu_0\)</span>).</li>
 <li><strong>Paired t-test.</strong> Compare before/after (or matched) measurements on the same units by running a one-sample t on the <em>differences</em>.</li>
-<li><strong>Independent-samples t-test (also called two-sample t-test)</strong> Compare means from two groups measured on different units. Use Welch’s test by default when variances differ.</li>
+<li><strong>Independent-samples t-test (also called two-sample t-test)</strong> Compare means from two groups measured on different units. Use Welch’s test <span class="citation" data-cites="Welch1947">(<a href="01-Data_Description.html#ref-Welch1947" role="doc-biblioref">Welch 1947</a>)</span> by default when variances differ.</li>
 </ol>
 <div class="callout callout-style-default callout-tip callout-titled" title="Tip: What you will report">
 <div class="callout-header d-flex align-content-center">
@@ -392,19 +388,19 @@ window.Quarto = {
 <p>Chapter 4 introduced the general shape of a test statistic: the effect you observed, divided by an estimate of how much it could move by chance.</p>
 <p><span class="math display">\[\text{statistic}=\frac{\text{effect}}{\text{error}}\]</span></p>
 <p>The <span class="math inline">\(t\)</span>-test is the first place we fill that in with real quantities. The effect is the distance between the sample mean and the value <span class="math inline">\(H_0\)</span> names. The error is not the raw standard deviation, though: it is the <strong>standard error</strong>, <span class="math inline">\(s/\sqrt{n}\)</span>, because what varies from study to study is the <em>mean</em>, not an individual observation.</p>
-<p><span class="math display">\[t = \frac{\text{effect}}{\text{standard error}} = \frac{\bar{X} - \mu_0}{s / \sqrt{n}}\]</span></p>
+<p><span class="math display">\[t = \frac{\text{effect}}{\text{standard error}} = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}\]</span></p>
 <p>We now turn that ratio into a test statistic for a <em>single mean</em>.</p>
 </section>
 <section id="one-sample-t-test" class="level2" data-number="6.3">
 <h2 data-number="6.3" class="anchored" data-anchor-id="one-sample-t-test"><span class="header-section-number">6.3</span> One-sample t-test</h2>
 <p>Use a one-sample <span class="math inline">\(t\)</span> when you want to test whether a sample mean differs from a reference value (<span class="math inline">\(\mu_0\)</span>). The question: is the observed difference bigger than you’d expect from sampling variability, given <span class="math inline">\(n\)</span> and your sample SD <span class="math inline">\(s\)</span>?</p>
-<p><span class="math display">\[t = \frac{\bar{X}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1\]</span></p>
+<p><span class="math display">\[t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1\]</span></p>
 <p>After calculating <span class="math inline">\(t\)</span> from our data, we compare the observed <span class="math inline">\(t\)</span> to a <span class="math inline">\(t\)</span> distribution with <span class="math inline">\(n-1\)</span> degrees of freedom to get a <span class="math inline">\(p\)</span>-value and a decision at <span class="math inline">\(\alpha\)</span>.</p>
 <section id="comparing-z-and-t" class="level3" data-number="6.3.1">
 <h3 data-number="6.3.1" class="anchored" data-anchor-id="comparing-z-and-t"><span class="header-section-number">6.3.1</span> Comparing <span class="math inline">\(z\)</span> and <span class="math inline">\(t\)</span></h3>
 <p>When the population SD is known (or we have a large enough sample to assume convergence), the ratio is called <span class="math inline">\(z\)</span>; when it’s estimated from the data, it’s <span class="math inline">\(t\)</span>.</p>
-<p>Under a known population SD (<span class="math inline">\(\sigma\)</span>), the standardized mean uses the <span class="math inline">\(z\)</span> statistic: <span class="math display">\[z = \frac{\bar{X}-\mu_0}{\sigma/\sqrt{n}}\]</span></p>
-<p>When <span class="math inline">\(\sigma\)</span> is <strong>unknown</strong> (the usual case), we estimate it with the sample SD (<span class="math inline">\(s\)</span>) and use the <span class="math inline">\(t\)</span> statistic: <span class="math display">\[t = \frac{\bar{X}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1\]</span></p>
+<p>Under a known population SD (<span class="math inline">\(\sigma\)</span>), the standardized mean uses the <span class="math inline">\(z\)</span> statistic: <span class="math display">\[z = \frac{\bar{x}-\mu_0}{\sigma/\sqrt{n}}\]</span></p>
+<p>When <span class="math inline">\(\sigma\)</span> is <strong>unknown</strong> (the usual case), we estimate it with the sample SD (<span class="math inline">\(s\)</span>) and use the <span class="math inline">\(t\)</span> statistic: <span class="math display">\[t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1\]</span></p>
 <p>Because <span class="math inline">\(s\)</span> varies from sample to sample, the <span class="math inline">\(t\)</span> distribution has <strong>heavier tails</strong> than the standard normal. As <span class="math inline">\(n\)</span> grows, <span class="math inline">\(s\)</span> stabilizes and <span class="math inline">\(t\)</span> <strong>converges</strong> to <span class="math inline">\(z\)</span>.</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -443,7 +439,7 @@ Figure&nbsp;6.1: Normal (<span class="math inline">\(z\)</span>) vs <span class=
 <h3 data-number="6.3.2" class="anchored" data-anchor-id="what-t-represents"><span class="header-section-number">6.3.2</span> What t represents</h3>
 <p>Either way, the ratio asks the same question: how far is the mean from the reference in SE units?</p>
 <p><span class="math inline">\(t\)</span> expresses how far a sample mean is from the hypothesized mean, in <strong>standard error units</strong> (signal over noise):</p>
-<p><span class="math display">\[t = \frac{\bar{X}-\mu_0}{s/\sqrt{n}}\]</span></p>
+<p><span class="math display">\[t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}\]</span></p>
 <p><span class="math inline">\(t\)</span> can be positive or negative depending on direction. Under <span class="math inline">\(H_0\)</span>, <span class="math inline">\(t \sim t_{(df=n-1)}\)</span>.<br>
 <strong>A useful anchor:</strong> at <span class="math inline">\(\alpha=.05\)</span> two-tailed and <span class="math inline">\(df\approx 20\)</span>, <span class="math inline">\(|t|\gtrsim 2\)</span> is already uncommon under <span class="math inline">\(H_0\)</span>; smaller <span class="math inline">\(df\)</span> pushes that threshold higher, as the critical-value table above shows.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Note: Standard error, again">
@@ -483,7 +479,7 @@ Figure&nbsp;6.2: Histogram of 1,000 simulated <span class="math inline">\(t\)</s
 <p>By hand, the standard error of the mean is the sample SD divided by the square root of <span class="math inline">\(n\)</span>:</p>
 <p><span class="math display">\[\text{SE} = \frac{s}{\sqrt{n}} = \frac{17.92}{\sqrt{10}} = 5.67\]</span></p>
 <p>And <span class="math inline">\(t\)</span> is the difference between the sample mean (61) and the reference value (50, chance level), divided by that SE:</p>
-<p><span class="math display">\[t = \frac{\bar{X}-\mu_0}{SE} = \frac{61-50}{5.67} = 1.94\]</span></p>
+<p><span class="math display">\[t = \frac{\bar{x}-\mu_0}{SE} = \frac{61-50}{5.67} = 1.94\]</span></p>
 <p>We can confirm this with a single R command, <code>t.test(scores, mu = 50)</code>:</p>
 <p><strong>Results:</strong> <span class="math inline">\(t(9)=1.94\)</span>, <span class="math inline">\(p=0.0842\)</span>; mean <span class="math inline">\(=61\)</span> (95% CI [48.18, 73.82]).</p>
 <p><strong>Interpretation:</strong> The mean (61%) is above chance (50%), but the difference is not statistically significant at <span class="math inline">\(\alpha=.05\)</span>.</p>
@@ -838,7 +834,7 @@ t = \frac{\bar d - 0}{s_d/\sqrt{n}}, \quad df=n-1.\]</span></p>
 <p>A natural first guess is to average the two groups’ standard errors:</p>
 <p><span class="math display">\[t = \frac{\bar{A}-\bar{B}}{\left(\dfrac{SE_A+SE_B}{2}\right)}\]</span></p>
 <p>That average, however, is a biased estimator of the variability under the null. Instead, the independent-samples <span class="math inline">\(t\)</span>-test <strong>pools</strong> the two groups’ variances, weighted by their degrees of freedom, into a single estimate for the denominator:</p>
-<p><span class="math display">\[t = \frac{\bar{X}_A-\bar{X}_B}{s_p\sqrt{\dfrac{1}{n_A}+\dfrac{1}{n_B}}}\]</span></p>
+<p><span class="math display">\[t = \frac{\bar{x}_A-\bar{x}_B}{s_p\sqrt{\dfrac{1}{n_A}+\dfrac{1}{n_B}}}\]</span></p>
 <p>where the pooled standard deviation <span class="math inline">\(s_p\)</span> is (note <span class="math inline">\(s_A^2\)</span> and <span class="math inline">\(s_B^2\)</span> here are variances, not standard deviations):</p>
 <p><span class="math display">\[s_p = \sqrt{\frac{(n_A-1)s_A^2 + (n_B-1)s_B^2}{n_A+n_B-2}}\]</span></p>
 <p>The example below computes <span class="math inline">\(t\)</span> for two small groups by following that formula step by step in R, then checks it against <code>t.test()</code>.</p>
@@ -1052,16 +1048,19 @@ Figure&nbsp;6.13: 1000 ps for n =100, when there is a true effect
 <li><strong>How worried to be depends on</strong> <span class="math inline">\(n\)</span>. Thanks to the Central Limit Theorem, <span class="math inline">\(t\)</span>-tests are fairly robust to non-normality once samples are reasonably large. The danger zone is small <em>and</em> skewed, which describes a lot of environmental field data. Plot your data first; treat a Shapiro-Wilk result as evidence rather than a gate, since it has least power exactly when you need it most.</li>
 <li><strong>Choose your tails before you look.</strong> Default to two-tailed. Reserve one-tailed tests for cases where theory rules out the opposite direction, and decide before seeing the result.</li>
 </ul>
-
-
-<div id="refs" class="references csl-bib-body hanging-indent" role="list">
-<div id="ref-mallory_barnes" class="csl-entry" role="listitem">
-Barnes, Mallory L. 2023. <em>Statistics for Environmental Science</em>.
-</div>
+</section>
+<section id="references" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
 <div id="ref-Student1908" class="csl-entry" role="listitem">
 Student, A. 1908. <span>“The Probable Error of a Mean.”</span> <em>Biometrika</em> 6: 1–2.
 </div>
+<div id="ref-Welch1947" class="csl-entry" role="listitem">
+Welch, B. L. 1947. <span>“The Generalization of <span>‘<span>Student</span>’s’</span> Problem When Several Different Population Variances Are Involved.”</span> <em>Biometrika</em> 34: 28–35.
 </div>
+</div>
+
+
 </section>
 
 </main> <!-- /main -->
