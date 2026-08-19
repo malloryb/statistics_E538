@@ -5,20 +5,15 @@ author:
 aliases: [redirects/anova.html]
 ---
 
-```{r, include = FALSE}
-source("global_stuff.R")
-set.seed(538)
-```
+
 
 # ANOVA
 
-```{r}
-library(ggplot2)
-library(dplyr)
-library(broom)
 
-fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = "f"))
-```
+::: {.cell}
+
+:::
+
 
 Some history first [@salsburg2001lady]. Sir Ronald Fisher invented the ANOVA and wanted to publish it in the journal Biometrika. The editor at the time was Karl Pearson, of Pearson's $r$, and the two men disliked each other, so Pearson refused to publish the new test. Fisher published it in the Journal of Agricultural Science instead. The feud carried into the next generation: years later, Karl Pearson's son Egon Pearson, working with Jerzy Neyman, revamped Fisher's ideas and re-cast them into what we now call null vs. alternative hypothesis testing. Fisher objected to that too.
 
@@ -50,23 +45,13 @@ $$1-(1-.05)^3 = .14.$$
 
 Even with only five groups, there's a 40% chance of turning up at least one "significant" difference somewhere purely by chance, even if every population mean is identical. @fig-8multiplet shows this inflation directly: as the number of independent $t$-tests grows, so does the chance that at least one is a false positive.
 
-```{r}
-#| label: fig-8multiplet
-#| fig-cap: "Familywise Type I error rate as the number of independent t-tests increases, at alpha = .05 per test."
-#| out-width: "80%"
 
-m <- 1:12
-familywise <- 1 - (1 - .05)^m
+::: {.cell}
+::: {.cell-output-display}
+![Familywise Type I error rate as the number of independent t-tests increases, at alpha = .05 per test.](08-ANOVA_files/figure-html/fig-8multiplet-1.png){#fig-8multiplet width=80%}
+:::
+:::
 
-ggplot(data.frame(m, familywise), aes(x = m, y = familywise)) +
-  geom_line() +
-  geom_point() +
-  scale_y_continuous(labels = scales::percent) +
-  scale_x_continuous(breaks = 1:12) +
-  xlab("Number of independent t-tests") +
-  ylab("Familywise Type I error rate") +
-  theme_classic(base_size = 12)
-```
 
 ANOVA solves this by replacing many separate $t$-tests with **one** test that controls the overall error rate. It asks a single question:
 
@@ -104,22 +89,93 @@ $SS_\text{Total}$ captures all of the variation in a dataset: the difference bet
 
 Let's imagine we had some data in three groups, A, B, and C. For example, we might have 3 scores in each group. The data could look like this:
 
-```{r}
-library(dplyr)
-scores <- c(20, 11, 2, 6, 2, 7, 2, 11, 2)
-groups <- as.character(rep(c("A", "B", "C"), each = 3))
-diff <- scores - mean(scores)
-diff_squared <- diff ^ 2
-df <- data.frame(groups, scores, diff, diff_squared)
-df$groups <- as.character(df$groups)
 
-df <- df %>%
-  rbind(c("Sums", round(colSums(df[1:9, 2:4]), 2))) %>%
-  rbind(c("Means", round(colMeans(df[1:9, 2:4]), 2)))
+::: {.cell}
+::: {.cell-output-display}
+`````{=html}
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> groups </th>
+   <th style="text-align:left;"> scores </th>
+   <th style="text-align:left;"> diff </th>
+   <th style="text-align:left;"> diff_squared </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> A </td>
+   <td style="text-align:left;"> 20 </td>
+   <td style="text-align:left;"> 13 </td>
+   <td style="text-align:left;"> 169 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> A </td>
+   <td style="text-align:left;"> 11 </td>
+   <td style="text-align:left;"> 4 </td>
+   <td style="text-align:left;"> 16 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> A </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> -5 </td>
+   <td style="text-align:left;"> 25 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> B </td>
+   <td style="text-align:left;"> 6 </td>
+   <td style="text-align:left;"> -1 </td>
+   <td style="text-align:left;"> 1 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> B </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> -5 </td>
+   <td style="text-align:left;"> 25 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> B </td>
+   <td style="text-align:left;"> 7 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> -5 </td>
+   <td style="text-align:left;"> 25 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C </td>
+   <td style="text-align:left;"> 11 </td>
+   <td style="text-align:left;"> 4 </td>
+   <td style="text-align:left;"> 16 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> -5 </td>
+   <td style="text-align:left;"> 25 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Sums </td>
+   <td style="text-align:left;"> 63 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> 302 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Means </td>
+   <td style="text-align:left;"> 7 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> 33.56 </td>
+  </tr>
+</tbody>
+</table>
 
-knitr::kable(df)
+`````
+:::
+:::
 
-```
 
 The data are in long format, so each row is a single score. The mean of all of the scores is the **Grand Mean**, calculated in the table as 7.
 
@@ -137,23 +193,105 @@ $SS_\text{Total}$ captured all of the variation in the data. $SS_\text{Between}$
 
 To find it, replace every score with its own group's mean, then square and sum each group mean's distance from the grand mean.
 
-```{r}
-library(dplyr)
-scores <- c(20, 11, 2, 6, 2, 7, 2, 11, 2)
-means <- c(11, 11, 11, 5, 5, 5, 5, 5, 5)
-groups <- as.character(rep(c("A", "B", "C"), each = 3))
-diff <- means - mean(scores)
-diff_squared <- diff ^ 2
-df <- data.frame(groups, scores, means, diff, diff_squared)
-df$groups <- as.character(df$groups)
 
-df <- df %>%
-  rbind(c("Sums", round(colSums(df[1:9, 2:5]), 2))) %>%
-  rbind(c("Means", round(colMeans(df[1:9, 2:5]), 2)))
+::: {.cell}
+::: {.cell-output-display}
+`````{=html}
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> groups </th>
+   <th style="text-align:left;"> scores </th>
+   <th style="text-align:left;"> means </th>
+   <th style="text-align:left;"> diff </th>
+   <th style="text-align:left;"> diff_squared </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> A </td>
+   <td style="text-align:left;"> 20 </td>
+   <td style="text-align:left;"> 11 </td>
+   <td style="text-align:left;"> 4 </td>
+   <td style="text-align:left;"> 16 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> A </td>
+   <td style="text-align:left;"> 11 </td>
+   <td style="text-align:left;"> 11 </td>
+   <td style="text-align:left;"> 4 </td>
+   <td style="text-align:left;"> 16 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> A </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> 11 </td>
+   <td style="text-align:left;"> 4 </td>
+   <td style="text-align:left;"> 16 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> B </td>
+   <td style="text-align:left;"> 6 </td>
+   <td style="text-align:left;"> 5 </td>
+   <td style="text-align:left;"> -2 </td>
+   <td style="text-align:left;"> 4 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> B </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> 5 </td>
+   <td style="text-align:left;"> -2 </td>
+   <td style="text-align:left;"> 4 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> B </td>
+   <td style="text-align:left;"> 7 </td>
+   <td style="text-align:left;"> 5 </td>
+   <td style="text-align:left;"> -2 </td>
+   <td style="text-align:left;"> 4 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> 5 </td>
+   <td style="text-align:left;"> -2 </td>
+   <td style="text-align:left;"> 4 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C </td>
+   <td style="text-align:left;"> 11 </td>
+   <td style="text-align:left;"> 5 </td>
+   <td style="text-align:left;"> -2 </td>
+   <td style="text-align:left;"> 4 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> 5 </td>
+   <td style="text-align:left;"> -2 </td>
+   <td style="text-align:left;"> 4 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Sums </td>
+   <td style="text-align:left;"> 63 </td>
+   <td style="text-align:left;"> 63 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> 72 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Means </td>
+   <td style="text-align:left;"> 7 </td>
+   <td style="text-align:left;"> 7 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> 8 </td>
+  </tr>
+</tbody>
+</table>
 
-knitr::kable(df)
+`````
+:::
+:::
 
-```
 
 Notice the new `means` column: the mean for group A was 11, so there are three 11s, one per observation in row A; groups B and C both average to 5, so the rest of the column is 5s.
 
@@ -171,22 +309,105 @@ $$SS_\text{Within} = SS_\text{Total} - SS_\text{Between} = 302 - 72 = 230.$$
 
 It's worth calculating $SS_\text{Within}$ directly from the data too, both to see where it comes from and to double-check that the subtraction was right.
 
-```{r}
-scores <- c(20, 11, 2, 6, 2, 7, 2, 11, 2)
-means <- c(11, 11, 11, 5, 5, 5, 5, 5, 5)
-groups <- as.character(rep(c("A", "B", "C"), each = 3))
-diff <- means - scores
-diff_squared <- diff ^ 2
-df <- data.frame(groups, scores, means, diff, diff_squared)
-df$groups <- as.character(df$groups)
 
-df <- df %>%
-  rbind(c("Sums", round(colSums(df[1:9, 2:5]), 2))) %>%
-  rbind(c("Means", round(colMeans(df[1:9, 2:5]), 2)))
+::: {.cell}
+::: {.cell-output-display}
+`````{=html}
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> groups </th>
+   <th style="text-align:left;"> scores </th>
+   <th style="text-align:left;"> means </th>
+   <th style="text-align:left;"> diff </th>
+   <th style="text-align:left;"> diff_squared </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> A </td>
+   <td style="text-align:left;"> 20 </td>
+   <td style="text-align:left;"> 11 </td>
+   <td style="text-align:left;"> -9 </td>
+   <td style="text-align:left;"> 81 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> A </td>
+   <td style="text-align:left;"> 11 </td>
+   <td style="text-align:left;"> 11 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> A </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> 11 </td>
+   <td style="text-align:left;"> 9 </td>
+   <td style="text-align:left;"> 81 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> B </td>
+   <td style="text-align:left;"> 6 </td>
+   <td style="text-align:left;"> 5 </td>
+   <td style="text-align:left;"> -1 </td>
+   <td style="text-align:left;"> 1 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> B </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> 5 </td>
+   <td style="text-align:left;"> 3 </td>
+   <td style="text-align:left;"> 9 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> B </td>
+   <td style="text-align:left;"> 7 </td>
+   <td style="text-align:left;"> 5 </td>
+   <td style="text-align:left;"> -2 </td>
+   <td style="text-align:left;"> 4 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> 5 </td>
+   <td style="text-align:left;"> 3 </td>
+   <td style="text-align:left;"> 9 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C </td>
+   <td style="text-align:left;"> 11 </td>
+   <td style="text-align:left;"> 5 </td>
+   <td style="text-align:left;"> -6 </td>
+   <td style="text-align:left;"> 36 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:left;"> 5 </td>
+   <td style="text-align:left;"> 3 </td>
+   <td style="text-align:left;"> 9 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Sums </td>
+   <td style="text-align:left;"> 63 </td>
+   <td style="text-align:left;"> 63 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> 230 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Means </td>
+   <td style="text-align:left;"> 7 </td>
+   <td style="text-align:left;"> 7 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> 25.56 </td>
+  </tr>
+</tbody>
+</table>
 
-knitr::kable(df)
+`````
+:::
+:::
 
-```
 
 This time, for each score we found the group mean first, then found the leftover error in that estimate: the `diff` column is the difference between each score and its own group mean, and `diff_squared` squares those differences. Summing them gives another sum of squares, $SS_\text{Within}$: the deviations the group means can't explain.
 
@@ -220,14 +441,45 @@ $$F = \frac{MS_\text{Between}}{MS_\text{Within}} = \frac{36}{38.33} = 0.94$$
 
 All of these pieces, the $df$s, $SS$es, $MS$es, and finally $F$, are conveniently organized into an **ANOVA table**:
 
-```{r}
-library(xtable)
-aov_out <- aov(scores ~ groups, df[1:9, ])
-summary_out <- summary(aov_out)
 
-knitr::kable(xtable(summary_out), digits = c(0, 0, 2, 2, 2, 4))
+::: {.cell}
+::: {.cell-output-display}
+`````{=html}
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> Df </th>
+   <th style="text-align:right;"> Sum Sq </th>
+   <th style="text-align:right;"> Mean Sq </th>
+   <th style="text-align:right;"> F value </th>
+   <th style="text-align:right;"> Pr(&gt;F) </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> groups </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 72 </td>
+   <td style="text-align:right;"> 36.00 </td>
+   <td style="text-align:right;"> 0.94 </td>
+   <td style="text-align:right;"> 0.44 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Residuals </td>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 230 </td>
+   <td style="text-align:right;"> 38.33 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+</tbody>
+</table>
 
-```
+`````
+:::
+:::
+
 
 R labels the two rows `groups` (the between-groups row: what the means can explain) and `Residuals` (the within-groups row: what they can't). Other software uses slightly different labels for the same two rows. The table doesn't add new information beyond what we already computed; it just organizes it, with $MS_\text{Between}$ (36) divided by $MS_\text{Within}$ (38.33) giving the $F$-value.
 
@@ -241,32 +493,13 @@ To build intuition for the F distribution, consider a simulated monitoring study
 
 We run this simulation 10,000 times. Each time we compute F from the sample data. The histogram of those 10,000 F-values, shown in @fig-8fnull, is the null distribution of F for this design.
 
-```{r}
-#| label: fig-8fnull
-#| fig.cap: "A simulation of 10,000 experiments from a null distribution where there is no differences. The histogram shows 10,000 $F$-values, one for each simulation. These are values that F can take in this situation. All of these $F$-values were produced by random sampling error."
-#| fig-asp: 0.5
-#| out-width: "100%"
 
-library(ggplot2)
+::: {.cell}
+::: {.cell-output-display}
+![A simulation of 10,000 experiments from a null distribution where there is no differences. The histogram shows 10,000 $F$-values, one for each simulation. These are values that F can take in this situation. All of these $F$-values were produced by random sampling error.](08-ANOVA_files/figure-html/fig-8fnull-1.png){#fig-8fnull width=100%}
+:::
+:::
 
-save_F <- length(10000)
-for (i in 1:10000) {
-  abundance   <- rnorm(30, 100, 10)
-  site_type   <- as.factor(rep(1:3, each = 10))
-  simulations <- rep(i, each = 30)
-  sample_df   <- data.frame(simulations, site_type, abundance)
-  aov.out <- summary(aov(abundance ~ site_type, sample_df))
-  save_F[i] <- aov.out[[1]]$`F value`[1]
-}
-
-plot_df <- data.frame(sims = 1:10000, save_F)
-plot_df <- plot_df[plot_df$save_F < 10, ]
-
-ggplot(plot_df, aes(x = save_F)) +
-  geom_histogram(color = "white", bins = 100) +
-  labs(x = "F", y = "Count")
-
-```
 
 A couple of things are worth noting about this $F$ distribution. First, it never goes below 0: $F$ is a ratio of two variances, and variances can't be negative, so neither can $F$. Second, it isn't normal or symmetric; it's right-skewed, and its exact shape depends on the numerator and denominator degrees of freedom.
 
@@ -281,35 +514,13 @@ We can use this null distribution of $F$ to decide when a real experiment's resu
 
 @fig-8criticalF marks that critical value on the histogram:
 
-```{r}
-#| label: fig-8criticalF
-#| fig-cap: "The critical value for $F$ where 5% of all $F$-values lie beyond this point"
-#| out-width: "100%"
-#| fig-asp: 0.5
 
-ggplot(plot_df, aes(x = save_F)) +
-  geom_histogram(color = "white", bins = 100) +
-  geom_vline(xintercept = qf(.95, 2, 27)) +
-  annotate(
-    "rect",
-    xmin = qf(.95, 2, 27),
-    xmax = Inf,
-    ymin = 0,
-    ymax = Inf,
-    alpha = 0.15,
-    fill = "#b22222"
-  ) +
-  geom_label(data = data.frame(
-    x = qf(.95, 2, 27),
-    y = 500,
-    label = round(qf(.95, 2, 27), digits = 2)
-  ), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = 7.5, y = 500, label = "5% of F-values"),
-             aes(x = x, y = y, label = label)) +
-  theme_classic(base_size = 12) +
-  labs(x = "F", y = "Count")
+::: {.cell}
+::: {.cell-output-display}
+![The critical value for $F$ where 5% of all $F$-values lie beyond this point](08-ANOVA_files/figure-html/fig-8criticalF-1.png){#fig-8criticalF width=100%}
+:::
+:::
 
-```
 
 Only 5% of $F$-values from this null distribution are 3.35 or larger. That gives us a decision rule: if we ran the same design for real (30 plots, 10 per site type) and site type actually affected abundance, we could treat $F\geq3.35$ as evidence the differences aren't just chance. An observed $F$ of 3.4, for instance, would occur less than 5% of the time under the null, so seeing it would give us reasonably good grounds to conclude that site type actually mattered.
 
@@ -339,45 +550,13 @@ A small $F$ with a large $p$-value means we don't reject the hypothesis of no di
 
 The 10,000 simulated experiments above never once showed us the actual group means behind each $F$-value. @fig-8manyDiffs shows the group means (with standard-error bars) from 10 of those null simulations.
 
-```{r}
-#| label: fig-8manyDiffs
-#| fig-cap: "Different patterns of group means under the null (all scores for each group sampled from the same distribution)."
-#| out-width: "100%"
 
-#library(dplyr)
-#library(ggplot2)
+::: {.cell}
+::: {.cell-output-display}
+![Different patterns of group means under the null (all scores for each group sampled from the same distribution).](08-ANOVA_files/figure-html/fig-8manyDiffs-1.png){#fig-8manyDiffs width=100%}
+:::
+:::
 
-all_df <- data.frame()
-
-for (i in 1:10) {
-  abundance   <- rnorm(30, 100, 10)
-  site_type   <- as.factor(rep(1:3, each = 10))
-  simulations <- rep(i, each = 30)
-  sample_df   <- data.frame(simulations, site_type, abundance)
-  all_df      <- rbind(all_df, sample_df)
-}
-
-#print(all_df[1:50,])
-
-all_df$simulations  <- as.factor(all_df$simulations)
-
-plot_df2 <- all_df %>%
-  dplyr::group_by(simulations, site_type) %>%
-  dplyr::summarise(group_means = mean(abundance),
-                   group_SE = sd(abundance) / sqrt(length(abundance)))
-
-#print(plot_df2[1:10,])
-
-ggplot(data = plot_df2, aes(x = site_type, y = group_means)) +
-  geom_point(color = "#1446a0", size = 2) +
-  geom_errorbar(aes(ymin = group_means - group_SE, ymax = group_means +
-                      group_SE), color = "#1446a0", width = 0.25) +
-  xlab("Site type") +
-  ylab("Mean abundance") +
-  facet_wrap( ~ simulations, nrow=2) +
-  theme(panel.border = element_rect(colour = "grey30", fill = NA, linewidth = 0.5))
-
-```
 
 Each panel is one simulated experiment; the dots are the group means for site types A, B, and C, with error bars showing standard error. All 30 plots in every panel were drawn from the same distribution (mean = 100, sd = 10), so the group means are only ever different because of sampling error, not any real effect of site type.
 
@@ -387,46 +566,13 @@ In most panels, the error bars overlap heavily, visually suggesting no real diff
 
 @fig-8flessthanone shows 10 simulated experiments, this time filtered to only the ones where $F<1$, the cases where we'd clearly fail to reject the null.
 
-```{r}
-#| label: fig-8flessthanone
-#| fig-cap: "Different patterns of group means under the null (sampled from same distribution) when F is less than 1."
-#| out-width: "100%"
 
-all_df <- data.frame()
-counter <- 0
-for (i in 1:100) {
-  abundance   <- rnorm(30, 100, 10)
-  site_type   <- as.factor(rep(1:3, each = 10))
-  simulations <- rep(i, each = 30)
-  sample_df   <- data.frame(simulations, site_type, abundance)
-  aov.out <- summary(aov(abundance ~ site_type, sample_df))
-  the_f <- aov.out[[1]]$`F value`[1]
-  if (the_f < 1) {
-    all_df <- rbind(all_df, sample_df)
-    counter <- counter + 1
-  }
-  if (counter == 10) {
-    break
-  }
-}
+::: {.cell}
+::: {.cell-output-display}
+![Different patterns of group means under the null (sampled from same distribution) when F is less than 1.](08-ANOVA_files/figure-html/fig-8flessthanone-1.png){#fig-8flessthanone width=100%}
+:::
+:::
 
-all_df$simulations  <- as.factor(all_df$simulations)
-
-plot_df <- all_df %>%
-  dplyr::group_by(simulations, site_type) %>%
-  dplyr::summarise(means = mean(abundance),
-                   SEs = sd(abundance) / sqrt(length(abundance)))
-
-ggplot(plot_df, aes(x = site_type, y = means)) +
-  geom_bar(stat = "identity", position = "dodge", fill = "#63b8ff") +
-  geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.25) +
-  facet_wrap( ~ simulations, nrow=2) +
-  xlab("Site type") +
-  ylab("Mean abundance") +
-  coord_cartesian(ylim = c(85, 115)) +
-  theme(panel.border = element_rect(colour = "grey30", fill = NA, linewidth = 0.5))
-
-```
 
 The panel numbers show which simulations actually produced $F<1$. The bars aren't perfectly flat, but what matters is that within each panel, the error bars for all three means overlap heavily: our estimate of the mean is about the same across groups, and we wouldn't be making a Type I error here.
 
@@ -434,46 +580,13 @@ The panel numbers show which simulations actually produced $F<1$. The bars aren'
 
 Earlier we found a critical value of 3.35: only 5% of $F$-values from this null distribution exceed it. @fig-8sigdiffs shows 10 simulations filtered to exactly that rare case, $F>3.35$, even though every one of them is still drawn from the same null distribution with no real group differences. Rejecting the null whenever $F$ clears 3.35 is the right long-run decision rule, but every one of these particular simulations would be a Type I error if we did.
 
-```{r}
-#| label: fig-8sigdiffs
-#| fig-cap: "Different patterns of group means under the null when F is above critical value (these are all type I Errors)."
-#| out-width: "100%"
 
-all_df <- data.frame()
-counter <- 0
-for (i in 1:1000) {
-  abundance   <- rnorm(30, 100, 10)
-  site_type   <- as.factor(rep(1:3, each = 10))
-  simulations <- rep(i, each = 30)
-  sample_df   <- data.frame(simulations, site_type, abundance)
-  aov.out <- summary(aov(abundance ~ site_type, sample_df))
-  the_f <- aov.out[[1]]$`F value`[1]
-  if (the_f > 3.35) {
-    all_df <- rbind(all_df, sample_df)
-    counter <- counter + 1
-  }
-  if (counter == 10) {
-    break
-  }
-}
+::: {.cell}
+::: {.cell-output-display}
+![Different patterns of group means under the null when F is above critical value (these are all type I Errors).](08-ANOVA_files/figure-html/fig-8sigdiffs-1.png){#fig-8sigdiffs width=100%}
+:::
+:::
 
-all_df$simulations  <- as.factor(all_df$simulations)
-
-plot_df <- all_df %>%
-  dplyr::group_by(simulations, site_type) %>%
-  dplyr::summarise(means = mean(abundance),
-                   SEs = sd(abundance) / sqrt(length(abundance)))
-
-ggplot(plot_df, aes(x = site_type, y = means)) +
-  geom_bar(stat = "identity", position = "dodge", fill = "#b22222") +
-  geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.25) +
-  facet_wrap( ~ simulations, nrow = 2) +
-  xlab("Site type") +
-  ylab("Mean abundance") +
-  coord_cartesian(ylim = c(85, 115)) +
-  theme(panel.border = element_rect(colour = "grey30", fill = NA, linewidth = 0.5))
-
-```
 
 Every panel of @fig-8sigdiffs now shows at least one group mean whose error bars don't overlap with another's: a visually convincing "real" difference. All ten are Type I errors. That's the deceptive part: when this happens by chance, the data really does look like it shows a pattern, the $F$-value really is large, and the $p$-value really is small. A Type I error looks exactly like a real effect, and nothing in the output distinguishes them.
 
@@ -487,72 +600,69 @@ The following example applies the full ANOVA workflow, from descriptive summarie
 
 Plethodontid salamanders are sensitive indicators of forest condition: they depend on moist microhabitats, abundant coarse woody debris, and stable soil temperatures, all features that decline with forest disturbance. A field ecologist surveys salamander abundance across three forest types, laid out in @fig-8salamanderdesign.
 
-```{r}
-#| label: fig-8salamanderdesign
-#| fig-cap: "The salamander study as a design schematic. Structurally this is the two-group design from Chapters 4 and 6 with one more box added, which is exactly why ANOVA generalizes the t-test rather than replacing it."
-#| fig-alt: "Study design schematic. IV: forest type, categorical. Three boxes labelled Old-growth, Secondary and Managed, each with n = 8 plots. DV: salamander abundance per plot."
-#| fig-asp: 0.34
-#| out-width: "100%"
 
-design_groups("Forest type (categorical)",
-              c("Old-growth", "Secondary", "Managed"), 8, "plots",
-              "Salamander abundance (per plot)",
-              "Do the three means differ by more than chance?")
-```
+::: {.cell}
+::: {.cell-output-display}
+![The salamander study as a design schematic. Structurally this is the two-group design from Chapters 4 and 6 with one more box added, which is exactly why ANOVA generalizes the t-test rather than replacing it.](08-ANOVA_files/figure-html/fig-8salamanderdesign-1.png){#fig-8salamanderdesign fig-alt='Study design schematic. IV: forest type, categorical. Three boxes labelled Old-growth, Secondary and Managed, each with n = 8 plots. DV: salamander abundance per plot.' width=100%}
+:::
+:::
+
 
 Compare that with the two-group designs earlier in the book: nothing has changed except the number of boxes. That is the entire reason ANOVA exists as a generalization of the $t$-test rather than a separate idea, and it is also why adding boxes is what forces the multiple-comparisons problem we opened this chapter with.
 
 Let's look at the data and findings. Note that you will work through these steps yourself in Lab 10.
 
-```{r}
-#| label: fig-8salamanderData
-#| fig-cap: "Mean salamander abundance (individuals per plot) across three forest types. Points show individual plot counts; error bars show ±1 SE."
-#| fig-asp: 0.5
-#| out-width: "100%"
 
-set.seed(288)
-old_growth <- pmax(round(rnorm(8, mean = 14, sd = 3.5)), 0)
-secondary  <- pmax(round(rnorm(8, mean = 7,  sd = 2.8)), 0)
-managed    <- pmax(round(rnorm(8, mean = 5,  sd = 2.5)), 0)
+::: {.cell}
+::: {.cell-output-display}
+![Mean salamander abundance (individuals per plot) across three forest types. Points show individual plot counts; error bars show ±1 SE.](08-ANOVA_files/figure-html/fig-8salamanderData-1.png){#fig-8salamanderData width=100%}
+:::
+:::
 
-salamander_df <- data.frame(
-  abundance   = c(old_growth, secondary, managed),
-  forest_type = factor(
-    rep(c("Old-growth", "Secondary", "Managed"), each = 8),
-    levels = c("Old-growth", "Secondary", "Managed")
-  )
-)
-
-descriptive_df <- salamander_df %>%
-  dplyr::group_by(forest_type) %>%
-  dplyr::summarise(
-    means = mean(abundance),
-    SEs   = sd(abundance) / sqrt(n())
-  )
-
-ggplot(descriptive_df, aes(x = forest_type, y = means, fill = forest_type)) +
-  geom_bar(stat = "identity") +
-  geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.15) +
-  geom_point(data = salamander_df, aes(x = forest_type, y = abundance),
-             inherit.aes = FALSE, alpha = 0.5, size = 2) +
-  ylab("Salamander abundance (individuals/plot)") +
-  xlab("Forest type") +
-  theme(legend.position = "none")
-```
 
 The bar graph shows a clear gradient: old-growth plots have the highest mean abundance, managed plantations the lowest, with secondary forest in between. The individual plot counts (dots) show considerable within-group variability, a reminder that even where a real difference exists, individual plots can vary substantially.
 
 We now conduct the one-way ANOVA to test whether these differences are larger than expected by chance alone.
 
-```{r}
-#| label: tbl-8salamanderANOVA
-#| tbl-cap: "One-way ANOVA table for salamander abundance by forest type."
 
-library(xtable)
-aov_out      <- aov(abundance ~ forest_type, data = salamander_df)
-summary_out  <- summary(aov_out)
-knitr::kable(xtable(summary_out), digits = c(0, 0, 2, 2, 2, 4))
-```
+::: {#tbl-8salamanderANOVA .cell tbl-cap='One-way ANOVA table for salamander abundance by forest type.'}
+::: {.cell-output-display}
+`````{=html}
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> Df </th>
+   <th style="text-align:right;"> Sum Sq </th>
+   <th style="text-align:right;"> Mean Sq </th>
+   <th style="text-align:right;"> F value </th>
+   <th style="text-align:right;"> Pr(&gt;F) </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> forest_type </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 313 </td>
+   <td style="text-align:right;"> 156.29 </td>
+   <td style="text-align:right;"> 14.6 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Residuals </td>
+   <td style="text-align:right;"> 21 </td>
+   <td style="text-align:right;"> 225 </td>
+   <td style="text-align:right;"> 10.70 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+</tbody>
+</table>
+
+`````
+:::
+:::
+
 
 ::: {.callout-important title="Results reporting: one-way ANOVA"}
 Report the direction in plain language, the test statistic with both degrees of freedom, the error term, $p$, and the effect size.
@@ -572,28 +682,35 @@ $$\eta^2 = \frac{SS_\text{Between}}{SS_\text{Total}} = \frac{SS_\text{Between}}{
 
 $SS_\text{Between}$ is the variation the group means can account for and $SS_\text{Total}$ is all the variation there is, so $\eta^2$ is the proportion of the total variation attributable to the grouping variable. It runs from 0 to 1.
 
-```{r}
-#| label: tbl-8etasq
-#| tbl-cap: "Eta-squared for the effect of forest type on salamander abundance."
 
-ss <- summary(aov_out)[[1]][["Sum Sq"]]
-ss_between <- ss[1]
-ss_within  <- ss[2]
-ss_total   <- ss_between + ss_within
-eta_sq     <- ss_between / ss_total
+::: {#tbl-8etasq .cell tbl-cap='Eta-squared for the effect of forest type on salamander abundance.'}
+::: {.cell-output-display}
+`````{=html}
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:right;"> SS Between </th>
+   <th style="text-align:right;"> SS Within </th>
+   <th style="text-align:right;"> SS Total </th>
+   <th style="text-align:right;"> Eta-squared </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;"> 312.58 </td>
+   <td style="text-align:right;"> 224.75 </td>
+   <td style="text-align:right;"> 537.33 </td>
+   <td style="text-align:right;"> 0.582 </td>
+  </tr>
+</tbody>
+</table>
 
-knitr::kable(
-  data.frame(
-    `SS Between` = round(ss_between, 2),
-    `SS Within`  = round(ss_within, 2),
-    `SS Total`   = round(ss_total, 2),
-    `Eta-squared` = round(eta_sq, 3),
-    check.names = FALSE
-  )
-)
-```
+`````
+:::
+:::
 
-Here $\eta^2 = `r round(eta_sq, 2)`$: forest type accounts for about `r round(eta_sq * 100)`% of the variation in salamander abundance across these 24 plots. The remaining `r round((1 - eta_sq) * 100)`% is within-group variation, the plot-to-plot differences that forest type alone cannot explain.
+
+Here $\eta^2 = 0.58$: forest type accounts for about 58% of the variation in salamander abundance across these 24 plots. The remaining 42% is within-group variation, the plot-to-plot differences that forest type alone cannot explain.
 
 If that formula looks familiar, it should. $\eta^2$ is the same quantity as $R^2$ in regression, computed the same way from the same partition of variance, which is Chapter 9's topic and the reason both chapters keep describing variance as something you divide up.
 
@@ -607,26 +724,61 @@ Before trusting this result and moving on to post-hoc comparisons, it's worth pa
 
 ANOVA has two: **homogeneity of variance** (the groups' spread around their own means should be roughly comparable) and **approximately normal residuals** (the leftover variation after accounting for group membership should be roughly bell-shaped). Both matter for the same underlying reason: the F-test pools information across groups into single numbers (a common error variance, a reference F-distribution), and that pooling is only trustworthy if the groups are behaving similarly enough to be pooled.
 
-```{r}
-library(car)
-levene_out <- leveneTest(abundance ~ forest_type, data = salamander_df)
 
-knitr::kable(
-  broom::tidy(levene_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)),
-  col.names = c("Statistic (F)", "p-value", "df", "df residual"),
-  caption = "Levene's test for homogeneity of variance"
-)
-```
+::: {.cell}
+::: {.cell-output-display}
+`````{=html}
+<table>
+<caption>Levene's test for homogeneity of variance</caption>
+ <thead>
+  <tr>
+   <th style="text-align:right;"> Statistic (F) </th>
+   <th style="text-align:left;"> p-value </th>
+   <th style="text-align:right;"> df </th>
+   <th style="text-align:right;"> df residual </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;"> 0.52 </td>
+   <td style="text-align:left;"> 0.599 </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 21 </td>
+  </tr>
+</tbody>
+</table>
 
-```{r}
-shapiro_out <- shapiro.test(residuals(aov_out))
+`````
+:::
+:::
 
-knitr::kable(
-  broom::tidy(shapiro_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)),
-  col.names = c("Statistic (W)", "p-value", "Method"),
-  caption = "Shapiro-Wilk test on ANOVA residuals"
-)
-```
+
+
+::: {.cell}
+::: {.cell-output-display}
+`````{=html}
+<table>
+<caption>Shapiro-Wilk test on ANOVA residuals</caption>
+ <thead>
+  <tr>
+   <th style="text-align:right;"> Statistic (W) </th>
+   <th style="text-align:left;"> p-value </th>
+   <th style="text-align:left;"> Method </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;"> 0.93 </td>
+   <td style="text-align:left;"> 0.078 </td>
+   <td style="text-align:left;"> Shapiro-Wilk normality test </td>
+  </tr>
+</tbody>
+</table>
+
+`````
+:::
+:::
+
 
 Levene's test [@Levene1960; @BrownForsythe1974] gives $F(2,21) = 0.52$, $p = .60$: no evidence of unequal variance across forest types. The Shapiro-Wilk test [@Shapiro1965] on the model's residuals gives $W = 0.93$, $p = .078$: no strong evidence against normality either. Both checks are consistent with the boxplot and dot plot we already looked at in @fig-8salamanderData: similar spread across groups, no glaring outliers.
 
@@ -636,13 +788,49 @@ Levene's test [@Levene1960; @BrownForsythe1974] gives $F(2,21) = 0.52$, $p = .60
 
 The omnibus F test tells us that at least one group mean differs, but not which pairs. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test [@Tukey1949]. Tukey HSD controls the family-wise error rate across all pairwise comparisons, making it the appropriate choice after a significant ANOVA.
 
-```{r}
-#| label: tbl-8tukey
-#| tbl-cap: "Tukey HSD post-hoc comparisons for salamander abundance by forest type."
 
-tukey_out <- TukeyHSD(aov_out)
-knitr::kable(round(tukey_out$forest_type, 4))
-```
+::: {#tbl-8tukey .cell tbl-cap='Tukey HSD post-hoc comparisons for salamander abundance by forest type.'}
+::: {.cell-output-display}
+`````{=html}
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> diff </th>
+   <th style="text-align:right;"> lwr </th>
+   <th style="text-align:right;"> upr </th>
+   <th style="text-align:right;"> p adj </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Secondary-Old-growth </td>
+   <td style="text-align:right;"> -6.875 </td>
+   <td style="text-align:right;"> -10.998 </td>
+   <td style="text-align:right;"> -2.752 </td>
+   <td style="text-align:right;"> 0.0011 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Managed-Old-growth </td>
+   <td style="text-align:right;"> -8.250 </td>
+   <td style="text-align:right;"> -12.373 </td>
+   <td style="text-align:right;"> -4.127 </td>
+   <td style="text-align:right;"> 0.0002 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Managed-Secondary </td>
+   <td style="text-align:right;"> -1.375 </td>
+   <td style="text-align:right;"> -5.498 </td>
+   <td style="text-align:right;"> 2.748 </td>
+   <td style="text-align:right;"> 0.6825 </td>
+  </tr>
+</tbody>
+</table>
+
+`````
+:::
+:::
+
 
 **Reading the table, column by column.** Each row is one pairwise comparison, and there are three of them because three groups make three pairs.
 
@@ -664,23 +852,13 @@ So the three comparisons give:
 
 **Compact letter display.** Once you have more than three groups, a list of pairwise sentences gets unwieldy fast, so results are usually summarized with letters placed above each group. The rule is simple: **groups that share a letter were not significantly different; groups sharing no letter were.** @fig-8tukeyletters puts the salamander results in that form.
 
-```{r}
-#| label: fig-8tukeyletters
-#| fig-cap: "Mean salamander abundance with Tukey letters. Old-growth carries an 'a' and differs from both other types; secondary and managed share a 'b', so they were not distinguishable from each other."
-#| fig-asp: 0.62
-#| out-width: "90%"
 
-letters_df <- descriptive_df %>%
-  dplyr::mutate(tukey_letter = c("a", "b", "b"))
+::: {.cell}
+::: {.cell-output-display}
+![Mean salamander abundance with Tukey letters. Old-growth carries an 'a' and differs from both other types; secondary and managed share a 'b', so they were not distinguishable from each other.](08-ANOVA_files/figure-html/fig-8tukeyletters-1.png){#fig-8tukeyletters width=90%}
+:::
+:::
 
-ggplot(letters_df, aes(x = forest_type, y = means)) +
-  geom_bar(stat = "identity", fill = "#63b8ff") +
-  geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.15) +
-  geom_text(aes(y = means + SEs + 1.1, label = tukey_letter),
-            fontface = "bold", size = 5) +
-  ylab("Salamander abundance (individuals/plot)") +
-  xlab("Forest type")
-```
 
 Old-growth gets its own letter because it differs from both of the others. Secondary and managed share a letter because the test could not separate them. Note that a group can carry *two* letters, written "ab", when it differs from neither of two groups that do differ from each other. That looks contradictory but isn't: it means that group sits in the middle, close enough to both ends that neither comparison reached significance, while the two ends are far enough apart that theirs did.
 
@@ -694,30 +872,75 @@ Our assumption checks above came back clean, so the ANOVA result stands as-is. B
 
 **Its assumption.** Kruskal-Wallis does not require normality. Like the Mann-Whitney-Wilcoxon test, it's cleanest to interpret as a test of differences in **location** (median) when the groups' distributions have similar shape; if the shapes differ a lot, a significant result tells you the groups differ somehow, but not cleanly whether that's a difference in location, spread, or shape.
 
-```{r}
-kw_out <- kruskal.test(abundance ~ forest_type, data = salamander_df)
 
-knitr::kable(
-  broom::tidy(kw_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)),
-  col.names = c("Statistic (χ²)", "p-value", "df", "Method"),
-  caption = "Kruskal-Wallis test on salamander abundance by forest type"
-)
-```
+::: {.cell}
+::: {.cell-output-display}
+`````{=html}
+<table>
+<caption>Kruskal-Wallis test on salamander abundance by forest type</caption>
+ <thead>
+  <tr>
+   <th style="text-align:right;"> Statistic (χ²) </th>
+   <th style="text-align:left;"> p-value </th>
+   <th style="text-align:right;"> df </th>
+   <th style="text-align:left;"> Method </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:right;"> 13.09 </td>
+   <td style="text-align:left;"> 0.001 </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:left;"> Kruskal-Wallis rank sum test </td>
+  </tr>
+</tbody>
+</table>
+
+`````
+:::
+:::
+
 
 $\chi^2(2) = 13.09$, $p = .001$: significant, the same conclusion as the ANOVA ($F(2,21)=14.60$, $p<.001$). That agreement is exactly what you'd hope for when the parametric assumptions were actually fine to begin with, as ours were here.
 
 **Post-hoc comparisons.** Just as a significant ANOVA needs Tukey HSD to identify *which* groups differ, a significant Kruskal-Wallis result needs its own follow-up: pairwise rank-sum tests (Mann-Whitney-Wilcoxon, applied to each pair) with a correction for running multiple comparisons [@Holm1979].
 
-```{r}
-pairwise_out <- pairwise.wilcox.test(salamander_df$abundance, salamander_df$forest_type,
-                                      p.adjust.method = "holm")
 
-knitr::kable(
-  broom::tidy(pairwise_out) |> mutate(p.value = fmt_p(p.value)),
-  col.names = c("Group 1", "Group 2", "p-value"),
-  caption = "Pairwise Mann-Whitney-Wilcoxon comparisons (Holm-adjusted)"
-)
-```
+::: {.cell}
+::: {.cell-output-display}
+`````{=html}
+<table>
+<caption>Pairwise Mann-Whitney-Wilcoxon comparisons (Holm-adjusted)</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> Group 1 </th>
+   <th style="text-align:left;"> Group 2 </th>
+   <th style="text-align:left;"> p-value </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Secondary </td>
+   <td style="text-align:left;"> Old-growth </td>
+   <td style="text-align:left;"> 0.011 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Managed </td>
+   <td style="text-align:left;"> Old-growth </td>
+   <td style="text-align:left;"> 0.004 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Managed </td>
+   <td style="text-align:left;"> Secondary </td>
+   <td style="text-align:left;"> 0.486 </td>
+  </tr>
+</tbody>
+</table>
+
+`````
+:::
+:::
+
 
 The pattern matches Tukey HSD exactly: Old-growth differs significantly from both Secondary ($p=.011$) and Managed ($p=.004$), while Secondary and Managed do not differ from each other ($p=.49$). The two approaches rest on different assumptions and use different machinery, and they agree here because the parametric assumptions held.
 
@@ -734,3 +957,4 @@ The pattern matches Tukey HSD exactly: Old-growth differs significantly from bot
 -   $\eta^2$ is the effect size. $SS_\text{Between}/SS_\text{Total}$ is the proportion of variation the grouping variable accounts for. It is the same quantity as regression's $R^2$, and it does not depend on sample size the way $p$ does, so report it alongside $F$.
 -   **Check the assumptions.** ANOVA needs approximately equal variances across groups (Levene's test) and roughly normal residuals. Treat formal tests as evidence rather than a gate, since they have least power exactly when small samples make violations matter most.
 -   **When assumptions fail.** The **Kruskal-Wallis** test is the rank-based alternative, with `pairwise.wilcox.test()` as its post-hoc counterpart.
+
