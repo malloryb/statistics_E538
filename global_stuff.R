@@ -43,9 +43,9 @@ if (knitr::is_latex_output()) {
 # Figures that set their own scale_colour_manual()/scale_fill_manual() are
 # unaffected; the options() below only replace ggplot2's default hue wheel.
 e538_palette <- c(
-  "#63b8ff",  # cool sky
+  "#008cff",  # cool sky
   "#b22222",  # brick red
-  "#1446a0",  # cobalt blue
+  "#10377f",  # cobalt blue
   "#f5d547",  # royal gold
   "#ebebd3"   # beige
 )
