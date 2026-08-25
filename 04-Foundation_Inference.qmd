@@ -179,6 +179,7 @@ It is easier to see the comparison in a bar graph (@fig-4gumballA), which shows 
 ```{r}
 #| label: fig-4gumballA
 #| fig-cap: "Mean number of infected bats per site for two groups drawn from the same population. Note the zoomed y-axis, which does not start at 0."
+#| fig-alt: "Bar chart with two bars, Group A and Group B, showing the mean number of infected bats. The y-axis is zoomed to run from 6 to 10, so a modest difference between the two bars looks larger than it would on a full 0-to-20 scale."
 
 mean_df <- aggregate(infected ~ group, df, mean)
 ggplot(mean_df, aes(x = group, y = infected)) +
@@ -203,6 +204,7 @@ The first step is to replicate the sampling scenario many times. @fig-4gumballsi
 ```{r}
 #| label: fig-4gumballsims
 #| fig-cap: "Ten replications of surveying 10 caves and splitting them arbitrarily into two groups of 5. Every difference here is chance alone."
+#| fig-alt: "Ten small bar-chart panels, each with two bars for Group A and Group B. The two bars are a similar height in most panels but noticeably uneven in others, with no consistent pattern of which group is higher from one panel to the next."
 #| out-width: "100%"
 
 group <- rep(rep(c("A", "B"), each = 5), 10)
@@ -228,6 +230,7 @@ Ten replications show that chance produces *a* difference every time, but not ho
 ```{r}
 #| label: fig-4gumballdiffs
 #| fig-cap: "Difference in mean infected count between Group A and Group B across 10 replications. The true difference is zero, but sampling error produces non-zero differences each time."
+#| fig-alt: "Bar chart of the A-minus-B difference score for each of 10 replications, with a horizontal reference line at zero. Bars extend above and below the line by varying amounts, some replications favoring Group A, others favoring Group B, none of them exactly zero."
 
 differences <- mean_df[mean_df$group == "A", ]$infected -
   mean_df[mean_df$group == "B", ]$infected
@@ -250,6 +253,7 @@ The differences in these 10 replications mostly fall in a narrow range. To bette
 ```{r}
 #| label: fig-4manydiffs
 #| fig-cap: "Difference in mean infected count between Group A and Group B across 100 replications. There are many possible differences that chance can produce, but the y-axis shows the range is bounded."
+#| fig-alt: "Bar chart of the A-minus-B difference score for 100 replications, indexed along the x-axis. The bars vary in height and sign but stay within a bounded band around zero, with none reaching far beyond the rest."
 
 group <- rep(rep(c("A", "B"), each = 5), 100)
 experiment <- rep(1:100, each = 10)
@@ -278,6 +282,7 @@ To get an even clearer picture, we now run 10,000 replications and plot the dist
 ```{r}
 #| label: fig-4histdiffgumball
 #| fig-cap: "Histogram of mean count differences between Group A and Group B over 10,000 replications. All differences arise from chance alone. The most frequent difference is near zero; larger differences occur less often. Chance cannot produce everything."
+#| fig-alt: "Histogram of 10,000 A-minus-B difference scores, tallest at zero in the center and tapering off symmetrically toward both larger positive and larger negative differences, with almost nothing beyond roughly plus or minus 3."
 
 group <- rep(rep(c("A", "B"), each = 5), 10000)
 experiment <- rep(1:10000, each = 10)
@@ -334,6 +339,7 @@ The boundaries are the minimum and maximum values chance actually produced acros
 ```{r}
 #| label: fig-4simdecision
 #| fig-cap: "Decision boundaries applied to the histogram of mean count differences from @fig-4histdiffgumball. Grey marks the range chance did produce across 10,000 replications; gold marks the edges of that range, which chance reached only rarely; red marks the differences chance never produced at all."
+#| fig-alt: "The same histogram of 10,000 difference scores, now overlaid with colored zones. A grey band across the middle, labeled CHANCE, covers the full range chance actually produced. Narrow gold slivers sit at the two edges of that grey band, and red zones beyond them on both sides, labeled NOT CHANCE, mark differences chance never produced in any of the 10,000 replications."
 
 diff_min <- min(differences)
 diff_max <- max(differences)
@@ -401,6 +407,7 @@ In an idealized world where $H_0$ is exactly true, the true population (orange) 
 ```{r}
 #| label: fig-4key.null_identical_sample
 #| fig-cap: 'True population distribution equals the null distribution ($H_0$ true): $\mu=\mu_0$.'
+#| fig-alt: "A single bell-shaped curve, since the orange true population curve and the blue null distribution curve sit exactly on top of each other, both centered at the same point marked with a dashed vertical line. Text reads H sub 0 colon mu equals mu sub 0."
 #| out-width: "100%"
 
 # Define the data and functions
@@ -425,6 +432,7 @@ print(p3)
 ```{r}
 #| label: fig-4key.perfectly_representative_sample
 #| fig-cap: 'Perfectly representative sample: estimated population, null, and true population distributions align; the CI for $\bar{x}$ includes $\mu_0$.'
+#| fig-alt: "Four curves, all nearly stacked on top of one another near the same center: the blue null distribution, the orange true population, the light-green dashed estimated population, and the narrow dark-green sampling distribution of the mean. A thick green confidence interval bar sits directly under this shared center, comfortably covering the null mean."
 #| out-width: "100%"
 
 p4 <-  plot_distributions(null_mean=0.5, null_sd=1, sample_mean=0.52, sample_sd=0.3, inferred_mean=0.52, inferred_sd=1, true_mean=0.54, true_sd=1)
@@ -439,6 +447,7 @@ From our sample we also infer an **estimated population distribution** (light-gr
 ```{r}
 #| label: fig-4key.sample_imperfect_convenient
 #| fig-cap: 'Imperfect but convenient sample: estimated population close to the null; the two-sided CI for $\bar{x}$ includes $\mu_0$ (fail to reject $H_0$).'
+#| fig-alt: "Four curves: the blue null distribution sits somewhat left of the orange true population, light-green dashed estimated population, and dark-green sampling distribution, which are clustered together to its right. Despite that offset, the thick green confidence interval bar under the sampling distribution is wide enough to still reach back and include the null mean, marked with a dashed vertical line."
 #| out-width: "100%"
 
 p7 <- plot_distributions(null_mean=-0.2, null_sd=1, sample_mean=0.5, sample_sd=0.5, inferred_mean=0.5, inferred_sd=1, true_mean=0.6, true_sd=1)
@@ -454,6 +463,7 @@ Key reminder: $\mu_0$ (pink dashed line) comes from the null hypothesis. The unk
 ```{r}
 #| label: fig-4key.keyfig
 #| fig-cap: 'Key elements of hypothesis testing graphs: null (blue), true population (orange), estimated population (light-green dashed), sampling distribution of $\bar{x}$ (dark-green dot-dash), null mean $\mu_0$ (magenta dashed), and CI for $\bar{x}$ (thick dark-green bar).'
+#| fig-alt: "The reference legend figure: a blue null distribution on the left, a dashed vertical line marking its mean mu sub 0, and to the right a cluster of three curves close together, the orange true population, the light-green dashed estimated population, and the narrow dark-green dot-dash sampling distribution of the mean, with a thick dark-green confidence interval bar beneath them, clearly separated from the null distribution's mean."
 #| out-width: "100%"
 
 pkey <-  plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=0.5, sample_sd=0.3, inferred_mean=0.5, inferred_sd=1, true_mean=0.75, true_sd=1)
@@ -527,6 +537,7 @@ This picture makes clear why $\alpha$ and the $p$-value are linked. $\alpha$ set
 ```{r}
 #| label: fig-rejection-region
 #| fig-cap: 'Two-sided test: blue curve is the sampling distribution under $H_0$ (centered at $\mu_0$). Magenta dashed line marks $\mu_0$. Red vertical lines mark the critical values for $\alpha=0.05$; shaded tails are the rejection regions.'
+#| fig-alt: "A blue bell curve centered at mu sub 0, marked with a dashed vertical line at its center. Two red vertical lines sit symmetrically in the tails, each labeled critical value, with the shaded area beyond each one labeled rejection region. The large middle portion of the curve between the two red lines is unshaded."
 #| fig-width: 7
 #| fig-height: 5
 
@@ -594,6 +605,7 @@ Decision rule:
 ```{r}
 #| label: fig-ci-lens-illustrative
 #| fig-cap: 'Confidence-interval lens: null (blue), sampling distribution of $\bar{x}$ (dark green), estimated population (light-green dashed). The thick bar is the $(1-\alpha)$ CI around $\bar{x}$; the magenta dashed line marks $\mu_0$. Decision uses whether $\mu_0$ is inside or outside the CI.'
+#| fig-alt: "A blue null distribution centered at mu sub 0, marked with a dashed vertical line, sitting just left of a dot-dash dark-green sampling distribution and a dashed light-green estimated population curve, both centered near the sample mean x-bar. A thick green confidence interval bar spans beneath the sampling distribution's peak and its left edge reaches back to include mu sub 0, so a text label reads 'Fail to reject at alpha = 0.05.'"
 #| out-width: "100%"
 
 library(ggplot2)
@@ -694,6 +706,7 @@ The $p$-value is the probability, **under** $H_0$, of obtaining a test statistic
 ```{r}
 #| label: fig-pvalue-lens
 #| fig-cap: 'p-value lens: compute the $p$-value from the observed statistic (vertical line) under the null.'
+#| fig-alt: "A blue standard normal curve centered at zero, marked with a dashed vertical line at the center for the null value and a solid black vertical line further right labeled 'observed z' at about 1.85. Text in the corner reports a two-sided p-value of about 0.064, labeled fail to reject."
 #| out-width: "100%"
 
 library(tidyverse)
@@ -733,6 +746,7 @@ Two-tailed tests allow for differences in *either* direction:
 ```{r}
 #| label: fig-4key.twotailed
 #| fig-cap: 'Two-sided test: $H_0:\ \mu=\mu_0$ vs $H_a:\ \mu\neq\mu_0$; estimated population distributions shifted left and right of the null.'
+#| fig-alt: "Three bell curves: a solid blue null distribution in the center, and two dashed green estimated-population curves of equal height, one shifted well to its left and one shifted well to its right. Text reads H sub 0 colon mu equals mu sub 0, H sub a colon mu not equal mu sub 0."
 #| out-width: "100%"
 
 # Define the data and functions
@@ -762,6 +776,7 @@ One-tailed tests only look in *one* direction (smaller or larger than $\mu_0$):
 ```{r}
 #| label: fig-4key.onetailed
 #| fig-cap: 'One-sided tests: $H_a:\ \mu<\mu_0$ (left) and $H_a:\ \mu>\mu_0$ (right), compared to the null.'
+#| fig-alt: "Two side-by-side panels, each with a solid blue null curve and a dashed green estimated-population curve of the same height. In the left panel the green curve sits to the left of the blue one, labeled H sub a colon mu less than mu sub 0. In the right panel the green curve sits to the right instead, labeled H sub a colon mu greater than mu sub 0."
 #| out-width: "100%"
 
 # Define the data and functions for the one-tailed alternatives
@@ -818,6 +833,7 @@ Here are our options (for a two tailed test).
 ```{r}
 #| label: fig-4key.reject_2_two_tailed
 #| fig-cap: 'Two-sided test, reject $H_0$: sample mean far from $\mu_0$ in either direction.'
+#| fig-alt: "A blue null distribution centered at mu sub 0, marked with a dashed vertical line, well separated from a narrow dot-dash sampling distribution and dashed estimated population curve centered far to the left. A thick green confidence interval bar under those two curves sits entirely to the left of mu sub 0, not reaching it at all."
 #| out-width: "100%"
 
 plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-1.5, sample_sd=0.3, inferred_mean=-1.5, inferred_sd=1)
@@ -829,6 +845,7 @@ plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-1.5, sample_sd=
 ```{r}
 #| label: fig-4key.reject_1
 #| fig-cap: 'Two-sided test, fail to reject $H_0$: sample mean not greater than critical value (within $3\,SE$ from $\mu_0$).'
+#| fig-alt: "A blue null distribution centered at mu sub 0, marked with a dashed vertical line, overlapping closely with a wider dot-dash sampling distribution and dashed estimated population curve centered a short distance to its left. A thick green confidence interval bar under those two curves extends far enough to reach and include mu sub 0."
 #| out-width: "100%"
 
 plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-0.4, sample_sd=0.7, inferred_mean=-0.4, inferred_sd=1)
