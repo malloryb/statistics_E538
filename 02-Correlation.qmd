@@ -357,7 +357,7 @@ For our data it comes to 5.916. On its own that number is hard to interpret, bec
 
 That square root is the **standard deviation (SD)**, so we had already computed it a step earlier without naming it:
 
-$$\text{standard deviation} = \sqrt{Variance} = \sqrt{\frac{SS}{N}} = \sqrt{\frac{\sum_{i}^{n}(x_{i}-\bar{x})^2}{N}}$$
+$$\text{standard deviation} = \sqrt{Variance} = \sqrt{\frac{SS}{N}} = \sqrt{\frac{\sum_{i}^{N}(x_{i}-\bar{x})^2}{N}}$$
 
 The square root "unsquares" the variance, putting the measure of spread back on the original scale of the data. Here is the table one more time:
 
@@ -511,7 +511,7 @@ Earlier we saw that multiplying values from two variables can highlight how they
 
 Instead of multiplying raw values of $X$ and $Y$, we multiply their *deviations from the mean*. This centers each variable, so the product reflects how the two variables co-vary around their averages:
 
-$cov(X,Y) = \frac{\sum_{i}^{n}(x_{i}-\bar{x})(y_{i}-\bar{Y})}{N}$
+$cov(X,Y) = \frac{\sum_{i}^{N}(x_{i}-\bar{x})(y_{i}-\bar{y})}{N}$
 
 In practice, the steps are straightforward: subtract the mean of $X$ from each $x_i$, subtract the mean of $Y$ from each $y_i$, multiply the deviations, and then average those products. A positive covariance means the two variables tend to move together (above or below their means at the same time). A negative covariance means they move in opposite directions. A covariance near zero suggests no consistent relationship.
 
@@ -553,9 +553,9 @@ Values closer to $\pm1$ indicate stronger linear association; values near $0$ in
 
 Let's take a look at a formula for Pearson's $r$:
 
-$r = \frac{cov(X,Y)}{\sigma_{X}\sigma_{Y}} = \frac{cov(X,Y)}{SD_{X}SD_{Y}}$
+$r = \frac{cov(X,Y)}{SD_{X}SD_{Y}}$
 
-Here, $\sigma$ is the standard deviation (SD), so $r$ is the covariance of X and Y divided by the product of their standard deviations. Dividing by the standard deviations **normalizes** the covariance, constraining $r$ to fall between -1 and 1, which makes correlation values comparable across variables measured in different units or on different scales.
+$r$ is the covariance of X and Y divided by the product of their standard deviations. Dividing by the standard deviations **normalizes** the covariance, constraining $r$ to fall between -1 and 1, which makes correlation values comparable across variables measured in different units or on different scales.
 
 ::: {.callout-note title="Note: Computing *r*"}
 You'll see several algebraically equivalent formulas for Pearson's *r*, some easier for hand calculation, others more compact. They all produce the same result. In practice, you'll compute $r$ with software, so the priority here is understanding what $r$ means and how to interpret it. Working through one example by hand still helps: it shows where $r$ actually comes from, which is why lecture walks through a full hand calculation before you run it in R during lab.
@@ -717,60 +717,26 @@ This graph shows how the total error behaves as the line's y-intercept moves up 
 
 ### Computing the best fit line
 
-How do we find the line that minimizes the sum of squared deviations? In principle, you could try many possible lines and compare their errors, but that's not efficient. Instead, we use formulas (or, more realistically, software) to identify the line with the smallest total error.
+How do we find the line that minimizes the sum of squared deviations? In principle, you could try many possible lines and compare their errors, but that's not efficient. In practice, we let software identify the line with the smallest total error, the same `lm()` fit behind every regression line drawn in this chapter's figures.
 
-Next we'll look at the formulas for calculating the slope and intercept of a regression line, and work through one example by hand. Many statistical formulas were designed to simplify hand calculations before computers were common. Today we rely on software, but working through examples by hand helps illustrate the logic behind the formulas.
-
-Here are two formulas we can use to calculate the slope and the intercept, straight from the data. We won't go into why these formulas do what they do. These ones are for "easy" calculation.
-
-$intercept = b = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2}$
-
-$slope = m = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2}$
-
-In these formulas, the $x$ and the $y$ refer to the individual scores. Here's a table showing you how everything fits together.
-
-```{r 3morcov}
-scores<-c(1,2,3,4,5,6,7)
-x<-c(1,4,3,6,5,7,8)
-y<-c(2,5,1,8,6,8,9)
-x_squared<-x^2
-y_squared<-y^2
-xy<-x*y
-
-all_df<-data.frame(scores,x,y,x_squared,y_squared,xy)
-
-all_df <- all_df %>%
-  rbind(c("Sums",colSums(all_df[1:7,2:6]))) 
-
-intercept=((sum(y)*sum(x_squared))-(sum(x)*sum(xy)))/((7*sum(x_squared))-sum(x)^2)
-slope=(7*sum(xy)-sum(x)*sum(y))/(7*sum(x_squared)-sum(x)^2)
-
-knitr::kable(all_df)
-
-```
-
-The table has 7 pairs of $x$ and $y$ scores, plus columns for $x^2$, $y^2$, and $xy$ (each $x$ score times its matching $y$ score), with column sums at the bottom. These sums are everything the formulas need. Here's what they look like with numbers plugged in:
-
-$intercept = b = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2} = \frac{39 * 200 - 34*231}{7*200-34^2} = -.221$
-
-$slope = m = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2} = \frac{7*231-34*39}{7*200-34^2} = 1.19$
-
-To check the work, plot the scores and draw a line through them with slope = 1.19 and y-intercept = -.221. As shown in @fig-2corwithLine, the line runs through the middle of the dots, as it should.
+@fig-2corwithLine checks that against a small example: seven $x,y$ pairs, plotted with their fitted line.
 
 ```{r}
 #| label: fig-2corwithLine
 #| fig-cap: "An example regression line going through a few data points in a scatterplot."
 #| out-width: "75%"
 
+x<-c(1,4,3,6,5,7,8)
+y<-c(2,5,1,8,6,8,9)
 plot_df<-data.frame(x,y)
 
 ggplot(plot_df,aes(x=x,y=y))+
   geom_point() +
   geom_smooth(method="lm",se=FALSE, color="#b22222")
-  
-#coef(lm(y~x,plot_df))
 
 ```
+
+We'll return to these same formulas in Week 11, computing a line's slope and intercept by hand and using those values to compute and interpret residuals for individual points.
 
 ## Interpreting Correlations: why caution is warranted
 

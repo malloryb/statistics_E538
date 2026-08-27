@@ -21,7 +21,7 @@ library(broom)
 library(knitr)
 ```
 
-Back in Chapter 2, we used the covariance between two variables to quantify the strength and direction of a relationship (**Pearson's** $r$), and fit a best-fit line through a scatterplot, learning to compute its slope and intercept from the data. What we couldn't yet do was ask the **inference question** every other test in this book has asked:
+Back in Chapter 2, we used the covariance between two variables to quantify the strength and direction of a relationship (**Pearson's** $r$), and fit a best-fit line through a scatterplot. What we couldn't yet do was ask the **inference question** every other test in this book has asked:
 
 *Could chance alone plausibly have produced our result?*
 
@@ -38,6 +38,41 @@ $y = \beta_0 + \beta_1 x + \varepsilon$
 *Intercept term*: $\beta_0$.
 
 A linear equation, fit to real data, is a statistical **model**. We never observe $\beta_1$ directly. So, we need one additional term for the *residual error*, $\varepsilon$. This is the additional variability in the DV not explained by our model.
+
+### Computing the best-fit line by hand
+
+In practice, we let software identify the line with the smallest total squared error, but working through one example by hand shows where that line actually comes from. Here are the "easy" formulas for the slope and intercept, calculated straight from the data:
+
+$intercept = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2}$
+
+$slope = b_1 = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2}$
+
+Here $x$ and $y$ are the individual scores. This is the same line from @fig-2corwithLine in Chapter 2; let's find its slope and intercept. Here's a table showing how everything fits together:
+
+```{r}
+scores<-c(1,2,3,4,5,6,7)
+x<-c(1,4,3,6,5,7,8)
+y<-c(2,5,1,8,6,8,9)
+x_squared<-x^2
+y_squared<-y^2
+xy<-x*y
+
+all_df<-data.frame(scores,x,y,x_squared,y_squared,xy)
+
+all_df <- all_df %>%
+  rbind(c("Sums",colSums(all_df[1:7,2:6])))
+
+knitr::kable(all_df)
+
+```
+
+The table has 7 pairs of $x$ and $y$ scores, plus columns for $x^2$, $y^2$, and $xy$ (each $x$ score times its matching $y$ score), with column sums at the bottom. These sums are everything the formulas need:
+
+$intercept = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2} = \frac{39 * 200 - 34*231}{7*200-34^2} = -.221$
+
+$slope = b_1 = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2} = \frac{7*231-34*39}{7*200-34^2} = 1.19$
+
+With $b_0$ and $b_1$ in hand, we can compute a **residual** for any observed point: the difference between what we observed and what the line predicts, $e = y - \hat y$, where $\hat y = b_0 + b_1x$. For the first row above ($x=1, y=2$): $\hat y = -.221 + 1.19(1) = .969$, so $e = 2 - .969 = 1.031$. That point sits above the line. Repeating this for every point, then squaring and summing the residuals, is exactly the quantity $b_0$ and $b_1$ were chosen to minimize.
 
 **Parameters and sample statistics**
 
