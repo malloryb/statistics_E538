@@ -114,7 +114,7 @@ The first panel shows a **negative correlation**: happiness goes down as chocola
 If the scatter shows a U-shape or other curve, a single straight-line correlation will mislead. Fit a curved model (e.g., add a quadratic term) or transform variables instead of reporting *r* alone.
 :::
 
-We've already covered central tendency: mean, median, mode. Variation is a different story. Chapter 1 measured spread with the range, and flagged it as a blunt instrument, a placeholder for something built from every observation, not just the two extremes. That something, variance and standard deviation, is what we build first here, before extending the same idea to how two variables move together. The path there starts with understanding covariance.
+We've already covered central tendency: mean, median, mode. Variation comes next.
 
 ## How much does one variable vary?
 
@@ -122,40 +122,15 @@ Before we can measure how two variables move *together*, we need the proper meas
 
 ### Difference Scores
 
-It would be nice to summarize the amount of different*ness* in the data. Think about these 10 ordered numbers:
+It would be nice to summarize the amount of different*ness* in the data. One idea is to compare every number to every other number: pick a first number, pick a second number, and subtract them. The result tells us exactly how different the two are: a large gap means the two numbers are far apart, a gap near zero means they're close together. Do that across a whole dataset and you have a complete picture of how different everyone is from everyone else.
 
-> 1 3 4 5 5 6 7 8 9 24
-
-One idea is to compare every number to every other number. It works, but it scales badly: 10 numbers give 100 pairwise differences, and 500 numbers would give 250,000. If all the values were identical every difference would be 0 and the lack of variation would be obvious, but with real data we just get a large pile of differences. The natural way to summarize a pile of numbers is the one we just learned, so let's take their **average**.
-
-Let's try it on a set small enough to see all at once:
-
-> 1 2 3
-
-```{r 2diffscoreSmall,echo=F}
-numbers<-c(1, 2,3)
-mat<-matrix(rep(numbers,3),ncol=3)
-differences<-t(mat)-numbers
-row.names(differences)<-numbers
-colnames(differences)<-numbers
-knitr::kable(differences, row.names=T)
-```
-
-The mean of these nine difference scores is:
-
-$\text{mean of difference scores} = \frac{0+1+2-1+0+1-2-1+0}{9} = \frac{0}{9} = 0$
-
-This will always happen: the positives and negatives cancel. So the mean of raw difference scores is not a useful measure of variation.
-
-Notice also that the matrix is redundant: the diagonal is always zero, and values above and below the diagonal are the same except for sign.
-
-These problems motivate why we compute **variance** and **standard deviation**. They solve the cancellation issue and give us a practical summary of spread.
+The count grows fast, though: 10 numbers means 10 × 10 = 100 comparisons, 500 numbers means 500 × 500 = 250,000. And even a full set of pairwise comparisons wouldn't solve a problem you're about to run into anyway: the positive and negative differences cancel out, so their average comes out to zero no matter what the data look like. These problems motivate a much simpler approach: compare each score to one reference point instead, the mean.
 
 ### The Variance
 
 We have used the words variability, variation, and variance a lot, and they all point at the same idea: numbers differ. The word *variance* does double duty, though. Loosely it means that general idea. Precisely it names a specific statistic, the **mean of the squared deviations from the mean**.
 
-To calculate it, subtract the mean from each score to get its **difference score**, square those differences, then average them. Squaring is the trick that stops positive and negative deviations from cancelling. In short:
+To calculate it, subtract the mean from each score to get its **difference score** (its deviation from the mean), square those differences, then average them. Squaring is the trick that stops positive and negative deviations from cancelling. In short:
 
 $variance = \frac{\text{Sum of squared difference scores}}{\text{Number of Scores}}$
 
@@ -329,13 +304,17 @@ Squared_Deviations <- Difference_from_Mean^2
 the_df<-data.frame(scores,values,mean=rep(mean_scores,6),Difference_from_Mean,Squared_Deviations)
 
 the_df <- the_df %>%
-  rbind(c("Sums",colSums(the_df[1:6,2:5]))) %>%
-  rbind(c("Means",colMeans(the_df[1:6,2:5])))
+  rbind(c("Sums",round(colSums(the_df[1:6,2:5]),2))) %>%
+  rbind(c("Means",round(colMeans(the_df[1:6,2:5]),2)))
 knitr::kable(the_df)
 
 ```
 
-The first score of 1 sits 3.5 below the mean, so its deviation is $-3.5$ and its squared deviation is $(-3.5)^2 = 12.25$. Now that nothing is negative we can add them up, and that total is the **sum of squares (SS)**. You will meet this quantity again in the ANOVA chapter, but there is nothing more to it than the sum of those squared deviations.
+The first score of 1 sits 3.5 below the mean, so its deviation is $-3.5$ and its squared deviation is $(-3.5)^2 = 12.25$. Now that nothing is negative we can add them up, and that total is the **sum of squares (SS)**: take every score's deviation from the mean, square it, and add up all those squared deviations.
+
+$$SS = \sum_{i=1}^{N}(x_{i}-\bar{x})^2$$
+
+You will meet this quantity again in the ANOVA chapter, but there is nothing more to it than the sum of those squared deviations.
 
 **Finally, the variance.**
 
@@ -343,7 +322,7 @@ We have already computed the variance, one step at a time, without naming it. Th
 
 $$variance = \frac{SS}{N}$$
 
-For our data it comes to 5.916. On its own that number is hard to interpret, because squaring the deviations put it on a *squared* scale, so it is no longer in the same units as the data. The fix is to take the square root, $\sqrt{5.916} \approx 2.43$.
+For our data it comes to 5.917. On its own that number is hard to interpret, because squaring the deviations put it on a *squared* scale, so it is no longer in the same units as the data. The fix is to take the square root, $\sqrt{5.917} \approx 2.43$.
 
 ### The Standard Deviation
 
@@ -362,13 +341,13 @@ Squared_Deviations <- Difference_from_Mean^2
 the_df<-data.frame(scores,values,mean=rep(mean_scores,6),Difference_from_Mean,Squared_Deviations)
 
 the_df <- the_df %>%
-  rbind(c("Sums",colSums(the_df[1:6,2:5]))) %>%
-  rbind(c("Means",colMeans(the_df[1:6,2:5])))
+  rbind(c("Sums",round(colSums(the_df[1:6,2:5]),2))) %>%
+  rbind(c("Means",round(colMeans(the_df[1:6,2:5]),2)))
 knitr::kable(the_df)
 
 ```
 
-Our standard deviation, $\sqrt{5.916} \approx 2.43$, makes far more sense than the variance did. A variance of 5.916 feels too large for this data because it is on the squared scale, but an SD of 2.43 lines up with the actual deviations, since most scores fall within about 2.4 of the mean of 4.5.
+Our standard deviation, $\sqrt{5.917} \approx 2.43$, makes far more sense than the variance did. A variance of 5.917 feels too large for this data because it is on the squared scale, but an SD of 2.43 lines up with the actual deviations, since most scores fall within about 2.4 of the mean of 4.5.
 
 **That is what makes the SD so useful.** Told only that a dataset has a mean of 4.5 and an SD of 2.4, you already have a picture of it: values cluster around 4.5, not exactly at it, with a typical spread of two to three units either way. It gives you the *typical deviation* from the mean while staying in the original units.
 
@@ -387,8 +366,8 @@ Absolute_Deviations <- abs(Difference_from_Mean)
 the_df<-data.frame(scores,values,mean=rep(mean_scores,6),Difference_from_Mean,Absolute_Deviations)
 
 the_df <- the_df %>%
-  rbind(c("Sums",colSums(the_df[1:6,2:5]))) %>%
-  rbind(c("Means",colMeans(the_df[1:6,2:5])))
+  rbind(c("Sums",round(colSums(the_df[1:6,2:5]),2))) %>%
+  rbind(c("Means",round(colMeans(the_df[1:6,2:5]),2)))
 knitr::kable(the_df)
 
 ```
@@ -431,9 +410,7 @@ We've added a new column called `Chocolate_X_Happiness`, which is simply each pe
 
 Now extend this idea from pairs to the whole dataset. If chocolate and happiness rise together (both above average at the same time), the summed products will be large. If one tends to rise while the other falls, the summed products will shrink. This is the basic logic behind **covariance**.
 
-Suppose we have two variables, $X$ and $Y$. If $X$ and $Y$ go up together (both small at the same time, both large at the same time), their products will also be large when summed across the dataset. If one goes up while the other goes down (large pairs with small), the summed products will be much smaller.
-
-Here are two tables to illustrate:
+To see just how large or small those summed products can get, set chocolate and happiness aside for a moment and look at two idealized cases, using plain numbers instead of a real scenario. The first table pairs two variables, $X$ and $Y$, so every value lines up with its match: 1 with 1, 2 with 2, and so on. The second table uses a different pair, $A$ and $B$, holding the same ten numbers but paired in the exact opposite order: 1 with 10, 2 with 9, and so on, the mirror image of the first table.
 
 ::: columns
 ::: {.column width="50%"}
@@ -507,7 +484,7 @@ $cov(X,Y) = \frac{\sum_{i}^{N}(x_{i}-\bar{x})(y_{i}-\bar{y})}{N}$
 
 In practice, the steps are straightforward: subtract the mean of $X$ from each $x_i$, subtract the mean of $Y$ from each $y_i$, multiply the deviations, and then average those products. A positive covariance means the two variables tend to move together (above or below their means at the same time). A negative covariance means they move in opposite directions. A covariance near zero suggests no consistent relationship.
 
-The following table shows this process:
+The following table shows this process for our chocolate and happiness data. `Cd` and `Hd` are each person's deviation from the chocolate mean and the happiness mean, and `Cd_x_Hd` is their product:
 
 ```{r 3cov,echo=F}
 the_df<-the_df_CC
@@ -515,19 +492,19 @@ the_df<-the_df_CC
 the_df_short<-the_df[1:10,]
 
 the_df_short<-cbind(the_df_short,
-                    C_d = round((chocolate[1:10]-mean(chocolate[1:10])),digits=2),
-                    H_d = round((happiness[1:10]-mean(happiness[1:10])),digits=2),
+                    Cd = round((chocolate[1:10]-mean(chocolate[1:10])),digits=2),
+                    Hd = round((happiness[1:10]-mean(happiness[1:10])),digits=2),
                     Cd_x_Hd = round(((chocolate[1:10]-mean(chocolate[1:10]))* (happiness[1:10]-mean(happiness[1:10]))),digits=2))
 
 the_df_short <- the_df_short %>%
-  rbind(c("Sums",round(colSums(the_df_short[1:10,2:6])),digits=2)) %>%
+  rbind(c("Sums",round(colSums(the_df_short[1:10,2:6]),digits=2))) %>%
   rbind(c("Means",round(colMeans(the_df_short[1:10,2:6]),digits=2)))
 
 knitr::kable(the_df_short)
 
 ```
 
-Deviations from the mean for chocolate (column `C_d`), deviations from the mean for happiness (column `H_d`), and their products. The mean of those products (in the bottom right corner of the table) is the official **covariance**.
+The mean of those products (in the bottom right corner of the table) is the official **covariance**.
 
 One note before moving on. The formula above divides by $N$, which is the population version, and that is what the table computes. R's `cov()` and `sd()` divide by $n-1$ instead, for the same reason the sample standard deviation did earlier in this chapter. The two differ only by a factor of $n/(n-1)$, and that factor cancels completely in Pearson's $r$ below, so $r$ comes out identical either way. If you compute the covariance itself in R, though, expect a slightly larger number than the one in this table.
 
