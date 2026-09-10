@@ -17,7 +17,7 @@ set.seed(538)
 
 **Inferential statistics** is the branch of statistics concerned with drawing conclusions about populations or causal relationships from sample data. It provides the tools to answer questions like: did our manipulation actually cause a change, or could the pattern we observed have arisen by random chance alone?
 
-This chapter does that in two parts. The first half builds the logic by simulation, with no formulas: we work out what chance alone can produce, then compare a real result against it. The second half replaces the simulation with the standard hypothesis testing machinery, because once you can assume a known reference distribution you no longer have to rebuild the chance window from scratch every time.
+This chapter does that in two parts. The first part builds the logic by simulation, with no formulas: we work out what chance alone can produce, then compare a real result against it. The rest of the chapter replaces the simulation with the standard hypothesis testing machinery, because once you can assume a known reference distribution you no longer have to rebuild the chance window from scratch every time.
 
 By the end of this chapter you should be able to:
 
@@ -128,21 +128,11 @@ plot_distributions_no_error <- function(
 
 ```
 
-## Brief review of Experiments
+## What chance alone can produce
 
-A controlled experiment is a structured method of data collection designed to support inferences about causality. Experiments involve deliberately manipulating one condition while holding others constant, then measuring the response. Every experiment has two core components: the **independent variable**, the condition under experimental control, and the **dependent variable**, what is measured. Causal forces produce detectable change. If the independent variable truly affects the dependent variable, then a well-designed experiment should detect that change.
-
-The central question becomes: how do we know if a measured difference between conditions reflects a real causal effect? Data always contain variability; measurements fluctuate even when nothing has changed. To decide whether a difference is real, we need tools that can distinguish meaningful change from background noise.
-
-## Is there a difference?
-
-Back to experiments. We want to know if an independent variable (our manipulation) causes a change in a dependent variable (measurement); if it does, we should see differences in the measurement as a function of the manipulation.
-
-Some manipulations are so overwhelming that no statistics are required to see them. Flip a light switch up and the light comes on; flip it down and it goes off, every time. You don't need a $t$-test to tell you that flipping the light switch is the cause of the change in brightness.
+An experiment asks whether a manipulation causes a change in what we measure. Some manipulations are so overwhelming that no statistics are required to see them. Flip a light switch up and the light comes on; flip it down and it goes off, every time. You don't need a $t$-test to tell you that flipping the light switch is the cause of the change in brightness.
 
 Nothing in environmental science behaves like this. Effects are real signals buried in noisy, variable measurements, where flipping the switch changes the outcome *on average*. Not in every instance, and not by the same amount every time.
-
-### Chance can produce differences
 
 Random chance can produce apparent differences between groups even when no real difference exists. We have already seen this with sampling: two samples from the same distribution come out differently. The same principle applies when we compare group means. This is a fundamental problem for inference.
 
@@ -162,24 +152,16 @@ design_groups("Group assignment (arbitrary)", c("Group A", "Group B"), 5, "caves
 
 The key feature is that all 10 caves are drawn from the same population. There is no treatment, no environmental gradient, nothing systematic separating them, so the true infection rate is identical everywhere. Splitting them into two groups of 5 is arbitrary. Any difference we see between those groups therefore *has* to be sampling error, which makes this the cleanest possible look at what chance alone can manufacture.
 
-Here is data from one run of this scenario:
-
-```{r,echo=F}
-group <- rep(c("A", "B"), each = 5)
-infected <- rbinom(10, size = 20, prob = 0.40)
-df <- data.frame(group, infected)
-
-knitr::kable(df, col.names = c("Group", "Infected bats (of 20)"))
-```
-
-Each row in the table is one site. The first column shows the group assignment, and the second shows how many of the 20 captured bats were infected. Did Group A have more infected bats on average than Group B?
-
-It is easier to see the comparison in a bar graph (@fig-4gumballA), which shows the mean count for each group.
+@fig-4gumballA shows one run of this scenario: the mean number of infected bats in each group.
 
 ```{r}
 #| label: fig-4gumballA
 #| fig-cap: "Mean number of infected bats per site for two groups drawn from the same population. Note the zoomed y-axis, which does not start at 0."
 #| fig-alt: "Bar chart with two bars, Group A and Group B, showing the mean number of infected bats. The y-axis is zoomed to run from 6 to 10, so a modest difference between the two bars looks larger than it would on a full 0-to-20 scale."
+
+group <- rep(c("A", "B"), each = 5)
+infected <- rbinom(10, size = 20, prob = 0.40)
+df <- data.frame(group, infected)
 
 mean_df <- aggregate(infected ~ group, df, mean)
 ggplot(mean_df, aes(x = group, y = infected)) +
@@ -195,42 +177,18 @@ The bars are not the same height: Group A and Group B have different mean counts
 
 This is the core inference problem: differences appear even when nothing real caused them. **How can we tell whether an observed difference is real or just the result of chance?**
 
-### Differences due to chance can be simulated
-
-Chapter 2 showed that chance alone can produce spurious correlations. The same is true for group means, and it can be pinned down: run the same arbitrary split many times and record what comes out.
-
-The first step is to replicate the sampling scenario many times. @fig-4gumballsims shows bar graphs of the mean infected count for Group A and Group B across 10 replications of the same survey: all 10 sites sampled from the same population, split 5+5, and means computed.
+Chapter 2 showed that chance alone can produce spurious correlations. The same is true for group means, and it can be pinned down: run the same arbitrary split many times and record what comes out. We summarize each run as a single **difference score**: the mean count for Group A minus the mean count for Group B. @fig-4gumballdiffs shows the difference scores for 10 replications of the survey, each one sampling all 10 caves from the same population, splitting them 5 and 5, and computing the means.
 
 ```{r}
-#| label: fig-4gumballsims
-#| fig-cap: "Ten replications of surveying 10 caves and splitting them arbitrarily into two groups of 5. Every difference here is chance alone."
-#| fig-alt: "Ten small bar-chart panels, each with two bars for Group A and Group B. The two bars are a similar height in most panels but noticeably uneven in others, with no consistent pattern of which group is higher from one panel to the next."
-#| out-width: "100%"
+#| label: fig-4gumballdiffs
+#| fig-cap: "Difference in mean infected count between Group A and Group B across 10 replications. The true difference is zero, but sampling error produces non-zero differences each time."
+#| fig-alt: "Bar chart of the A-minus-B difference score for each of 10 replications, with a horizontal reference line at zero. Bars extend above and below the line by varying amounts, some replications favoring Group A, others favoring Group B."
 
 group <- rep(rep(c("A", "B"), each = 5), 10)
 experiment <- rep(1:10, each = 10)
 infected <- rbinom(10 * 10, size = 20, prob = 0.40)
 df <- data.frame(experiment, group, infected)
 mean_df <- aggregate(infected ~ experiment * group, df, mean)
-
-ggplot(mean_df, aes(x = group, y = infected)) +
-  geom_bar(stat = "identity") +
-  xlab("Group") +
-  ylab("Mean infected bats") +
-  facet_wrap(~experiment, nrow = 2)
-
-```
-
-These 10 replications show that chance produces different mean differences each time. Sometimes Group A is higher, sometimes Group B is higher, sometimes the means are nearly equal. All of this variation arises from sampling error alone: there is no real difference in the population.
-
-## Chance makes some differences more likely than others
-
-Ten replications show that chance produces *a* difference every time, but not how big those differences usually get. For that we need a summary we can pile up. We summarize each replication as a single **difference score**: the mean count for Group A minus the mean count for Group B. @fig-4gumballdiffs shows those difference scores for the 10 replications above.
-
-```{r}
-#| label: fig-4gumballdiffs
-#| fig-cap: "Difference in mean infected count between Group A and Group B across 10 replications. The true difference is zero, but sampling error produces non-zero differences each time."
-#| fig-alt: "Bar chart of the A-minus-B difference score for each of 10 replications, with a horizontal reference line at zero. Bars extend above and below the line by varying amounts, some replications favoring Group A, others favoring Group B, none of them exactly zero."
 
 differences <- mean_df[mean_df$group == "A", ]$infected -
   mean_df[mean_df$group == "B", ]$infected
@@ -246,38 +204,7 @@ ggplot(dif_df, aes(y = differences, x = experiment)) +
   ylab("Difference in mean count (A - B)")
 ```
 
-A bar at zero means the two groups had the same mean count in that replication. Positive values indicate Group A was higher; negative values indicate Group B was higher.
-
-The differences in these 10 replications mostly fall in a narrow range. To better characterize what chance can do, we run 100 replications. The results are shown in @fig-4manydiffs.
-
-```{r}
-#| label: fig-4manydiffs
-#| fig-cap: "Difference in mean infected count between Group A and Group B across 100 replications. There are many possible differences that chance can produce, but the y-axis shows the range is bounded."
-#| fig-alt: "Bar chart of the A-minus-B difference score for 100 replications, indexed along the x-axis. The bars vary in height and sign but stay within a bounded band around zero, with none reaching far beyond the rest."
-
-group <- rep(rep(c("A", "B"), each = 5), 100)
-experiment <- rep(1:100, each = 10)
-infected <- rbinom(10 * 100, size = 20, prob = 0.40)
-df <- data.frame(experiment, group, infected)
-mean_df <- aggregate(infected ~ experiment * group, df, mean)
-
-differences <- mean_df[mean_df$group == "A", ]$infected -
-  mean_df[mean_df$group == "B", ]$infected
-
-dif_df <- data.frame(experiment = c(1:100), differences)
-dif_df$experiment <- as.factor(dif_df$experiment)
-
-ggplot(dif_df, aes(y = differences, x = experiment)) +
-  geom_bar(stat = "identity", color = "white", linewidth = 0.2) +
-  scale_x_discrete(breaks = c(1, 25, 50, 75, 100)) +
-  theme_classic(base_size = 16) +
-  xlab("Replication") +
-  ylab("Difference in mean count (A - B)")
-```
-
-The x-axis just indexes the 100 replications; the information is on the y-axis. Many different difference sizes occur, but the range is bounded: the bars stay within a limited band around zero, and differences several times larger never show up. This begins to define the window of what chance can produce.
-
-To get an even clearer picture, we now run 10,000 replications and plot the distribution of difference scores as a histogram. This gives a precise view of which differences happen often and which are extremely rare.
+A bar at zero means the two groups had the same mean count in that replication. Positive values indicate Group A was higher; negative values indicate Group B was higher. Chance produces a different difference every time, but not an unlimited one. To see which sizes are common and which are rare, we run 10,000 replications and plot the difference scores as a histogram.
 
 ```{r}
 #| label: fig-4histdiffgumball
@@ -302,19 +229,9 @@ This histogram is the **chance window** for this study design. It shows that cha
 
 We can use this window to evaluate any observed difference. If a study found a difference of 1 infected bat between two groups, that falls well inside the chance window: differences of that size occur frequently by random sampling alone. If the study found a difference of 6 bats, that would fall far outside the window; chance produced a difference that large 0 times out of 10,000. When an observed result almost never happens by chance, we have grounds to conclude that *something other than chance* produced it.
 
-## Making a decision from the window
+## Drawing the line
 
-The window tells us what chance can do. It does not tell us where to draw the line between "chance could have" and "chance didn't." That judgment is next, and it is a judgment, not a calculation.
-
-::: {.callout-caution title="Warning: Beyond ruling out chance"}
-Every hypothesis test in this book asks one question: could chance alone have produced this result? It is not the only question available.
-
-Other methods start from two or more candidate explanations, say a steady linear decline versus a sharp threshold response, and ask which one the data support better.
-
-Ruling out chance tells you that *something* is going on, but not always *what*. It is worth knowing the difference, because "significant" only ever answers the first question.
-:::
-
-Every formal test in this book ends up drawing the same line. It just does it with a formula instead of ten thousand reshuffles.
+The window tells us what chance can do. It does not tell us where to draw the line between "chance could have" and "chance didn't." That is a judgment, not a calculation.
 
 ### How rare is rare enough?
 
@@ -322,19 +239,11 @@ Every formal test in this book ends up drawing the same line. It just does it wi
 
 Environmental scientists already have a working vocabulary for this: the **100-year flood**. A "100-year flood" doesn't mean floods that size happen once a century on a schedule; it means that in any given year, there's about a 1-in-100 chance of a flood that severe. Would you build a house in that floodplain? Many people do, and often regret it, because a 1% annual chance still adds up over a 30-year mortgage (roughly a 26% chance of at least one such flood in that span). A location with a 1-in-10,000 annual flood risk is very different: over the same 30 years, the cumulative chance is under 0.3%.
 
-That's the intuition we need going forward: **rare events still happen, but how rare something is changes what you're willing to conclude from seeing it.** Later in this chapter, we'll use 1-in-10,000 as our own working definition of "rare enough to call surprising."
+That's the intuition we need going forward: **rare events still happen, but how rare something is changes what you're willing to conclude from seeing it.**
 
-### Drawing the line: chance vs. not chance
+### Chance vs. not chance
 
-We already have everything we need to make this concrete: the bat simulation above gave us 10,000 mean differences that chance alone can produce when there is no real difference between groups. That histogram (@fig-4histdiffgumball) *is* our reference distribution. Now we use it to make a decision.
-
-Let's draw some lines on that same histogram and label two kinds of regions:
-
-1.  **Region of chance.** Chance did it.
-
-2.  **Region of not chance.** Chance didn't do it.
-
-The boundaries are the minimum and maximum values chance actually produced across the 10,000 replications. @fig-4simdecision shows this applied to our count differences.
+@fig-4simdecision draws lines on the same histogram. The boundaries are the smallest and largest differences chance actually produced across the 10,000 replications.
 
 ```{r}
 #| label: fig-4simdecision
@@ -368,15 +277,17 @@ ggplot(data.frame(differences), aes(x = differences)) +
 
 ```
 
-Here's how the decision works. The grey band in the middle is the chance window: our 10,000 simulated replications produced differences from roughly `r round(diff_min,1)` to `r round(diff_max,1)` bats, and a result sitting well inside it, close to 0, is exactly what chance turns out routinely. No grounds for suspicion. The red zones on either side are the ones chance never reached, so a difference out there would give real grounds to suspect something beyond sampling error. This is the region where you would reject chance as the explanation.
+Across the 10,000 replications, chance produced differences from about `r round(diff_min,1)` to `r round(diff_max,1)` bats.
 
-The gold bands are the honest part: differences *near the edge* of what chance can do, but not quite past it. Chance *could* produce something in the gold zone, it is technically still inside the window, but it does so rarely. That's not a clean yes/no; it's a "probably not chance, but I can't rule it out," and how you handle that ambiguity is a judgment call. More conservative researchers would shrink the gold zone (fewer false alarms, more missed real effects); more permissive researchers would expand it (the reverse trade-off). All of science formalizes this trade-off with a standard convention ($\alpha = .05$), which we'll discuss more later in this chapter, so that researchers aren't each inventing their own boundary from scratch.
+- **Chance (grey).** Chance produced differences like this routinely. No grounds for suspicion.
+- **Ambiguous (gold).** The edges of what chance produced. Chance *can* land here, but rarely: probably not chance, but not ruled out.
+- **Not chance (red).** Chance never produced a difference this large in 10,000 tries. Real grounds to suspect something beyond sampling error.
 
-## From simulation to formal hypothesis tests
+Where the gold zone ends is a judgment call. A stricter line means fewer false alarms and more missed real effects; a looser line means the reverse. Science standardizes that call with a convention, $\alpha = .05$, defined later in this chapter. It is about 1 in 20, far looser than the red zone's never in 10,000.
 
-Everything so far was built by brute force: split the sites into groups at random ten thousand times, collect the difference each time, and look at where a real result falls against that pile. That works, and it makes the logic visible, but nobody wants to rebuild a chance window from scratch for every question they ask.
+## From simulation to a formal test
 
-There is a shortcut, and you already have most of the pieces. In Chapter 3 we established that a sample comes from a population, that the sample mean is an estimate of that population's mean, and that sample means have a predictable distribution of their own with a known spread. Put those together and the simulated chance window can be replaced by a curve whose shape we already know. The logic does not change. Only the bookkeeping does.
+Everything so far was built by brute force: thousands of replications, piled into a histogram, with a real result laid against the pile. That makes the logic visible, but nobody wants to rebuild a chance window for every question. Chapter 3 already supplies a shortcut: sample means have a predictable distribution of their own, with a known spread. That lets us replace the simulated chance window with a curve whose shape we already know. The logic does not change. Only the bookkeeping does.
 
 The chance window described a world where nothing but chance is at work. A formal test gives that world a name. In the bat example, "nothing but chance" meant no real difference between groups. From here on we compare a single sample against a specific value, such as a regulatory limit or a historical average. The **null hypothesis**, $H_0$, is the claim that any gap between the sample and that value is sampling error: the population mean really equals it. We write that value as $\mu_0$. The **alternative hypothesis**, $H_a$, is the claim that the population mean does not equal $\mu_0$.
 
@@ -878,6 +789,14 @@ plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-1.5, sample_sd=
 
 plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-0.4, sample_sd=0.7, inferred_mean=-0.4, inferred_sd=1)
 ```
+
+::: {.callout-caution title="Warning: Beyond ruling out chance"}
+Every hypothesis test in this book asks one question: could chance alone have produced this result? It is not the only question available.
+
+Other methods start from two or more candidate explanations, say a steady linear decline versus a sharp threshold response, and ask which one the data support better.
+
+Ruling out chance tells you that *something* is going on, but not always *what*. It is worth knowing the difference, because "significant" only ever answers the first question.
+:::
 
 ## Chapter Summary
 
