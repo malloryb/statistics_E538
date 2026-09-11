@@ -36,7 +36,7 @@ library(kableExtra)
 # population and blue for the sampling distribution, which collided with red = rejection
 # region and blue = null here.
 
-plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd, true_mean, true_sd, show_ci = TRUE, show_samp = TRUE, y_top = 1.4, show_null = TRUE, show_true = TRUE) {
+plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd, true_mean, true_sd, show_ci = TRUE, show_samp = TRUE, y_top = 1.4, show_null = TRUE, show_true = TRUE, show_xbar = FALSE) {
   x_vals <- seq(-6, 6, by=0.01)
   
   h0 <- dnorm(x_vals, mean=null_mean, sd=null_sd)
@@ -54,6 +54,8 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
     { if (show_true) geom_line(aes(x=x_vals, y=true_parent, color="True Population Distribution"), size=1.5) } +
     geom_line(aes(x=x_vals, y=inferred_parent, color="Estimated Population Distribution"), linetype="dashed", size=1.5) +
     { if (show_ci) geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) } +
+    { if (show_xbar) annotate("segment", x = inferred_mean, xend = inferred_mean, y = 0, yend = y_top * 0.92, linetype = "dotted", linewidth = 0.9) } +
+    { if (show_xbar) annotate("text", x = inferred_mean, y = y_top * 0.97, label = "bar(x)", parse = TRUE, size = 4.5) } +
     { if (show_null) geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dashed", color="magenta", size=1) } +
     coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, y_top)) +  # shared axes across the four-color figures
     theme_classic() + 
@@ -448,16 +450,16 @@ scale_color_manual(values=c("Null Population Distribution"="blue", "True Populat
 print(p3 + coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 0.45)))
 ```
 
-**3. The sample's picture of the truth.** We never see the true population, but we do have a sample. From the sample's mean and standard deviation we build the **estimated population distribution** (light-green dashed): a normal curve that is our best picture of the true population (orange). With a representative sample, the two line up closely.
+**3. The sample's picture of the truth.** We never see the true population, but we do have a sample. From the sample's mean, $\bar{x}$ (dotted line), and its standard deviation we build the **estimated population distribution** (light-green dashed): a normal curve that is our best picture of the true population (orange). With a representative sample, the two line up closely.
 
 ```{r}
 #| label: fig-4key.perfectly_representative_sample
-#| fig-height: 2.3
+#| fig-height: 2.52
 #| fig-cap: 'A representative sample: the estimated population distribution, built from the sample, lines up closely with the true population distribution.'
 #| fig-alt: "Two wide bell curves nearly on top of one another: the solid orange true population and the light-green dashed estimated population."
 #| out-width: "100%"
 
-p4 <-  plot_distributions(null_mean=0.5, null_sd=1, sample_mean=0.52, sample_sd=0.3, inferred_mean=0.52, inferred_sd=1, true_mean=0.54, true_sd=1, show_ci = FALSE, show_samp = FALSE, show_null = FALSE, y_top = 0.45)  # wide curves only: crop the empty space, same scale
+p4 <-  plot_distributions(null_mean=0.5, null_sd=1, sample_mean=0.52, sample_sd=0.3, inferred_mean=0.52, inferred_sd=1, true_mean=0.54, true_sd=1, show_ci = FALSE, show_samp = FALSE, show_null = FALSE, show_xbar = TRUE, y_top = 0.53)  # wide curves only: crop the empty space, same scale
 print(p4)
 
 ```
@@ -470,7 +472,7 @@ print(p4)
 #| fig-alt: "A wide light-green dashed bell curve and a much narrower, taller dark-green dot-dash bell curve, both centered at the same point."
 #| out-width: "100%"
 
-p7 <- plot_distributions(null_mean=-0.2, null_sd=1, sample_mean=0.5, sample_sd=0.4, inferred_mean=0.5, inferred_sd=1, true_mean=0.6, true_sd=1, show_ci = FALSE, show_null = FALSE, show_true = FALSE)
+p7 <- plot_distributions(null_mean=-0.2, null_sd=1, sample_mean=0.5, sample_sd=0.4, inferred_mean=0.5, inferred_sd=1, true_mean=0.6, true_sd=1, show_ci = FALSE, show_null = FALSE, show_true = FALSE, show_xbar = TRUE)
 
 print(p7)
 
