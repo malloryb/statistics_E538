@@ -304,6 +304,7 @@ Everything so far was built by brute force: thousands of replications, piled int
 Every test in this book except the nonparametric tests in Chapter 7 reads its answer off a normal curve, or its close relative, the $t$ curve. Two different reasons put a normal curve there.
 
 - **For the sampling distribution of the sample mean**, it is the Central Limit Theorem at work: whatever the population looks like, sample means pile up in a roughly normal shape once the sample is large enough.
+
 - **For a population, it is not required.** A test reads its answer off the sampling distribution of the sample mean, not off the population. The population's shape only matters when the sample is small, because the Central Limit Theorem needs a large enough sample to promise a normal shape for sample means. With a small sample, the normal curve for $\bar{x}$ rests on the population itself being roughly normal, and the only check we have is the sample: a histogram with no strong skew and no extreme outliers.
 
 When the sample says the normal assumption is not reasonable, the nonparametric tests in Chapter 7 take over.
@@ -311,7 +312,7 @@ When the sample says the normal assumption is not reasonable, the nonparametric 
 
 ### The players
 
-A test is about $\mu$, the true population mean, which we never observe; everything we know about it comes from one sample. The null hypothesis names a value for it, $\mu_0$. To reject $H_0$, the sample has to be hard to explain if the null were true: its mean, $\bar{x}$, has to land farther from $\mu_0$ than sampling error would plausibly carry it.
+A test is about $\mu$, the true population mean, which we never observe; everything we know about it comes from one sample. The null hypothesis proposes a value for it, $\mu_0$. To reject $H_0$, the sample has to be hard to explain if the null were true: its mean, $\bar{x}$, has to land farther from $\mu_0$ than sampling error would plausibly carry it.
 
 Several distributions and values take part in that comparison. @tbl-4players lists every one, with the line each is drawn with in this chapter's figures. They fall into three groups: what we would expect if $H_0$ were true, what the sample gives us, and the truth we never see.
 
@@ -346,11 +347,11 @@ players <- data.frame(
              "True population distribution"),
   what = c("The population mean if $H_0$ were true",
            "The population if $H_0$ were true: centered at $\\mu_0$, as wide as the population",
-           "Where $\\bar{x}$ would land across many samples if $H_0$ were true: centered at $\\mu_0$, spread = standard error. Critical values come from it (Route 1)",
+           "Where $\\bar{x}$ would land across many samples if $H_0$ were true: centered at $\\mu_0$, spread = standard error",
            "The sample mean: the one value we observe",
            "Centered at $\\bar{x}$, with the sample's standard deviation as its spread: our best picture of the true population",
            "Where $\\bar{x}$ would land across many samples: centered at $\\bar{x}$, spread = standard error",
-           "$\\bar{x} \\pm 1.96$ standard errors, built from the sampling distribution of the sample mean (Route 2)",
+           "$\\bar{x} \\pm 1.96$ standard errors, built from the sampling distribution of the sample mean",
            "The population the data actually came from. Never known. $H_a$ is a claim about where it sits")
 )
 swatches <- c(
@@ -400,9 +401,11 @@ The players are easier to hold onto as a picture than as a table. Let's build th
 
 The population curves in these figures are drawn as normal for clarity, including the estimated population, drawn with the sample's mean and standard deviation. A test does not need the population to be normal. It runs on the two sampling distributions of the sample mean (the dot-dash curves), and the Central Limit Theorem makes those close to normal whatever shape the population has, once the sample is large enough.
 
+**Notation reminder.** Chapter 3's shorthand for a normal curve: $X \sim N(\mu, \sigma^2)$ reads "the random variable $X$ is normally distributed with mean $\mu$ and variance $\sigma^2$." A normal curve needs just those two numbers, a center and a spread. The second number is the variance, the square of the standard deviation.
+
 **1. The null population distribution.**
 
-Start with the null population distribution: the population we would have if $H_0$ were true. Its center, $\mu_0$ (magenta dashed line), comes from $H_0$ itself. Its spread is the population standard deviation, $\sigma$. In practice $\sigma$ is almost never known and the sample's standard deviation stands in for it; this chapter treats $\sigma$ as known as a simplification. The $t$-tests in Chapter 6 are the adjustment used in practice.
+Start with the null population distribution: the population we would have if $H_0$ were true. Its center, $\mu_0$, comes from $H_0$ itself. Its spread is the population standard deviation, $\sigma$. In practice $\sigma$ is almost never known and the sample's standard deviation stands in for it; this chapter treats $\sigma$ as known as a simplification. The $t$-tests in Chapter 6 are the adjustment used in practice.
 
 ```{r}
 #| label: fig-4key.null_alone
@@ -423,12 +426,13 @@ p_null <- ggplot() +
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
 
 # Same vertical scale as the four-color figures, with the empty space above the curve cropped
-print(p_null + coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 0.45)))
+print(p_null + annotate("text", x = 0.12, y = 0.43, label = "mu[0]", parse = TRUE, hjust = 0, colour = "magenta", size = 5) +
+      coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 0.45)))
 ```
 
 **2. Null vs. true population.**
 
-In an idealized world where $H_0$ is exactly true, the true population (orange) and the null population distribution (blue) are identical. In reality, we never know the orange curve.
+In an idealized world where $H_0$ is exactly true, the true population and the null population distribution are identical. In reality, we never know the true population.
 
 ```{r}
 #| label: fig-4key.null_identical_sample
@@ -455,7 +459,7 @@ scale_color_manual(values=c("Null Population Distribution"="blue", "True Populat
 print(p3 + coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 0.45)))
 ```
 
-**3. The sample's picture of the truth.** We never see the true population, but we do have a sample. From the sample's mean, $\bar{x}$ (dotted line), and its standard deviation we build the **estimated population distribution** (light-green dashed): our best picture of the true population (orange), drawn here as a normal curve. With a representative sample, the two line up closely.
+**3. The sample's picture of the truth.** We never see the true population, but we do have a sample. From the sample's mean, $\bar{x}$, and its standard deviation we build the **estimated population distribution**: our best picture of the true population, drawn here as a normal curve. With a representative sample, the two line up closely.
 
 ```{r}
 #| label: fig-4key.perfectly_representative_sample
@@ -469,7 +473,7 @@ print(p4)
 
 ```
 
-**4. From individual readings to sample means.** Divide the sample's standard deviation by $\sqrt{n}$. (Not $\sqrt{n-1}$: the $n-1$ already went into computing the standard deviation itself, back in Chapter 3.) The result is the standard error, and it gives the **sampling distribution of the sample mean** (dark-green dot-dash): centered at $\bar{x}$, and much narrower. This special distribution is also where the confidence interval comes from, which we build later in this chapter.
+**4. From individual readings to sample means.** The **sampling distribution of the sample mean** is a normal curve, so it needs a center and a spread. Its center is $\bar{x}$, the same as the estimated population. Its spread is the standard error: the sample's standard deviation divided by $\sqrt{n}$. (Not $\sqrt{n-1}$: the $n-1$ already went into computing the standard deviation itself, back in Chapter 3.) In the shorthand, it is $N(\bar{x}, SE_{\bar{x}}^2)$: same center, much narrower. This special distribution is also where the confidence interval comes from, which we build later in this chapter.
 
 ```{r}
 #| label: fig-4key.sample_to_sampling
@@ -483,7 +487,7 @@ print(p7)
 
 ```
 
-**5. The same move on the null side.** Divide the null population's standard deviation by $\sqrt{n}$ and you get the **sampling distribution of the sample mean under $H_0$** (blue dot-dash): centered at $\mu_0$, and much narrower. It describes where $\bar{x}$ would land across many samples if $H_0$ were true, which makes it the formal version of the chance window. The critical values in Route 1 come from it.
+**5. The same move on the null side.** The **sampling distribution of the sample mean under $H_0$** is centered at $\mu_0$, and its spread is again the standard error, the null population's standard deviation divided by $\sqrt{n}$: $N(\mu_0, SE_{\bar{x}}^2)$. It describes where $\bar{x}$ would land across many samples if $H_0$ were true, which makes it the formal version of the chance window. The critical values later in the chapter come from it.
 
 ```{r}
 #| label: fig-4key.null_to_sampling
@@ -498,7 +502,8 @@ null_pair <- rbind(
 )
 ggplot(null_pair, aes(x, y, color = curve, linetype = curve)) +
   geom_line(linewidth = 1.3) +
-  annotate("segment", x = 0, xend = 0, y = 0, yend = dnorm(0, 0, 1), linetype = "dashed", color = "magenta", linewidth = 1) +
+  annotate("segment", x = 0, xend = 0, y = 0, yend = 1.3, linetype = "dashed", color = "magenta", linewidth = 1) +
+  annotate("text", x = 0.12, y = 1.34, label = "mu[0]", parse = TRUE, hjust = 0, colour = "magenta", size = 5) +
   scale_color_manual(values = c("Null Population Distribution" = "blue",
                                 "Sampling Distribution of the Sample Mean under H0" = "blue")) +
   scale_linetype_manual(values = c("Null Population Distribution" = "solid",
@@ -511,8 +516,6 @@ ggplot(null_pair, aes(x, y, color = curve, linetype = curve)) +
 ```
 
 **All of them at once.** Put every player on one set of axes and the picture gets crowded fast, which is why the rest of the book shows only the pieces a given question needs. @fig-4players-gif adds them one at a time, grouped as in @tbl-4players, and ends with the two curves a decision actually uses.
-
-**Notation reminder.** The labels use the shorthand from Chapter 3. $X \sim N(\mu, \sigma^2)$ reads "the random variable $X$ is normally distributed with mean $\mu$ and variance $\sigma^2$." The second number is the variance, the square of the standard deviation, so $N(\mu_0, SE_{\bar{x}}^2)$ is a normal curve centered at $\mu_0$ whose standard deviation is the standard error.
 
 ```{r}
 #| label: fig-4players-gif
@@ -575,7 +578,7 @@ All three routes below run on the same quantity: the **test statistic** defined 
 
 Critical values come from the **sampling distribution of the sample mean under $H_0$** (@fig-4key.null_to_sampling): centered at $\mu_0$, with spread equal to the standard error, $\sigma/\sqrt{n}$. It is the formal version of the chance window: instead of simulating the differences chance can produce, we assume a distribution and read them off it.
 
-@fig-rejection-region draws it for a two-sided test at $\alpha = 0.05$, marked off in standard errors from $\mu_0$. The red lines are the **critical values**, 1.96 standard errors on either side of $\mu_0$. They cut off the most extreme 5% of the curve, 2.5% in each tail, and those shaded tails are the **rejection regions**. Here the observed $\bar{x}$ (dotted line) lands 2.4 standard errors above $\mu_0$, inside the right-hand rejection region. Counting that distance in standard errors is exactly the test statistic from earlier, $z = (\bar{x} - \mu_0)/SE = 2.4$.
+@fig-rejection-region draws it for a two-sided test at $\alpha = 0.05$, marked off in standard errors from $\mu_0$. The red lines are the **critical values**, 1.96 standard errors on either side of $\mu_0$. They cut off the most extreme 5% of the curve, 2.5% in each tail, and those shaded tails are the **rejection regions**. Here the observed $\bar{x}$ lands 2.4 standard errors above $\mu_0$, inside the right-hand rejection region. Counting that distance in standard errors is exactly the test statistic from earlier, $z = (\bar{x} - \mu_0)/SE = 2.4$.
 
 Here's the decision rule:
 
@@ -622,9 +625,9 @@ ggplot(rr, aes(x, y)) +
 
 The confidence-interval route makes the same decision from the other pair of curves: the sample's. It never uses the null population distribution, only the single value $\mu_0$. It takes three steps.
 
-1. **Start from the sample.** $\bar{x}$ (dotted line) and the spread of the individual readings give the estimated population distribution (light-green dashed, left panel of @fig-ci-lens-build). It describes individual readings, so it is wide.
-2. **Divide the spread by $\sqrt{n}$.** That is the standard error, and it gives the sampling distribution of the sample mean (dark-green dot-dash, right panel), centered at $\bar{x}$ and much narrower. A sample mean lands within 1.96 standard errors of the true mean $\mu$ about 95% of the time, so the middle 95% of this curve, $\bar{x} \pm 1.96\,SE$, is the 95% confidence interval (thick dark-green bar): the values of $\mu$ that are consistent with our sample.
-3. **Ask where $\mu_0$ falls** (magenta dashed line, @fig-ci-lens-decision).
+1. **Start from the sample.** $\bar{x}$ and the spread of the individual readings give the estimated population distribution (left panel of @fig-ci-lens-build). It describes individual readings, so it is wide.
+2. **Divide the spread by $\sqrt{n}$.** That is the standard error, the spread of the sampling distribution of the sample mean (right panel): same center, $\bar{x}$, and much narrower. A sample mean lands within 1.96 standard errors of the true mean $\mu$ about 95% of the time, so the middle 95% of this curve, $\bar{x} \pm 1.96\,SE$, is the 95% confidence interval: the values of $\mu$ that are consistent with our sample.
+3. **Ask where $\mu_0$ falls** (@fig-ci-lens-decision).
 
 ```{r}
 #| label: fig-ci-lens-build
@@ -743,7 +746,7 @@ If the observed statistic falls in either tail beyond the critical value(s), rej
 
 Here are our options (for a two tailed test).
 
-1.  **Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean (magenta line). In this example, the mean is more than 3 standard errors from $\mu_0$, which is typically considered significant for common choices of $\alpha$.
+1.  **Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean. In this example, the mean is more than 3 standard errors from $\mu_0$, which is typically considered significant for common choices of $\alpha$.
 
 ```{r}
 #| label: fig-4key.reject_2_two_tailed
