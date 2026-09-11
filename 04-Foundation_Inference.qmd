@@ -62,6 +62,7 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
     geom_line(aes(x=x_vals, y=true_parent, color="True Population Distribution"), size=1.5) +
     geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) +
     geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dashed", color="magenta", size=1) +
+    coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 1.4)) +  # shared axes across the four-color figures
     theme_classic() + 
     theme(legend.position='bottom', 
           axis.text = element_blank(), 
@@ -108,6 +109,7 @@ plot_distributions_no_error <- function(
     # CI bar (thick dark green): keep this!
     { if (show_ci) geom_segment(aes(x = CI_left, xend = CI_right, y = 0, yend = 0),
                                 color = "darkgreen", size = 1.8) } +
+    coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 1.4)) +  # shared axes across the four-color figures
     theme_classic() +
     theme(
       legend.position = "bottom",
@@ -291,8 +293,6 @@ Everything so far was built by brute force: thousands of replications, piled int
 
 The chance window described a world where nothing but chance is at work. A formal test gives that world a name. In the bat example, "nothing but chance" meant no real difference between groups. From here on we compare a single sample against a specific value, such as a regulatory limit or a historical average. The **null hypothesis**, $H_0$, is the claim that any gap between the sample and that value is sampling error: the population mean really equals it. We write that value as $\mu_0$. The **alternative hypothesis**, $H_a$, is the claim that the population mean does not equal $\mu_0$.
 
-If $H_0$ were true, individual measurements would follow the **null population distribution**: a population centered at $\mu_0$. Like any population, it has a partner: the **sampling distribution of the mean under $H_0$**, which describes what $\bar{x}$ would look like across many samples drawn from that null population. That partner is what replaces the simulated chance window. We meet the null population distribution in the next section and put its partner to work later in the chapter, when we test $H_0$.
-
 ## The four distributions
 
 Hypothesis testing juggles four distributions at once, which is the main reason it feels harder than it is. Three of them you have already met. Only one is new.
@@ -305,7 +305,7 @@ Hypothesis testing juggles four distributions at once, which is the main reason 
 
 **New here:**
 
-- **Null population distribution.** The population distribution we would have *if $H_0$ were true*: centered at $\mu_0$, and as wide as the population itself. In the figures below it is the blue curve.
+- **Null population distribution.** The population distribution we would have *if $H_0$ were true*: centered at $\mu_0$, and as wide as the population itself. In the figures below it is the blue curve. It has a partner, the **sampling distribution of the mean under $H_0$**, which describes what $\bar{x}$ would look like across many samples drawn from that null population. That partner is what replaces the simulated chance window, and we put it to work later in the chapter when we test $H_0$.
 
 That is the whole change. Testing does not add three new objects; it adds one, and then asks how the sample looks against it.
 
@@ -336,7 +336,7 @@ p_null <- ggplot() +
   theme_classic() +
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
 
-print(p_null)
+print(p_null + coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 1.4)))
 ```
 
 **2. Null vs. true population.**
@@ -363,7 +363,7 @@ scale_color_manual(values=c("Null Population Distribution"="blue", "True Populat
   theme_classic() + 
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
 
-print(p3)
+print(p3 + coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 1.4)))
 ```
 
 **3. Adding the sampling distribution.** We never know the true population distribution directly. What we do have is a sample, and from that we can construct the **sampling distribution of the mean** (dark-green dot-dash). This distribution underlies our ability to estimate a CI (dark green horizontal line).
@@ -415,6 +415,7 @@ To summarize, here is what each element means in every figure from here on:
 - **Orange solid line** = True population distribution (what actually generated the data).
 - **Light green dashed line** = Estimated population distribution (inferred from the sample; our stand-in for $H_a$).
 - **Dark green dot-dashed line** = Sampling distribution of the sample mean, $\bar{x}$.
+- **Blue dot-dashed line** = Sampling distribution of the mean under $H_0$ (appears once we start testing).
 - **Magenta dashed line** = Hypothesized mean $\mu_0$ (under $H_0$).\
 - **Thick dark green bar** = 95% confidence interval (CI) around the sample mean $\bar{x}$.
 
@@ -462,9 +463,18 @@ All three routes below run on the same quantity: the **test statistic** defined 
 
 **Note.** Methods 1--2 yield a yes/no at $\alpha$; method 3 yields a yes/no plus a graded measure of evidence (exact $p$).
 
+Each route leans on one pair of curves from earlier in the chapter:
+
+|                     | Wide: individual readings | Narrow: sample means | Route that uses it |
+|---------------------|---------------------------|----------------------|--------------------|
+| **From the sample** | Estimated population distribution, centered at $\bar{x}$ | Sampling distribution of $\bar{x}$, centered at $\bar{x}$ | Confidence interval |
+| **Under $H_0$**     | Null population distribution, centered at $\mu_0$ | Sampling distribution of the mean under $H_0$, centered at $\mu_0$ | Critical values, $p$-value |
+
+In both rows the narrow curve is the wide one with its spread divided by $\sqrt{n}$, which is the standard error. In the figures, color tells you the row (green for the sample, blue for $H_0$) and a dot-dash line marks the narrow curve. The true population distribution is the one nobody gets to draw.
+
 ### Test statistic/critical values
 
-@fig-rejection-region shows how these ideas come together in a two-sided test. The blue curve is the partner promised earlier: the sampling distribution of the mean under $H_0$. Like the null population distribution it is centered at $\mu_0$, but it is narrower, with a spread of one standard error. It is the formal version of the chance window: instead of simulating the differences chance can produce, we assume a distribution and read them off it. The dashed magenta line marks the expected center at $\mu_0$. The red vertical lines are the **critical values** for $\alpha = 0.05$. They cut off the most extreme 5% of the distribution: 2.5% in each tail. Those shaded tails are the **rejection regions**.
+@fig-rejection-region shows how these ideas come together in a two-sided test. The blue dot-dash curve is the partner promised earlier: the sampling distribution of the mean under $H_0$. Like the null population distribution it is centered at $\mu_0$, but it is narrower, with a spread of one standard error. It is the formal version of the chance window: instead of simulating the differences chance can produce, we assume a distribution and read them off it. The dashed magenta line marks the expected center at $\mu_0$. The red vertical lines are the **critical values** for $\alpha = 0.05$. They cut off the most extreme 5% of the distribution: 2.5% in each tail. Those shaded tails are the **rejection regions**.
 
 Here's the decision rule:
 
@@ -475,8 +485,8 @@ This picture makes clear why $\alpha$ and the $p$-value are linked. $\alpha$ set
 
 ```{r}
 #| label: fig-rejection-region
-#| fig-cap: 'Two-sided test: blue curve is the sampling distribution under $H_0$ (centered at $\mu_0$). Magenta dashed line marks $\mu_0$. Red vertical lines mark the critical values for $\alpha=0.05$; shaded tails are the rejection regions.'
-#| fig-alt: "A blue bell curve centered at mu sub 0, marked with a dashed vertical line at its center. Two red vertical lines sit symmetrically in the tails, each labeled critical value, with the shaded area beyond each one labeled rejection region. The large middle portion of the curve between the two red lines is unshaded."
+#| fig-cap: 'Two-sided test: blue dot-dash curve is the sampling distribution of the mean under $H_0$ (centered at $\mu_0$). Magenta dashed line marks $\mu_0$. Red vertical lines mark the critical values for $\alpha=0.05$; shaded tails are the rejection regions.'
+#| fig-alt: "A blue dot-dash bell curve centered at mu sub 0, marked with a dashed vertical line at its center. Two red vertical lines sit symmetrically in the tails, each labeled critical value, with the shaded area beyond each one labeled rejection region. The large middle portion of the curve between the two red lines is unshaded."
 #| fig-width: 7
 #| fig-height: 5
 
@@ -508,7 +518,7 @@ ggplot(df, aes(x, y)) +
     inherit.aes = FALSE, fill = "red", alpha = 0.15
   ) +
   # Blue normal curve
-  geom_line(color = "blue", linewidth = 1.2) +
+  geom_line(color = "blue", linewidth = 1.2, linetype = "dotdash") +
   # Magenta dashed line at mu0 (use annotate to avoid recycling warning)
   annotate("segment",
            x = mu0, xend = mu0, y = 0, yend = y_peak,
@@ -532,9 +542,48 @@ ggplot(df, aes(x, y)) +
 
 ### Confidence intervals
 
-@fig-ci-lens-illustrative shows another way to make the same decision. The **blue curve** is the null population distribution ($H_0$ true), and the **dark green curve** is the sampling distribution of the mean based on our sample. The **dashed green curve** is the estimated population distribution we infer from the sample.
+The confidence-interval route makes the same decision from the other pair of curves: the sample's. It never uses the null population distribution, only the single value $\mu_0$. It takes three steps.
 
-The **thick dark green bar** at the bottom is the 95% confidence interval around the sample mean $\bar{x}$. The **magenta dashed line** marks $\mu_0$, the hypothesized mean under $H_0$.
+1. **Start from the sample.** $\bar{x}$ (dotted line) and the spread of the individual readings give the estimated population distribution (light-green dashed, left panel of @fig-ci-lens-build). It describes individual readings, so it is wide.
+2. **Divide the spread by $\sqrt{n}$.** That is the standard error, and it gives the sampling distribution of $\bar{x}$ (dark-green dot-dash, right panel), centered at $\bar{x}$ and much narrower. A sample mean lands within 1.96 standard errors of the true mean $\mu$ about 95% of the time, so the middle 95% of this curve, $\bar{x} \pm 1.96\,SE$, is the 95% confidence interval (thick dark-green bar): the values of $\mu$ that are consistent with our sample.
+3. **Ask where $\mu_0$ falls** (magenta dashed line, @fig-ci-lens-decision).
+
+```{r}
+#| label: fig-ci-lens-build
+#| fig-cap: 'Building the confidence interval from the sample. Left: $\bar{x}$ (dotted line) and the spread of individual readings give the estimated population distribution. Right: dividing that spread by $\sqrt{n}$ gives the sampling distribution of $\bar{x}$; its middle 95% is the confidence interval.'
+#| fig-alt: "Two panels. Left: a wide light-green dashed bell curve centered on a black dotted vertical line labeled x-bar. Right: a much narrower, taller dark-green dot-dash bell curve centered on the same dotted line, with a thick dark-green bar along the baseline under its middle, labeled 95% CI."
+#| fig-width: 9
+#| fig-height: 3.6
+#| out-width: "100%"
+
+xbar <- 0.42; pop_sd <- 1; SE <- 0.4; alpha <- 0.05
+ci_lo <- xbar - qnorm(1 - alpha/2) * SE
+ci_hi <- xbar + qnorm(1 - alpha/2) * SE
+xs <- seq(-4.5, 4.5, by = 0.01)
+
+ci_panel <- function() {
+  ggplot() +
+    coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(-0.16, 1.4)) +
+    theme_classic(base_size = 12) + labs(x = NULL, y = NULL) +
+    theme(axis.text = element_blank(), axis.ticks = element_blank()) +
+    annotate("segment", x = xbar, xend = xbar, y = 0, yend = 1.2, linetype = "dotted", linewidth = 0.9) +
+    annotate("text", x = xbar, y = 1.28, label = "bar(x)", parse = TRUE, size = 4.5)
+}
+with_ci <- function(p) {
+  p +
+    geom_line(aes(xs, dnorm(xs, xbar, SE)), color = "darkgreen", linetype = "dotdash", linewidth = 1.1) +
+    annotate("segment", x = ci_lo, xend = ci_hi, y = 0, yend = 0, colour = "darkgreen", linewidth = 3) +
+    annotate("text", x = xbar, y = -0.1, label = "95% CI", colour = "darkgreen", size = 4)
+}
+
+p_est <- ci_panel() +
+  geom_line(aes(xs, dnorm(xs, xbar, pop_sd)), color = "green3", linetype = "dashed", linewidth = 1.2) +
+  annotate("text", x = -4.4, y = 0.6, label = "Estimated population", color = "green3", size = 3.8, hjust = 0)
+p_samp <- with_ci(ci_panel()) +
+  annotate("text", x = -4.4, y = 0.9, label = expression("Sampling distribution of " * bar(x)), color = "darkgreen", size = 3.8, hjust = 0)
+
+grid.arrange(p_est, p_samp, ncol = 2)
+```
 
 Decision rule:
 
@@ -542,99 +591,26 @@ Decision rule:
 - If $\mu_0$ lies **outside** the CI bar, we **reject** $H_0$ at $\alpha=0.05$.
 
 ```{r}
-#| label: fig-ci-lens-illustrative
-#| fig-cap: 'Confidence-interval lens: null (blue), sampling distribution of $\bar{x}$ (dark green), estimated population (light-green dashed). The thick bar is the $(1-\alpha)$ CI around $\bar{x}$; the magenta dashed line marks $\mu_0$. Decision uses whether $\mu_0$ is inside or outside the CI.'
-#| fig-alt: "A blue null population distribution centered at mu sub 0, marked with a dashed vertical line, sitting just left of a dot-dash dark-green sampling distribution and a dashed light-green estimated population curve, both centered near the sample mean x-bar. A thick green confidence interval bar spans beneath the sampling distribution's peak and its left edge reaches back to include mu sub 0, so a text label reads 'Fail to reject at alpha = 0.05.'"
+#| label: fig-ci-lens-decision
+#| fig-cap: 'The decision, same sample in both panels. Left: $\mu_0$ (magenta) falls inside the 95% confidence interval, so we fail to reject $H_0$. Right: a different $\mu_0$ falls outside it, so we reject $H_0$.'
+#| fig-alt: "Two panels, each showing the same narrow dark-green dot-dash curve centered on a dotted line labeled x-bar, with a thick dark-green confidence interval bar underneath. Left: a magenta dashed line labeled mu sub 0 sits just left of x-bar, inside the bar, with a box reading Fail to reject. Right: the magenta line sits further left, outside the bar, with a box reading Reject."
+#| fig-width: 9
+#| fig-height: 3.6
 #| out-width: "100%"
 
-library(ggplot2)
-library(dplyr)
-library(tibble)
+mu0_panel <- function(mu0) {
+  inside <- mu0 >= ci_lo && mu0 <= ci_hi
+  with_ci(ci_panel()) +
+    annotate("segment", x = mu0, xend = mu0, y = 0, yend = 0.8, colour = "magenta", linetype = "dashed", linewidth = 1) +
+    annotate("text", x = mu0 - 0.35, y = 0.86, label = "mu[0]", parse = TRUE, colour = "magenta", size = 5) +
+    annotate("label", x = 3.1, y = 1.0, label = ifelse(inside, "Fail to reject", "Reject"),
+             size = 3.8, fill = "white", label.size = 0.2)
+}
 
-# Parameters you can edit ---
-null_mean    <- 0
-null_sd      <- 1
-sample_mean  <- 0.42   # \bar{x}
-SE           <- 0.4   # standard error for sampling dist + CI
-inferred_sd  <- 1      # for the light-green "estimated population"
-alpha        <- 0.05
-
-# Derived quantities
-x_vals   <- seq(-6, 6, by = 0.01)
-h0       <- dnorm(x_vals, mean = null_mean, sd = null_sd)
-samp     <- dnorm(x_vals, mean = sample_mean, sd = SE)
-inferred <- dnorm(x_vals, mean = sample_mean, sd = inferred_sd)
-
-zcrit   <- qnorm(1 - alpha/2)
-ci_lo   <- sample_mean - zcrit * SE
-ci_hi   <- sample_mean + zcrit * SE
-y_mu0   <- dnorm(null_mean, mean = null_mean, sd = null_sd)
-inside  <- (null_mean >= ci_lo) && (null_mean <= ci_hi)
-
-df <- tibble(x = x_vals, y_h0 = h0, y_samp = samp, y_inf = inferred)
-
-# Helpful y-levels for placing labels
-y_top   <- max(h0, samp, inferred)
-y_mid   <- dnorm(sample_mean, sample_mean, SE)
-
-ggplot() +
-  # Curves
-  geom_line(data = df, aes(x, y_h0),    color = "blue",      linewidth = 1.2) +
-  geom_line(data = df, aes(x, y_samp),  color = "darkgreen", linewidth = 1.0, linetype = "dotdash") +
-  geom_line(data = df, aes(x, y_inf),   color = "green3",    linewidth = 1.0, linetype = "dashed") +
-
-  # mu0 reference (magenta dashed down from the peak of H0)
-  annotate("segment",
-           x = null_mean, xend = null_mean, y = 0, yend = y_mu0,
-           colour = "magenta", linetype = "dashed", linewidth = 1) +
-
-  # CI bar and ticks on baseline
-  annotate("segment",
-           x = ci_lo, xend = ci_hi, y = 0, yend = 0,
-           colour = "darkgreen", linewidth = 2.8) +
-  annotate("segment", x = ci_lo, xend = ci_lo, y = -0.01, yend = 0.03) +
-  annotate("segment", x = ci_hi, xend = ci_hi, y = -0.01, yend = 0.03) +
-
-  # xbar marker
-  annotate("point", x = sample_mean, y = 0, size = 2) +
-  annotate("text",  x = sample_mean, y = 0.06, label = expression(bar(X)), size = 4) +
-
-  # Bracket and label for (1 - alpha) CI
-  annotate("segment", x = ci_lo, xend = ci_lo, y = -0.06, yend = -0.01) +
-  annotate("segment", x = ci_hi, xend = ci_hi, y = -0.06, yend = -0.01) +
-  annotate("segment", x = ci_lo, xend = ci_hi, y = -0.06, yend = -0.06) +
-  annotate("text",   x = (ci_lo + ci_hi)/2, y = -0.095,
-           label = expression(paste("(1 - ", alpha, ") CI")), size = 3.8) +
-
-  # Labels for the three curves (inline, color-matched)
-  annotate("text", x = -3.2, y = dnorm(-3.2, null_mean, null_sd) + 0.015,
-           label = "Null population distribution", color = "blue", size = 3.6, hjust = 0, vjust=-0.4) +
-  annotate("text", x = sample_mean + 1.6, y = dnorm(sample_mean + 1.6, sample_mean, SE) + 0.015,
-           label = expression("Sampling dist. of " * bar(X)), color = "darkgreen", size = 3.6, hjust = 0, vjust=0.4) +
-  annotate("text", x = sample_mean - 1.8, y = dnorm(sample_mean - 1.8, sample_mean, inferred_sd) + 0.015,
-           label = "Estimated population", color = "green3", size = 3.6, hjust = 0) +
-
-  # mu0 label
-  annotate("text", x = null_mean, y = y_mu0 + 0.08, label = expression(mu[0]),
-           colour = "magenta", size = 5) +
-
-  # Decision banner
-  annotate("label",
-           x = sample_mean, y = y_top * 0.92,
-           label = ifelse(inside,
-                          paste0("Fail to reject at \u03B1 = ", alpha),
-                          paste0("Reject at \u03B1 = ", alpha)),
-           size = 3.7, fill = "white", label.size = 0.2) +
-
-  # Axes and theme
-  coord_cartesian(ylim = c(-0.12, y_top * 1.05)) +
-  labs(x = NULL, y = NULL) +
-  theme_classic(base_size = 12) +
-  theme(
-    axis.text  = element_blank(),
-    axis.ticks = element_blank()
-  )
+grid.arrange(mu0_panel(0), mu0_panel(-0.9), ncol = 2)
 ```
+
+The right panel is worth a second look. A single reading at that $\mu_0$ would be unremarkable: it sits well inside the estimated population in @fig-ci-lens-build. It is simply not a plausible value for the *mean*, because sample means vary much less than individual readings do.
 
 For common models, a two-sided level-$\alpha$ test of $H_0:\ \mu=\mu_0$ is equivalent to checking whether $\mu_0$ lies inside the $100(1-\alpha)\%$ confidence interval. The **CI** is often the most intuitive way to see this: it shows both the decision (reject or not) *and* the range of parameter values still consistent with the data.
 
@@ -645,7 +621,7 @@ The $p$-value is the probability, **under** $H_0$, of obtaining a test statistic
 ```{r}
 #| label: fig-pvalue-lens
 #| fig-cap: 'p-value lens: the two-sided $p$-value is the shaded area beyond the observed statistic (vertical line), in both tails, under the null.'
-#| fig-alt: "A blue standard normal curve centered at zero, marked with a dashed vertical line at the center for the null value and a solid black vertical line further right labeled 'observed z' at about 1.85. The areas beyond plus and minus 1.85 in both tails are shaded red. Text on the left reports a two-sided p-value of 0.064, labeled fail to reject."
+#| fig-alt: "A blue dot-dash standard normal curve centered at zero, marked with a dashed vertical line at the center for the null value and a solid black vertical line further right labeled 'observed z' at about 1.85. The areas beyond plus and minus 1.85 in both tails are shaded red. Text on the left reports a two-sided p-value of 0.064, labeled fail to reject."
 #| out-width: "100%"
 
 library(tidyverse)
@@ -663,7 +639,7 @@ ggplot(x, aes(x, y)) +
   # shaded tails: the two-sided p-value is this area
   geom_area(data = filter(x, x >=  abs(z_obs)), fill = "red", alpha = 0.2) +
   geom_area(data = filter(x, x <= -abs(z_obs)), fill = "red", alpha = 0.2) +
-  geom_line(color = "blue", linewidth = 1.2) +
+  geom_line(color = "blue", linewidth = 1.2, linetype = "dotdash") +
   # observed statistic (black)
   geom_vline(xintercept = z_obs, color = "black", linewidth = 0.9) +
   # mu0 reference (magenta dashed at 0)
