@@ -1,4 +1,4 @@
-# Builds imgs/gifs/ch4_players.gif for Chapter 4 (the players appearing one at a time).
+# Builds imgs/gifs/ch4_players.gif for Chapter 4 (the players appearing one at a time, ending on the crowded all-together frame).
 # Run from the project root: Rscript imgs/gifs/ch4_players_gif.R
 suppressMessages({library(ggplot2); library(gifski)})
 mu0 <- -1.2; xbar <- 0.6; true_m <- 0.9; SE <- 0.4
@@ -56,20 +56,5 @@ all_keys <- sapply(steps, `[[`, "add")
 p_all <- draw(base("italic('All together: crowded fast')"), all_keys, fade = FALSE) +
   annotate("text", x = mu0 - 0.1, y = 1.3, label = "mu[0]", parse = TRUE, hjust = 1, colour = "magenta", size = 5) +
   annotate("text", x = xbar + 0.1, y = 1.3, label = "bar(x)", parse = TRUE, hjust = 0, size = 5)
-add_png(p_all, 5)
-p_fin <- draw(base("italic('What the decision uses: the two sampling distributions of the sample mean')"), c("mu0", "xbar", "sampH0", "samp"), fade = FALSE)
-p_fin <- label(p_fin, L(-4.4, 1.2, "'Under '*H[0]", "N*'('*mu[0]*', '*SE[bar(x)]^2*')'", "blue", 0))
-p_fin <- label(p_fin, L(4.45, 1.2, "'From the sample'", "N*'('*bar(x)*', '*SE[bar(x)]^2*')'", "darkgreen", 1))
-add_png(p_fin, 7)
-# Last frame: skewed populations (shifted gamma, same means and SD), normal sampling distributions
-skew <- function(m) { sh <- 2; sc <- 1 / sqrt(sh); dgamma(xs - (m - sh * sc), shape = sh, scale = sc) }
-p_skew <- base("italic('Skewed populations, same test: with a large enough sample, the dot-dash curves are still normal')") +
-  geom_line(aes(x = xs, y = skew(mu0)),    colour = "blue",   linewidth = 1.3) +
-  geom_line(aes(x = xs, y = skew(true_m)), colour = "orange", linewidth = 1.3) +
-  geom_line(aes(x = xs, y = skew(xbar)),   colour = "green3", linetype = "dashed", linewidth = 1.3) +
-  geom_line(aes(x = xs, y = dnorm(xs, mu0, SE)),  colour = "blue",      linetype = "dotdash", linewidth = 1.1) +
-  geom_line(aes(x = xs, y = dnorm(xs, xbar, SE)), colour = "darkgreen", linetype = "dotdash", linewidth = 1.1)
-p_skew <- vline(vline(p_skew, mu0, "magenta", "dashed", 1), xbar, "black", "dotted", 1)
-p_skew <- p_skew + theme(plot.title = element_text(size = 11.5, colour = "grey35"))
-add_png(p_skew, 7)
+add_png(p_all, 10)
 gifski(files, gif_file = "imgs/gifs/ch4_players.gif", width = 720, height = 450, delay = 1)

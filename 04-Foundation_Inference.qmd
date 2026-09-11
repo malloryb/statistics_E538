@@ -473,18 +473,15 @@ print(p4)
 
 ```
 
-**4. From individual readings to sample means.** The **sampling distribution of the sample mean** is a normal curve, so it needs a center and a spread. Its center is $\bar{x}$, the same as the estimated population. Its spread is the standard error: the sample's standard deviation divided by $\sqrt{n}$. (Not $\sqrt{n-1}$: the $n-1$ already went into computing the standard deviation itself, back in Chapter 3.) In the shorthand, it is $N(\bar{x}, SE_{\bar{x}}^2)$: same center, much narrower. This special distribution is also where the confidence interval comes from, which we build later in this chapter.
+**4. From individual readings to sample means.** The **sampling distribution of the sample mean** is a normal curve, so it needs a center and a spread. Its center is $\bar{x}$, the same as the estimated population. Its spread is the standard error: the sample's standard deviation divided by $\sqrt{n}$. (Not $\sqrt{n-1}$: the $n-1$ already went into computing the standard deviation itself, back in Chapter 3.) In the shorthand, it is $N(\bar{x}, SE_{\bar{x}}^2)$: same center, much narrower. This special distribution is also where the confidence interval comes from, which we build later in this chapter. @fig-4key.sample_to_sampling also shows why the population's shape matters less than it might seem: make the population right-skewed and, once the sample is large enough, the sampling distribution of the sample mean keeps the same normal shape and the same spread.
 
 ```{r}
 #| label: fig-4key.sample_to_sampling
-#| fig-cap: 'From the sample to sample means: the estimated population distribution (light-green dashed) and the sampling distribution of the sample mean (dark-green dot-dash) share a center, $\bar{x}$. Dividing the spread by $\sqrt{n}$ makes the second much narrower.'
-#| fig-alt: "A wide light-green dashed bell curve and a much narrower, taller dark-green dot-dash bell curve, both centered at the same point."
+#| fig-cap: 'From individual readings to sample means. The sampling distribution of the sample mean (dark-green dot-dash) shares the estimated population''s center, $\bar{x}$, with the standard error as its spread. When the population turns right-skewed, the sampling distribution keeps the same normal shape and spread, once the sample is large enough.'
+#| fig-alt: "Animation. A wide light-green dashed bell curve centered on a dotted line labeled x-bar, labeled estimated population, center x-bar, spread s. A much narrower dark-green dot-dash curve appears at the same center, labeled sampling distribution of the sample mean, N of x-bar and SE squared. The wide curve then gradually becomes right-skewed, with a long right tail, while the narrow dot-dash curve stays exactly the same; the final label reads same sampling distribution of the sample mean, once n is large enough."
 #| out-width: "100%"
 
-p7 <- plot_distributions(null_mean=-0.2, null_sd=1, sample_mean=0.5, sample_sd=0.4, inferred_mean=0.5, inferred_sd=1, true_mean=0.6, true_sd=1, show_ci = FALSE, show_null = FALSE, show_true = FALSE, show_xbar = TRUE)
-
-print(p7)
-
+knitr::include_graphics("imgs/gifs/ch4_step4.gif")
 ```
 
 **5. The same move on the null side.** The **sampling distribution of the sample mean under $H_0$** is centered at $\mu_0$, and its spread is again the standard error, the null population's standard deviation divided by $\sqrt{n}$: $N(\mu_0, SE_{\bar{x}}^2)$. It describes where $\bar{x}$ would land across many samples if $H_0$ were true, which makes it the formal version of the chance window. The critical values later in the chapter come from it.
@@ -515,15 +512,42 @@ ggplot(null_pair, aes(x, y, color = curve, linetype = curve)) +
   guides(color = guide_legend(nrow = 2), linetype = guide_legend(nrow = 2))
 ```
 
-**All of them at once.** Put every player on one set of axes and the picture gets crowded fast, which is why the rest of the book shows only the pieces a given question needs. @fig-4players-gif adds them one at a time, grouped as in @tbl-4players, and ends with the two curves a decision actually uses.
+**All of them at once.** Put every player on one set of axes and the picture gets crowded fast, which is why the rest of the book shows only the pieces a given question needs. @fig-4players-gif adds them one at a time, grouped as in @tbl-4players, and ends with all of them together.
 
 ```{r}
 #| label: fig-4players-gif
-#| fig-cap: 'The players, added one at a time: first everything built from $H_0$, then everything built from the sample, then the true population. After the crowded all-together frame, the last two frames keep only the two sampling distributions of the sample mean, first with normal populations and then with right-skewed ones. Built by `imgs/gifs/ch4_players_gif.R`.'
-#| fig-alt: "Animation. Curves appear one at a time on shared axes, each with a colored label: a magenta dashed line for mu sub 0; a wide blue null population curve; a narrow blue dot-dash sampling distribution under H sub 0; a black dotted line for x-bar; a wide light-green dashed estimated population; a narrow dark-green dot-dash sampling distribution of the sample mean; a wide orange true population. A crowded frame shows all of them. Then only the two narrow dot-dash curves remain. The final frame redraws the three wide population curves as right-skewed while the two narrow dot-dash curves stay symmetric and bell-shaped."
+#| fig-cap: 'The players, added one at a time: first everything built from $H_0$, then everything built from the sample, then the true population, ending with all of them on one set of axes.'
+#| fig-alt: "Animation. Curves appear one at a time on shared axes, each with a colored label: a magenta dashed line for mu sub 0; a wide blue null population curve; a narrow blue dot-dash sampling distribution under H sub 0; a black dotted line for x-bar; a wide light-green dashed estimated population; a narrow dark-green dot-dash sampling distribution of the sample mean; a wide orange true population. The last frame shows all of them together, crowded."
 #| out-width: "100%"
 
 knitr::include_graphics("imgs/gifs/ch4_players.gif")
+```
+
+**The two curves a decision uses.** Strip the picture back to the two sampling distributions of the sample mean (@fig-4two-sampling). Everything in the next section runs on these two: critical values and the $p$-value read off the one built from $H_0$, and the confidence interval comes from the one built from the sample.
+
+```{r}
+#| label: fig-4two-sampling
+#| fig-cap: 'The two curves a decision uses: the sampling distribution of the sample mean under $H_0$ (blue dot-dash), centered at $\mu_0$, and the sampling distribution of the sample mean from the sample (dark-green dot-dash), centered at $\bar{x}$. Both have the standard error as their spread.'
+#| fig-alt: "Two narrow dot-dash bell curves of the same width on shared axes: a blue one centered on a magenta dashed line labeled mu sub 0, and a dark-green one centered on a black dotted line labeled x-bar, to its right."
+#| out-width: "100%"
+
+mu0_2 <- -1.2; xbar_2 <- 0.6; se_2 <- 0.4
+xs2 <- seq(-4.5, 4.5, by = 0.01)
+ggplot() +
+  geom_line(aes(xs2, dnorm(xs2, mu0_2, se_2)), colour = "blue", linetype = "dotdash", linewidth = 1.2) +
+  geom_line(aes(xs2, dnorm(xs2, xbar_2, se_2)), colour = "darkgreen", linetype = "dotdash", linewidth = 1.2) +
+  annotate("segment", x = mu0_2, xend = mu0_2, y = 0, yend = 1.22, colour = "magenta", linetype = "dashed", linewidth = 1) +
+  annotate("segment", x = xbar_2, xend = xbar_2, y = 0, yend = 1.22, linetype = "dotted", linewidth = 1) +
+  annotate("text", x = mu0_2 - 0.1, y = 1.3, label = "mu[0]", parse = TRUE, hjust = 1, colour = "magenta", size = 5) +
+  annotate("text", x = xbar_2 + 0.1, y = 1.3, label = "bar(x)", parse = TRUE, hjust = 0, size = 5) +
+  annotate("text", x = -4.4, y = 1.12, label = "'Under '*H[0]", parse = TRUE, hjust = 0, colour = "blue", size = 4.5) +
+  annotate("text", x = -4.4, y = 1.03, label = "N*'('*mu[0]*', '*SE[bar(x)]^2*')'", parse = TRUE, hjust = 0, colour = "blue", size = 4) +
+  annotate("text", x = 4.45, y = 1.12, label = "'From the sample'", parse = TRUE, hjust = 1, colour = "darkgreen", size = 4.5) +
+  annotate("text", x = 4.45, y = 1.03, label = "N*'('*bar(x)*', '*SE[bar(x)]^2*')'", parse = TRUE, hjust = 1, colour = "darkgreen", size = 4) +
+  coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 1.38)) +  # shared axes across the four-color figures
+  labs(x = NULL, y = NULL) +
+  theme_classic() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank())
 ```
 
 
