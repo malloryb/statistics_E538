@@ -315,6 +315,8 @@ Several distributions and values take part in that comparison. @tbl-4players lis
 
 ```{r}
 #| label: tbl-4players
+#| html-table-processing: none
+#| results: asis
 #| tbl-cap: "The players in a hypothesis test, and the line each is drawn with in this chapter's figures."
 
 swatch <- function(name, col, lt, lw, vertical = FALSE) {
@@ -331,6 +333,7 @@ swatch <- function(name, col, lt, lw, vertical = FALSE) {
 dir.create(file.path("imgs", "ch4_players"), showWarnings = FALSE, recursive = TRUE)
 
 players <- data.frame(
+  group = c("The hypothesis", "The hypothesis", "The truth", "The sample", "The sample", "The sample", "The sample", "For testing"),
   line = "",
   player = c("$\\mu_0$", "Null population distribution", "True population distribution",
              "$\\bar{x}$", "Estimated population distribution",
@@ -361,18 +364,32 @@ if (knitr::is_html_output()) {
   players[] <- lapply(players, function(col) gsub("\\$([^$]+)\\$", "\\\\(\\1\\\\)", col))
 }
 
-kbl(players, escape = FALSE, col.names = c("Line", "Player", "What it is")) |>
-  kable_styling(full_width = FALSE) |>
-  column_spec(1, image = spec_image(swatches, 120, 40)) |>
-  pack_rows("The hypothesis", 1, 2) |>
-  pack_rows("The truth", 3, 3) |>
-  pack_rows("The sample", 4, 7) |>
-  pack_rows("For testing", 8, 8)
+# HTML: hand-built table so the group labels can span their rows, sideways, in their own
+# column. PDF: a plain kable with the group in the first column.
+if (knitr::is_html_output()) {
+  groups <- rle(players$group)
+  first_row <- cumsum(c(1, head(groups$lengths, -1)))
+  rows <- vapply(seq_len(nrow(players)), function(i) {
+    g <- match(i, first_row)
+    group_cell <- if (!is.na(g)) sprintf(
+      '<td rowspan="%d" style="vertical-align: middle; border-right: 1px solid #ccc; padding: 0 6px; box-shadow: none; background: white;"><span style="writing-mode: vertical-rl; transform: rotate(180deg); font-style: italic; color: #555; white-space: nowrap;">%s</span></td>',
+      groups$lengths[g], groups$values[g]) else ""
+    top <- if (!is.na(g)) "border-top: 1px solid #999;" else ""
+    sprintf('<tr style="%s">%s<td style="padding: 6px 10px; text-align: left; vertical-align: middle; box-shadow: none; background: white;"><img src="%s" width="90" height="30" alt=""></td><td style="padding: 6px 10px; text-align: left; vertical-align: middle; box-shadow: none; background: white; font-weight: 600;">%s</td><td style="padding: 6px 10px; text-align: left; vertical-align: middle; box-shadow: none; background: white;">%s</td></tr>',
+            top, group_cell, swatches[i], players$player[i], players$what[i])
+  }, character(1))
+  cat('```{=html}', '<table style="width: auto; margin: 0 auto 1em auto; border-collapse: collapse; background: white; font-size: 0.95em;">',
+      '<thead><tr style="border-bottom: 2px solid #333;"><th></th><th style="text-align: left;">Line</th><th style="text-align: left;">Player</th><th style="text-align: left;">What it is</th></tr></thead><tbody>',
+      rows, '</tbody></table>', '```', sep = "\n")
+} else {
+  kbl(players, escape = FALSE, col.names = c("", "Line", "Player", "What it is"), booktabs = TRUE) |>
+    column_spec(2, image = spec_image(swatches, 120, 40))
+}
 ```
 
 ### Seeing them together
 
-The players are easier to hold onto as a picture than as a table. Let's build that picture a curve or two at a time, ending at @fig-4key.keyfig.
+The players are easier to hold onto as a picture than as a table. Let's build that picture a curve or two at a time.
 
 Every curve in these figures is drawn as a normal curve. For the sampling distribution of the sample mean, that is the Central Limit Theorem at work. For the three population curves, it is an assumption: we treat the population as normal, and the estimated population is the normal curve with the sample's mean and standard deviation.
 
@@ -459,18 +476,31 @@ print(p7)
 
 ```
 
-**5. All together.** @fig-4key.keyfig puts the null population, the true population, the estimated population, and the sampling distribution of the sample mean in one picture. This is the figure you will see variations on for the rest of the book.
-
-Key reminder: $\mu_0$ (magenta dashed line) comes from the null hypothesis. The unknown $\mu$ is what we're trying to learn about, and we approximate it from the sample through the estimated population distribution and the sampling distribution of the sample mean.
+**5. The same move on the null side.** Divide the null population's standard deviation by $\sqrt{n}$ and you get the **sampling distribution of the sample mean under $H_0$** (blue dot-dash): centered at $\mu_0$, and much narrower. It describes where $\bar{x}$ would land across many samples if $H_0$ were true, which makes it the formal version of the chance window. The critical values in Route 1 come from it.
 
 ```{r}
-#| label: fig-4key.keyfig
-#| fig-cap: 'Key elements of hypothesis testing graphs: null population (blue), true population (orange), estimated population (light-green dashed), sampling distribution of the sample mean (dark-green dot-dash), and null mean $\mu_0$ (magenta dashed).'
-#| fig-alt: "The reference legend figure: a blue null population distribution on the left, a dashed vertical line marking its mean mu sub 0, and to the right a cluster of three curves close together, the orange true population, the light-green dashed estimated population, and the narrow dark-green dot-dash sampling distribution of the sample mean, clearly separated from the null mean."
+#| label: fig-4key.null_to_sampling
+#| fig-cap: 'The same move on the null side: the null population distribution (blue solid) and the sampling distribution of the sample mean under $H_0$ (blue dot-dash) share a center, $\mu_0$. Dividing the spread by $\sqrt{n}$ makes the second much narrower.'
+#| fig-alt: "A wide solid blue bell curve and a much narrower, taller blue dot-dash bell curve, both centered on a magenta dashed line."
 #| out-width: "100%"
 
-pkey <-  plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=0.5, sample_sd=0.3, inferred_mean=0.5, inferred_sd=1, true_mean=0.75, true_sd=1, show_ci = FALSE)
-print(pkey)
+xs_null <- seq(-6, 6, by = 0.01)
+null_pair <- rbind(
+  data.frame(x = xs_null, y = dnorm(xs_null, 0, 1),   curve = "Null Population Distribution"),
+  data.frame(x = xs_null, y = dnorm(xs_null, 0, 0.4), curve = "Sampling Distribution of the Sample Mean under H0")
+)
+ggplot(null_pair, aes(x, y, color = curve, linetype = curve)) +
+  geom_line(linewidth = 1.3) +
+  annotate("segment", x = 0, xend = 0, y = 0, yend = dnorm(0, 0, 1), linetype = "dashed", color = "magenta", linewidth = 1) +
+  scale_color_manual(values = c("Null Population Distribution" = "blue",
+                                "Sampling Distribution of the Sample Mean under H0" = "blue")) +
+  scale_linetype_manual(values = c("Null Population Distribution" = "solid",
+                                   "Sampling Distribution of the Sample Mean under H0" = "dotdash")) +
+  coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 1.4)) +  # shared axes across the four-color figures
+  theme_classic() +
+  theme(legend.position = "bottom", legend.title = element_blank(), legend.text = element_text(size = 12),
+        axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
+  guides(color = guide_legend(nrow = 2), linetype = guide_legend(nrow = 2))
 ```
 
 
@@ -523,7 +553,7 @@ All three routes below run on the same quantity: the **test statistic** defined 
 
 ### Route 1: test statistic and critical values
 
-Critical values need one more curve, the last row of @tbl-4players: the **sampling distribution of the sample mean under $H_0$**, which describes what $\bar{x}$ would look like across many samples if $H_0$ were true. Its center, $\mu_0$, comes from $H_0$. Its spread is the standard error, $\sigma/\sqrt{n}$. This curve is the formal version of the chance window: instead of simulating the differences chance can produce, we assume a distribution and read them off it.
+Critical values come from the **sampling distribution of the sample mean under $H_0$** (@fig-4key.null_to_sampling): centered at $\mu_0$, with spread equal to the standard error, $\sigma/\sqrt{n}$. It is the formal version of the chance window: instead of simulating the differences chance can produce, we assume a distribution and read them off it.
 
 @fig-rejection-region draws it for a two-sided test at $\alpha = 0.05$, marked off in standard errors from $\mu_0$. The red lines are the **critical values**, 1.96 standard errors on either side of $\mu_0$. They cut off the most extreme 5% of the curve, 2.5% in each tail, and those shaded tails are the **rejection regions**. Here the observed $\bar{x}$ (dotted line) lands 2.4 standard errors above $\mu_0$, inside the right-hand rejection region. Counting that distance in standard errors is exactly the test statistic from earlier, $z = (\bar{x} - \mu_0)/SE = 2.4$.
 
@@ -685,6 +715,45 @@ ggplot(x, aes(x, y)) +
   theme_classic(base_size = 12)
 ```
 
+### Reject or fail to reject
+
+Test outcomes are **binary**: we either **reject** $H_0$ or **fail to reject** $H_0$. We never *accept* $H_0$, because sampling variability means we can't prove it's true, only that the data are consistent with it. Similarly, we don't formally *accept* $H_a$, but we can say the results provide **support for** $H_a$ when $H_0$ is rejected.
+
+If the observed statistic falls in either tail beyond the critical value(s), reject $H_0$. Otherwise, fail to reject $H_0$. Report the exact $p$ and an effect size or CI.
+
+Here are our options (for a two tailed test).
+
+1.  **Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean (magenta line). In this example, the mean is more than 3 standard errors from $\mu_0$, which is typically considered significant for common choices of $\alpha$.
+
+```{r}
+#| label: fig-4key.reject_2_two_tailed
+#| fig-cap: 'Two-sided test, reject $H_0$: sample mean far from $\mu_0$ in either direction.'
+#| fig-alt: "A blue null population distribution centered at mu sub 0, marked with a dashed vertical line, well separated from a narrow dot-dash sampling distribution and dashed estimated population curve centered far to the left. A thick green confidence interval bar under those two curves sits entirely to the left of mu sub 0, not reaching it at all."
+#| out-width: "100%"
+
+plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-1.5, sample_sd=0.3, inferred_mean=-1.5, inferred_sd=1)
+
+```
+
+2.  **Fail to Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls in the non-rejection region, and the confidence interval includes the null mean. In this case, the evidence is consistent with chance variation, so we fail to reject $H_0$.
+
+```{r}
+#| label: fig-4key.reject_1
+#| fig-cap: 'Two-sided test, fail to reject $H_0$: sample mean not greater than critical value (within $3\,SE$ from $\mu_0$).'
+#| fig-alt: "A blue null population distribution centered at mu sub 0, marked with a dashed vertical line, overlapping closely with a wider dot-dash sampling distribution and dashed estimated population curve centered a short distance to its left. A thick green confidence interval bar under those two curves extends far enough to reach and include mu sub 0."
+#| out-width: "100%"
+
+plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-0.4, sample_sd=0.7, inferred_mean=-0.4, inferred_sd=1)
+```
+
+::: {.callout-caution title="Warning: Beyond ruling out chance"}
+Every hypothesis test in this book asks one question: could chance alone have produced this result? It is not the only question available.
+
+Other methods start from two or more candidate explanations, say a steady linear decline versus a sharp threshold response, and ask which one the data support better.
+
+Ruling out chance tells you that *something* is going on, but not always *what*. It is worth knowing the difference, because "significant" only ever answers the first question.
+:::
+
 ## One- and Two-Tailed Tests {#sec-tails}
 
 $H_a$ is a claim about where the true population could sit. A two-tailed alternative says it might sit below $\mu_0$ or above it. A one-tailed alternative says it can only sit on one side (@fig-4tails-claims).
@@ -770,45 +839,6 @@ grid.arrange(
 Default to two-sided unless your theory genuinely rules out the other direction. There is a second reason beyond caution. A one-tailed critical value always sits closer to zero than a two-tailed one, so a one-tailed test rejects on weaker evidence. Run them habitually and you reject more often than your stated $\alpha$ implies, which is a cost the next chapter makes precise.
 
 The practical upshot: commit to one or two tails *before* you see the data. Choosing afterward, because one of them gives the smaller $p$-value, is the version of this that gets people in trouble.
-
-## Making the call
-
-Test outcomes are **binary**: we either **reject** $H_0$ or **fail to reject** $H_0$. We never *accept* $H_0$, because sampling variability means we can't prove it's true, only that the data are consistent with it. Similarly, we don't formally *accept* $H_a$, but we can say the results provide **support for** $H_a$ when $H_0$ is rejected.
-
-If the observed statistic falls in either tail beyond the critical value(s), reject $H_0$. Otherwise, fail to reject $H_0$. Report the exact $p$ and an effect size or CI.
-
-Here are our options (for a two tailed test).
-
-1.  **Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean (magenta line). In this example, the mean is more than 3 standard errors from $\mu_0$, which is typically considered significant for common choices of $\alpha$.
-
-```{r}
-#| label: fig-4key.reject_2_two_tailed
-#| fig-cap: 'Two-sided test, reject $H_0$: sample mean far from $\mu_0$ in either direction.'
-#| fig-alt: "A blue null population distribution centered at mu sub 0, marked with a dashed vertical line, well separated from a narrow dot-dash sampling distribution and dashed estimated population curve centered far to the left. A thick green confidence interval bar under those two curves sits entirely to the left of mu sub 0, not reaching it at all."
-#| out-width: "100%"
-
-plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-1.5, sample_sd=0.3, inferred_mean=-1.5, inferred_sd=1)
-
-```
-
-2.  **Fail to Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls in the non-rejection region, and the confidence interval includes the null mean. In this case, the evidence is consistent with chance variation, so we fail to reject $H_0$.
-
-```{r}
-#| label: fig-4key.reject_1
-#| fig-cap: 'Two-sided test, fail to reject $H_0$: sample mean not greater than critical value (within $3\,SE$ from $\mu_0$).'
-#| fig-alt: "A blue null population distribution centered at mu sub 0, marked with a dashed vertical line, overlapping closely with a wider dot-dash sampling distribution and dashed estimated population curve centered a short distance to its left. A thick green confidence interval bar under those two curves extends far enough to reach and include mu sub 0."
-#| out-width: "100%"
-
-plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-0.4, sample_sd=0.7, inferred_mean=-0.4, inferred_sd=1)
-```
-
-::: {.callout-caution title="Warning: Beyond ruling out chance"}
-Every hypothesis test in this book asks one question: could chance alone have produced this result? It is not the only question available.
-
-Other methods start from two or more candidate explanations, say a steady linear decline versus a sharp threshold response, and ask which one the data support better.
-
-Ruling out chance tells you that *something* is going on, but not always *what*. It is worth knowing the difference, because "significant" only ever answers the first question.
-:::
 
 ## Chapter Summary
 
