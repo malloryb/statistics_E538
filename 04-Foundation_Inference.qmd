@@ -644,8 +644,8 @@ The $p$-value is the probability, **under** $H_0$, of obtaining a test statistic
 
 ```{r}
 #| label: fig-pvalue-lens
-#| fig-cap: 'p-value lens: compute the $p$-value from the observed statistic (vertical line) under the null.'
-#| fig-alt: "A blue standard normal curve centered at zero, marked with a dashed vertical line at the center for the null value and a solid black vertical line further right labeled 'observed z' at about 1.85. Text in the corner reports a two-sided p-value of about 0.064, labeled fail to reject."
+#| fig-cap: 'p-value lens: the two-sided $p$-value is the shaded area beyond the observed statistic (vertical line), in both tails, under the null.'
+#| fig-alt: "A blue standard normal curve centered at zero, marked with a dashed vertical line at the center for the null value and a solid black vertical line further right labeled 'observed z' at about 1.85. The areas beyond plus and minus 1.85 in both tails are shaded red. Text on the left reports a two-sided p-value of 0.064, labeled fail to reject."
 #| out-width: "100%"
 
 library(tidyverse)
@@ -660,6 +660,9 @@ x <- tibble(
 )
 
 ggplot(x, aes(x, y)) +
+  # shaded tails: the two-sided p-value is this area
+  geom_area(data = filter(x, x >=  abs(z_obs)), fill = "red", alpha = 0.2) +
+  geom_area(data = filter(x, x <= -abs(z_obs)), fill = "red", alpha = 0.2) +
   geom_line(color = "blue", linewidth = 1.2) +
   # observed statistic (black)
   geom_vline(xintercept = z_obs, color = "black", linewidth = 0.9) +
@@ -669,9 +672,9 @@ ggplot(x, aes(x, y)) +
   annotate("text", x = z_obs, y = dnorm(0)*0.95,
            label = expression(paste("observed ", z)),
            hjust = ifelse(z_obs > 0, -0.05, 1.05), size = 3.6) +
-  annotate("text", x = 2.9, y = dnorm(0)*0.35,
-           label = paste0("two-sided p ≈ ", sprintf("%.3f", p_two),
-                          ifelse(p_two < alpha, "  (reject)", "  (fail to reject)")),
+  annotate("text", x = -2.2, y = dnorm(0)*0.75,
+           label = paste0("two-sided p = ", sprintf("%.3f", p_two),
+                          ifelse(p_two < alpha, "\n(reject)", "\n(fail to reject)")),
            size = 4.2) +
   labs(x = "z", y = "Density") +
   coord_cartesian(ylim = c(0, dnorm(0)*1.05)) +
