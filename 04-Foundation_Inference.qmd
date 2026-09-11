@@ -319,7 +319,7 @@ Hypothesis testing juggles four distributions at once, which is the main reason 
 
 **New here:**
 
-- **Null population distribution.** The population distribution we would have *if $H_0$ were true*: centered at $\mu_0$, and as wide as the population itself. In the figures below it is the blue curve. It has a partner, the **sampling distribution of the sample mean under $H_0$**, which describes what $\bar{x}$ would look like across many samples drawn from that null population. That partner is what replaces the simulated chance window, and we put it to work later in the chapter when we test $H_0$.
+- **Null population distribution.** The population distribution we would have *if $H_0$ were true*: centered at $\mu_0$, and as wide as the population itself. In the figures below it is the blue curve.
 
 ### Seeing all four at once
 
@@ -335,7 +335,6 @@ Here is what each line means in the figures that follow:
 - **Dark-green dot-dashed line** = Sampling distribution of the sample mean, $\bar{x}$.
 - **Magenta dashed line** = Hypothesized mean $\mu_0$ (under $H_0$).
 
-Two more elements join later in the chapter: a blue dot-dashed line for the sampling distribution of the sample mean under $H_0$, and a thick dark-green bar for the confidence interval.
 
 **1. The null population distribution.**
 
@@ -484,7 +483,9 @@ All three routes below run on the same quantity: the **test statistic** defined 
 
 ### Route 1: test statistic and critical values
 
-@fig-rejection-region shows how these ideas come together in a two-sided test. The blue dot-dash curve is the partner promised earlier: the sampling distribution of the sample mean under $H_0$. Like the null population distribution it is centered at $\mu_0$, but it is narrower, with a spread of one standard error. It is the formal version of the chance window: instead of simulating the differences chance can produce, we assume a distribution and read them off it. The dashed magenta line marks the expected center at $\mu_0$. The red vertical lines are the **critical values** for $\alpha = 0.05$. They cut off the most extreme 5% of the distribution: 2.5% in each tail. Those shaded tails are the **rejection regions**.
+Critical values need one more curve: the **sampling distribution of the sample mean under $H_0$**, which describes what $\bar{x}$ would look like across many samples if $H_0$ were true. Its center, $\mu_0$, comes from $H_0$. Its spread is the standard error, $\sigma/\sqrt{n}$. This curve is the formal version of the chance window: instead of simulating the differences chance can produce, we assume a distribution and read them off it.
+
+@fig-rejection-region draws it for a two-sided test at $\alpha = 0.05$, marked off in standard errors from $\mu_0$. The red lines are the **critical values**, 1.96 standard errors on either side of $\mu_0$. They cut off the most extreme 5% of the curve, 2.5% in each tail, and those shaded tails are the **rejection regions**. Here the observed $\bar{x}$ (dotted line) lands 2.4 standard errors above $\mu_0$, inside the right-hand rejection region. Counting that distance in standard errors is exactly the test statistic from earlier, $z = (\bar{x} - \mu_0)/SE = 2.4$.
 
 Here's the decision rule:
 
@@ -495,59 +496,36 @@ This picture makes clear why $\alpha$ and the $p$-value are linked. $\alpha$ set
 
 ```{r}
 #| label: fig-rejection-region
-#| fig-cap: 'Two-sided test: blue dot-dash curve is the sampling distribution of the sample mean under $H_0$ (centered at $\mu_0$). Magenta dashed line marks $\mu_0$. Red vertical lines mark the critical values for $\alpha=0.05$; shaded tails are the rejection regions.'
-#| fig-alt: "A blue dot-dash bell curve centered at mu sub 0, marked with a dashed vertical line at its center. Two red vertical lines sit symmetrically in the tails, each labeled critical value, with the shaded area beyond each one labeled rejection region. The large middle portion of the curve between the two red lines is unshaded."
+#| fig-cap: 'Two-sided test at $\alpha = 0.05$: the sampling distribution of the sample mean under $H_0$ (blue dot-dash), centered at $\mu_0$ (magenta) and marked off in standard errors. Red lines are the critical values at $\pm 1.96$ SE; the shaded tails are the rejection regions. The observed $\bar{x}$ (dotted) falls 2.4 SE above $\mu_0$, in the rejection region.'
+#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0. The x-axis is marked mu sub 0 minus 2 SE, minus 1 SE, mu sub 0, plus 1 SE, plus 2 SE. Red vertical lines at plus and minus 1.96 SE, each labeled critical value, with the small tail areas beyond them shaded red and labeled rejection region. A black dotted line labeled x-bar sits at 2.4 SE, inside the right-hand shaded region."
 #| fig-width: 7
-#| fig-height: 5
+#| fig-height: 4.5
 
-library(tidyverse)
-
-# Parameters (edit alpha if needed)
-mu0   <- 0
-sigma <- 1
 alpha <- 0.05
-crit  <- qnorm(1 - alpha/2, mean = mu0, sd = sigma)
-# Curve data
-df <- tibble::tibble(
-  x = seq(mu0 - 4*sigma, mu0 + 4*sigma, length.out = 2000),
-  y = dnorm(x, mean = mu0, sd = sigma)
-)
+crit  <- qnorm(1 - alpha/2)
+xbar_se <- 2.4    # observed x-bar, in standard errors above mu0
+rr <- tibble::tibble(x = seq(-4, 4, length.out = 2000), y = dnorm(x))
+y_peak <- dnorm(0)
 
-y_peak <- dnorm(mu0, mu0, sigma)
-
-ggplot(df, aes(x, y)) +
-  # Shade rejection regions (now mapping x and y explicitly)
-  geom_area(
-    data = df %>% filter(x <= -crit),
-    aes(x = x, y = y),
-    inherit.aes = FALSE, fill = "red", alpha = 0.15
-  ) +
-  geom_area(
-    data = df %>% filter(x >=  crit),
-    aes(x = x, y = y),
-    inherit.aes = FALSE, fill = "red", alpha = 0.15
-  ) +
-  # Blue normal curve
+ggplot(rr, aes(x, y)) +
+  geom_area(data = dplyr::filter(rr, x <= -crit), fill = "red", alpha = 0.15) +
+  geom_area(data = dplyr::filter(rr, x >=  crit), fill = "red", alpha = 0.15) +
   geom_line(color = "blue", linewidth = 1.2, linetype = "dotdash") +
-  # Magenta dashed line at mu0 (use annotate to avoid recycling warning)
-  annotate("segment",
-           x = mu0, xend = mu0, y = 0, yend = y_peak,
-           colour = "magenta", linetype = "dashed", linewidth = 1) +
-  # Red critical value lines
+  annotate("segment", x = 0, xend = 0, y = 0, yend = y_peak, colour = "magenta", linetype = "dashed", linewidth = 1) +
   geom_vline(xintercept = c(-crit, crit), color = "red", linewidth = 0.9) +
-  # Labels
-  annotate("text", x =  crit, y = y_peak*0.95,
-           label = "critical value", color = "black", hjust = -0.05, size = 3.6) +
-  annotate("text", x = -crit, y = y_peak*0.95,
-           label = "critical value", color = "black", hjust =  1.05, size = 3.6) +
-  annotate("text", x = mu0 + 2.6*sigma, y = dnorm(crit, mu0, sigma)*0.55,
-           label = "rejection region", color = "black", size = 3.6) +
-  annotate("text", x = mu0 - 2.6*sigma, y = dnorm(crit, mu0, sigma)*0.55,
-           label = "rejection region", color = "black", size = 3.6) +
-  labs(x = "x", y = "Density") +
-  coord_cartesian(ylim = c(0, y_peak*1.05)) +
-  theme_classic(base_size = 12)
-
+  annotate("text", x =  crit, y = y_peak * 1.02, label = "critical value\n(1.96 SE)", hjust = -0.05, size = 3.6) +
+  annotate("text", x = -crit, y = y_peak * 1.02, label = "critical value\n(1.96 SE)", hjust =  1.05, size = 3.6) +
+  annotate("text", x =  3.1, y = 0.12, label = "rejection\nregion", size = 3.4) +
+  annotate("text", x = -3.1, y = 0.12, label = "rejection\nregion", size = 3.4) +
+  annotate("segment", x = xbar_se, xend = xbar_se, y = 0, yend = 0.3, linetype = "dotted", linewidth = 0.9) +
+  annotate("text", x = xbar_se, y = 0.33, label = "bar(x)", parse = TRUE, size = 4.5) +
+  scale_x_continuous(breaks = -2:2,
+                     labels = c(expression(mu[0] - 2*SE), expression(mu[0] - SE), expression(mu[0]),
+                                expression(mu[0] + SE), expression(mu[0] + 2*SE))) +
+  labs(x = NULL, y = NULL) +
+  coord_cartesian(xlim = c(-4, 4), ylim = c(0, y_peak * 1.1)) +
+  theme_classic(base_size = 12) +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
 ```
 
 ### Route 2: confidence interval
@@ -669,7 +647,35 @@ ggplot(x, aes(x, y)) +
 
 ## One- and Two-Tailed Tests {#sec-tails}
 
-A two-tailed test splits $\alpha$ between both tails of the sampling distribution of the sample mean under $H_0$. A one-tailed test puts all of $\alpha$ in the one tail $H_a$ points toward (@fig-4tails).
+$H_a$ is a claim about where the true population could sit. A two-tailed alternative says it might sit below $\mu_0$ or above it. A one-tailed alternative says it can only sit on one side (@fig-4tails-claims).
+
+```{r}
+#| label: fig-4tails-claims
+#| fig-cap: 'What $H_a$ claims. The null population distribution (blue) sits at $\mu_0$. The orange dashed curves are possible true population distributions under $H_a$: on either side for a two-tailed alternative (left), on one side only for a one-tailed alternative (middle and right).'
+#| fig-alt: "Three panels. Left, titled H sub a colon mu not equal to mu sub 0: a blue bell curve in the center with an orange dashed bell curve of the same shape shifted to each side. Middle, titled H sub a colon mu less than mu sub 0: the blue curve with one orange dashed curve to its left. Right, titled H sub a colon mu greater than mu sub 0: the blue curve with one orange dashed curve to its right."
+#| fig-width: 9
+#| fig-height: 2.4
+#| out-width: "100%"
+
+xc <- seq(-6, 6, by = 0.01)
+claims_panel <- function(shifts, ttl) {
+  p <- ggplot() + geom_line(aes(xc, dnorm(xc)), color = "blue", linewidth = 1.1)
+  alt <- do.call(rbind, lapply(shifts, function(m) data.frame(x = xc, y = dnorm(xc, m), g = m)))
+  p <- p + geom_line(data = alt, aes(x, y, group = g), color = "orange", linetype = "dashed", linewidth = 1.1)
+  p + annotate("segment", x = 0, xend = 0, y = 0, yend = dnorm(0), colour = "magenta", linetype = "dashed", linewidth = 0.8) +
+    labs(x = NULL, y = NULL, title = ttl) +
+    coord_cartesian(xlim = c(-6, 6), ylim = c(0, 0.45)) +
+    theme_classic(base_size = 11) +
+    theme(axis.text = element_blank(), axis.ticks = element_blank(), plot.title = element_text(size = 11, hjust = 0.5))
+}
+grid.arrange(
+  claims_panel(c(-3, 3), expression(H[a] * ": " * mu != mu[0])),
+  claims_panel(-3,       expression(H[a] * ": " * mu < mu[0])),
+  claims_panel(3,        expression(H[a] * ": " * mu > mu[0])),
+  ncol = 3)
+```
+
+The test handles those claims through where $\alpha$ goes. A two-tailed test splits $\alpha$ between both tails of the sampling distribution of the sample mean under $H_0$. A one-tailed test puts all of $\alpha$ in the one tail $H_a$ points toward (@fig-4tails).
 
 ```{r}
 #| label: fig-4tails
