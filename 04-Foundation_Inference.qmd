@@ -36,7 +36,7 @@ library(kableExtra)
 # population and blue for the sampling distribution, which collided with red = rejection
 # region and blue = null here.
 
-plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd, true_mean, true_sd, show_ci = TRUE, show_samp = TRUE, y_top = 1.4) {
+plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd, true_mean, true_sd, show_ci = TRUE, show_samp = TRUE, y_top = 1.4, show_null = TRUE, show_true = TRUE) {
   x_vals <- seq(-6, 6, by=0.01)
   
   h0 <- dnorm(x_vals, mean=null_mean, sd=null_sd)
@@ -49,12 +49,12 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
 
   
   p <- ggplot() + 
-    geom_line(aes(x=x_vals, y=h0, color="Null Population Distribution"), size=1.5) +
+    { if (show_null) geom_line(aes(x=x_vals, y=h0, color="Null Population Distribution"), size=1.5) } +
     { if (show_samp) geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) } +
-    geom_line(aes(x=x_vals, y=true_parent, color="True Population Distribution"), size=1.5) +
+    { if (show_true) geom_line(aes(x=x_vals, y=true_parent, color="True Population Distribution"), size=1.5) } +
     geom_line(aes(x=x_vals, y=inferred_parent, color="Estimated Population Distribution"), linetype="dashed", size=1.5) +
     { if (show_ci) geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) } +
-    geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dashed", color="magenta", size=1) +
+    { if (show_null) geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dashed", color="magenta", size=1) } +
     coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, y_top)) +  # shared axes across the four-color figures
     theme_classic() + 
     theme(legend.position='bottom', 
@@ -307,34 +307,74 @@ Every test in this book except the nonparametric tests in Chapter 7 reads its an
 When the sample says the normal assumption is not reasonable, the nonparametric tests in Chapter 7 take over.
 :::
 
-### The four distributions
+### The players
 
-Hypothesis testing juggles four distributions at once, which is the main reason it feels harder than it is. Three of them you have already met. Only one is new.
+A test is about $\mu$, the true population mean, which we never observe; everything we know about it comes from one sample. The null hypothesis names a value for it, $\mu_0$. To reject $H_0$, the sample has to be hard to explain if the null were true: its mean, $\bar{x}$, has to land farther from $\mu_0$ than sampling error would plausibly carry it.
 
-**Already familiar, from Chapter 3:**
+Several distributions and values take part in that comparison. @tbl-4players lists every one, with the line each is drawn with in this chapter's figures. Three are familiar from Chapter 3: the true population distribution, the estimated population distribution, and the sampling distribution of the sample mean. The rest come from the null hypothesis or are built later in the chapter.
 
-- **True population distribution.** The actual distribution the data came from. We never observe it. Chapter 3 called this the population distribution, and everything about estimation assumed it was out there.
-- **Estimated population distribution.** A normal curve built from the sample: centered at $\bar{x}$, with the sample standard deviation as its spread. It is what the sample suggests the population looks like. This is estimation from Chapter 3, viewed as a whole distribution rather than a single parameter. In a test it stands in for $H_a$.
-- **Sampling distribution of the sample mean.** What you would get if you drew many samples and computed $\bar{x}$ each time. Chapter 3 built this one in detail and gave it a spread, the standard error, $\sigma/\sqrt{n}$.
+```{r}
+#| label: tbl-4players
+#| tbl-cap: "The players in a hypothesis test, and the line each is drawn with in this chapter's figures."
 
-**New here:**
+swatch <- function(name, col, lt, lw, vertical = FALSE) {
+  f <- file.path("imgs", "ch4_players", paste0(name, ".png"))
+  p <- ggplot() + theme_void() + coord_cartesian(xlim = c(0, 1), ylim = c(0, 1))
+  p <- if (vertical) {
+    p + annotate("segment", x = 0.5, xend = 0.5, y = 0.05, yend = 0.95, colour = col, linetype = lt, linewidth = lw)
+  } else {
+    p + annotate("segment", x = 0.05, xend = 0.95, y = 0.5, yend = 0.5, colour = col, linetype = lt, linewidth = lw)
+  }
+  ggsave(f, p, width = 1.2, height = 0.4, dpi = 200, bg = "white")
+  f
+}
+dir.create(file.path("imgs", "ch4_players"), showWarnings = FALSE, recursive = TRUE)
 
-- **Null population distribution.** The population distribution we would have *if $H_0$ were true*: centered at $\mu_0$, and as wide as the population itself. In the figures below it is the blue curve.
+players <- data.frame(
+  line = "",
+  player = c("$\\mu_0$", "Null population distribution", "True population distribution",
+             "$\\bar{x}$", "Estimated population distribution",
+             "Sampling distribution of the sample mean", "Confidence interval",
+             "Sampling distribution of the sample mean under $H_0$"),
+  what = c("The population mean if $H_0$ were true",
+           "The population if $H_0$ were true: centered at $\\mu_0$, as wide as the population",
+           "The population the data actually came from. Never known",
+           "The sample mean: the one value we observe",
+           "A normal curve from the sample's mean and standard deviation: our best picture of the true population",
+           "Where $\\bar{x}$ would land across many samples: centered at $\\bar{x}$, spread = standard error",
+           "$\\bar{x} \\pm 1.96$ standard errors, built from the sampling distribution of the sample mean (Route 2)",
+           "Where $\\bar{x}$ would land if $H_0$ were true: centered at $\\mu_0$, spread = standard error (Route 1)")
+)
+swatches <- c(
+  swatch("mu0",     "magenta",   "22",      2.2, vertical = TRUE),
+  swatch("nullpop", "blue",      "solid",   1.4),
+  swatch("truepop", "orange",    "solid",   1.4),
+  swatch("xbar",    "black",     "11",      2.2, vertical = TRUE),
+  swatch("estpop",  "green3",    "dashed",  1.4),
+  swatch("samp",    "darkgreen", "dotdash", 1.2),
+  swatch("ci",      "darkgreen", "solid",   4),
+  swatch("sampH0",  "blue",      "dotdash", 1.2)
+)
 
-### Seeing all four at once
+# The page's MathJax reads \( \) in raw HTML tables; the PDF build reads $ $.
+if (knitr::is_html_output()) {
+  players[] <- lapply(players, function(col) gsub("\\$([^$]+)\\$", "\\\\(\\1\\\\)", col))
+}
 
-The four are much easier to hold onto as a picture than as a list. Let's build that picture one curve at a time, ending at @fig-4key.keyfig.
+kbl(players, escape = FALSE, col.names = c("Line", "Player", "What it is")) |>
+  kable_styling(full_width = FALSE) |>
+  column_spec(1, image = spec_image(swatches, 120, 40)) |>
+  pack_rows("The hypothesis", 1, 2) |>
+  pack_rows("The truth", 3, 3) |>
+  pack_rows("The sample", 4, 7) |>
+  pack_rows("For testing", 8, 8)
+```
+
+### Seeing them together
+
+The players are easier to hold onto as a picture than as a table. Let's build that picture a curve or two at a time, ending at @fig-4key.keyfig.
 
 Every curve in these figures is drawn as a normal curve. For the sampling distribution of the sample mean, that is the Central Limit Theorem at work. For the three population curves, it is an assumption: we treat the population as normal, and the estimated population is the normal curve with the sample's mean and standard deviation.
-
-Here is what each line means in the figures that follow:
-
-- **Blue solid line** = Null population distribution ($H_0$).
-- **Orange solid line** = True population distribution (what actually generated the data).
-- **Light-green dashed line** = Estimated population distribution (built from the sample; our stand-in for $H_a$).
-- **Dark-green dot-dashed line** = Sampling distribution of the sample mean, $\bar{x}$.
-- **Magenta dashed line** = Hypothesized mean $\mu_0$ (under $H_0$).
-
 
 **1. The null population distribution.**
 
@@ -391,35 +431,35 @@ scale_color_manual(values=c("Null Population Distribution"="blue", "True Populat
 print(p3 + coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 0.45)))
 ```
 
-**3. Adding the estimated population distribution.** We never know the true population distribution directly, but what we do have is a sample. From the sample's mean and standard deviation we build the **estimated population distribution** (light-green dashed). In the best case, this lines up closely with the true population (orange).
+**3. The sample's picture of the truth.** We never see the true population, but we do have a sample. From the sample's mean and standard deviation we build the **estimated population distribution** (light-green dashed): a normal curve that is our best picture of the true population (orange). With a representative sample, the two line up closely.
 
 ```{r}
 #| label: fig-4key.perfectly_representative_sample
 #| fig-height: 2.3
-#| fig-cap: 'Perfectly representative sample: the estimated population distribution lines up with the true and null population distributions.'
-#| fig-alt: "Three wide bell curves nearly stacked on top of one another near the same center: the blue null population distribution, the orange true population, and the light-green dashed estimated population."
+#| fig-cap: 'A representative sample: the estimated population distribution, built from the sample, lines up closely with the true population distribution.'
+#| fig-alt: "Two wide bell curves nearly on top of one another: the solid orange true population and the light-green dashed estimated population."
 #| out-width: "100%"
 
-p4 <-  plot_distributions(null_mean=0.5, null_sd=1, sample_mean=0.52, sample_sd=0.3, inferred_mean=0.52, inferred_sd=1, true_mean=0.54, true_sd=1, show_ci = FALSE, show_samp = FALSE, y_top = 0.45)  # wide curves only: crop the empty space, same scale
+p4 <-  plot_distributions(null_mean=0.5, null_sd=1, sample_mean=0.52, sample_sd=0.3, inferred_mean=0.52, inferred_sd=1, true_mean=0.54, true_sd=1, show_ci = FALSE, show_samp = FALSE, show_null = FALSE, y_top = 0.45)  # wide curves only: crop the empty space, same scale
 print(p4)
 
 ```
 
-**4. Adding the sampling distribution of the sample mean.** Divide the sample's spread by $\sqrt{n}$ and we get the **sampling distribution of the sample mean** (dark-green dot-dash): centered at $\bar{x}$, and much narrower. This special distribution is also where the confidence interval comes from, which we build later in this chapter.
+**4. From individual readings to sample means.** Divide the sample's standard deviation by $\sqrt{n}$. (Not $\sqrt{n-1}$: the $n-1$ already went into computing the standard deviation itself, back in Chapter 3.) The result is the standard error, and it gives the **sampling distribution of the sample mean** (dark-green dot-dash): centered at $\bar{x}$, and much narrower. This special distribution is also where the confidence interval comes from, which we build later in this chapter.
 
 ```{r}
-#| label: fig-4key.sample_imperfect_convenient
-#| fig-cap: 'Imperfect but convenient sample: the estimated population sits close to the null population distribution, but not on it. The sampling distribution of the sample mean is centered on $\bar{x}$ and much narrower.'
-#| fig-alt: "Four curves: the blue null population distribution sits somewhat left of the orange true population, light-green dashed estimated population, and dark-green sampling distribution, which are clustered together to its right. The null mean is marked with a dashed vertical line."
+#| label: fig-4key.sample_to_sampling
+#| fig-cap: 'From the sample to sample means: the estimated population distribution (light-green dashed) and the sampling distribution of the sample mean (dark-green dot-dash) share a center, $\bar{x}$. Dividing the spread by $\sqrt{n}$ makes the second much narrower.'
+#| fig-alt: "A wide light-green dashed bell curve and a much narrower, taller dark-green dot-dash bell curve, both centered at the same point."
 #| out-width: "100%"
 
-p7 <- plot_distributions(null_mean=-0.2, null_sd=1, sample_mean=0.5, sample_sd=0.5, inferred_mean=0.5, inferred_sd=1, true_mean=0.6, true_sd=1, show_ci = FALSE)
+p7 <- plot_distributions(null_mean=-0.2, null_sd=1, sample_mean=0.5, sample_sd=0.4, inferred_mean=0.5, inferred_sd=1, true_mean=0.6, true_sd=1, show_ci = FALSE, show_null = FALSE, show_true = FALSE)
 
 print(p7)
 
 ```
 
-All four together give the figure you will see variations on for the rest of the book.
+**5. All together.** @fig-4key.keyfig puts the null population, the true population, the estimated population, and the sampling distribution of the sample mean in one picture. This is the figure you will see variations on for the rest of the book.
 
 Key reminder: $\mu_0$ (magenta dashed line) comes from the null hypothesis. The unknown $\mu$ is what we're trying to learn about, and we approximate it from the sample through the estimated population distribution and the sampling distribution of the sample mean.
 
@@ -483,7 +523,7 @@ All three routes below run on the same quantity: the **test statistic** defined 
 
 ### Route 1: test statistic and critical values
 
-Critical values need one more curve: the **sampling distribution of the sample mean under $H_0$**, which describes what $\bar{x}$ would look like across many samples if $H_0$ were true. Its center, $\mu_0$, comes from $H_0$. Its spread is the standard error, $\sigma/\sqrt{n}$. This curve is the formal version of the chance window: instead of simulating the differences chance can produce, we assume a distribution and read them off it.
+Critical values need one more curve, the last row of @tbl-4players: the **sampling distribution of the sample mean under $H_0$**, which describes what $\bar{x}$ would look like across many samples if $H_0$ were true. Its center, $\mu_0$, comes from $H_0$. Its spread is the standard error, $\sigma/\sqrt{n}$. This curve is the formal version of the chance window: instead of simulating the differences chance can produce, we assume a distribution and read them off it.
 
 @fig-rejection-region draws it for a two-sided test at $\alpha = 0.05$, marked off in standard errors from $\mu_0$. The red lines are the **critical values**, 1.96 standard errors on either side of $\mu_0$. They cut off the most extreme 5% of the curve, 2.5% in each tail, and those shaded tails are the **rejection regions**. Here the observed $\bar{x}$ (dotted line) lands 2.4 standard errors above $\mu_0$, inside the right-hand rejection region. Counting that distance in standard errors is exactly the test statistic from earlier, $z = (\bar{x} - \mu_0)/SE = 2.4$.
 
