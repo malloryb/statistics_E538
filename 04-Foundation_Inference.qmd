@@ -669,72 +669,49 @@ ggplot(x, aes(x, y)) +
 
 ## One- and Two-Tailed Tests
 
-Two-tailed tests allow for differences in *either* direction:
+A two-tailed test splits $\alpha$ between both tails of the sampling distribution of the sample mean under $H_0$. A one-tailed test puts all of $\alpha$ in the one tail $H_a$ points toward (@fig-4tails).
 
 ```{r}
-#| label: fig-4key.twotailed
-#| fig-cap: 'Two-sided test: $H_0:\ \mu=\mu_0$ vs $H_a:\ \mu\neq\mu_0$; estimated population distributions shifted left and right of the null.'
-#| fig-alt: "Three bell curves: a solid blue null population distribution in the center, and two dashed green estimated-population curves of equal height, one shifted well to its left and one shifted well to its right. Text reads H sub 0 colon mu equals mu sub 0, H sub a colon mu not equal mu sub 0."
+#| label: fig-4tails
+#| fig-cap: 'Where $\alpha$ goes. Both panels show the sampling distribution of the sample mean under $H_0$ (blue dot-dash), in standard-error units. Left, two-tailed ($H_a:\ \mu \neq \mu_0$): $\alpha/2$ in each tail, critical values at $\pm 1.96$. Right, one-tailed ($H_a:\ \mu > \mu_0$): all of $\alpha$ in the right tail, critical value at 1.645.'
+#| fig-alt: "Two panels, each a blue dot-dash bell curve centered on a magenta dashed line. Left panel, titled two-tailed with an arrow pointing both ways: small red shaded areas in both tails beyond red vertical lines at minus 1.96 and plus 1.96. Right panel, titled one-tailed with an arrow pointing right: a single, larger red shaded area in the right tail beyond a red vertical line at 1.645, which sits closer to the center than 1.96."
+#| fig-width: 9
+#| fig-height: 3.6
 #| out-width: "100%"
 
-# Define the data and functions
-x_vals <- seq(-6, 6, by=0.01)
-ha_left <- dnorm(x_vals, mean=-3, sd=0.75)
-h0 <- dnorm(x_vals, mean=0, sd=0.75)
-ha_right <- dnorm(x_vals, mean=3, sd=0.75)
+alpha <- 0.05
+z2 <- qnorm(1 - alpha/2); z1 <- qnorm(1 - alpha)
+tail_df <- tibble::tibble(x = seq(-4, 4, length.out = 2000), y = dnorm(x))
 
-# Plot
-p <- ggplot() + 
-  geom_line(aes(x_vals, ha_left, color="Estimated Population Distribution"), linetype="dashed", size=1.2) +
-  geom_line(aes(x_vals, h0, color="Null Population Distribution"), linetype="solid", size=1.2) +
-  geom_line(aes(x_vals, ha_right, color="Estimated Population Distribution"), linetype="dashed", size=1.2) +
-  annotate("text", x = 0, y = 0.62, label = expression(H[0] * ": " * mu == mu[0] ~ "   " ~ H[a] * ": " * mu != mu[0]),
-  size = 5) +
-  scale_color_manual(values=c("Null Population Distribution"="blue", "Estimated Population Distribution"="green3"))+
-  theme_classic() + 
-  ylim(0,0.8)+
-  theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) 
+tail_panel <- function(cuts, ttl, arrow_dir) {
+  p <- ggplot(tail_df, aes(x, y))
+  for (cv in cuts) {
+    shade <- if (cv > 0) dplyr::filter(tail_df, x >= cv) else dplyr::filter(tail_df, x <= cv)
+    p <- p + geom_area(data = shade, fill = "red", alpha = 0.2)
+  }
+  p <- p +
+    geom_line(color = "blue", linewidth = 1.1, linetype = "dotdash") +
+    annotate("segment", x = 0, xend = 0, y = 0, yend = dnorm(0), colour = "magenta", linetype = "dashed", linewidth = 0.9) +
+    geom_vline(xintercept = cuts, color = "red") +
+    annotate("text", x = cuts + ifelse(cuts > 0, 0.12, -0.12), y = 0.3, hjust = ifelse(cuts > 0, 0, 1),
+             label = ifelse(abs(abs(cuts) - 1.645) < 0.01, "1.645", sprintf("%.2f", cuts)), size = 3.6) +
+    labs(x = "Standard errors from the null mean", y = NULL, title = ttl) +
+    coord_cartesian(ylim = c(0, 0.55)) +
+    theme_classic(base_size = 12) +
+    theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+  if (arrow_dir == "both") {
+    p <- p + annotate("segment", x = 0.3, xend = 2.9, y = 0.52, yend = 0.52, arrow = arrow(length = unit(0.15, "cm"))) +
+      annotate("segment", x = -0.3, xend = -2.9, y = 0.52, yend = 0.52, arrow = arrow(length = unit(0.15, "cm")))
+  } else {
+    p <- p + annotate("segment", x = 0.3, xend = 2.9, y = 0.52, yend = 0.52, arrow = arrow(length = unit(0.15, "cm")))
+  }
+  p
+}
 
-print(p)
-
-```
-
-One-tailed tests only look in *one* direction (smaller or larger than $\mu_0$):
-
-```{r}
-#| label: fig-4key.onetailed
-#| fig-cap: 'One-sided tests: $H_a:\ \mu<\mu_0$ (left) and $H_a:\ \mu>\mu_0$ (right), compared to the null.'
-#| fig-alt: "Two side-by-side panels, each with a solid blue null curve and a dashed green estimated-population curve of the same height. In the left panel the green curve sits to the left of the blue one, labeled H sub a colon mu less than mu sub 0. In the right panel the green curve sits to the right instead, labeled H sub a colon mu greater than mu sub 0."
-#| out-width: "100%"
-
-# Define the data and functions for the one-tailed alternatives
-x_vals <- seq(-10, 10, by=0.01)
-ha_left <- dnorm(x_vals, mean=-5, sd=2)  # Adjusted standard deviation for wider curve
-h0 <- dnorm(x_vals, mean=0, sd=2)       # Adjusted standard deviation for wider curve
-ha_right <- dnorm(x_vals, mean=4, sd=2) # Adjusted standard deviation for wider curve
-
-# First Plot: Ha: µ < X
-p1 <- ggplot() + 
-  geom_line(aes(x_vals, ha_left, color="Estimated Population Distribution"), linetype="dashed", size=1.2) +
-  geom_line(aes(x_vals, h0, color="Null Population Distribution"), linetype="solid", size=1.2) +
-    ylim(0, 0.25)+
-  annotate("text", x = 0, y = 0.22, label = expression("H"[a] ~ ": " ~ mu < mu[0]), size = 5) + # adjusted y value
-scale_color_manual(values=c("Null Population Distribution"="blue", "Estimated Population Distribution"="green3"))+
-  theme_classic() + 
-  theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
-
-# Second Plot: Ha: µ > X
-p2 <- ggplot() + 
-  geom_line(aes(x_vals, h0, color="Null Population Distribution"), linetype="solid", size=1.2) +
-  geom_line(aes(x_vals, ha_right, color="Estimated Population Distribution"), linetype="dashed", size=1.2) +
-  annotate("text", x = 0, y = 0.22, label = expression("H"[a] ~ ": " ~ mu > mu[0]), size = 5) + # adjusted y value
-scale_color_manual(values=c("Null Population Distribution"="blue", "Estimated Population Distribution"="green3"))+
-    ylim(0, 0.25)+
-  theme_classic() + 
-  theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
-
-# Plot them side by side
-grid.arrange(p1, p2, ncol=2)
+grid.arrange(
+  tail_panel(c(-z2, z2), expression("Two-tailed:  " * H[a] * ": " * mu != mu[0]), "both"),
+  tail_panel(z1,         expression("One-tailed:  " * H[a] * ": " * mu > mu[0]), "right"),
+  ncol = 2)
 ```
 
 ### One- vs. Two-Sided: which and why?
@@ -789,13 +766,14 @@ Ruling out chance tells you that *something* is going on, but not always *what*.
 
 ## Chapter Summary
 
-**Why it matters.** This chapter is the hinge between describing data and drawing conclusions from it. Everything after this point is a variation on one move: work out what chance alone could produce, then ask whether your result is something chance can comfortably explain.
+**Why it matters.** This chapter is the bridge between describing data and drawing conclusions from it. Everything after this point is a variation on one move: work out what chance alone could produce, then ask whether your result is rare enough under chance, by a standard set in advance ($\alpha$), to rule chance out.
 
 **Core ideas**
 
-- **Chance produces differences on its own.** Split one population into two arbitrary groups and their means will differ anyway. The question is never "is there a difference," it is "is this difference bigger than chance can account for."
+- **Chance produces differences on its own.** Split one population into two arbitrary groups and their means will differ anyway, from sampling error alone. The question is never "is there a difference," it is "is this difference bigger than chance can account for."
 - **The chance window is buildable.** Repeat a study thousands of times under conditions where you know nothing real is going on, collect the differences, and you have a picture of exactly what chance is capable of for a design your size.
 - **Rarity is a judgment, and it needs a convention.** The 100-year flood shows the reasoning already exists outside statistics: a 1% annual chance is not zero, but it changes what you build. $\alpha = .05$ is that same judgment, standardized so researchers aren't each drawing their own line.
-- **A hypothesis test is the practical shortcut.** Once you can assume a known reference distribution, the simulated window becomes a curve, and the decision becomes a calculation. The logic is unchanged.
-- **Three routes, one decision.** A test statistic against a critical value, a confidence interval, and a $p$-value are three ways of asking the same question. For a given $\alpha$ they always agree.
-- **Commit to one- or two-tailed in advance.** A one-tailed test is only justified when theory rules out the other direction. Choosing after seeing the data quietly raises your real error rate above the $\alpha$ you claimed.
+- **A hypothesis test is the practical shortcut.** Once you can assume a known reference distribution, the simulated chance window becomes a curve, and the decision becomes a calculation. The logic is the same.
+- **Two pairs of curves.** From the sample: the estimated population distribution and the sampling distribution of the sample mean, which gives the confidence interval. Under $H_0$: the null population distribution and the sampling distribution of the sample mean under $H_0$, which gives the critical values and $p$-value. The true population distribution is never known.
+- **Three routes, one decision.** A test statistic against a critical value, a confidence interval, and a $p$-value are three ways of asking the same question. For a two-tailed test at the same $\alpha$ they always agree; a one-tailed test checked against a two-sided confidence interval can disagree near the boundary.
+- **Commit to one- or two-tailed in advance.** A one-tailed test is only justified when theory rules out the other direction. Choosing after seeing the data raises your real error rate above the $\alpha$ you claimed.
