@@ -768,27 +768,49 @@ If the observed statistic falls in either tail beyond the critical value(s), rej
 
 Here are our options (for a two tailed test).
 
-1.  **Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean. In this example, the mean is more than 3 standard errors from $\mu_0$, which is typically considered significant for common choices of $\alpha$.
+1.  **Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean. In this example, $\bar{x}$ is 3.75 standard errors from $\mu_0$, well past the critical values of $\pm 1.96$.
 
 ```{r}
 #| label: fig-4key.reject_2_two_tailed
-#| fig-cap: 'Two-sided test, reject $H_0$: sample mean far from $\mu_0$ in either direction.'
-#| fig-alt: "A blue null population distribution centered at mu sub 0, marked with a dashed vertical line, well separated from a narrow dot-dash sampling distribution and dashed estimated population curve centered far to the left. A thick green confidence interval bar under those two curves sits entirely to the left of mu sub 0, not reaching it at all."
+#| fig-cap: 'Two-sided test, reject $H_0$. Blue: the sampling distribution of the sample mean under $H_0$, with its rejection regions shaded beyond $\pm 1.96$ SE; $\bar{x}$ lands in one. Green: the sampling distribution of the sample mean from the sample, with its 95% confidence interval; $\mu_0$ falls outside it.'
+#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. A dark-green dot-dash bell curve of the same width sits well to the left, centered on a black dotted line labeled x-bar, which lies inside the left shaded rejection region. A thick dark-green confidence interval bar under the green curve does not reach mu sub 0."
 #| out-width: "100%"
 
-plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-1.5, sample_sd=0.3, inferred_mean=-1.5, inferred_sd=1)
+decision_panel <- function(xbar, se = 0.4, mu0 = 0) {
+  xs_d <- seq(-4.5, 4.5, by = 0.01)
+  crit <- 1.96 * se
+  h0 <- data.frame(x = xs_d, y = dnorm(xs_d, mu0, se))
+  ggplot() +
+    geom_area(data = subset(h0, x <= mu0 - crit), aes(x, y), fill = "red", alpha = 0.18) +
+    geom_area(data = subset(h0, x >= mu0 + crit), aes(x, y), fill = "red", alpha = 0.18) +
+    geom_line(data = h0, aes(x, y), colour = "blue", linetype = "dotdash", linewidth = 1.2) +
+    geom_line(aes(xs_d, dnorm(xs_d, xbar, se)), colour = "darkgreen", linetype = "dotdash", linewidth = 1.2) +
+    annotate("segment", x = mu0 + c(-crit, crit), xend = mu0 + c(-crit, crit), y = 0, yend = 0.5, colour = "red", linewidth = 0.8) +
+    annotate("segment", x = xbar - crit, xend = xbar + crit, y = -0.04, yend = -0.04, colour = "darkgreen", linewidth = 3) +
+    annotate("segment", x = mu0, xend = mu0, y = -0.04, yend = 1.22, colour = "magenta", linetype = "dashed", linewidth = 1) +
+    annotate("segment", x = xbar, xend = xbar, y = -0.04, yend = 1.22, linetype = "dotted", linewidth = 1) +
+    annotate("text", x = mu0 + 0.1, y = 1.3, label = "mu[0]", parse = TRUE, hjust = 0, colour = "magenta", size = 5) +
+    annotate("text", x = xbar - 0.1, y = 1.3, label = "bar(x)", parse = TRUE, hjust = 1, size = 5) +
+    annotate("text", x = 4.45, y = 1.12, label = "'Under '*H[0]", parse = TRUE, hjust = 1, colour = "blue", size = 4.5) +
+    annotate("text", x = -4.4, y = 1.12, label = "From the sample", hjust = 0, colour = "darkgreen", size = 4.5) +
+    coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(-0.08, 1.38)) +  # shared axes across the four-color figures
+    labs(x = NULL, y = NULL) +
+    theme_classic() +
+    theme(axis.text = element_blank(), axis.ticks = element_blank())
+}
 
+decision_panel(xbar = -1.5)
 ```
 
 2.  **Fail to Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls in the non-rejection region, and the confidence interval includes the null mean. In this case, the evidence is consistent with chance variation, so we fail to reject $H_0$.
 
 ```{r}
 #| label: fig-4key.reject_1
-#| fig-cap: 'Two-sided test, fail to reject $H_0$: sample mean not greater than critical value (within $3\,SE$ from $\mu_0$).'
-#| fig-alt: "A blue null population distribution centered at mu sub 0, marked with a dashed vertical line, overlapping closely with a wider dot-dash sampling distribution and dashed estimated population curve centered a short distance to its left. A thick green confidence interval bar under those two curves extends far enough to reach and include mu sub 0."
+#| fig-cap: 'Two-sided test, fail to reject $H_0$. $\bar{x}$ lands 1 standard error from $\mu_0$, inside the critical values of $\pm 1.96$ SE, and the confidence interval from the sample includes $\mu_0$.'
+#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. A dark-green dot-dash bell curve of the same width sits just to its left, heavily overlapping it, centered on a black dotted line labeled x-bar that lies between the critical values. The thick dark-green confidence interval bar under the green curve reaches past mu sub 0."
 #| out-width: "100%"
 
-plot_distributions_no_error(null_mean=0, null_sd=1, sample_mean=-0.4, sample_sd=0.7, inferred_mean=-0.4, inferred_sd=1)
+decision_panel(xbar = -0.4)
 ```
 
 ::: {.callout-caution title="Warning: Beyond ruling out chance"}
