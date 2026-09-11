@@ -222,7 +222,7 @@ ggplot(data.frame(differences), aes(x = differences)) +
   labs(x = "Difference in mean count (A - B)", y = "Count")
 ```
 
-This histogram is the **chance window** for this study design. It shows that chance most often produces a difference near zero, the tallest bar in the center. Larger differences in either direction occur less and less frequently. We can see that differences larger than +/- 3-ish are possible, but very rare.
+This histogram is the **chance window** for this study design. It shows that chance most often produces a difference near zero, the tallest bar in the center. Larger differences in either direction occur less and less frequently. Differences beyond about $\pm 3$ are possible, but rare.
 
 We can use this window to evaluate any observed difference. If a study found a difference of 1 infected bat between two groups, that falls well inside the chance window: differences of that size occur frequently by random sampling alone. If the study found a difference of 6 bats, that would fall far outside the window; chance produced a difference that large 0 times out of 10,000. When an observed result almost never happens by chance, we have grounds to conclude that *something other than chance* produced it.
 
@@ -294,14 +294,14 @@ The chance window described a world where nothing but chance is at work. A forma
 
 $$H_0:\ \mu = \mu_0 \qquad H_a:\ \mu \neq \mu_0$$
 
-**Null value notation.** Hypotheses are always about the population mean $\mu$, compared with the constant $\mu_0$. The sample mean $\bar{x}$ is never part of $H_0$ or $H_a$; it is the evidence we bring to test them.
+**Null value notation.** In this chapter, hypotheses are about the population mean $\mu$, compared with the constant $\mu_0$. The sample mean $\bar{x}$ is never part of $H_0$ or $H_a$; it is the evidence we bring to test them.
 
 ### From simulation to a formal test
 
 Everything so far was built by brute force: thousands of replications, piled into a histogram, with a real result laid against the pile. Nobody wants to rebuild a chance window for every question. Chapter 3 already supplies a shortcut: sample means have a predictable distribution of their own: centered on the population mean, with spread $\sigma/\sqrt{n}$, and close to normal once the sample is large enough (the Central Limit Theorem). That lets us replace the simulated chance window with a curve whose shape we already know. The logic does not change, only the bookkeeping does.
 
 ::: {.callout-note title="Note: Which curves have to be normal"}
-Every test in this book except the nonparametric tests in Chapter 7 reads its answer off a normal curve, or its close relative, the $t$ curve. Two different reasons put a normal curve there.
+The tests in this chapter and the next two read their answers off a normal curve, or its close relative, the $t$ curve. Two different reasons put a normal curve there.
 
 - **For the sampling distribution of the sample mean**, it is the Central Limit Theorem at work: whatever the population looks like, sample means pile up in a roughly normal shape once the sample is large enough.
 
@@ -399,7 +399,7 @@ if (knitr::is_html_output()) {
 
 The players are easier to hold onto as a picture than as a table. Let's build that picture a curve or two at a time.
 
-The population curves in these figures are drawn as normal for clarity, including the estimated population, drawn with the sample's mean and standard deviation. A test does not need the population to be normal. It runs on the two sampling distributions of the sample mean (the dot-dash curves), and the Central Limit Theorem makes those close to normal whatever shape the population has, once the sample is large enough.
+The population curves in these figures are drawn as normal for clarity; the note in the previous section explains why a test does not need them to be.
 
 **Notation reminder.** Chapter 3's shorthand for a normal curve: $X \sim N(\mu, \sigma^2)$ reads "the random variable $X$ is normally distributed with mean $\mu$ and variance $\sigma^2$." A normal curve needs just those two numbers, a center and a spread. The second number is the variance, the square of the standard deviation.
 
@@ -484,7 +484,7 @@ print(p4)
 knitr::include_graphics("imgs/gifs/ch4_step4.gif")
 ```
 
-**5. The same move on the null side.** The **sampling distribution of the sample mean under $H_0$** is centered at $\mu_0$, and its spread is again the standard error, the null population's standard deviation divided by $\sqrt{n}$: $N(\mu_0, SE_{\bar{x}}^2)$. It describes where $\bar{x}$ would land across many samples if $H_0$ were true, which makes it the formal version of the chance window. The critical values later in the chapter come from it.
+**5. The same move on the null side.** The **sampling distribution of the sample mean under $H_0$** is centered at $\mu_0$, and its spread is again the standard error, the null population's standard deviation divided by $\sqrt{n}$ (with $\sigma$ treated as known, the same standard error as in step 4): $N(\mu_0, SE_{\bar{x}}^2)$. It describes where $\bar{x}$ would land across many samples if $H_0$ were true, which makes it the formal version of the chance window. The critical values later in the chapter come from it.
 
 ```{r}
 #| label: fig-4key.null_to_sampling
@@ -600,9 +600,9 @@ All three routes below run on the same quantity: the **test statistic** defined 
 
 ### Route 1: test statistic and critical values
 
-Critical values come from the **sampling distribution of the sample mean under $H_0$** (@fig-4key.null_to_sampling): centered at $\mu_0$, with spread equal to the standard error, $\sigma/\sqrt{n}$. It is the formal version of the chance window: instead of simulating the differences chance can produce, we assume a distribution and read them off it.
+Critical values come from the sampling distribution of the sample mean under $H_0$, built in @fig-4key.null_to_sampling.
 
-@fig-rejection-region draws it for a two-sided test at $\alpha = 0.05$, marked off in standard errors from $\mu_0$. The red lines are the **critical values**, 1.96 standard errors on either side of $\mu_0$. They cut off the most extreme 5% of the curve, 2.5% in each tail, and those shaded tails are the **rejection regions**. Here the observed $\bar{x}$ lands 2.4 standard errors above $\mu_0$, inside the right-hand rejection region. Counting that distance in standard errors is exactly the test statistic from earlier, $z = (\bar{x} - \mu_0)/SE = 2.4$.
+@fig-rejection-region draws it for a two-tailed test at $\alpha = 0.05$, marked off in standard errors from $\mu_0$. The red lines are the **critical values**, 1.96 standard errors on either side of $\mu_0$. They cut off the most extreme 5% of the curve, 2.5% in each tail, and those shaded tails are the **rejection regions**. Here the observed $\bar{x}$ lands 2.4 standard errors above $\mu_0$, inside the right-hand rejection region. Counting that distance in standard errors is exactly the test statistic from earlier, $z = (\bar{x} - \mu_0)/SE = 2.4$.
 
 Here's the decision rule:
 
@@ -613,7 +613,7 @@ This picture makes clear why $\alpha$ and the $p$-value are linked. $\alpha$ set
 
 ```{r}
 #| label: fig-rejection-region
-#| fig-cap: 'Two-sided test at $\alpha = 0.05$: the sampling distribution of the sample mean under $H_0$ (blue dot-dash), centered at $\mu_0$ (magenta) and marked off in standard errors. Red lines are the critical values at $\pm 1.96$ SE; the shaded tails are the rejection regions. The observed $\bar{x}$ (dotted) falls 2.4 SE above $\mu_0$, in the rejection region.'
+#| fig-cap: 'Two-tailed test at $\alpha = 0.05$: the sampling distribution of the sample mean under $H_0$ (blue dot-dash), centered at $\mu_0$ (magenta) and marked off in standard errors. Red lines are the critical values at $\pm 1.96$ SE; the shaded tails are the rejection regions. The observed $\bar{x}$ (dotted) falls 2.4 SE above $\mu_0$, in the rejection region.'
 #| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0. The x-axis is marked mu sub 0 minus 2 SE, minus 1 SE, mu sub 0, plus 1 SE, plus 2 SE. Red vertical lines at plus and minus 1.96 SE, each labeled critical value, with the small tail areas beyond them shaded red and labeled rejection region. A black dotted line labeled x-bar sits at 2.4 SE, inside the right-hand shaded region."
 #| fig-width: 7
 #| fig-height: 4.5
@@ -715,23 +715,23 @@ grid.arrange(mu0_panel(0), mu0_panel(-0.9), ncol = 2)
 
 The right panel is worth a second look. A single reading at that $\mu_0$ would be unremarkable: it sits well inside the wide estimated population of @fig-4key.sample_to_sampling. It is simply not a plausible value for the *mean*, because sample means vary much less than individual readings do.
 
-For common models, a two-sided level-$\alpha$ test of $H_0:\ \mu=\mu_0$ is equivalent to checking whether $\mu_0$ lies inside the $100(1-\alpha)\%$ confidence interval. The **CI** is often the most intuitive way to see this: it shows both the decision (reject or not) *and* the range of parameter values still consistent with the data.
+For common models, a two-tailed level-$\alpha$ test of $H_0:\ \mu=\mu_0$ is equivalent to checking whether $\mu_0$ lies inside the $100(1-\alpha)\%$ confidence interval. The **CI** is often the most intuitive way to see this: it shows both the decision (reject or not) *and* the range of parameter values still consistent with the data.
 
 ### Route 3: $p$-value
 
-The $p$-value is the probability, **under** $H_0$, of obtaining a test statistic **at least as extreme** as the one you observed. It is an area under the curve, so it comes from `pnorm()`, which Chapter 3 introduced as the area to the left of a value. For the observed $z = 1.85$ in @fig-pvalue-lens, `pnorm(-1.85)` gives the area below $-1.85$, about 0.032, which by symmetry equals the area above $+1.85$. A two-sided test counts both tails, so $p$ = `2 * pnorm(-1.85)` $\approx 0.064$. Reject if $p<\alpha$; here $0.064 > 0.05$, so we fail to reject.
+The $p$-value is an area under the curve, so it comes from `pnorm()`, which Chapter 3 introduced as the area to the left of a value. For the observed $z = 1.85$ in @fig-pvalue-lens, `pnorm(-1.85)` gives the area below $-1.85$, about 0.032, which by symmetry equals the area above $+1.85$. A two-tailed test counts both tails, so $p$ = `2 * pnorm(-1.85)` $\approx 0.064$. Reject if $p<\alpha$; here $0.064 > 0.05$, so we fail to reject.
 
 ```{r}
 #| label: fig-pvalue-lens
-#| fig-cap: 'p-value lens: the two-sided $p$-value is the shaded area beyond the observed statistic (vertical line), in both tails, under the null.'
-#| fig-alt: "A blue dot-dash standard normal curve centered at zero, marked with a dashed vertical line at the center for the null value and a solid black vertical line further right labeled 'observed z' at about 1.85. The areas beyond plus and minus 1.85 in both tails are shaded red. Text on the left reports a two-sided p-value of 0.064, labeled fail to reject."
+#| fig-cap: 'p-value lens: the two-tailed $p$-value is the shaded area beyond the observed statistic (vertical line), in both tails, under the null.'
+#| fig-alt: "A blue dot-dash standard normal curve centered at zero, marked with a dashed vertical line at the center for the null value and a solid black vertical line further right labeled 'observed z' at about 1.85. The areas beyond plus and minus 1.85 in both tails are shaded red. Text on the left reports a two-tailed p-value of 0.064, labeled fail to reject."
 #| out-width: "100%"
 
 library(tidyverse)
 
 alpha <- 0.05
 z_obs <- 1.85     # observed z (edit this)
-p_two <- 2*pnorm(-abs(z_obs))   # two-sided p under N(0,1)
+p_two <- 2*pnorm(-abs(z_obs))   # two-tailed p under N(0,1)
 
 x <- tibble(
   x = seq(-4, 4, length.out = 2000),
@@ -739,7 +739,7 @@ x <- tibble(
 )
 
 ggplot(x, aes(x, y)) +
-  # shaded tails: the two-sided p-value is this area
+  # shaded tails: the two-tailed p-value is this area
   geom_area(data = filter(x, x >=  abs(z_obs)), fill = "red", alpha = 0.2) +
   geom_area(data = filter(x, x <= -abs(z_obs)), fill = "red", alpha = 0.2) +
   geom_line(color = "blue", linewidth = 1.2, linetype = "dotdash") +
@@ -752,7 +752,7 @@ ggplot(x, aes(x, y)) +
            label = expression(paste("observed ", z)),
            hjust = ifelse(z_obs > 0, -0.05, 1.05), size = 3.6) +
   annotate("text", x = -2.2, y = dnorm(0)*0.75,
-           label = paste0("two-sided p = ", sprintf("%.3f", p_two),
+           label = paste0("two-tailed p = ", sprintf("%.3f", p_two),
                           ifelse(p_two < alpha, "\n(reject)", "\n(fail to reject)")),
            size = 4.2) +
   labs(x = "z", y = "Density") +
@@ -764,15 +764,15 @@ ggplot(x, aes(x, y)) +
 
 Test outcomes are **binary**: we either **reject** $H_0$ or **fail to reject** $H_0$. We never *accept* $H_0$, because sampling variability means we can't prove it's true, only that the data are consistent with it. Similarly, we don't formally *accept* $H_a$, but we can say the results provide **support for** $H_a$ when $H_0$ is rejected.
 
-If the observed statistic falls in either tail beyond the critical value(s), reject $H_0$. Otherwise, fail to reject $H_0$. Report the exact $p$ and an effect size or CI.
+Report the exact $p$ and an effect size or CI.
 
 Here are our options (for a two-tailed test).
 
-1.  **Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean. In this example, $\bar{x}$ is 3.75 standard errors from $\mu_0$ ($z = -3.75$), well past the critical values of $\pm 1.96$, and the two-sided $p$-value is about 0.0002, far below $\alpha = 0.05$. All three routes say reject.
+1.  **Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean. In this example, $\bar{x}$ is 3.75 standard errors from $\mu_0$ ($z = -3.75$), well past the critical values of $\pm 1.96$, and the two-tailed $p$-value is about 0.0002, far below $\alpha = 0.05$. All three routes say reject.
 
 ```{r}
 #| label: fig-4key.reject_2_two_tailed
-#| fig-cap: 'Two-sided test, reject $H_0$. Blue: the sampling distribution of the sample mean under $H_0$, with its rejection regions shaded beyond $\pm 1.96$ SE; $\bar{x}$ lands in one. Green: the sampling distribution of the sample mean from the sample, with its 95% confidence interval; $\mu_0$ falls outside it.'
+#| fig-cap: 'Two-tailed test, reject $H_0$. Blue: the sampling distribution of the sample mean under $H_0$, with its rejection regions shaded beyond $\pm 1.96$ SE; $\bar{x}$ lands in one. Green: the sampling distribution of the sample mean from the sample, with its 95% confidence interval; $\mu_0$ falls outside it.'
 #| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. A dark-green dot-dash bell curve of the same width sits well to the left, centered on a black dotted line labeled x-bar, which lies inside the left shaded rejection region. A thick dark-green confidence interval bar under the green curve does not reach mu sub 0."
 #| out-width: "100%"
 
@@ -802,11 +802,11 @@ decision_panel <- function(xbar, se = 0.4, mu0 = 0, xlim = c(-3.2, 1.8)) {
 decision_panel(xbar = -1.5)
 ```
 
-2.  **Fail to Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls in the non-rejection region, and the confidence interval includes the null mean. Here $\bar{x}$ is 1 standard error from $\mu_0$ ($z = -1.00$), inside the critical values, and the two-sided $p$-value is 0.32, above $\alpha = 0.05$. All three routes say the evidence is consistent with chance variation, so we fail to reject $H_0$.
+2.  **Fail to Reject the Null Hypothesis (Two-Tailed Test).** The sample mean falls in the non-rejection region, and the confidence interval includes the null mean. Here $\bar{x}$ is 1 standard error from $\mu_0$ ($z = -1.00$), inside the critical values, and the two-tailed $p$-value is 0.32, above $\alpha = 0.05$. All three routes say the evidence is consistent with chance variation, so we fail to reject $H_0$.
 
 ```{r}
 #| label: fig-4key.reject_1
-#| fig-cap: 'Two-sided test, fail to reject $H_0$. $\bar{x}$ lands 1 standard error from $\mu_0$, inside the critical values of $\pm 1.96$ SE, and the confidence interval from the sample includes $\mu_0$.'
+#| fig-cap: 'Two-tailed test, fail to reject $H_0$. $\bar{x}$ lands 1 standard error from $\mu_0$, inside the critical values of $\pm 1.96$ SE, and the confidence interval from the sample includes $\mu_0$.'
 #| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. A dark-green dot-dash bell curve of the same width sits just to its left, heavily overlapping it, centered on a black dotted line labeled x-bar that lies between the critical values. The thick dark-green confidence interval bar under the green curve reaches past mu sub 0."
 #| out-width: "100%"
 
@@ -821,7 +821,7 @@ Other methods start from two or more candidate explanations, say a steady linear
 Ruling out chance tells you that *something* is going on, but not always *what*. It is worth knowing the difference, because "significant" only ever answers the first question.
 :::
 
-## One- and Two-Tailed Tests {#sec-tails}
+## One- and two-tailed tests {#sec-tails}
 
 $H_a$ is a claim about where the true population could sit. A two-tailed alternative says it might sit below $\mu_0$ or above it. A one-tailed alternative says it can only sit on one side (@fig-4tails-claims).
 
@@ -896,14 +896,14 @@ grid.arrange(
   ncol = 2)
 ```
 
-### One- vs. Two-Sided: which and why?
+### One- or two-tailed: which and why?
 
 **Use this rule of thumb:**
 
-- Two-sided (default): You care whether $\mu$ differs from $\mu_0$ **in either direction**.
-- One-sided (only if justified): Differences in the opposite direction are **scientifically irrelevant** and **would not change your decision or action**.
+- Two-tailed (default): You care whether $\mu$ differs from $\mu_0$ **in either direction**.
+- One-tailed (only if justified): Differences in the opposite direction are **scientifically irrelevant** and **would not change your decision or action**.
 
-Default to two-sided unless your theory rules out the other direction. At $\alpha = .05$, a one-tailed test's critical value is 1.645 instead of 1.96, so it rejects on less evidence, but only in the direction you named in advance. If the effect goes the other way, a one-tailed test cannot detect it at all.
+Default to two-tailed unless your theory rules out the other direction. At $\alpha = .05$, a one-tailed test's critical value is 1.645 instead of 1.96, so it rejects on less evidence, but only in the direction you named in advance. If the effect goes the other way, a one-tailed test cannot detect it at all.
 
 That is why the direction has to be chosen before you see the data. Picking the tail afterward, because it gives the smaller $p$-value, makes your real chance of a false positive higher than the $\alpha$ you report.
 
