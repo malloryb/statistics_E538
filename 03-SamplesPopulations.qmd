@@ -291,6 +291,8 @@ pnorm(q = 1.64, mean = 0, sd = 1)
 
 In a normal distribution with a mean of 0 and standard deviation of 1, the probability the value is less than or equal to 1.64 is about 95%.
 
+"Less than or equal to" and "less than" give the same answer here. In general, $P(X \ge a) = P(X > a) + P(X = a)$, and for a continuous variable that last term is zero. So `pnorm(q = 1.64, mean = 0, sd = 1, lower.tail = FALSE)` gives both $P(X > 1.64)$ and $P(X \ge 1.64)$, and R never has to decide whether the cutoff itself is included. For a discrete variable like the binomial, $P(X = a)$ is a bar with real height, so the two are different.
+
 2.  Value for a percentile, e.g. the 97.5th percentile:
 
 ```{r, echo=TRUE}
@@ -942,11 +944,13 @@ ggplot(t_df, aes(x=x_range,y=dnorm_vec))+
 
 ### What "standardized" means
 
-**Standardizing** converts raw scores to z-scores by subtracting the mean and dividing by the standard deviation:
+**Standardizing** converts raw scores to z-scores by subtracting the mean and dividing by the standard deviation. There are two versions, depending on which mean and SD you have:
 
-$z=\frac{x-\mu}{\sigma}$
+$$z=\frac{x-\mu}{\sigma} \qquad\qquad z=\frac{x-\bar{x}}{s}$$
 
-Interpretation is immediate:
+The first uses the population mean and SD, when they are known. The second uses the sample mean $\bar{x}$ and sample SD $s$, which is the usual situation with real data. Keep each pair together: a population mean goes with a population SD, and a sample mean goes with a sample SD.
+
+Interpretation is the same for both:
 
 - $z=0$ is the mean
 
@@ -954,7 +958,7 @@ Interpretation is immediate:
 
 - $z=-2$ is two SDs below the mean
 
-Because z-scores put everything on the same scale, you can compare values across different normal variables (or read probabilities from the standard normal). And by the CLT, you can do the same with *sample means* when $n$ is modestly large.
+Because z-scores put everything on the same scale, you can compare values across different normal variables (or read probabilities from the standard normal). Standardizing a single observation like this does not rely on the central limit theorem. The CLT matters for a different calculation: standardizing a *sample mean*, where the standard error takes the place of the SD. That comes back in Chapter 4.
 
 ### Calculating z-scores
 
@@ -967,15 +971,17 @@ scores <- round(rnorm(10,100,25),digits=2)
 knitr::kable(data.frame(Observation=1:10, Score=scores))
 ```
 
-Using the known population values:
-
-$(scores - 100)/25$
+These ten scores can be standardized both ways. Using the known population values, $z = (x - 100)/25$. Using only the sample itself, $z = (x - \bar{x})/s$, with $\bar{x} =$ `r round(mean(scores), 2)` and $s =$ `r round(sd(scores), 2)`:
 
 ```{r}
 knitr::kable(data.frame(Observation = 1:10,
        Score = scores,
-       Zscore = round((scores - 100)/25, 2)))
+       `z (population values)` = round((scores - 100)/25, 2),
+       `z (sample values)` = round((scores - mean(scores))/sd(scores), 2),
+       check.names = FALSE))
 ```
+
+The two columns are close but not identical, because $\bar{x}$ and $s$ are estimates of $\mu = 100$ and $\sigma = 25$ from only ten observations. With real data you rarely know $\mu$ and $\sigma$, so the sample version is the one you will usually compute.
 
 Once standardized, areas under the normal curve tell you how unusual a score is. z between −1 and 1 is common (\~68% of cases), between 1 and 2 is less common (\~13.6% on each side), and beyond ±2 is relatively rare (\~2.1% in each tail segment between 2 and 3, even less beyond 3).
 
@@ -1351,7 +1357,7 @@ To summarize:
 >
 > Unknown origin
 
-So far, we've focused on using sample data to estimate population parameters, but every estimate comes with some uncertainty. A single number, like "the mean IQ is 115," doesn't capture how confident we are. What we want is a range that likely contains the true population mean. That range is called a **confidence interval (CI)**.
+So far, we've focused on using sample data to estimate population parameters, but every estimate comes with some uncertainty. A single number, like "the mean IQ is 115," doesn't capture how confident we are. What we want is a range of plausible values for the true population mean, built by a method whose long-run success rate we know. That range is called a **confidence interval (CI)**.
 
 You'll use this directly in Chapter 4, where a confidence interval becomes one of three equivalent ways to decide whether to reject $H_0$. For now, let's see where it comes from.
 
@@ -1375,9 +1381,21 @@ $$CI_{95} = \bar{x} \pm 1.96\,\frac{\sigma}{\sqrt{n}}$$
 
 The constant 1.96 is the normal cutoff for 95%. For other levels use the corresponding normal quantile, for example 1.04 for 70%.
 
+**What the 95% means**
+
+The 95% describes the method, not any one interval. Imagine repeating the whole process many times: draw a new sample, compute its $\bar{x}$, build a new interval. About 95% of those intervals would contain $\mu$, and about 5% would miss it. The interval you actually have either contains $\mu$ or it doesn't; you just don't know which.
+
+::: {.callout-caution title="Warning: Don't misread a confidence interval"}
+Do **not** say "there is a 95% probability that $\mu$ is in this interval." The population mean $\mu$ is fixed, and your one interval either contains it or it doesn't. The 95% is the long-run success rate of the procedure that built the interval.
+:::
+
 **The catch**
 
-There's one snag: this formula assumes we know the population standard deviation $\sigma$. But in practice, $\sigma$ is almost never known. We estimate it with $\hat\sigma$, which introduces extra uncertainty.
+There's one snag: this formula assumes we know the population standard deviation $\sigma$. But in practice, $\sigma$ is almost never known. We estimate it with the sample standard deviation $s$, which gives the estimated standard error
+
+$$SE = \frac{s}{\sqrt{n}}$$
+
+The $n-1$ correction is already built into $s$, so the denominator here is still $\sqrt{n}$. Estimating $\sigma$ this way introduces extra uncertainty.
 
 To account for this, we swap the normal cutoffs for those from the $t$-distribution, which depends on sample size. With small $n$, the $t$ values are larger, so the CI widens. As $n$ grows, $t$ values shrink toward 1.96, and the $t$-based CI becomes indistinguishable from the normal version.
 
@@ -1398,7 +1416,7 @@ Confidence intervals tell us how precise our guess is, and they force us to ackn
 - **Probability runs model → data; statistics runs data → model.** Probability starts from a known process and predicts what data it produces. Statistics starts from observed data and reasons backward to the process. The rest of the book is the second direction.
 - **A population is a distribution, not just a group.** Treating the population as a probability distribution is what lets us say anything precise about how samples behave.
 - **Law of large numbers.** As $n$ grows, a sample statistic settles onto the population value. This is why bigger samples give more reliable estimates.
-- **Sampling distributions are the key abstraction.** Any statistic computed over repeated samples has its own distribution. The sampling distribution of the mean is the one that matters most, and its spread is the **standard error**, $\sigma/\sqrt{n}$.
+- **Sampling distributions are the key abstraction.** Any statistic computed over repeated samples has its own distribution. The sampling distribution of the mean is the one that matters most, and its spread is the **standard error**, $\sigma/\sqrt{n}$, estimated by $s/\sqrt{n}$ when $\sigma$ is unknown.
 - **The central limit theorem.** The sampling distribution of the mean centers on $\mu$, narrows as $n$ grows, and approaches normal *regardless of the population's shape*. That last clause is what lets normal-based methods work on data that are not themselves normal.
 - **Not every estimator is unbiased.** The sample mean lands on $\mu$ on average, but the sample SD systematically underestimates $\sigma$. Dividing by $n-1$ corrects it, and the correction matters most when $n$ is small.
-- **Confidence intervals express uncertainty.** Rather than reporting a single estimate, a CI reports the range of population values the data are consistent with.
+- **Confidence intervals express uncertainty.** Rather than reporting a single estimate, a CI reports a range of plausible values. The 95% describes the method: across many repeated samples, about 95% of intervals built this way would contain $\mu$. It is not a 95% probability that any one interval does.
