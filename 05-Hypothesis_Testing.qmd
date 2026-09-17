@@ -13,7 +13,7 @@ library(gridExtra)
 library(kableExtra)
 
 # NOTE: this is Chapter 4's plot_distributions(), copied verbatim so both
-# chapters draw the same curves with the same names, colours and scale.
+# chapters draw the same curves with the same names, colors and scale.
 # Two copies is the known cost; consolidate into global_stuff.R next year.
 plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd, true_mean, true_sd, show_ci = TRUE, show_samp = TRUE, y_top = 1.4, show_null = TRUE, show_true = TRUE, show_xbar = FALSE) {
   x_vals <- seq(-6, 6, by=0.01)
@@ -106,6 +106,75 @@ print(p8)
 p9 <- plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=0, sample_sd=0.4, inferred_mean=0, inferred_sd=1, true_mean=3, true_sd=1, y_top = 1.05)  # crop the empty space, same scale as Ch4
 print(p9)
 ```
+
+Those two figures show what a wrong conclusion looks like for one unlucky sample. They do not show how *often* it happens. For that we stop looking at a single sample and look instead at where the sample mean lands across many of them, which is the sampling distribution of the sample mean from Chapter 4.
+
+@fig-5alpha-beta does that. The blue curve is the **sampling distribution of the sample mean under** $H_0$, the one that sets the critical values. The orange curve is new here: the **sampling distribution of the sample mean if** $\mu = \mu_a$, meaning the population mean really is some particular value $\mu_a$ other than $\mu_0$. There is one such curve for every value $\mu_a$ could take, which is why the Type II error rate is written $\beta(\mu_a)$. The miss rate depends on how large the real difference is.
+
+-   $\alpha$ is the red area in the tails of the blue curve, past the critical values. If $H_0$ is true, that is how often the sample mean lands in the rejection region anyway.
+-   $\beta$ is the gray area under the orange curve *between* the critical values. If $\mu = \mu_a$, that is how often the sample mean fails to reach the rejection region and a real difference goes undetected.
+-   Power, $1-\beta$, is the rest of the orange curve, the part past the critical values.
+
+```{r}
+#| label: fig-5alpha-beta
+#| fig-cap: 'The two error rates, drawn on sampling distributions. Top: $\alpha$ is the red area in the tails of the null curve. Bottom: adding the curve for one specific alternative value $\mu_a$, $\beta$ is the gray area under it between the critical values.'
+#| fig-height: 6.6
+#| fig-alt: "Two stacked panels sharing the same axes. The top panel shows a single blue dot-dash bell curve centered at the null mean, marked with a dashed vertical line, with red vertical lines at the critical values on either side and small red shaded tails beyond them, each labeled alpha over two. The bottom panel repeats that curve and adds an orange dot-dash bell curve of the same width centered well to the right. The region under the orange curve lying between the two critical-value lines is shaded gray and labeled beta, while the part of the orange curve past the right critical line is unshaded."
+#| out-width: "100%"
+
+mu0_ab <- 0; mua_ab <- 2.5; se_ab <- 1; crit_ab <- 1.96
+x_ab <- seq(-4, 6.5, length.out = 3000)
+d_ab <- data.frame(x = x_ab,
+                   null = dnorm(x_ab, mu0_ab, se_ab),
+                   alt  = dnorm(x_ab, mua_ab, se_ab))
+
+leg_ab <- c(
+  expression(paste("Sampling distribution of the sample mean under ", H[0])),
+  expression(paste("Sampling distribution of the sample mean if ", mu == mu[a])))
+
+shell_ab <- function(p) {
+  p +
+    geom_vline(xintercept = c(-crit_ab, crit_ab), color = "red", linewidth = .7) +
+    annotate("segment", x = mu0_ab, xend = mu0_ab, y = 0,
+             yend = dnorm(mu0_ab, mu0_ab, se_ab),
+             linetype = "dashed", color = "magenta", linewidth = .9) +
+    scale_color_manual(values = c(null = "blue", alt = "orange"),
+                       limits = c("null", "alt"), breaks = c("null", "alt"),
+                       labels = leg_ab, drop = FALSE) +
+    coord_cartesian(xlim = c(-4, 6.5), ylim = c(0, 0.52)) +
+    theme_classic() +
+    theme(legend.position = "bottom", axis.text = element_blank(),
+          axis.title = element_blank(), axis.ticks = element_blank(),
+          legend.text = element_text(size = 9), plot.title = element_text(size = 11)) +
+    guides(color = guide_legend(title = NULL, nrow = 2))
+}
+
+null_ab <- geom_line(data = d_ab, aes(x, null, color = "null"), linetype = "dotdash", linewidth = 1.1)
+alt_ab  <- geom_line(data = d_ab, aes(x, alt,  color = "alt"),  linetype = "dotdash", linewidth = 1.1)
+ashade_ab <- list(
+  geom_area(data = subset(d_ab, x <= -crit_ab), aes(x, null), fill = "red", alpha = .25),
+  geom_area(data = subset(d_ab, x >=  crit_ab), aes(x, null), fill = "red", alpha = .25))
+bshade_ab <- geom_area(data = subset(d_ab, x > -crit_ab & x < crit_ab),
+                       aes(x, alt), fill = "gray50", alpha = .35)
+alabs_ab <- list(
+  annotate("segment", x = -3.05, xend = -2.25, y = .072, yend = .022,
+           arrow = arrow(length = unit(.14, "cm")), linewidth = .4),
+  annotate("text", x = -3.15, y = .085, label = "alpha/2", parse = TRUE, size = 4.5),
+  annotate("segment", x = 3.30, xend = 2.30, y = .072, yend = .022,
+           arrow = arrow(length = unit(.14, "cm")), linewidth = .4),
+  annotate("text", x = 3.45, y = .085, label = "alpha/2", parse = TRUE, size = 4.5))
+blab_ab <- annotate("text", x = 1.30, y = .085, label = "beta", parse = TRUE, size = 5.5)
+
+ab_top <- shell_ab(ggplot() + ashade_ab + null_ab + alabs_ab) +
+  ggtitle(expression(paste(alpha, ": the rate of rejecting a true ", H[0]))) +
+  theme(legend.position = "none")
+ab_bot <- shell_ab(ggplot() + bshade_ab + ashade_ab + null_ab + alt_ab + blab_ab) +
+  ggtitle(expression(paste(beta, ": the rate of missing a real difference of this size")))
+
+patchwork::wrap_plots(ab_top, ab_bot, ncol = 1)
+```
+
+In @fig-5alpha-beta, $\mu_a$ sits 2.5 standard errors above $\mu_0$, which leaves $\beta = 0.29$ and power $= 0.71$: this design misses a real difference of that size in almost three tries out of ten. Slide the orange curve further right, meaning a larger real difference, and the gray area shrinks. Move the red lines outward, meaning a smaller $\alpha$, and the gray area grows. That is the tradeoff the table above states in words.
 
 ### Effect of Sample Size on Errors
 
