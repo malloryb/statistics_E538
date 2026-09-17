@@ -62,7 +62,7 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
 
 The previous chapter built the machinery of a hypothesis test and left you with a yes or no: reject $H_0$, or fail to reject it. That decision is only part of the story.
 
-Two questions remain. First, how often will that decision be wrong, and in which direction? Second, when we do reject, how *large* is the effect we found, and was the study ever capable of detecting it in the first place? This chapter answers both.
+Two questions remain. First, how often will that decision be wrong, and in which direction? Second, when we do reject, how *large* is the effect we found, and was the study ever capable of detecting it in the first place? This chapter answers both, then closes with how to report the answers.
 
 ## Errors in Hypothesis Testing
 
@@ -128,6 +128,9 @@ d_ab <- data.frame(x = x_ab,
                    null = dnorm(x_ab, mu0_ab, se_ab),
                    alt  = dnorm(x_ab, mua_ab, se_ab))
 
+beta_ab  <- pnorm(crit_ab, mua_ab, se_ab) - pnorm(-crit_ab, mua_ab, se_ab)
+power_ab <- 1 - beta_ab
+
 leg_ab <- c(
   expression(paste("Sampling distribution of the sample mean under ", H[0])),
   expression(paste("Sampling distribution of the sample mean if ", mu == mu[a])))
@@ -174,7 +177,7 @@ ab_bot <- shell_ab(ggplot() + bshade_ab + ashade_ab + null_ab + alt_ab + blab_ab
 patchwork::wrap_plots(ab_top, ab_bot, ncol = 1)
 ```
 
-In @fig-5alpha-beta, $\mu_a$ sits 2.5 standard errors above $\mu_0$, which leaves $\beta = 0.29$ and power $= 0.71$: this design misses a real difference of that size in almost three tries out of ten. Slide the orange curve further right, meaning a larger real difference, and the gray area shrinks. Move the red lines outward, meaning a smaller $\alpha$, and the gray area grows. That is the tradeoff the table above states in words.
+In @fig-5alpha-beta, $\mu_a$ sits `r mua_ab / se_ab` standard errors above $\mu_0$, which leaves $\beta = `r round(beta_ab, 2)`$ and power $= `r round(power_ab, 2)`$: this design misses a real difference of that size in almost three tries out of ten. Slide the orange curve further right, meaning a larger real difference, and the gray area shrinks. Move the red lines outward, meaning a smaller $\alpha$, and the gray area grows. That is the tradeoff the table above states in words.
 
 ### Effect of Sample Size on Errors
 
@@ -207,7 +210,7 @@ Why go beyond a yes/no at $\alpha=0.05$? Because scientists, managers, policymak
 
 **Working definitions**
 
--   **Effect size**: how big the difference or association is (in natural units or standardized units like Cohen's $d$).
+-   **Effect size**: how big the result is, not just whether it cleared the threshold.
 
 -   **Power (**$1-\beta$): the probability your design will detect a real effect of a specified size at your chosen $\alpha$.
 
@@ -219,7 +222,7 @@ Effect size comes in two currencies. You can express it in **original units**, w
 
 **Practical (original units).** Use the scale stakeholders recognize.
 
--   Exams: "Treatment improved scores by **5 percentage points**" (a letter-grade--sized change).
+-   Exams: "Treatment improved scores by **5 percentage points**" (a letter-grade-sized change).
 -   Time-on-task: "New training reduces practice time by **1,000 hours** out of 10,000" (a 10% reduction).
 
 These statements are easy to interpret, but they don't travel well across contexts or measures.
@@ -228,7 +231,7 @@ These statements are easy to interpret, but they don't travel well across contex
 
 $$d = \frac{\mu_1 - \mu_2}{\sigma}$$
 
-Now "how big?" is expressed in **SD units**.
+Now "how big?" is expressed in **SD units**. The same form covers a single mean tested against a reference value: put $\mu - \mu_0$ on top in place of $\mu_1 - \mu_2$. Either way the numerator is the difference you care about and the denominator is the population standard deviation.
 
 **This is the same ratio as a test statistic, with one part swapped.** Chapter 4 gave the general shape, effect over error, and the $t$-test filled it in as
 
@@ -247,7 +250,7 @@ That is why a large $t$ does not mean a large effect, and why the two numbers an
     -   If the SD across sites is 1.0, then $d = 1.0$: a large shift.
     -   If the SD is 10, then $d = 0.10$: a small shift.
 
-**The raw difference has a name when you are planning.** Designing a study means asking how often you would catch a difference of a given size. The size you ask about is the raw distance between the null value and the candidate value:
+**The raw difference has a name when you are planning.** Designing a study means asking how often you would catch a difference of a given size. The size you ask about is the raw distance between the two values being compared, the candidate value and the null value for a one-sample test, or the two group means for a two-group comparison:
 
 $$\Delta = |\mu_a - \mu_0|$$
 
@@ -257,7 +260,6 @@ $$d = \frac{\Delta}{\sigma}$$
 
 These are one quantity in two units, not two quantities, which is why the biodiversity example gives $d = 1.0$ or $d = 0.10$ from the same $\Delta$ of one index point. Neither one is known: both describe a population, and after collecting data you estimate both from the sample. What differs is the unit the question gets asked in. A study reports $d$, because it compares across studies. A study is planned in $\Delta$, because the smallest difference worth detecting is a judgment about the real world, made in the units the decision is made in: milligrams per liter, degrees, index points.
 
-> **Takeaway:** Report both when possible: original units for meaning (policy/action) and a standardized effect (e.g., Cohen's $d$) for comparison across studies.
 
 **Notes for practice**
 
@@ -277,32 +279,18 @@ Let's ground effect size in a concrete example. Suppose we're measuring **final 
 #| out-width: "100%"
 
 
-X <- c(
-  seq(25, 100, 1),
-  seq(25, 100, 1),
-  seq(25, 100, 1),
-  seq(25, 100, 1),
-  seq(25, 100, 1),
-  seq(25, 100, 1),
-  seq(25, 100, 1),
-  seq(25, 100, 1)
-)
-Y <- c(
-  dnorm(seq(25, 100, 1), 65, 5),
-  dnorm(seq(25, 100, 1), 65, 5),
-  dnorm(seq(25, 100, 1), 65, 5),
-  dnorm(seq(25, 100, 1), 67.5, 5),
-  dnorm(seq(25, 100, 1), 65, 5),
-  dnorm(seq(25, 100, 1), 70, 5),
-  dnorm(seq(25, 100, 1), 65, 5),
-  dnorm(seq(25, 100, 1), 75, 5)
-)
-effect_size <-
-  rep(c("65, d=0", "67.5,d=.5", "70, d=1", "75, d=2"), each = 76 * 2)
-condition <- rep(rep(c("A", "B"), each = 76), 2)
-df <- data.frame(effect_size,
-                 condition,
-                 X, Y)
+x_es <- seq(25, 100, 1)
+shifts <- c("d = 0" = 65, "d = 0.5" = 67.5, "d = 1" = 70, "d = 2" = 75)
+
+df <- do.call(rbind, lapply(names(shifts), function(lab) {
+  data.frame(
+    effect_size = lab,
+    condition   = rep(c("A", "B"), each = length(x_es)),
+    X           = rep(x_es, 2),
+    Y           = c(dnorm(x_es, 65, 5), dnorm(x_es, shifts[[lab]], 5))
+  )
+}))
+df$effect_size <- factor(df$effect_size, levels = names(shifts))
 
 ggplot(df, aes(
   x = X,
@@ -324,7 +312,7 @@ ggplot(df, aes(
 -   **Panel 3 (**$d=1$): A 5-point shift (70).
 -   **Panel 4 (**$d=2$): A large 10-point shift (75).
 
-The takeaway is that effect size puts raw differences into a standard-deviation scale. A half--SD shift ($d=0.5$) is noticeable but modest; a two--SD shift ($d=2$) is very large. In practice, we rarely know beforehand how big a shift to expect, that's why we conduct the study.
+The takeaway is that effect size puts raw differences into a standard-deviation scale. A half-SD shift ($d=0.5$) is noticeable but modest; a two-SD shift ($d=2$) is very large. In practice, we rarely know beforehand how big a shift to expect. That is why we conduct the study.
 
 ## Power
 
@@ -337,7 +325,7 @@ Power rises when:
 3.  **The test is less conservative** (larger $\alpha$).
 4.  **Measurement noise is lower** (smaller $SD$).
 
-> **Question:** "With $\alpha = 0.05$, how large must $n$ be to achieve $\ge 80\%$ power for the smallest effect that matters?"
+That raises the practical planning question: with $\alpha$ fixed at 0.05, how large must $n$ be to reach 80% power for the smallest effect that matters? @fig-5.5powercurveN answers it for one such effect.
 
 ### Simulation walkthrough
 
@@ -450,6 +438,8 @@ n_seq <- seq(10, 800, 10)
 power <- sapply(n_seq, function(n)
   power.t.test(n = n, delta = 0.2, sd = 1, sig.level = 0.05)$power)
 
+n_for_80 <- power.t.test(delta = 0.2, sd = 1, sig.level = 0.05, power = 0.80)$n
+
 plot_df <- data.frame(power, n_seq)
 
 ggplot(plot_df, aes(x=n_seq, y=power))+
@@ -462,7 +452,7 @@ ggplot(plot_df, aes(x=n_seq, y=power))+
 **Walkthrough.**
 
 -   At $n=10$ per group, power to detect $d=0.2$ is near zero.
--   To reach 80% power, we need about **394 per group**.
+-   To reach 80% power, we need about **`r ceiling(n_for_80)` per group**.
 -   Even then, 20% of studies would still fail to reject $H_0$ just by chance.
 
 **Takeaway:**
@@ -567,5 +557,6 @@ A results statement gives the plain-language conclusion and the key statistics i
 -   **Two ways to be wrong.** A Type I error rejects a true $H_0$, at a rate you set with $\alpha$. A Type II error fails to reject a false one. Tightening one loosens the other, which is why $\alpha = .05$ is a balance rather than a fact about nature.
 -   **What a** $p$-value is not. It is not the probability that $H_0$ is true, and on its own it says nothing about how large an effect is.
 -   **Significance is not size.** With a large enough $n$, a trivially small difference clears any threshold. Report an effect size and a confidence interval next to every $p$-value so a reader can judge whether the result matters, not just whether it cleared a line.
--   **Effect size in two currencies.** Original units carry practical meaning for the people who act on your result; a standardized effect like Cohen's $d$ makes results comparable across studies and scales. Report both when you can.
+-   **Effect size in two currencies.** The same difference can be written in original units, $\Delta$, which carry practical meaning for the people who act on your result, or in standard deviations, Cohen's $d = \Delta/\sigma$, which makes results comparable across studies and scales. These are one quantity in two units, not two quantities. Report both when you can, and plan in $\Delta$, because the smallest difference worth detecting is a judgment made in real units.
 -   **Power is a design decision.** Power depends on $n$, effect size, $\alpha$, and variability together. An underpowered study fails twice over: it usually misses real effects, and when it does reach significance the effect it reports tends to be inflated. That is why power analysis belongs *before* data collection.
+-   **A result is a sentence, not a number.** State the direction in words, then give the test, the statistic with its df or $n$, the $p$-value, and an effect size or confidence interval. "Significant" on its own tells a reader nothing about direction, magnitude, or precision.
