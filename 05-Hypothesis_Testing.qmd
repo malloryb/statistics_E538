@@ -77,7 +77,7 @@ Sometimes, even when we apply the test correctly, sampling variability can lead 
 | **Reject** $H_0$         | Type I error (prob = $\alpha$) | Correct (prob = 1 - $\beta$)    |
 | **Fail to reject** $H_0$ | Correct (prob = 1 - $\alpha$)  | Type II error (prob = $\beta$)  |
 
-> **Key Takeaway**: As $\alpha$ gets smaller, $\beta$ gets bigger, and vice-versa.
+> **Takeaway:** As $\alpha$ gets smaller, $\beta$ gets bigger, and vice-versa.
 
 Errors happen because samples are imperfect.
 
@@ -180,7 +180,6 @@ In @fig-5alpha-beta, $\mu_a$ sits 2.5 standard errors above $\mu_0$, which leave
 
 With fixed $\alpha$ and correct assumptions, the long-run Type I error rate is $\alpha$ for any $n$. **Sample size mainly affects Type II error:** with small $n$, the sampling distribution is wide, true effects are harder to detect, and $\beta$ increases (power decreases). As $n$ grows, the sampling distribution tightens, $\beta$ falls, and power rises. Apparent changes in the Type I rate at small $n$ usually reflect **assumption violations** (e.g., non-normality, poor variance estimates, multiple looks), not $n$ itself.
 
-**Takeaway:** Increasing $n$ improves estimation precision and **power** (reduces $\beta$); **Type I error remains at** $\alpha$ when assumptions hold.
 
 **The one-tailed cost, made precise.** Chapter 4 said that habitually running one-tailed tests makes you reject more often than your stated $\alpha$ implies. Here is what that means: a one-tailed test at $\alpha = .05$ puts the whole 5% in one tail, so if you pick the tail *after* seeing which way the data went, you have effectively run a two-tailed test at $\alpha = .10$ and doubled your Type I error rate. The test itself is not wrong. Choosing its direction from the data is.
 
@@ -201,7 +200,6 @@ A $p$-value is the probability, **assuming** $H_0$ is true, of obtaining a test 
 4.  With small $n$, true effects can yield large $p$ (low power).
 :::
 
-**Takeaway.** Use $p$ for the decision, but interpret results alongside **effect size** and a **95% CI**.
 
 ## Beyond the 0.05 Cutoff
 
@@ -345,13 +343,15 @@ for(i in 1:1000){
   B <- rnorm(10, 12.5, 5)
   p[i] <- t.test(A,B,var.equal=TRUE)$p.value
 }
+power_n10 <- mean(p < 0.05)
 ```
 
 ```{r}
-mean(p < 0.05)
+#| include: false
+power_n10_exact <- power.t.test(n = 10, delta = 0.5, sd = 1, sig.level = 0.05)$power
 ```
 
-This proportion is the **power** of the design: the probability of detecting the true effect in repeated experiments. With $n=10$, it's only about 20%. Even though we know a medium-sized effect exists, the test usually fails to pick it up with such a small sample.
+This proportion is the **power** of the design: the probability of detecting the true effect in repeated experiments. Here it comes out at about `r round(power_n10 * 100)`%. Even though we know a medium-sized effect exists, the test usually fails to pick it up with such a small sample.
 
 ### How power changes
 
@@ -364,16 +364,20 @@ for(i in 1:1000){
   B <- rnorm(20, 12.5, 5)
   p[i] <- t.test(A,B,var.equal=TRUE)$p.value
 }
-mean(p < 0.05)
+power_n20 <- mean(p < 0.05)
 ```
+
+That lifts power to about `r round(power_n20 * 100)`%, roughly double what $n=10$ gave.
 
 2.  **Smaller** $\alpha$. Making the test more conservative (e.g., $\alpha=0.01$) lowers power, because fewer outcomes count as "significant". Using the same $n=20$ simulations, we just change the cutoff:
 
 ```{r, echo=TRUE}
-mean(p < 0.01)
+power_n20_strict <- mean(p < 0.01)
 ```
 
-3.  **Bigger effects are easier to detect.** If the treatment produces a big shift (say 2 standard deviations), the same design has near-perfect power:
+Power falls to about `r round(power_n20_strict * 100)`%.
+
+3.  **Bigger effects are easier to detect.** If the treatment produces a big shift (say 2 standard deviations), the same design at the same $\alpha=0.01$ has near-perfect power:
 
 ```{r, echo=TRUE}
 p <- numeric(1000)
@@ -382,11 +386,10 @@ for(i in 1:1000){
   B <- rnorm(20, 20, 5)   # 2SD effect
   p[i] <- t.test(A,B,var.equal=TRUE)$p.value
 }
+power_big <- mean(p < 0.01)
 ```
 
-```{r}
-mean(p < 0.01)
-```
+Power is now about `r round(power_big * 100)`%: a difference that large is almost impossible to miss, even with 20 samples per group and a strict cutoff.
 
 ### Power curves
 
@@ -417,13 +420,13 @@ ggplot(plot_df, aes(x=effect_size, y=power))+
 
 **Walkthrough.**
 
--   With $n=10$, the design only detects a medium effect ($d=0.5$) about 18% of the time.
+-   With $n=10$, the design only detects a medium effect ($d=0.5$) about `r round(power_n10_exact * 100)`% of the time. This is the same quantity the simulation above estimated at about `r round(power_n10 * 100)`%. The two differ because 1,000 repetitions give an estimate, not an exact answer; the curve is computed exactly.
 -   A larger effect ($d=0.8$) is caught about 40% of the time.
 -   Very large effects ($d=2$) are detected almost every time (about 99%).
 
 This shows that small samples are only sensitive to big, obvious effects.
 
-Now suppose prior research suggests the effect size is small ($d=0.2$). Instead of varying the effect, we can ask: *how many subjects per group do we need to have decent power?*
+Now suppose prior research suggests the effect size is small ($d=0.2$). Instead of varying the effect, we can ask: *how many samples per group do we need to have decent power?*
 
 @fig-5.5powercurveN plots power against sample size for detecting $d=0.2$. The green line marks 80% power, a common planning target.
 
@@ -508,11 +511,6 @@ ggplot(type_I_error, aes(x = p_value, y = abs(effect_size),
   labs(color = "Sample size")
 ```
 
-**Takeaway:** statistical significance does not guarantee scientific significance. Always interpret $p$ in the context of effect size, confidence intervals, and study design.
-
-**Key point**
-
-Power is not a fixed property of a test; it depends entirely on assumptions about $n$, effect size, $\alpha$, and variability. Think of it as a **family of numbers**, not a single value. That's why power analysis is most useful **before** you collect data: it tells you whether your design is capable of detecting the kind of effect you care about.
 
 ## Reporting Results
 
@@ -549,7 +547,6 @@ A results statement gives the plain-language conclusion and the key statistics i
 -   **Do** include a CI or effect size when it aids interpretation.
 -   **Don't** restate methods; **don't** claim proof; **don't** omit units.
 
-> **Takeaway:** One sentence is enough: state the direction in words, then report the test, the statistic, df or *n*, the $p$-value, and an effect size or CI.
 
 ## Chapter Summary
 
