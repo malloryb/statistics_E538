@@ -24,7 +24,8 @@ t2_mu_se    <- 4.0   # Type II: mu 4.0 SE from mu0
 t2_xbar_se  <- 1.5   # Type II: x-bar 1.5 SE from mu0, inside the critical value, 2.5 SE below mu
 
 error_panel <- function(xbar, mu, se = err_se, sigma = err_sigma, mu0 = 0,
-                        xlim = c(-2.2, 3.6)) {
+                        xlim = c(-2.2, 3.6), y_top = 1.38, verdict = NULL) {
+  k <- y_top / 1.38
   xs <- seq(xlim[1], xlim[2], by = 0.005)
   crit <- 1.96 * se
   h0 <- data.frame(x = xs, y = dnorm(xs, mu0, se))
@@ -36,22 +37,25 @@ error_panel <- function(xbar, mu, se = err_se, sigma = err_sigma, mu0 = 0,
     geom_line(aes(xs, dnorm(xs, xbar, se)), colour = "darkgreen", linetype = "dotdash", linewidth = 1.2) +
     annotate("segment", x = mu0 + c(-crit, crit), xend = mu0 + c(-crit, crit), y = 0,
              yend = dnorm(crit, 0, se), colour = "red", linewidth = 0.8) +
-    annotate("segment", x = xbar - crit, xend = xbar + crit, y = -0.04, yend = -0.04,
+    annotate("segment", x = xbar - crit, xend = xbar + crit, y = -0.04 * k, yend = -0.04 * k,
              colour = "darkgreen", linewidth = 3) +
     # orange mu line first, so where mu = mu0 the magenta dashes show over it
-    annotate("segment", x = mu, xend = mu, y = -0.04, yend = 1.22, colour = "orange", linewidth = 0.9) +
-    annotate("segment", x = mu0, xend = mu0, y = -0.04, yend = 1.22, colour = "magenta",
+    annotate("segment", x = mu, xend = mu, y = -0.04 * k, yend = 1.22 * k, colour = "orange", linewidth = 0.9) +
+    annotate("segment", x = mu0, xend = mu0, y = -0.04 * k, yend = 1.22 * k, colour = "magenta",
              linetype = "dashed", linewidth = 1) +
-    annotate("segment", x = xbar, xend = xbar, y = -0.04, yend = 1.22, colour = "limegreen", linetype = "dotted", linewidth = 1.6) +
-    annotate("text", x = mu0 - 0.08, y = 1.3, label = "mu[0]", parse = TRUE, hjust = 1, colour = "magenta", size = 5) +
-    annotate("text", x = mu + 0.08, y = 1.3, label = "mu", parse = TRUE, hjust = 0, colour = "orange", size = 5) +
+    annotate("segment", x = xbar, xend = xbar, y = -0.04 * k, yend = 1.22 * k, colour = "limegreen", linetype = "dotted", linewidth = 1.6) +
+    annotate("text", x = mu0 - 0.08, y = 1.3 * k, label = "mu[0]", parse = TRUE, hjust = 1, colour = "magenta", size = 5) +
+    annotate("text", x = mu + 0.08, y = 1.3 * k, label = "mu", parse = TRUE, hjust = 0, colour = "orange", size = 5) +
     # x-bar label level with the others; drops only if it would collide with the mu label
-    annotate("text", x = xbar + 0.08, y = if (xbar < mu && mu - xbar < 0.35) 1.18 else 1.3,
+    annotate("text", x = xbar + 0.08, y = if (xbar < mu && mu - xbar < 0.35) 1.18 * k else 1.3 * k,
              label = "bar(x)", parse = TRUE, hjust = 0, colour = "#1E9E1E", size = 5.5, fontface = "bold") +
-    annotate("text", x = xlim[1] + 0.05, y = 1.12, label = "'Under '*H[0]", parse = TRUE, hjust = 0, colour = "blue", size = 4.5) +
-    annotate("text", x = xlim[1] + 0.05, y = 1.02, label = "From the sample", hjust = 0, colour = "darkgreen", size = 4.5) +
-    annotate("text", x = xlim[1] + 0.05, y = 0.92, label = "The truth", hjust = 0, colour = "orange", size = 4.5) +
-    coord_cartesian(xlim = xlim, ylim = c(-0.08, 1.38)) +
+    annotate("text", x = xlim[1] + 0.05, y = 1.12 * k, label = "'Under '*H[0]", parse = TRUE, hjust = 0, colour = "blue", size = 4.5) +
+    annotate("text", x = xlim[1] + 0.05, y = 1.02 * k, label = "From the sample", hjust = 0, colour = "darkgreen", size = 4.5) +
+    annotate("text", x = xlim[1] + 0.05, y = 0.92 * k, label = "The truth", hjust = 0, colour = "orange", size = 4.5) +
+    coord_cartesian(xlim = xlim, ylim = c(-0.08 * k, y_top)) +
+    { if (!is.null(verdict)) annotate("label", x = xlim[2] - 0.1, y = 0.55 * y_top, label = verdict, hjust = 1,
+                                      size = 7, fontface = "bold", colour = if (verdict == "Reject") "red3" else "grey25",
+                                      fill = "white", label.size = 0.9, label.padding = unit(0.35, "lines")) } +
     labs(x = NULL, y = NULL) +
     theme_classic() +
     theme(axis.text = element_blank(), axis.ticks = element_blank())
@@ -102,7 +106,7 @@ knitr::include_graphics("imgs/gifs/ch5_recap.gif")
 #| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. A solid orange line labeled mu sits exactly on the magenta line, and a wide, low orange bell curve is centered there too. A dark-green dot-dash bell curve of the same width as the blue one sits to the right, centered on a thick lime-green dotted line labeled x-bar that lies just past the right critical value. The thick dark-green confidence interval bar under it starts just to the right of mu sub 0, so it excludes mu sub 0."
 #| out-width: "100%"
 
-error_panel(xbar = t1_xbar_se * err_se, mu = 0)
+error_panel(xbar = t1_xbar_se * err_se, mu = 0, verdict = "Reject")
 ```
 
 -   In @fig-5key.type2_error, the true population mean (orange) is far from $\mu_0$, but the particular sample looks close to $\mu_0$. The CI includes $\mu_0$, so the test fails to reject when it should reject the null: a **Type II error**.
@@ -113,7 +117,7 @@ error_panel(xbar = t1_xbar_se * err_se, mu = 0)
 #| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. Well to the right, a solid orange line labeled mu marks the center of a wide, low orange bell curve. A dark-green dot-dash bell curve of the same width as the blue one sits between them, centered on a thick lime-green dotted line labeled x-bar that lies inside the right critical value. The thick dark-green confidence interval bar under it reaches back past mu sub 0, so it includes mu sub 0."
 #| out-width: "100%"
 
-error_panel(xbar = t2_xbar_se * err_se, mu = t2_mu_se * err_se)
+error_panel(xbar = t2_xbar_se * err_se, mu = t2_mu_se * err_se, verdict = "Fail to reject")
 ```
 
 Those two figures show what a wrong conclusion looks like for one unlucky sample. They do not show how *often* it happens. For that we stop looking at a single sample and look instead at where the sample mean lands across many of them, which is the sampling distribution of the sample mean from Chapter 4.
@@ -191,6 +195,26 @@ In @fig-5alpha-beta, $\mu_a$ sits `r mua_ab / se_ab` standard errors above $\mu_
 ### Effect of Sample Size on Errors
 
 With fixed $\alpha$ and correct assumptions, the long-run Type I error rate is $\alpha$ for any $n$. **Sample size mainly affects Type II error:** with small $n$, the sampling distribution is wide, true effects are harder to detect, and $\beta$ increases (power decreases). As $n$ grows, the sampling distribution tightens, $\beta$ falls, and power rises. Apparent changes in the Type I rate at small $n$ usually reflect **assumption violations** (e.g., non-normality, poor variance estimates, multiple looks), not $n$ itself.
+
+```{r}
+#| label: fig-5type2-samplesize
+#| fig-cap: 'The Type II situation at two sample sizes, with the same $\mu_0$, true $\mu$ and population. In both, $\bar{x}$ lands 2.5 standard errors below $\mu$. Top: the confidence interval catches $\mu_0$, so we fail to reject. Bottom: with four times the sample, the standard error halves, the same bad luck leaves the interval clear of $\mu_0$, and we reject.'
+#| fig-alt: "Two stacked panels on the same axes. Both show a blue dot-dash curve centered on a magenta dashed line labeled mu sub 0 with red critical lines, a wide orange curve centered on an orange line labeled mu well to the right, and a dark-green dot-dash curve centered on a lime-green dotted line labeled x-bar between them, with a dark-green confidence interval bar underneath. Top panel: the blue and green curves are wide and short, the interval bar reaches back past mu sub 0, and a gray box reads Fail to reject. Bottom panel: the blue and green curves are half as wide and twice as tall, x-bar sits closer to mu, the interval bar ends well to the right of mu sub 0, and a red box reads Reject. The orange curve is the same in both panels."
+#| fig-height: 9
+#| out-width: "100%"
+
+n_mu  <- t2_mu_se * err_se           # the Type II figure's true mean
+n_yt  <- 2.2                         # shared y range: fits the taller 4n curves
+n_vdt <- function(xb, se) if (abs(xb) >= 1.96 * se) "Reject" else "Fail to reject"
+n_se  <- c(err_se, err_se / 2)       # n, then 4n
+n_xb  <- n_mu - 2.5 * n_se           # the same bad luck in both: 2.5 SE below mu
+patchwork::wrap_plots(
+  error_panel(xbar = n_xb[1], mu = n_mu, se = n_se[1], y_top = n_yt, verdict = n_vdt(n_xb[1], n_se[1])) +
+    ggtitle("Sample size n"),
+  error_panel(xbar = n_xb[2], mu = n_mu, se = n_se[2], y_top = n_yt, verdict = n_vdt(n_xb[2], n_se[2])) +
+    ggtitle("Sample size 4n: the standard error halves"),
+  ncol = 1)
+```
 
 
 **The one-tailed cost, made precise.** Chapter 4 said that habitually running one-tailed tests makes you reject more often than your stated $\alpha$ implies. Here is what that means: a one-tailed test at $\alpha = .05$ puts the whole 5% in one tail, so if you pick the tail *after* seeing which way the data went, you have effectively run a two-tailed test at $\alpha = .10$ and doubled your Type I error rate. The test itself is not wrong. Choosing its direction from the data is.
