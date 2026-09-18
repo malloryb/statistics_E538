@@ -19,7 +19,7 @@ steps <- list(
   list(add = "sampH0",  title = "italic('If ')*italic(H[0])*italic(' were true')",
        lab = L(-4.4, 1.2, "'Sampling distribution of the sample mean under '*H[0]", "N*'('*mu[0]*', '*SE[bar(x)]^2*')'", "blue", 0)),
   list(add = "xbar",    title = "italic('From the sample')",
-       lab = L(xbar + 0.15, 1.3, "bar(x)*': the sample mean'", NULL, "black", 0)),
+       lab = L(xbar + 0.15, 1.3, "bar(x)*': the sample mean'", NULL, "#1E9E1E", 0)),
   list(add = "estpop",  title = "italic('From the sample')",
        lab = L(4.45, 0.68, "'Estimated population distribution'", "'center '*bar(x)*', spread '*s*''", "green4", 1)),
   list(add = "samp",    title = "italic('From the sample')",
@@ -30,14 +30,14 @@ steps <- list(
 base <- function(title) ggplot() + coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 1.38)) + theme_classic(base_size = 13) +
   labs(x = NULL, y = NULL, title = parse(text = title)) +
   theme(axis.text = element_blank(), axis.ticks = element_blank(), plot.title = element_text(size = 13, colour = "grey35"))
-vline <- function(p, x, col, lt, a) p + annotate("segment", x = x, xend = x, y = 0, yend = 1.22, colour = col, linetype = lt, linewidth = 1, alpha = a)
+vline <- function(p, x, col, lt, a, lw = 1) p + annotate("segment", x = x, xend = x, y = 0, yend = 1.22, colour = col, linetype = lt, linewidth = lw, alpha = a)
 draw <- function(p, keys, newest = NULL, fade = TRUE) {
   for (nm in intersect(names(curves), keys)) {
     cv <- curves[[nm]]; a <- if (!fade || identical(nm, newest)) 1 else 0.4
     p <- p + geom_line(aes(x = xs, y = !!cv$y), colour = cv$col, linetype = cv$lt, linewidth = cv$lw, alpha = a)
   }
   if ("mu0" %in% keys)  p <- vline(p, mu0,  "magenta", "dashed", if (!fade || identical(newest, "mu0")) 1 else 0.4)
-  if ("xbar" %in% keys) p <- vline(p, xbar, "black",   "dotted", if (!fade || identical(newest, "xbar")) 1 else 0.4)
+  if ("xbar" %in% keys) p <- vline(p, xbar, "limegreen", "dotted", if (!fade || identical(newest, "xbar")) 1 else 0.4, lw = 1.6)
   p
 }
 label <- function(p, lab) {
@@ -55,6 +55,6 @@ for (k in seq_along(steps)) {
 all_keys <- sapply(steps, `[[`, "add")
 p_all <- draw(base("italic('All together: crowded fast')"), all_keys, fade = FALSE) +
   annotate("text", x = mu0 - 0.1, y = 1.3, label = "mu[0]", parse = TRUE, hjust = 1, colour = "magenta", size = 5) +
-  annotate("text", x = xbar + 0.1, y = 1.3, label = "bar(x)", parse = TRUE, hjust = 0, size = 5)
+  annotate("text", x = xbar + 0.1, y = 1.3, label = "bar(x)", parse = TRUE, hjust = 0, colour = "#1E9E1E", fontface = "bold", size = 5)
 add_png(p_all, 10)
 gifski(files, gif_file = "imgs/gifs/ch4_players.gif", width = 720, height = 450, delay = 1)
