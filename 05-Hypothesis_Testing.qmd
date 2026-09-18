@@ -15,6 +15,7 @@ library(kableExtra)
 # Type I / Type II figures: Chapter 4's reject/fail figure (decision_panel()),
 # same curves, colors, line types and labels, plus the truth in orange:
 # the true population distribution and a line at its mean, mu.
+# x-bar is lime (label a darker green for legibility) so it reads first.
 # Positions are in standard errors. Both errors put x-bar about 2 SE from
 # the true mean, the same amount of bad luck in opposite situations.
 # The figure captions quote these numbers; change them together.
@@ -44,11 +45,12 @@ error_panel <- function(xbar, mu, se = err_se, sigma = err_sigma, mu0 = 0,
     annotate("segment", x = mu, xend = mu, y = -0.04, yend = 1.22, colour = "orange", linewidth = 1.3) +
     annotate("segment", x = mu0, xend = mu0, y = -0.04, yend = 1.22, colour = "magenta",
              linetype = "dashed", linewidth = 1) +
-    annotate("segment", x = xbar, xend = xbar, y = -0.04, yend = 1.22, linetype = "dotted", linewidth = 1) +
+    annotate("segment", x = xbar, xend = xbar, y = -0.04, yend = 1.22, colour = "limegreen", linetype = "dotted", linewidth = 1.6) +
     annotate("text", x = mu0 - 0.08, y = 1.3, label = "mu[0]", parse = TRUE, hjust = 1, colour = "magenta", size = 5) +
     annotate("text", x = mu + 0.08, y = 1.3, label = "mu", parse = TRUE, hjust = 0, colour = "orange", size = 5) +
-    annotate("text", x = xbar + 0.08, y = if (abs(xbar - mu) < 0.5 || abs(xbar - mu0) < 0.5) 1.18 else 1.3,
-             label = "bar(x)", parse = TRUE, hjust = 0, size = 5) +
+    # x-bar label level with the others; drops only if it would collide with the mu label
+    annotate("text", x = xbar + 0.08, y = if (xbar < mu && mu - xbar < 0.35) 1.18 else 1.3,
+             label = "bar(x)", parse = TRUE, hjust = 0, colour = "#1E9E1E", size = 5.5, fontface = "bold") +
     annotate("text", x = xlim[1] + 0.05, y = 1.12, label = "'Under '*H[0]", parse = TRUE, hjust = 0, colour = "blue", size = 4.5) +
     annotate("text", x = xlim[1] + 0.05, y = 1.02, label = "From the sample", hjust = 0, colour = "darkgreen", size = 4.5) +
     annotate("text", x = xlim[1] + 0.05, y = 0.92, label = "The truth", hjust = 0, colour = "orange", size = 4.5) +
@@ -91,7 +93,7 @@ Errors happen because samples are imperfect. @fig-5key.type1_error and @fig-5key
 ```{r}
 #| label: fig-5key.type1_error
 #| fig-cap: 'Type I error. $H_0$ is true ($\mu = \mu_0$), but $\bar{x}$ lands 2.3 standard errors out, past the critical value, and the confidence interval excludes $\mu_0$.'
-#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. A solid orange line labeled mu sits exactly on the magenta line, and a wide, low orange bell curve is centered there too. A dark-green dot-dash bell curve of the same width as the blue one sits to the right, centered on a black dotted line labeled x-bar that lies just past the right critical value. The thick dark-green confidence interval bar under it starts just to the right of mu sub 0, so it excludes mu sub 0."
+#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. A solid orange line labeled mu sits exactly on the magenta line, and a wide, low orange bell curve is centered there too. A dark-green dot-dash bell curve of the same width as the blue one sits to the right, centered on a thick lime-green dotted line labeled x-bar that lies just past the right critical value. The thick dark-green confidence interval bar under it starts just to the right of mu sub 0, so it excludes mu sub 0."
 #| out-width: "100%"
 
 error_panel(xbar = t1_xbar_se * err_se, mu = 0)
@@ -102,7 +104,7 @@ error_panel(xbar = t1_xbar_se * err_se, mu = 0)
 ```{r}
 #| label: fig-5key.type2_error
 #| fig-cap: 'Type II error. $\mu$ is 3.5 standard errors above $\mu_0$, but $\bar{x}$ lands 2 standard errors below $\mu$, inside the critical values, and the confidence interval includes $\mu_0$.'
-#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. Well to the right, a solid orange line labeled mu marks the center of a wide, low orange bell curve. A dark-green dot-dash bell curve of the same width as the blue one sits between them, centered on a black dotted line labeled x-bar that lies inside the right critical value. The thick dark-green confidence interval bar under it reaches back past mu sub 0, so it includes mu sub 0."
+#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. Well to the right, a solid orange line labeled mu marks the center of a wide, low orange bell curve. A dark-green dot-dash bell curve of the same width as the blue one sits between them, centered on a thick lime-green dotted line labeled x-bar that lies inside the right critical value. The thick dark-green confidence interval bar under it reaches back past mu sub 0, so it includes mu sub 0."
 #| out-width: "100%"
 
 error_panel(xbar = t2_xbar_se * err_se, mu = t2_mu_se * err_se)
