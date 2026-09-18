@@ -12,46 +12,51 @@ library(dplyr)
 library(gridExtra)
 library(kableExtra)
 
-# NOTE: this is Chapter 4's plot_distributions(), copied verbatim so both
-# chapters draw the same curves with the same names, colors and scale.
-# Two copies is the known cost; consolidate into global_stuff.R next year.
-plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd, true_mean, true_sd, show_ci = TRUE, show_samp = TRUE, y_top = 1.4, show_null = TRUE, show_true = TRUE, show_xbar = FALSE) {
-  x_vals <- seq(-6, 6, by=0.01)
-  
-  h0 <- dnorm(x_vals, mean=null_mean, sd=null_sd)
-  sampling_mean <- dnorm(x_vals, mean=sample_mean, sd=sample_sd)
-  inferred_parent <- dnorm(x_vals, mean=inferred_mean, sd=inferred_sd)
-  true_parent <- dnorm(x_vals, mean=true_mean, sd=true_sd)
-  CI_left <- qnorm(0.025, mean=sample_mean, sd=sample_sd)
-  CI_right <- qnorm(0.975, mean=sample_mean, sd=sample_sd)
-  y_intersect = dnorm(null_mean, mean=null_mean, sd=null_sd)
+# Type I / Type II figures: Chapter 4's reject/fail figure (decision_panel()),
+# same curves, colors, line types and labels, plus the truth in orange:
+# the true population distribution and a line at its mean, mu.
+# Positions are in standard errors. Both errors put x-bar about 2 SE from
+# the true mean, the same amount of bad luck in opposite situations.
+# The figure captions quote these numbers; change them together.
+err_se      <- 0.4   # standard error, as in Ch4's decision figures
+err_sigma   <- 1.2   # population SD, so n = 9
+t1_xbar_se  <- 2.3   # Type I:  mu = mu0, x-bar 2.3 SE out, past the critical value
+t2_mu_se    <- 3.5   # Type II: mu 3.5 SE from mu0
+t2_xbar_se  <- 1.5   # Type II: x-bar 1.5 SE from mu0, so 2 SE below mu
+t2_power    <- 1 - (pnorm(1.96 - t2_mu_se) - pnorm(-1.96 - t2_mu_se))
 
-  
-  p <- ggplot() + 
-    { if (show_null) geom_line(aes(x=x_vals, y=h0, color="Null Population Distribution"), size=1.5) } +
-    { if (show_samp) geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) } +
-    { if (show_true) geom_line(aes(x=x_vals, y=true_parent, color="True Population Distribution"), size=1.5) } +
-    geom_line(aes(x=x_vals, y=inferred_parent, color="Estimated Population Distribution"), linetype="dashed", size=1.5) +
-    { if (show_ci) geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) } +
-    { if (show_xbar) annotate("segment", x = inferred_mean, xend = inferred_mean, y = 0, yend = y_top * 0.92, linetype = "dotted", linewidth = 0.9) } +
-    { if (show_xbar) annotate("text", x = inferred_mean, y = y_top * 0.97, label = "bar(x)", parse = TRUE, size = 4.5) } +
-    { if (show_null) geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dashed", color="magenta", size=1) } +
-    coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, y_top)) +  # shared axes across the four-color figures
-    theme_classic() + 
-    theme(legend.position='bottom', 
-          axis.text = element_blank(), 
-          axis.title = element_blank(), 
-          axis.ticks = element_blank(), 
-          legend.text = element_text(size = 12)) + 
-    guides(color=guide_legend(title=NULL, nrow=2)) +
-    scale_color_manual(values=c("Null Population Distribution"="blue", 
-                                "Sampling Distribution of the Sample Mean"="darkgreen", 
-                                "Estimated Population Distribution"="green3", 
-                                "True Population Distribution"="orange"))
-
-  return(p)
+error_panel <- function(xbar, mu, se = err_se, sigma = err_sigma, mu0 = 0,
+                        xlim = c(-3.2, 4.8)) {
+  xs <- seq(xlim[1], xlim[2], by = 0.005)
+  crit <- 1.96 * se
+  h0 <- data.frame(x = xs, y = dnorm(xs, mu0, se))
+  ggplot() +
+    geom_area(data = subset(h0, x <= mu0 - crit), aes(x, y), fill = "red", alpha = 0.18) +
+    geom_area(data = subset(h0, x >= mu0 + crit), aes(x, y), fill = "red", alpha = 0.18) +
+    geom_line(aes(xs, dnorm(xs, mu, sigma)), colour = "orange", linewidth = 1.2) +
+    geom_line(data = h0, aes(x, y), colour = "blue", linetype = "dotdash", linewidth = 1.2) +
+    geom_line(aes(xs, dnorm(xs, xbar, se)), colour = "darkgreen", linetype = "dotdash", linewidth = 1.2) +
+    annotate("segment", x = mu0 + c(-crit, crit), xend = mu0 + c(-crit, crit), y = 0,
+             yend = dnorm(crit, 0, se), colour = "red", linewidth = 0.8) +
+    annotate("segment", x = xbar - crit, xend = xbar + crit, y = -0.04, yend = -0.04,
+             colour = "darkgreen", linewidth = 3) +
+    # orange mu line first, so where mu = mu0 the magenta dashes show over it
+    annotate("segment", x = mu, xend = mu, y = -0.04, yend = 1.22, colour = "orange", linewidth = 1.3) +
+    annotate("segment", x = mu0, xend = mu0, y = -0.04, yend = 1.22, colour = "magenta",
+             linetype = "dashed", linewidth = 1) +
+    annotate("segment", x = xbar, xend = xbar, y = -0.04, yend = 1.22, linetype = "dotted", linewidth = 1) +
+    annotate("text", x = mu0 - 0.08, y = 1.3, label = "mu[0]", parse = TRUE, hjust = 1, colour = "magenta", size = 5) +
+    annotate("text", x = mu + 0.08, y = 1.3, label = "mu", parse = TRUE, hjust = 0, colour = "orange", size = 5) +
+    annotate("text", x = xbar + 0.08, y = if (abs(xbar - mu) < 0.5 || abs(xbar - mu0) < 0.5) 1.18 else 1.3,
+             label = "bar(x)", parse = TRUE, hjust = 0, size = 5) +
+    annotate("text", x = xlim[1] + 0.05, y = 1.12, label = "'Under '*H[0]", parse = TRUE, hjust = 0, colour = "blue", size = 4.5) +
+    annotate("text", x = xlim[1] + 0.05, y = 1.02, label = "From the sample", hjust = 0, colour = "darkgreen", size = 4.5) +
+    annotate("text", x = xlim[1] + 0.05, y = 0.92, label = "The truth", hjust = 0, colour = "orange", size = 4.5) +
+    coord_cartesian(xlim = xlim, ylim = c(-0.08, 1.38)) +
+    labs(x = NULL, y = NULL) +
+    theme_classic() +
+    theme(axis.text = element_blank(), axis.ticks = element_blank())
 }
-
 ```
 
 # Errors, Power, and Effect Size
@@ -79,33 +84,31 @@ Sometimes, even when we apply the test correctly, sampling variability can lead 
 
 > **Takeaway:** As $\alpha$ gets smaller, $\beta$ gets bigger, and vice-versa.
 
-Errors happen because samples are imperfect.
+Errors happen because samples are imperfect. @fig-5key.type1_error and @fig-5key.type2_error are the reject and fail-to-reject figures from Chapter 4 with one addition: the truth, in orange. The blue curve and its red tails are the sampling distribution of the sample mean under $H_0$, which sets the critical values. The green curve is the sampling distribution of the sample mean built from the sample, and the green bar is its confidence interval. The orange curve is the true population distribution, and the orange line marks its mean, $\mu$. With real data we never see the orange. We draw it here so the decision can be checked against it.
 
--   In @fig-5key.type1_error, the true population distribution (orange) is almost identical to the null population distribution (blue). By chance, however, the sample mean lands far away, and the CI excludes $\mu_0$. The test rejects $H_0$ even though it is true: a **Type I error**.
+-   In @fig-5key.type1_error, $H_0$ is true: $\mu$ sits exactly on $\mu_0$, so the orange and magenta lines coincide. By chance the sample mean lands `r t1_xbar_se` standard errors from $\mu$, past the critical value, and the confidence interval excludes $\mu_0$. The test rejects a true $H_0$: a **Type I error**. A sample mean lands that far from $\mu$, in one direction or the other, only about `r round(200 * pnorm(-t1_xbar_se))`% of the time.
 
 ```{r}
 #| label: fig-5key.type1_error
-#| fig-cap: 'Type I error: $H_0$ is true ($\mu=\mu_0$), but the sample leads us to reject $H_0$.'
-#| fig-height: 3.96
-#| fig-alt: "Four overlaid normal curves: a blue null population distribution and an orange true population distribution sit almost on top of each other, both centered near negative 0.5, while a dashed estimated-population curve and a dot-dash sampling-distribution curve are centered far to the right, near 2. A thick horizontal bar marking the 95 percent confidence interval sits around that same right-shifted location and does not reach back to the null mean, marked with a dashed vertical line, so the interval excludes the null value even though the true and null distributions are nearly identical."
+#| fig-cap: 'Type I error. $H_0$ is true ($\mu = \mu_0$), but $\bar{x}$ lands 2.3 standard errors out, past the critical value, and the confidence interval excludes $\mu_0$.'
+#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. A solid orange line labeled mu sits exactly on the magenta line, and a wide, low orange bell curve is centered there too. A dark-green dot-dash bell curve of the same width as the blue one sits to the right, centered on a black dotted line labeled x-bar that lies just past the right critical value. The thick dark-green confidence interval bar under it starts just to the right of mu sub 0, so it excludes mu sub 0."
 #| out-width: "100%"
 
-p8 <- plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=2, sample_sd=0.5, inferred_mean=2, inferred_sd=1, true_mean=-0.52, true_sd=1, y_top = 1.05)  # crop the empty space, same scale as Ch4
-print(p8)
+error_panel(xbar = t1_xbar_se * err_se, mu = 0)
 ```
 
--   In @fig-5key.type2_error, the true population mean (orange) is far from $\mu_0$, but the particular sample looks close to the null population distribution. The CI includes $\mu_0$, so the test fails to reject when it should reject the null: a **Type II error**.
+-   In @fig-5key.type2_error, $H_0$ is false: $\mu$ sits `r t2_mu_se` standard errors above $\mu_0$, far enough that this design would catch a difference that size about `r round(100 * t2_power)`% of the time. This sample mean happened to land `r t2_mu_se - t2_xbar_se` standard errors below $\mu$, which leaves it inside the critical values, and the confidence interval includes $\mu_0$. The test fails to reject a false $H_0$: a **Type II error**.
 
 ```{r}
 #| label: fig-5key.type2_error
-#| fig-cap: 'Type II error: $H_0$ is false (true population mean differs from $\mu_0$), but the sample leads us to fail to reject $H_0$.'
-#| fig-height: 3.96
-#| fig-alt: "Four overlaid normal curves: a blue null population distribution centered near negative 0.5, an orange true population distribution centered far to the right near 3, and a dashed estimated-population curve with a dot-dash sampling-distribution curve both centered near 0, much closer to the null population distribution than to the true population distribution. A thick horizontal bar marking the 95 percent confidence interval sits near 0 and reaches back to include the null mean, marked with a dashed vertical line, so the interval fails to exclude the null value even though the true population is far away."
+#| fig-cap: 'Type II error. $\mu$ is 3.5 standard errors above $\mu_0$, but $\bar{x}$ lands 2 standard errors below $\mu$, inside the critical values, and the confidence interval includes $\mu_0$.'
+#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. Well to the right, a solid orange line labeled mu marks the center of a wide, low orange bell curve. A dark-green dot-dash bell curve of the same width as the blue one sits between them, centered on a black dotted line labeled x-bar that lies inside the right critical value. The thick dark-green confidence interval bar under it reaches back past mu sub 0, so it includes mu sub 0."
 #| out-width: "100%"
 
-p9 <- plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=0, sample_sd=0.4, inferred_mean=0, inferred_sd=1, true_mean=3, true_sd=1, y_top = 1.05)  # crop the empty space, same scale as Ch4
-print(p9)
+error_panel(xbar = t2_xbar_se * err_se, mu = t2_mu_se * err_se)
 ```
+
+In both cases the test worked exactly as designed. What went wrong is the sample: its mean landed about 2 standard errors from the true mean, the same amount of bad luck in opposite situations.
 
 Those two figures show what a wrong conclusion looks like for one unlucky sample. They do not show how *often* it happens. For that we stop looking at a single sample and look instead at where the sample mean lands across many of them, which is the sampling distribution of the sample mean from Chapter 4.
 
