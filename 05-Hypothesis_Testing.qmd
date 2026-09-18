@@ -18,13 +18,11 @@ library(kableExtra)
 # x-bar is lime (label a darker green for legibility) so it reads first.
 # Positions are in standard errors. Both errors put x-bar about 2 SE from
 # the true mean, the same amount of bad luck in opposite situations.
-# The figure captions quote these numbers; change them together.
 err_se      <- 0.4   # standard error, as in Ch4's decision figures
 err_sigma   <- 1.2   # population SD, so n = 9
 t1_xbar_se  <- 2.3   # Type I:  mu = mu0, x-bar 2.3 SE out, past the critical value
 t2_mu_se    <- 3.5   # Type II: mu 3.5 SE from mu0
 t2_xbar_se  <- 1.5   # Type II: x-bar 1.5 SE from mu0, so 2 SE below mu
-t2_power    <- 1 - (pnorm(1.96 - t2_mu_se) - pnorm(-1.96 - t2_mu_se))
 
 error_panel <- function(xbar, mu, se = err_se, sigma = err_sigma, mu0 = 0,
                         xlim = c(-3.2, 4.8)) {
@@ -86,31 +84,29 @@ Sometimes, even when we apply the test correctly, sampling variability can lead 
 
 > **Takeaway:** As $\alpha$ gets smaller, $\beta$ gets bigger, and vice-versa.
 
-Errors happen because samples are imperfect. @fig-5key.type1_error and @fig-5key.type2_error are the reject and fail-to-reject figures from Chapter 4 with one addition: the truth, in orange. The blue curve and its red tails are the sampling distribution of the sample mean under $H_0$, which sets the critical values. The green curve is the sampling distribution of the sample mean built from the sample, and the green bar is its confidence interval. The orange curve is the true population distribution, and the orange line marks its mean, $\mu$. With real data we never see the orange. We draw it here so the decision can be checked against it.
+Errors happen because samples are imperfect.
 
--   In @fig-5key.type1_error, $H_0$ is true: $\mu$ sits exactly on $\mu_0$, so the orange and magenta lines coincide. By chance the sample mean lands `r t1_xbar_se` standard errors from $\mu$, past the critical value, and the confidence interval excludes $\mu_0$. The test rejects a true $H_0$: a **Type I error**. A sample mean lands that far from $\mu$, in one direction or the other, only about `r round(200 * pnorm(-t1_xbar_se))`% of the time.
+-   In @fig-5key.type1_error, the true population mean (orange) is the same as $\mu_0$. By chance, however, the sample mean lands far away, and the CI excludes $\mu_0$. The test rejects $H_0$ even though it is true: a **Type I error**.
 
 ```{r}
 #| label: fig-5key.type1_error
-#| fig-cap: 'Type I error. $H_0$ is true ($\mu = \mu_0$), but $\bar{x}$ lands 2.3 standard errors out, past the critical value, and the confidence interval excludes $\mu_0$.'
+#| fig-cap: 'Type I error: $H_0$ is true ($\mu=\mu_0$), but the sample leads us to reject $H_0$.'
 #| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. A solid orange line labeled mu sits exactly on the magenta line, and a wide, low orange bell curve is centered there too. A dark-green dot-dash bell curve of the same width as the blue one sits to the right, centered on a thick lime-green dotted line labeled x-bar that lies just past the right critical value. The thick dark-green confidence interval bar under it starts just to the right of mu sub 0, so it excludes mu sub 0."
 #| out-width: "100%"
 
 error_panel(xbar = t1_xbar_se * err_se, mu = 0)
 ```
 
--   In @fig-5key.type2_error, $H_0$ is false: $\mu$ sits `r t2_mu_se` standard errors above $\mu_0$, far enough that this design would catch a difference that size about `r round(100 * t2_power)`% of the time. This sample mean happened to land `r t2_mu_se - t2_xbar_se` standard errors below $\mu$, which leaves it inside the critical values, and the confidence interval includes $\mu_0$. The test fails to reject a false $H_0$: a **Type II error**.
+-   In @fig-5key.type2_error, the true population mean (orange) is far from $\mu_0$, but the particular sample looks close to $\mu_0$. The CI includes $\mu_0$, so the test fails to reject when it should reject the null: a **Type II error**.
 
 ```{r}
 #| label: fig-5key.type2_error
-#| fig-cap: 'Type II error. $\mu$ is 3.5 standard errors above $\mu_0$, but $\bar{x}$ lands 2 standard errors below $\mu$, inside the critical values, and the confidence interval includes $\mu_0$.'
+#| fig-cap: 'Type II error: $H_0$ is false (true population mean differs from $\mu_0$), but the sample leads us to fail to reject $H_0$.'
 #| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. Well to the right, a solid orange line labeled mu marks the center of a wide, low orange bell curve. A dark-green dot-dash bell curve of the same width as the blue one sits between them, centered on a thick lime-green dotted line labeled x-bar that lies inside the right critical value. The thick dark-green confidence interval bar under it reaches back past mu sub 0, so it includes mu sub 0."
 #| out-width: "100%"
 
 error_panel(xbar = t2_xbar_se * err_se, mu = t2_mu_se * err_se)
 ```
-
-In both cases the test worked exactly as designed. What went wrong is the sample: its mean landed about 2 standard errors from the true mean, the same amount of bad luck in opposite situations.
 
 Those two figures show what a wrong conclusion looks like for one unlucky sample. They do not show how *often* it happens. For that we stop looking at a single sample and look instead at where the sample mean lands across many of them, which is the sampling distribution of the sample mean from Chapter 4.
 
