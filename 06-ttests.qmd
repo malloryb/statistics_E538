@@ -149,6 +149,45 @@ If the population SD $\sigma$ is known *and* the sampling distribution of the me
 -   $z$ uses critical values $\pm 1.96$.
 -   $t$ is a bit wider for small $n$ (e.g., $df=9 \Rightarrow \pm 2.262$; $df=29 \Rightarrow \pm 2.045$), and approaches $\pm 1.96$ as $n$ increases.
 
+### Degrees of freedom
+
+Every $t$ formula so far has carried $df = n-1$ alongside it, and @fig-6-z-vs-t-linear-log drew a different $t$ curve for each $df$. That number is the degrees of freedom, and it is worth understanding what it means, not just where to find it. It is also the number in parentheses whenever a $t$-test is reported, as in $t(9) = 1.94$.
+
+For one-sample and paired $t$-tests, $df = n-1$. A sample of 10 has $df=9$.
+
+Degrees of freedom is both a concept and a correction. The concept: once you've estimated something from your data, like the mean, that estimate constrains how many of the numbers are still free to vary. Consider three numbers with a mean of 2: pick the first two freely, say 51 and $-3$, and the third number is no longer free. It has to be $-42$ for the mean to come out to 2. Two of the three numbers had freedom; the third didn't. That's $df=n-1=2$ for three numbers.
+
+The correction: the same logic applies to the sample standard deviation. Computing it requires the sample mean first, which uses up one degree of freedom, exactly why the sample SD divides by $n-1$ rather than $n$ (Chapter 3). That $n-1$ is the correction, and it is what shows up as the $df$ in every $t$-test you run.
+
+**Simulating how degrees of freedom affects the** $t$ distribution.
+
+We can see the effect of degrees of freedom directly by simulating the $t$ distribution at two different sample sizes. @fig-6dft compares $df=9$ (a sample of 10) to $df=100$ (a much larger sample).
+
+```{r}
+#| label: fig-6dft
+#| fig-cap: "The width of the t distribution shrinks as sample size and degrees of freedom (from 9 to 100) increases."
+#| fig-alt: "Two side-by-side histograms of 10,000 simulated t values each, one for 9 degrees of freedom and one for 100 degrees of freedom. The 9-degrees-of-freedom histogram is visibly shorter and wider, with more values spread into the tails, while the 100-degrees-of-freedom histogram is taller and narrower, concentrated closer to zero."
+#| fig-asp: 0.5
+#| out-width: "100%"
+
+ts <- c(rt(10000, 9), rt(10000, 100))
+dfs <- as.factor(rep(c(9, 100), each = 10000))
+
+t_df <- data.frame(dfs, ts)
+t_df <- t_df[abs(t_df$ts) < 5, ]
+
+ggplot(t_df, aes(x = ts)) +
+  geom_histogram(fill = "#008cff", color = "white") +
+  theme_classic(base_size = 15) +
+  facet_wrap( ~ dfs) +
+  xlab("t value") +
+  ylab("Count")
+
+
+```
+
+As degrees of freedom increase, the $t$ distribution gets taller in the middle and narrower in the tails. With more data the sample SD is a more reliable stand-in for $\sigma$, so $t$ behaves more like $z$.
+
 ### What t represents
 
 Either way, the ratio asks the same question: how far is the mean from the reference in SE units?
@@ -410,47 +449,6 @@ Applied to our actual result, $t(9) = 1.94$: the one-tailed $p$ is .042, the two
 
 The rule is Chapter 4's, unchanged: default to two-tailed, and go one-tailed only when your theory already rules out the opposite direction. What the $t$-test adds is that you can now see the cost directly in the critical value, since $t_{crit}$ for a one-tailed test sits closer to 0 than the two-tailed one at the same $\alpha$.
 
-### Degrees of freedom
-
-You've probably noticed a number in parentheses every time we report a $t$-test, like $t(9) = 1.94$. That's the degrees of freedom, and it's worth understanding what it means, not just where to find it.
-
-For one-sample and paired $t$-tests, $df = n-1$. In our quiz example, $n=10$ students, so $df=9$.
-
-Degrees of freedom is both a concept and a correction. The concept: once you've estimated something from your data, like the mean, that estimate constrains how many of the numbers are still free to vary. Consider three numbers with a mean of 2: pick the first two freely, say 51 and $-3$, and the third number is no longer free. It has to be $-42$ for the mean to come out to 2. Two of the three numbers had freedom; the third didn't. That's $df=n-1=2$ for three numbers.
-
-The correction: the same logic applies to the sample standard deviation. Computing it requires the sample mean first, which uses up one degree of freedom, exactly why the sample SD divides by $n-1$ rather than $n$ (Chapter 3). That $n-1$ is the correction, and it is what shows up as the $df$ in every $t$-test you run.
-
-**Simulating how degrees of freedom affects the** $t$ distribution.
-
-We can see the effect of degrees of freedom directly by simulating the $t$ distribution at two different sample sizes. @fig-6dft compares $df=9$ (our quiz-score example) to $df=100$ (a much larger sample).
-
-```{r}
-#| label: fig-6dft
-#| fig-cap: "The width of the t distribution shrinks as sample size and degrees of freedom (from 9 to 100) increases."
-#| fig-alt: "Two side-by-side histograms of 10,000 simulated t values each, one for 9 degrees of freedom and one for 100 degrees of freedom. The 9-degrees-of-freedom histogram is visibly shorter and wider, with more values spread into the tails, while the 100-degrees-of-freedom histogram is taller and narrower, concentrated closer to zero."
-#| fig-asp: 0.5
-#| out-width: "100%"
-
-ts <- c(rt(10000, 9), rt(10000, 100))
-dfs <- as.factor(rep(c(9, 100), each = 10000))
-
-t_df <- data.frame(dfs, ts)
-t_df <- t_df[abs(t_df$ts) < 5, ]
-
-ggplot(t_df, aes(x = ts)) +
-  geom_histogram(fill = "#008cff", color = "white") +
-  theme_classic(base_size = 15) +
-  facet_wrap( ~ dfs) +
-  xlab("t value") +
-  ylab("Count")
-
-
-```
-
-As degrees of freedom increase, the $t$ distribution gets taller in the middle and narrower in the tails, converging toward the standard normal. That's the same pattern from "Comparing $z$ and $t$" earlier: with more data, the sample SD becomes a more reliable estimate of the population SD, so $t$ behaves more like $z$.
-
-Why $n-1$ and not $n$? Because $t$ uses the sample SD to estimate the standard error, and that SD calculation already spent one degree of freedom estimating the mean, so the $t$-distribution is built assuming $n-1$ from the start.
-
 ## Paired t: before/after or matched
 
 When the **same units** are measured twice (before/after, matched pairs), the question is whether they **changed**. The natural data unit is the **within-unit difference**.
@@ -649,21 +647,18 @@ Note the paired write-up never mentions the before and after means separately. T
 
 ## Simulating data for t-tests
 
-We can also use R to simulate data for $t$-tests, which is worth knowing how to do.
-
 Chapter 4 simulated *group mean differences* to build a chance window. Here we simulate the **test statistic itself**, which shows two things the earlier simulation could not: what the null distribution of $t$ actually looks like, and what happens to $p$-values when $H_0$ is true.
 
 Simulating under conditions you choose builds intuition for how sampling error affects your results given your design: sample size, the size of the difference you expect, and the amount of variation. The same methods run formal power analyses.
 
 ### Simulating a one-sample t-test
 
-Here are the steps you might follow to simulate data for a one sample $t$-test.
+A simulation has two steps.
 
-1.  Make some assumptions about what your sample (that you might be planning to collect) might look like. For example, you might be planning to collect 30 subjects worth of data. The scores of those data points might come from a normal distribution (mean = 50, sd = 10).
+1.  Decide what the population looks like. Here each sample is 30 sites, with values drawn from a normal distribution with mean 50 and SD 25.
+2.  Draw one sample from that population, run the $t$-test, and save the statistics you care about ($t$ and $p$). Repeat 1,000 times and look at how they are distributed.
 
-2.  sample simulated numbers from the distribution, then conduct a $t$-test on the simulated numbers. Save the statistics you want (such as $t$s and $p$s), and then see how things behave.
-
-Let's do this a couple different times. First, let's simulate samples with n = 30, taken from a normal (mean= 50, sd = 25). We'll do a simulation with 1000 simulations. For each simulation, we will compare the sample mean with a population mean of 50. There should be no difference on average here. @fig-6nullt is the null distribution that we are simulating.
+Every test compares the sample mean to $\mu_0 = 50$, which is also the true population mean, so $H_0$ is true in every repetition. @fig-6nullt is the null distribution of $t$ that this produces.
 
 ```{r}
 # steps to create fake data from a distribution
@@ -694,7 +689,7 @@ hist_t(save_ts)
 hist_p(save_ps)
 ```
 
-The simulated $t$ distribution looks like a $t$ distribution should, and it shows us how often we get $t$ values of particular sizes. The $p$-distribution is flat under the null, which we are simulating here. This means you have the same chance of getting a $t$ with a p-value between 0 and 0.05 as you would of getting one between .90 and .95. Those ranges are both ranges of 5%, so there are an equal amount of $t$ values in them by definition.
+The simulated $t$ distribution looks like a $t$ distribution should, and it shows us how often we get $t$ values of particular sizes. The $p$-distribution is flat under the null, which we are simulating here. This means you have the same chance of getting a $t$ with a p-value between 0 and 0.05 as you would of getting one between .90 and .95. Those ranges are both ranges of 5%, so they hold an equal share of the $t$ values by definition.
 
 You can write the same simulation more compactly with `replicate()` instead of a `for` loop; it produces the same two distributions above:
 
