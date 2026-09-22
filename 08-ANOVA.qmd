@@ -18,6 +18,19 @@ library(dplyr)
 library(broom)
 
 fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = "f"))
+
+# ANOVA table in the book's style: R's row labels, blank F and p on the Residuals row
+anova_kable <- function(fit, caption = NULL) {
+  broom::tidy(fit) |>
+    mutate(
+      sumsq    = round(sumsq, 2),
+      meansq   = round(meansq, 2),
+      statistic = ifelse(is.na(statistic), "", formatC(statistic, digits = 2, format = "f")),
+      p.value  = ifelse(is.na(p.value), "", fmt_p(p.value))
+    ) |>
+    knitr::kable(col.names = c("Source", "df", "SS", "MS", "F", "p"),
+                 align = "lrrrrr", caption = caption)
+}
 ```
 
 Some history first [@salsburg2001lady]. Sir Ronald Fisher invented the ANOVA and wanted to publish it in the journal Biometrika. The editor at the time was Karl Pearson, of Pearson's $r$, and the two men disliked each other, so Pearson refused to publish the new test. Fisher published it in the Journal of Agricultural Science instead. The feud carried into the next generation: years later, Karl Pearson's son Egon Pearson, working with Jerzy Neyman, revamped Fisher's ideas and re-cast them into what we now call null vs. alternative hypothesis testing. Fisher objected to that too.
@@ -141,7 +154,6 @@ $$SS_\text{Total} = \sum (Y_{ij} - \bar{Y}_\text{grand})^2.$$
 Let's imagine we had some data in three groups, A, B, and C. For example, we might have 3 scores in each group. The data could look like this:
 
 ```{r}
-library(dplyr)
 scores <- c(20, 11, 2, 6, 2, 7, 2, 11, 2)
 groups <- as.character(rep(c("A", "B", "C"), each = 3))
 diff <- scores - mean(scores)
@@ -169,7 +181,7 @@ We only need to compute one of the two remaining pieces directly; the other foll
 
 ### SS Between
 
-$SS_\text{Total}$ captured all of the variation in the data. $SS_\text{Between}$ isolates the piece of that variation caused by group membership: how far each group's mean sits from the grand mean.
+$SS_\text{Total}$ captured all of the variation in the data. $SS_\text{Between}$ isolates the piece of that variation we can explain by group membership: how far each group's mean sits from the grand mean.
 
 To find it, replace every score with its own group's mean, then square and sum each group mean's distance from the grand mean. Writing $\bar{Y}_j$ for the mean of group $j$ and $n_j$ for its number of scores,
 
@@ -178,7 +190,6 @@ $$SS_\text{Between} = \sum_j n_j(\bar{Y}_j - \bar{Y}_\text{grand})^2.$$
 The $n_j$ is there because every score in group $j$ is replaced by the same group mean, so each group's squared distance counts once per score. Here every group has 3 scores; with unequal groups, larger groups count more.
 
 ```{r}
-library(dplyr)
 scores <- c(20, 11, 2, 6, 2, 7, 2, 11, 2)
 means <- c(11, 11, 11, 5, 5, 5, 5, 5, 5)
 groups <- as.character(rep(c("A", "B", "C"), each = 3))
@@ -199,7 +210,7 @@ Notice the new `means` column: the mean for group A was 11, so there are three 1
 
 Each score has been replaced by its own group's mean, so within a group every value is now identical. Replacing scores this way throws away the individual variation inside each group and keeps only the differences between groups, which is exactly the piece we want to measure here.
 
-Finding the differences between each of those group-mean values and the grand mean, squaring them, and summing gives $SS_\text{Between} = 72$: the amount of variation caused by differences between the group means, i.e., the variation we can explain by group membership.
+Finding the differences between each of those group-mean values and the grand mean, squaring them, and summing gives $SS_\text{Between} = 72$: the variation we can explain by group membership.
 
 $SS_\text{Between}$ can never be larger than $SS_\text{Total}$, and indeed 72 is smaller than 302.
 
@@ -267,12 +278,11 @@ $$F = \frac{MS_\text{Between}}{MS_\text{Within}} = \frac{36}{38.33} = 0.94$$
 All of these pieces, the $df$s, $SS$es, $MS$es, and finally $F$, are conveniently organized into an **ANOVA table**:
 
 ```{r}
-library(xtable)
-aov_out <- aov(scores ~ groups, df[1:9, ])
-summary_out <- summary(aov_out)
-
-knitr::kable(xtable(summary_out), digits = c(0, 0, 2, 2, 2, 4))
-
+toy_df <- data.frame(
+  scores = c(20, 11, 2, 6, 2, 7, 2, 11, 2),
+  groups = rep(c("A", "B", "C"), each = 3)
+)
+anova_kable(aov(scores ~ groups, data = toy_df))
 ```
 
 R labels the two rows `groups` (the between-groups row: what the means can explain) and `Residuals` (the within-groups row: what they can't). Other software uses slightly different labels for the same two rows. The table doesn't add new information beyond what we already computed; it just organizes it, with $MS_\text{Between}$ (36) divided by $MS_\text{Within}$ (38.33) giving the $F$-value.
@@ -323,7 +333,7 @@ Most simulated $F$-values here fall near or below 1, because under the null the 
 
 We can use this null distribution of $F$ to decide when a real experiment's result is too large to be explained by chance:
 
-1.  Set an alpha criterion of $p$ = 0.05
+1.  Set $\alpha = .05$.
 2.  Find the critical value of $F$ for our design's numerator and denominator $df$s.
 
 @fig-8criticalF marks that critical value on the histogram:
@@ -359,11 +369,11 @@ ggplot(plot_df, aes(x = save_F)) +
 
 ```
 
-Only 5% of $F$-values from this null distribution are 3.35 or larger. That gives us a decision rule: if we ran the same design for real (30 plots, 10 per site type) and site type actually affected abundance, we could treat $F\geq3.35$ as evidence the differences aren't just chance. An observed $F$ of 3.4, for instance, would occur less than 5% of the time under the null, so seeing it would give us reasonably good grounds to conclude that site type actually mattered.
+Only 5% of $F$-values from this null distribution are 3.35 or larger. That gives us a decision rule: if we ran the same design for real (30 plots, 10 per site type) and site type actually affected abundance, we could treat $F\geq3.35$ as evidence the differences aren't just chance. An observed $F$ of 3.4, for instance, would occur less than 5% of the time under the null, so seeing it would lead us to reject the null and conclude that site type mattered.
 
 ### F and the means
 
-An $F$-value and its $p$-value don't, by themselves, tell us what the group means actually were. If a study reports $F(2,27)=6.0$, $p=.001$, we know only that an $F$ this large would happen by chance about 0.1% of the time, strong evidence against the null. We still don't know which means differed, or by how much, without looking at the group means directly (the ANOVA table itself doesn't report them).
+An $F$-value and its $p$-value don't, by themselves, tell us what the group means actually were. If a study reports $F(2,27)=6.0$, $p=.007$, we know only that an $F$ this large would happen by chance less than 1% of the time. We still don't know which means differed, or by how much, without looking at the group means directly (the ANOVA table itself doesn't report them).
 
 That said, a large $F$ with a small $p$-value does tell us one thing for certain: the group means **must** differ somewhere. If they didn't, the variance explained by group membership (the numerator of $F$) wouldn't be large enough to produce that result. We know a difference exists; identifying it requires a separate step.
 
@@ -377,11 +387,12 @@ Hypothesis of no differences anywhere: $A=B=C$
 
 Any differences anywhere:
 
-a.  $A\neq B=C$
-b.  $A=B\neq C$
-c.  $A\neq C=B$
+a.  $A\neq B=C$ (A differs)
+b.  $B\neq A=C$ (B differs)
+c.  $C\neq A=B$ (C differs)
+d.  $A\neq B$, $B\neq C$, and $A\neq C$ (all three differ)
 
-A small $F$ with a large $p$-value means we don't reject the hypothesis of no differences: we have no evidence the three group means differ, and whatever gaps exist could easily be chance. A large $F$ with a small $p$-value (below our alpha criterion) means we reject that hypothesis and conclude at least one group mean differs from the others. That's the omnibus test: it tells us *whether* the means differ, not yet *which* ones.
+A small $F$ with a large $p$-value means we don't reject the hypothesis of no differences: we have no evidence the three group means differ, and whatever gaps exist could easily be chance. A large $F$ with a small $p$-value (below $\alpha$) means we reject that hypothesis and conclude at least one group mean differs from the others. That's the omnibus test: it tells us *whether* the means differ, not yet *which* ones.
 
 **What group means look like when F exceeds the critical value.**
 
@@ -485,14 +496,15 @@ descriptive_df <- salamander_df %>%
     SEs   = sd(abundance) / sqrt(n())
   )
 
-ggplot(descriptive_df, aes(x = forest_type, y = means, fill = forest_type)) +
-  geom_bar(stat = "identity") +
+ggplot(descriptive_df, aes(x = forest_type, y = means)) +
+  geom_bar(stat = "identity", fill = "#008cff") +
   geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.15) +
   geom_point(data = salamander_df, aes(x = forest_type, y = abundance),
-             inherit.aes = FALSE, alpha = 0.5, size = 2) +
+             inherit.aes = FALSE, alpha = 0.5, size = 2, colour = "grey20",
+             position = position_jitter(width = 0.08, height = 0, seed = 1)) +
+  coord_cartesian(ylim = c(0, 20)) +
   ylab("Salamander abundance (individuals/plot)") +
-  xlab("Forest type") +
-  theme(legend.position = "none")
+  xlab("Forest type")
 ```
 
 The bar graph shows a clear gradient: old-growth plots have the highest mean abundance, managed plantations the lowest, with secondary forest in between. The individual plot counts (dots) show considerable within-group variability, a reminder that even where a real difference exists, individual plots can vary substantially.
@@ -525,7 +537,7 @@ knitr::kable(
 )
 ```
 
-Levene's test [@Levene1960; @BrownForsythe1974] gives $F(2,21) = 0.52$, $p = .60$: no evidence of unequal variance across forest types. The Shapiro-Wilk test [@Shapiro1965] on the model's residuals gives $W = 0.93$, $p = .078$: no strong evidence against normality either. Both checks are consistent with the individual plots in @fig-8salamanderData: similar spread across groups, no glaring outliers.
+Levene's test [@Levene1960; @BrownForsythe1974] gives $F(2,21) = 0.52$, $p = .60$: no evidence of unequal variance across forest types. The Shapiro-Wilk test [@Shapiro1965] on the model's residuals gives $W = 0.93$, $p = .078$: no evidence against normality either. Both checks are consistent with the individual plots in @fig-8salamanderData: similar spread across groups, no glaring outliers.
 
 **A word of caution about formal assumption tests.** It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." Resist that. These tests have an awkward property: with a small sample (exactly when a violated assumption matters most), they have low power and will often say "no problem" even when there is one; with a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." A formal test is one piece of evidence, not the whole verdict, so look at the diagnostic plots too and use judgment. In practice, one-way ANOVA is moderately robust to mild departures from these assumptions, especially with balanced group sizes like we have here (8 plots per forest type). The situation to really worry about is the combination of small, unbalanced samples with visibly skewed data or wildly different spreads, and that's exactly when the nonparametric alternative below becomes the better choice.
 
@@ -535,9 +547,7 @@ With the assumptions reasonable, we run the one-way ANOVA to test whether these 
 #| label: tbl-8salamanderANOVA
 #| tbl-cap: "One-way ANOVA table for salamander abundance by forest type."
 
-library(xtable)
-summary_out  <- summary(aov_out)
-knitr::kable(xtable(summary_out), digits = c(0, 0, 2, 2, 2, 4))
+anova_kable(aov_out)
 ```
 
 ::: {.callout-important title="Results reporting: one-way ANOVA"}
@@ -550,7 +560,7 @@ The F-value of 14.60 falls far into the tail of the null F distribution for df(2
 
 ### Effect size: eta-squared
 
-The $F$-test answers whether the group means differ by more than chance would produce. It says nothing about *how much* of the variation in salamander abundance forest type actually accounts for, and those are separate questions. Chapter 6 made the same distinction for the $t$-test, where $p$ told us whether a difference was detectable and Cohen's $d$ told us how large it was.
+The $F$-test answers whether the group means differ by more than chance would produce. It says nothing about *how much* of the variation in salamander abundance forest type actually accounts for, and those are separate questions. Chapter 5 made the same distinction, where $p$ told us whether a difference was detectable and Cohen's $d$ told us how large it was.
 
 ANOVA's effect size is **eta-squared** ($\eta^2$), and we already computed both of its ingredients when we partitioned the sums of squares:
 
@@ -589,7 +599,7 @@ If that formula looks familiar, it should. $\eta^2$ is the same quantity as $R^2
 
 ### Post-hoc comparisons with Tukey HSD
 
-The omnibus F test tells us that at least one group mean differs, but not which pairs. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test [@Tukey1949]. Tukey HSD controls the family-wise error rate across all pairwise comparisons, making it the appropriate choice after a significant ANOVA.
+The omnibus F test tells us that at least one group mean differs, but not which pairs. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test [@Tukey1949]. Tukey HSD controls the familywise error rate across all pairwise comparisons, making it the appropriate choice after a significant ANOVA.
 
 ```{r}
 #| label: tbl-8tukey
@@ -601,7 +611,7 @@ knitr::kable(round(tukey_out$forest_type, 4))
 
 **Reading the table, column by column.** Each row is one pairwise comparison, and there are three of them because three groups make three pairs.
 
--   **diff** is the difference in group means, computed as *the second group listed minus the first*. Read the row label right to left.
+-   **diff** is the difference in group means, computed as *the first group in the row label minus the second*: `Secondary-Old-growth` is secondary minus old-growth.
 -   **lwr** and **upr** are the lower and upper bounds of the 95% confidence interval for that difference.
 -   **p adj** is the $p$-value *after* adjusting for the fact that you are making three comparisons at once. This adjustment is the whole point of Tukey HSD: it is why running the three comparisons here does not carry the 14% familywise error rate we computed at the start of the chapter.
 
@@ -634,6 +644,7 @@ ggplot(letters_df, aes(x = forest_type, y = means)) +
   geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.15) +
   geom_text(aes(y = means + SEs + 1.1, label = tukey_letter),
             fontface = "bold", size = 5) +
+  coord_cartesian(ylim = c(0, 20)) +
   ylab("Salamander abundance (individuals/plot)") +
   xlab("Forest type")
 ```
