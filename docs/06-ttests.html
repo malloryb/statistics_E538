@@ -366,7 +366,7 @@ window.Quarto = {
 <ol type="1">
 <li><strong>One-sample t-test.</strong> Compare a sample mean to a target (<span class="math inline">\(\mu_0\)</span>).</li>
 <li><strong>Paired t-test.</strong> Compare before/after (or matched) measurements on the same units by running a one-sample t on the <em>differences</em>.</li>
-<li><strong>Independent-samples t-test (also called two-sample t-test)</strong> Compare means from two groups measured on different units. Use Welch’s test <span class="citation" data-cites="Welch1947">(<a href="references.html#ref-Welch1947" role="doc-biblioref">Welch 1947</a>)</span> by default when variances differ.</li>
+<li><strong>Independent-samples t-test (also called two-sample t-test)</strong> Compare means from two groups measured on different units. The pooled version assumes the two groups have similar spread; Welch’s version <span class="citation" data-cites="Welch1947">(<a href="references.html#ref-Welch1947" role="doc-biblioref">Welch 1947</a>)</span> does not, and it is what R’s <code>t.test()</code> runs unless you set <code>var.equal = TRUE</code>.</li>
 </ol>
 <div class="callout callout-style-default callout-tip callout-titled" title="Tip: What you will report">
 <div class="callout-header d-flex align-content-center">
@@ -471,7 +471,7 @@ Figure&nbsp;6.2: The width of the t distribution shrinks as sample size and degr
 <p><span class="math inline">\(t\)</span> expresses how far a sample mean is from the hypothesized mean, in <strong>standard error units</strong> (signal over noise):</p>
 <p><span class="math display">\[t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}\]</span></p>
 <p><span class="math inline">\(t\)</span> can be positive or negative depending on direction. Under <span class="math inline">\(H_0\)</span>, <span class="math inline">\(t \sim t_{(df=n-1)}\)</span>.<br>
-<strong>A useful anchor:</strong> at <span class="math inline">\(\alpha=.05\)</span> two-tailed and <span class="math inline">\(df\approx 20\)</span>, <span class="math inline">\(|t|\gtrsim 2\)</span> is already uncommon under <span class="math inline">\(H_0\)</span>; smaller <span class="math inline">\(df\)</span> pushes that threshold higher, as the critical-value table above shows.</p>
+<strong>A useful anchor:</strong> at <span class="math inline">\(\alpha=.05\)</span> two-tailed and <span class="math inline">\(df\approx 20\)</span>, <span class="math inline">\(|t|\gtrsim 2\)</span> is already uncommon under <span class="math inline">\(H_0\)</span>; smaller <span class="math inline">\(df\)</span> pushes that threshold higher, as the critical values above show.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Note: Standard error, again">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -593,7 +593,7 @@ Figure&nbsp;6.6: Splitting the t distribution up into regions each containing 10
 <section id="getting-the-p-values-for-t-values" class="level3" data-number="6.3.8">
 <h3 data-number="6.3.8" class="anchored" data-anchor-id="getting-the-p-values-for-t-values"><span class="header-section-number">6.3.8</span> Getting the p-values for <span class="math inline">\(t\)</span>-values</h3>
 <p>Where do values like these actually come from? Older textbooks put a table in the back of the book; this one doesn’t need one, because software gives you exact <span class="math inline">\(t\)</span> and <span class="math inline">\(p\)</span> values directly. R, Excel, and <a href="http://www.socscistatistics.com/pvalues/tdistribution.aspx">online calculators</a> all work; you’ll get hands-on practice with this in lab, both with software and by simulation.</p>
-<p>Software does need a couple of things from you to compute a <span class="math inline">\(p\)</span>-value correctly: the degrees of freedom, and whether the test is one-tailed or two-tailed. We haven’t covered either yet, so that’s next, starting with one-tailed tests, then two-tailed, then degrees of freedom.</p>
+<p>Software needs two things from you to compute a <span class="math inline">\(p\)</span>-value: the degrees of freedom, which you already have, and whether the test is one-tailed or two-tailed, which comes next.</p>
 </section>
 <section id="one-tailed-vs.-two-tailed-applied" class="level3" data-number="6.3.9">
 <h3 data-number="6.3.9" class="anchored" data-anchor-id="one-tailed-vs.-two-tailed-applied"><span class="header-section-number">6.3.9</span> One-tailed vs.&nbsp;two-tailed, applied</h3>
@@ -842,6 +842,7 @@ t = \frac{\bar d - 0}{s_d/\sqrt{n}}, \quad df=n-1.\]</span></p>
 <p><span class="math display">\[t = \frac{\bar{x}_A-\bar{x}_B}{s_p\sqrt{\dfrac{1}{n_A}+\dfrac{1}{n_B}}}\]</span></p>
 <p>where the pooled standard deviation <span class="math inline">\(s_p\)</span> is (note <span class="math inline">\(s_A^2\)</span> and <span class="math inline">\(s_B^2\)</span> here are variances, not standard deviations):</p>
 <p><span class="math display">\[s_p = \sqrt{\frac{(n_A-1)s_A^2 + (n_B-1)s_B^2}{n_A+n_B-2}}\]</span></p>
+<p>The pooled test adds two test-specific assumptions: the outcome is approximately normal within each group, and the two groups have similar variances. When the spreads clearly differ, use Welch’s version instead.</p>
 <p>The example below computes <span class="math inline">\(t\)</span> for two small groups by following that formula step by step in R, then checks it against <code>t.test()</code>.</p>
 <p>Here we deliberately print R’s raw console output instead of a formatted table, because this is the block you will actually be looking at in lab, and it is worth seeing that the number you built by hand is the same number sitting in it.</p>
 <div class="cell">
@@ -998,7 +999,7 @@ Figure&nbsp;6.12: 1000 ps when there is a true difference
 </div>
 </div>
 </div>
-<p>Now you can see that the <span class="math inline">\(p\)</span>-value distribution is skewed to the left. This is because when there is a true effect, you will get p-values that are less than .05 more often. Or, rather, you get larger <span class="math inline">\(t\)</span> values than you normally would if there were no differences.</p>
+<p>Now you can see that the <span class="math inline">\(p\)</span>-value distribution is skewed to the right: most of the values pile up near 0, with a long tail toward 1. This is because when there is a true effect, you will get p-values that are less than .05 more often. Or, rather, you get larger <span class="math inline">\(t\)</span> values than you normally would if there were no differences.</p>
 <p>In this case, we wouldn’t be making a type I error if we rejected the null when p was smaller than .05. How many times would we do that out of our 1000 experiments?</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(save_ps[save_ps<span class="sc">&lt;</span>.<span class="dv">05</span>])</span>
@@ -1048,7 +1049,7 @@ Figure&nbsp;6.13: 1000 ps for n =100, when there is a true effect
 <li><strong>Signal over noise.</strong> A difference is only impressive relative to the variability around it. Every <span class="math inline">\(t\)</span> statistic is a ratio: the effect you observed on top, an estimate of how much that effect could bounce around by chance on the bottom.</li>
 <li><strong>Three forms, one idea.</strong> The one-sample, paired, and independent-samples <span class="math inline">\(t\)</span>-tests differ in what goes into the numerator, but all three ask whether an observed difference is large compared to its own standard error. The paired test is just the one-sample test applied to difference scores.</li>
 <li><strong>Why</strong> <span class="math inline">\(t\)</span> and not <span class="math inline">\(z\)</span>. When the population SD <span class="math inline">\(\sigma\)</span> is unknown, we estimate it with <span class="math inline">\(s\)</span>, which adds uncertainty. The <span class="math inline">\(t\)</span> distribution accounts for that by being fatter in the tails than the normal, and it tightens toward the normal as degrees of freedom grow.</li>
-<li><strong>Assumptions come in two kinds.</strong> <em>Independence and a sound study design</em> apply to every test in this book and are assumed from here on. The <em>test-specific</em> assumption for these tests is approximate normality, of the outcome for a one-sample test or of the difference scores for a paired test.</li>
+<li><strong>Assumptions come in two kinds.</strong> <em>Independence and a sound study design</em> apply to every test in this book and are assumed from here on. The <em>test-specific</em> assumption for these tests is approximate normality, of the outcome for a one-sample test or of the difference scores for a paired test, or of each group, plus similar variances, for an independent-samples test.</li>
 <li><strong>How worried to be depends on</strong> <span class="math inline">\(n\)</span>. Thanks to the Central Limit Theorem, <span class="math inline">\(t\)</span>-tests are fairly robust to non-normality once samples are reasonably large. The danger zone is small <em>and</em> skewed, which describes a lot of environmental field data. Plot your data first; treat a Shapiro-Wilk result as evidence rather than a gate, since it has least power exactly when you need it most.</li>
 <li><strong>Choose your tails before you look.</strong> Default to two-tailed. Reserve one-tailed tests for cases where a difference in the opposite direction would lead to the same action as no difference, and decide before seeing the result.</li>
 </ul>
