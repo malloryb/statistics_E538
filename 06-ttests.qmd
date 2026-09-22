@@ -49,7 +49,7 @@ Gosset set out to quantify the extra uncertainty introduced by **small** samples
 
 1.  **One-sample t-test.** Compare a sample mean to a target ($\mu_0$).
 2.  **Paired t-test.** Compare before/after (or matched) measurements on the same units by running a one-sample t on the *differences*.
-3.  **Independent-samples t-test (also called two-sample t-test)** Compare means from two groups measured on different units. Use Welch's test [@Welch1947] by default when variances differ.
+3.  **Independent-samples t-test (also called two-sample t-test)** Compare means from two groups measured on different units. The pooled version assumes the two groups have similar spread; Welch's version [@Welch1947] does not, and it is what R's `t.test()` runs unless you set `var.equal = TRUE`.
 
 ::: {.callout-tip title="Tip: What you will report"}
 Always report:
@@ -197,7 +197,7 @@ $t$ expresses how far a sample mean is from the hypothesized mean, in **standard
 $$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}$$
 
 $t$ can be positive or negative depending on direction. Under $H_0$, $t \sim t_{(df=n-1)}$.\
-**A useful anchor:** at $\alpha=.05$ two-tailed and $df\approx 20$, $|t|\gtrsim 2$ is already uncommon under $H_0$; smaller $df$ pushes that threshold higher, as the critical-value table above shows.
+**A useful anchor:** at $\alpha=.05$ two-tailed and $df\approx 20$, $|t|\gtrsim 2$ is already uncommon under $H_0$; smaller $df$ pushes that threshold higher, as the critical values above show.
 
 ::: {.callout-note title="Note: Standard error, again"}
 Remember that $s/\sqrt{n}$ is the **standard error (SE)**, the standard deviation of the sampling distribution of the mean.
@@ -388,7 +388,7 @@ Each range captures the same 10% of the distribution, even though the ranges the
 
 Where do values like these actually come from? Older textbooks put a table in the back of the book; this one doesn't need one, because software gives you exact $t$ and $p$ values directly. R, Excel, and [online calculators](http://www.socscistatistics.com/pvalues/tdistribution.aspx) all work; you'll get hands-on practice with this in lab, both with software and by simulation.
 
-Software does need a couple of things from you to compute a $p$-value correctly: the degrees of freedom, and whether the test is one-tailed or two-tailed. We haven't covered either yet, so that's next, starting with one-tailed tests, then two-tailed, then degrees of freedom.
+Software needs two things from you to compute a $p$-value: the degrees of freedom, which you already have, and whether the test is one-tailed or two-tailed, which comes next.
 
 ### One-tailed vs. two-tailed, applied
 
@@ -592,6 +592,8 @@ where the pooled standard deviation $s_p$ is (note $s_A^2$ and $s_B^2$ here are 
 
 $$s_p = \sqrt{\frac{(n_A-1)s_A^2 + (n_B-1)s_B^2}{n_A+n_B-2}}$$
 
+The pooled test adds two test-specific assumptions: the outcome is approximately normal within each group, and the two groups have similar variances. When the spreads clearly differ, use Welch's version instead.
+
 The example below computes $t$ for two small groups by following that formula step by step in R, then checks it against `t.test()`.
 
 Here we deliberately print R's raw console output instead of a formatted table, because this is the block you will actually be looking at in lab, and it is worth seeing that the number you built by hand is the same number sitting in it.
@@ -737,7 +739,7 @@ for ( i in 1:1000 ){
 hist_p(save_ps)
 ```
 
-Now you can see that the $p$-value distribution is skewed to the left. This is because when there is a true effect, you will get p-values that are less than .05 more often. Or, rather, you get larger $t$ values than you normally would if there were no differences.
+Now you can see that the $p$-value distribution is skewed to the right: most of the values pile up near 0, with a long tail toward 1. This is because when there is a true effect, you will get p-values that are less than .05 more often. Or, rather, you get larger $t$ values than you normally would if there were no differences.
 
 In this case, we wouldn't be making a type I error if we rejected the null when p was smaller than .05. How many times would we do that out of our 1000 experiments?
 
@@ -787,6 +789,6 @@ Now almost all of the experiments show a $p$-value of less than .05 (using a two
 -   **Signal over noise.** A difference is only impressive relative to the variability around it. Every $t$ statistic is a ratio: the effect you observed on top, an estimate of how much that effect could bounce around by chance on the bottom.
 -   **Three forms, one idea.** The one-sample, paired, and independent-samples $t$-tests differ in what goes into the numerator, but all three ask whether an observed difference is large compared to its own standard error. The paired test is just the one-sample test applied to difference scores.
 -   **Why** $t$ and not $z$. When the population SD $\sigma$ is unknown, we estimate it with $s$, which adds uncertainty. The $t$ distribution accounts for that by being fatter in the tails than the normal, and it tightens toward the normal as degrees of freedom grow.
--   **Assumptions come in two kinds.** *Independence and a sound study design* apply to every test in this book and are assumed from here on. The *test-specific* assumption for these tests is approximate normality, of the outcome for a one-sample test or of the difference scores for a paired test.
+-   **Assumptions come in two kinds.** *Independence and a sound study design* apply to every test in this book and are assumed from here on. The *test-specific* assumption for these tests is approximate normality, of the outcome for a one-sample test or of the difference scores for a paired test, or of each group, plus similar variances, for an independent-samples test.
 -   **How worried to be depends on** $n$. Thanks to the Central Limit Theorem, $t$-tests are fairly robust to non-normality once samples are reasonably large. The danger zone is small *and* skewed, which describes a lot of environmental field data. Plot your data first; treat a Shapiro-Wilk result as evidence rather than a gate, since it has least power exactly when you need it most.
 -   **Choose your tails before you look.** Default to two-tailed. Reserve one-tailed tests for cases where a difference in the opposite direction would lead to the same action as no difference, and decide before seeing the result.
