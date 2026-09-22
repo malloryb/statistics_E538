@@ -130,9 +130,9 @@ Those two figures show what a wrong conclusion looks like for one unlucky sample
 
 ```{r}
 #| label: fig-5alpha-beta
-#| fig-cap: 'The two error rates, drawn on sampling distributions. Top: $\alpha$ is the red area in the tails of the null curve. Bottom: adding the curve for one specific alternative value $\mu_a$, $\beta$ is the gray area under it between the critical values.'
+#| fig-cap: 'The two error rates, drawn on sampling distributions. Top: $\alpha$ is the red area in the tails of the null curve. Bottom: adding the curve for one specific alternative value $\mu_a$, $\beta$ is the gray area under it between the critical values, and power is the orange area past the right critical value.'
 #| fig-height: 6.6
-#| fig-alt: "Two stacked panels sharing the same axes. The top panel shows a single blue dot-dash bell curve centered at the null mean, marked with a dashed vertical line, with red vertical lines at the critical values on either side and small red shaded tails beyond them, each labeled alpha over two. The bottom panel repeats that curve and adds an orange dot-dash bell curve of the same width centered well to the right. The region under the orange curve lying between the two critical-value lines is shaded gray and labeled beta, while the part of the orange curve past the right critical line is unshaded."
+#| fig-alt: "Two stacked panels sharing the same axes. The top panel shows a single blue dot-dash bell curve centered at the null mean, marked with a dashed vertical line, with red vertical lines at the critical values on either side and small red shaded tails beyond them, each labeled alpha over two. The bottom panel repeats that curve and adds an orange dot-dash bell curve of the same width centered well to the right. The region under the orange curve lying between the two critical-value lines is shaded gray and labeled beta, while the part of the orange curve past the right critical line is shaded orange and labeled power."
 #| out-width: "100%"
 
 mu0_ab <- 0; mua_ab <- 2.5; se_ab <- 1; crit_ab <- 1.96
@@ -180,11 +180,16 @@ alabs_ab <- list(
            arrow = arrow(length = unit(.14, "cm")), linewidth = .4),
   annotate("text", x = 3.45, y = .125, label = "alpha/2", parse = TRUE, size = 4.5))
 blab_ab <- annotate("text", x = 1.30, y = .085, label = "beta", parse = TRUE, size = 5.5)
+# Power is the rest of the alternative curve, past the critical value. Shade it,
+# so all three quantities are readable off the same panel rather than two of three.
+pshade_ab <- geom_area(data = subset(d_ab, x >= crit_ab), aes(x, alt),
+                       fill = "orange", alpha = .30)
+plab_ab <- annotate("text", x = 3.55, y = .30, label = "power", color = "darkorange3", size = 4.5)
 
 ab_top <- shell_ab(ggplot() + ashade_ab + null_ab + alabs_ab) +
   ggtitle(expression(paste(alpha, ": the rate of rejecting a true ", H[0]))) +
   theme(legend.position = "none")
-ab_bot <- shell_ab(ggplot() + bshade_ab + ashade_ab + null_ab + alt_ab + blab_ab) +
+ab_bot <- shell_ab(ggplot() + bshade_ab + pshade_ab + ashade_ab + null_ab + alt_ab + blab_ab + plab_ab) +
   ggtitle(expression(paste(beta, ": the rate of missing a real difference of this size")))
 
 patchwork::wrap_plots(ab_top, ab_bot, ncol = 1)
@@ -237,6 +242,10 @@ A $p$-value is the probability, **assuming** $H_0$ is true, of obtaining a test 
 Why go beyond a yes/no at $\alpha=0.05$? Because scientists, managers, policymakers, and communities need to know **how large** an effect is and **how likely** a study is to detect it. That's what **effect size** and **power** provide.
 
 **Working definitions**
+
+-   **Statistical significance**: the result is unlikely under $H_0$, at your chosen $\alpha$.
+
+-   **Practical significance**: the effect is large enough to change what someone does about it. This is a judgment about the world, not a calculation. A result can be statistically significant and practically trivial, which is what a large enough $n$ buys you, or practically important and statistically undetected, which is what too small an $n$ costs you.
 
 -   **Effect size**: how big the result is, not just whether it cleared the threshold.
 
