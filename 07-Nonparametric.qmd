@@ -139,7 +139,7 @@ knitr::kable(
 
 $V$ is the sum of the ranks where Sign is "+": $6.5+6.5+5+8+9+4 = 39$, matching the table R gave us above.
 
-**How the reference distribution is actually built.** Under $H_0$, each plot's rank has an independent 50/50 chance of ending up positive or negative, purely by chance. That gives you $2^n$ equally likely sign patterns for $n$ nonzero differences (here, $n=9$, not 12, since the zeros already dropped out), and summing the positive ranks for every one of those patterns builds a discrete probability distribution, not just a raw count. It has a known mean and variance:
+**How the null distribution of $V$ is actually built.** Under $H_0$, each plot's rank has an independent 50/50 chance of ending up positive or negative, purely by chance. That gives you $2^n$ equally likely sign patterns for $n$ nonzero differences (here, $n=9$, not 12, since the zeros already dropped out), and summing the positive ranks for every one of those patterns builds the null distribution of $V$, not just a raw count. It has a known mean and variance:
 
 $$E[V] = \frac{n(n+1)}{4}, \qquad \text{Var}(V) = \frac{n(n+1)(2n+1)}{24}$$
 
@@ -147,7 +147,7 @@ Plugging in our $n=9$ nonzero plots:
 
 $$E[V] = \frac{9 \times 10}{4} = 22.5, \qquad \text{Var}(V) = \frac{9 \times 10 \times 19}{24} = 71.25$$
 
-That's an SD of about 8.4. Our observed $V=39$ sits about 1.96 SDs above that expectation ($\frac{39-22.5}{8.4} \approx 1.96$). R's $p=.057$ comes from this normal approximation, slightly larger than the .05 a $z$ of 1.96 would give, because R makes two small corrections: one for tied ranks, and one because $V$ moves in steps rather than smoothly. For small, tie-free samples with no zeros, R can instead read the exact enumerated distribution directly.
+That's an SD of about 8.4. Our observed $V=39$ sits about 1.96 SDs above that expectation ($\frac{39-22.5}{8.4} \approx 1.96$). R's $p=.057$ comes from this normal approximation, slightly larger than the .05 a $z$ of 1.96 would give, because R makes two small corrections: one for tied ranks, and one because $V$ moves in steps rather than smoothly. For small, tie-free samples with no zeros, R can instead read the exact null distribution directly.
 
 Where do the critical values actually come from? The same place they always do in this book: we build the null distribution ourselves, by simulating 20,000 experiments where each of the 9 nonzero ranks independently gets a random $+$ or $-$ sign, exactly what $H_0$ says should happen, and adding up the positive ranks each time.
 
@@ -318,7 +318,7 @@ knitr::kable(
 
 R labels this statistic $W$; for two groups it is the Mann-Whitney $U$. R falls back to the normal approximation again, because both groups share some tied richness values (two plots at 16, two at 11, and so on).
 
-**How the reference distribution is actually built.** Same idea as the Wilcoxon signed-rank case above, just built from group membership instead of signs. Under $H_0$, both groups are draws from the same population, so once you pool and rank all $N = n_A + n_B = 16$ values, which ranks end up in the restored group is just a matter of chance: any of the $\binom{16}{8}$ ways of splitting those 16 ranks into two groups of 8 is equally likely. That's a real, discrete probability distribution, and its mean and variance are known:
+**How the null distribution of $U$ is actually built.** Same idea as the Wilcoxon signed-rank case above, just built from group membership instead of signs. Under $H_0$, both groups are draws from the same population, so once you pool and rank all $N = n_A + n_B = 16$ values, which ranks end up in the restored group is just a matter of chance: any of the $\binom{16}{8}$ ways of splitting those 16 ranks into two groups of 8 is equally likely. That's a real, discrete probability distribution, and its mean and variance are known:
 
 $$E[U] = \frac{n_A n_B}{2}, \qquad \text{Var}(U) = \frac{n_A n_B (n_A+n_B+1)}{12}$$
 
@@ -326,9 +326,9 @@ Plugging in our two groups of 8:
 
 $$E[U] = \frac{8 \times 8}{2} = 32, \qquad \text{Var}(U) = \frac{8 \times 8 \times 17}{12} \approx 90.7$$
 
-That's an SD of about 9.5. Our observed $U=50$ sits about 1.9 SDs above that expectation ($\frac{50-32}{9.5} \approx 1.9$). R's $p=.063$ comes from this normal approximation, slightly larger than a $z$ of 1.9 alone would give, because of the same two small corrections as in the Wilcoxon case: tied ranks, and $U$ moving in steps rather than smoothly. For small samples without ties, R can instead read the exact permutation distribution directly, no approximation needed.
+That's an SD of about 9.5. Our observed $U=50$ sits about 1.9 SDs above that expectation ($\frac{50-32}{9.5} \approx 1.9$). R's $p=.063$ comes from this normal approximation, slightly larger than a $z$ of 1.9 alone would give, because of the same two small corrections as in the Wilcoxon case: tied ranks, and $U$ moving in steps rather than smoothly. For small samples without ties, R can instead read the exact null distribution directly, no approximation needed.
 
-Same question as before: where do the critical values come from? They come from that same permutation distribution we just described, the $\binom{16}{8}$ equally likely ways to split 16 pooled ranks into two groups of 8. Rather than enumerate every one of those splits by hand, we approximate that distribution the same way as before, by simulation: pool the richness values, then repeatedly shuffle which 8 ranks land in the restored group:
+Same question as before: where do the critical values come from? They come from that same null distribution we just described, the $\binom{16}{8}$ equally likely ways to split 16 pooled ranks into two groups of 8. Rather than enumerate every one of those splits by hand, we approximate that distribution the same way as before, by simulation: pool the richness values, then repeatedly shuffle which 8 ranks land in the restored group:
 
 ```{r}
 #| label: fig-7mww-null
@@ -391,7 +391,7 @@ ggplot(df3, aes(x, density)) +
   labs(x = expression(chi^2*" (df = 3)"), y = "Density")
 ```
 
-How can a nonparametric test have its own named distribution? "Nonparametric" describes what you assume about the data: you don't assume they came from a particular family like the normal. Every test still needs a reference distribution for its test statistic. For the rank tests, that distribution is exact: it comes from every possible arrangement of the ranks under $H_0$. For the chi-square tests, the chi-square curve is an approximation to the statistic's distribution under $H_0$, and it is a good one only when expected counts are large enough. That's why each chi-square test below comes with an expected-count rule.
+How can a nonparametric test have its own named distribution? "Nonparametric" describes what you assume about the data: you don't assume they came from a particular family like the normal. Every test still needs a null distribution for its test statistic: the distribution that statistic would have if $H_0$ were true. For the rank tests, that distribution is exact: it comes from every possible arrangement of the ranks under $H_0$. For the chi-square tests, the chi-square curve is an approximation to the statistic's distribution under $H_0$, and it is a good one only when expected counts are large enough. That's why each chi-square test below comes with an expected-count rule.
 
 There are two versions of the chi-square test, depending on the question you're asking.
 
@@ -566,4 +566,4 @@ Two habits worth keeping. Report the number of non-zero differences for a signed
 -   **Nonparametric does not mean assumption-free.** Wilcoxon assumes the differences are symmetric about their median. Mann-Whitney-Wilcoxon assumes the two distributions have the same *shape*, which is not the same as equal variance. State the assumption you are actually making.
 -   **Check assumptions before you trust a** $p$-value, not after. Both worked examples in this chapter ran the parametric test first, then went back and found the violation. That order is deliberate, because it is the mistake most people actually make.
 -   **Categorical data needs a different tool entirely.** The **chi-square tests** handle counts: goodness-of-fit asks whether one variable's counts match an expected pattern, and the test of independence asks whether two categorical variables are related.
--   **The testing logic never changes.** State $H_0$ and $H_a$, compute a statistic, and ask how surprising that statistic would be if $H_0$ were true. Only the statistic and its reference distribution differ from test to test.
+-   **The testing logic never changes.** State $H_0$ and $H_a$, compute a statistic, and ask how surprising that statistic would be if $H_0$ were true. Only the statistic and its null distribution differ from test to test.
