@@ -292,7 +292,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">August 25, 2026</p>
+      <p class="date-modified">September 22, 2026</p>
     </div>
   </div>
     
@@ -470,11 +470,11 @@ Figure&nbsp;7.1: Change in soil moisture per plot. Three plots showed no change 
 </table>
 </div>
 </div>
-<p>The Shapiro-Wilk test agrees with the picture: <span class="math inline">\(p=.039\)</span>, a violation of our assumption. Three plots didn’t change at all, three dropped slightly, and the rest jumped up by quite a lot; that’s not symmetric, let alone normal. The <span class="math inline">\(t\)</span>-test’s “significant” result was built on an assumption the data don’t meet. Time for the <strong>Wilcoxon signed-rank test</strong>.</p>
+<p>The Shapiro-Wilk test agrees with the picture (<span class="math inline">\(p=.039\)</span>). Three plots didn’t change at all, three dropped slightly, and the rest jumped up by quite a lot; that’s not symmetric, let alone normal. The <span class="math inline">\(t\)</span>-test’s “significant” result was built on an assumption the data don’t meet. Time for the <strong>Wilcoxon signed-rank test</strong>.</p>
 <p><strong>The question:</strong> did soil moisture systematically change after restoration, or is any change we see just plot-to-plot noise?</p>
 <ul>
 <li><p><span class="math inline">\(H_0\)</span>: no systematic shift; the differences are symmetric around a median of 0 (positive and negative ranks are balanced).</p></li>
-<li><p><span class="math inline">\(H_A\)</span>: there is a systematic shift; the median difference is not 0.</p></li>
+<li><p><span class="math inline">\(H_a\)</span>: there is a systematic shift; the median difference is not 0.</p></li>
 </ul>
 <p><strong>How it works, conceptually.</strong> Instead of using the actual sizes of the differences, the test converts them to ranks: it ranks the <em>absolute</em> differences from smallest to largest, then checks whether the positive-signed ranks and negative-signed ranks are roughly balanced. Balanced ranks are the null case, meaning a plot’s rank (how extreme its change was) has nothing to do with whether that change was an increase or a decrease. If soil moisture really increased at most plots, the larger ranks should belong mostly to positive differences instead. Because it works with ranks rather than raw values, one wildly extreme plot can’t dominate the result the way it could with a mean.</p>
 <p><strong>Its assumption.</strong> The Wilcoxon signed-rank test does not require normality, but it assumes the differences come from a <strong>symmetric distribution around their median</strong>. That’s a milder assumption than normality (symmetric-but-not-normal distributions are common), but our histogram above is pushing it: the positive side stretches to 8, the negative side barely reaches -1. We’ll run the test anyway, since it’s still the better-justified choice here, and note the strain honestly when we interpret the result.</p>
@@ -580,7 +580,7 @@ Figure&nbsp;7.1: Change in soil moisture per plot. Three plots showed no change 
 <p><span class="math display">\[E[V] = \frac{n(n+1)}{4}, \qquad \text{Var}(V) = \frac{n(n+1)(2n+1)}{24}\]</span></p>
 <p>Plugging in our <span class="math inline">\(n=9\)</span> nonzero plots:</p>
 <p><span class="math display">\[E[V] = \frac{9 \times 10}{4} = 22.5, \qquad \text{Var}(V) = \frac{9 \times 10 \times 19}{24} = 71.25\]</span></p>
-<p>That’s an SD of about 8.4. Our observed <span class="math inline">\(V=39\)</span> sits about 1.96 SDs above that expectation (<span class="math inline">\(\frac{39-22.5}{8.4} \approx 1.96\)</span>), which is where R’s <span class="math inline">\(p=.057\)</span> comes from: a normal approximation to this exact distribution (with a ties and zeros adjustment). For small, tie-free samples with no zeros, R can instead read the exact enumerated distribution directly.</p>
+<p>That’s an SD of about 8.4. Our observed <span class="math inline">\(V=39\)</span> sits about 1.96 SDs above that expectation (<span class="math inline">\(\frac{39-22.5}{8.4} \approx 1.96\)</span>). R’s <span class="math inline">\(p=.057\)</span> comes from this normal approximation, slightly larger than the .05 a <span class="math inline">\(z\)</span> of 1.96 would give, because R makes two small corrections: one for tied ranks, and one because <span class="math inline">\(V\)</span> moves in steps rather than smoothly. For small, tie-free samples with no zeros, R can instead read the exact enumerated distribution directly.</p>
 <p>Where do the critical values actually come from? The same place they always do in this book: we build the null distribution ourselves, by simulating 20,000 experiments where each of the 9 nonzero ranks independently gets a random <span class="math inline">\(+\)</span> or <span class="math inline">\(-\)</span> sign, exactly what <span class="math inline">\(H_0\)</span> says should happen, and adding up the positive ranks each time.</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -596,7 +596,7 @@ Figure&nbsp;7.2: Simulated null distribution of the Wilcoxon signed-rank statist
 </div>
 </div>
 </div>
-<p>Our observed <span class="math inline">\(V=39\)</span> isn’t just close to the critical value; it <em>is</em> the critical value, 39, the exact boundary where the two-tailed 5% rejection region begins. That’s why <span class="math inline">\(p=.057\)</span> sits so close to <span class="math inline">\(\alpha=.05\)</span> without crossing it. Not significant, but only barely.</p>
+<p>Our observed <span class="math inline">\(V=39\)</span> lands on the upper boundary but not inside the 5% region. <span class="math inline">\(V\)</span> can only take certain values, so the boundary can’t fall exactly at 2.5%: a <span class="math inline">\(V\)</span> of 39 or more comes up just over 2.5% of the time under <span class="math inline">\(H_0\)</span>, which puts the two-tailed <span class="math inline">\(p\)</span> just over .05. Not significant, but only barely.</p>
 <p><strong>So far:</strong> <span class="math inline">\(t\)</span>-test <span class="math inline">\(p=.026\)</span> (significant), Wilcoxon <span class="math inline">\(p=.057\)</span> (not quite). Same 12 plots, two different verdicts, because the <span class="math inline">\(t\)</span>-test’s numerator and denominator both used the exact magnitudes the Wilcoxon test deliberately ignores.</p>
 <p><strong>The sign test.</strong> There’s an even simpler nonparametric option, the <strong>sign test</strong>, which looks only at whether each difference is positive or negative. It discards the magnitude entirely and asks whether pluses outnumber minuses more than chance would suggest. It has essentially no distributional assumption beyond the universal one (independence of observations, from a sound study design; see Chapter 6), not even symmetry.</p>
 <p>That’s useful here: we already flagged the symmetry assumption as shaky for this data (the positive side stretching to 8, the negative side barely reaching -1), so the sign test sidesteps the one assumption the Wilcoxon test still needed. That robustness comes at a big cost in power, though, so it’s usually a last resort.</p>
@@ -770,10 +770,10 @@ Figure&nbsp;7.4: Plant species richness by group. The circled restored plot has 
 <p><strong>The question:</strong> did restoration increase plant species richness, or is the difference we see consistent with random plot-to-plot variation?</p>
 <ul>
 <li><p><span class="math inline">\(H_0\)</span>: no difference in richness between restored and unrestored plots; ranks are well-mixed between the groups.</p></li>
-<li><p><span class="math inline">\(H_A\)</span>: richness tends to rank systematically higher in one group than the other.</p></li>
+<li><p><span class="math inline">\(H_a\)</span>: richness tends to rank systematically higher in one group than the other.</p></li>
 </ul>
 <p><strong>How it works, conceptually.</strong> Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups truly don’t differ, ranks should be well mixed between them; if one group tends to have higher values, its ranks should be systematically higher too. Critically, that outlier plot still gets <em>a</em> rank, but only one rank, the highest one, no matter how far above the pack it sits. Its magnitude, which is what distorted the <span class="math inline">\(t\)</span>-test, can’t distort the Mann-Whitney-Wilcoxon test the same way.</p>
-<p><strong>Its assumption.</strong> The Mann-Whitney-Wilcoxon test assumes both groups’ parent distributions have the <strong>same shape</strong>: it does <em>not</em> require normality, and the assumption is <strong>not</strong> “equal variance,” even though same-shape distributions happen to have equal variance as a side effect. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as “the medians differ” becomes murkier, since it could be a difference in location, shape, or both. Our two groups are both right-skewed by roughly the same amount, so that’s a reasonable assumption here.</p>
+<p><strong>Its assumption.</strong> The Mann-Whitney-Wilcoxon test assumes both groups’ parent distributions have the <strong>same shape</strong>: it does <em>not</em> require normality, and the assumption is <strong>not</strong> “equal variance,” even though same-shape distributions happen to have equal variance as a side effect. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as “the medians differ” becomes murkier, since it could be a difference in location, shape, or both. Our two groups don’t quite share a shape: the restored group’s skew comes almost entirely from the one 34-species plot, while the unrestored group is only mildly skewed. So read a result from this test as “richness tends to be higher in one group,” not strictly as a difference in medians.</p>
 <div class="cell">
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -797,12 +797,12 @@ Figure&nbsp;7.4: Plant species richness by group. The circled restored plot has 
 </table>
 </div>
 </div>
-<p>R falls back to the normal approximation again, because both groups share some tied richness values (two plots at 16, two at 11, and so on).</p>
+<p>R labels this statistic <span class="math inline">\(W\)</span>; for two groups it is the Mann-Whitney <span class="math inline">\(U\)</span>. R falls back to the normal approximation again, because both groups share some tied richness values (two plots at 16, two at 11, and so on).</p>
 <p><strong>How the reference distribution is actually built.</strong> Same idea as the Wilcoxon signed-rank case above, just built from group membership instead of signs. Under <span class="math inline">\(H_0\)</span>, both groups are draws from the same population, so once you pool and rank all <span class="math inline">\(N = n_A + n_B = 16\)</span> values, which ranks end up in the restored group is just a matter of chance: any of the <span class="math inline">\(\binom{16}{8}\)</span> ways of splitting those 16 ranks into two groups of 8 is equally likely. That’s a real, discrete probability distribution, and its mean and variance are known:</p>
 <p><span class="math display">\[E[U] = \frac{n_A n_B}{2}, \qquad \text{Var}(U) = \frac{n_A n_B (n_A+n_B+1)}{12}\]</span></p>
 <p>Plugging in our two groups of 8:</p>
 <p><span class="math display">\[E[U] = \frac{8 \times 8}{2} = 32, \qquad \text{Var}(U) = \frac{8 \times 8 \times 17}{12} \approx 90.7\]</span></p>
-<p>That’s an SD of about 9.5. Our observed <span class="math inline">\(U=50\)</span> sits about 1.9 SDs above that expectation (<span class="math inline">\(\frac{50-32}{9.5} \approx 1.9\)</span>), which is where R’s <span class="math inline">\(p=.063\)</span> comes from: a normal approximation to this exact distribution (with a small ties adjustment), same mechanism as the Wilcoxon case. For small samples without ties, R can instead read the exact permutation distribution directly, no approximation needed.</p>
+<p>That’s an SD of about 9.5. Our observed <span class="math inline">\(U=50\)</span> sits about 1.9 SDs above that expectation (<span class="math inline">\(\frac{50-32}{9.5} \approx 1.9\)</span>). R’s <span class="math inline">\(p=.063\)</span> comes from this normal approximation, slightly larger than a <span class="math inline">\(z\)</span> of 1.9 alone would give, because of the same two small corrections as in the Wilcoxon case: tied ranks, and <span class="math inline">\(U\)</span> moving in steps rather than smoothly. For small samples without ties, R can instead read the exact permutation distribution directly, no approximation needed.</p>
 <p>Same question as before: where do the critical values come from? They come from that same permutation distribution we just described, the <span class="math inline">\(\binom{16}{8}\)</span> equally likely ways to split 16 pooled ranks into two groups of 8. Rather than enumerate every one of those splits by hand, we approximate that distribution the same way as before, by simulation: pool the richness values, then repeatedly shuffle which 8 ranks land in the restored group:</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -824,7 +824,7 @@ Figure&nbsp;7.5: Simulated null distribution of the Mann-Whitney U statistic, bu
 <section id="categorical-data-the-chi-square-tests" class="level2" data-number="7.4">
 <h2 data-number="7.4" class="anchored" data-anchor-id="categorical-data-the-chi-square-tests"><span class="header-section-number">7.4</span> Categorical data: the chi-square tests</h2>
 <p>Every test so far (the <span class="math inline">\(t\)</span>-tests in Chapter 6, and the Wilcoxon and Mann-Whitney-Wilcoxon tests above) needs a <strong>continuous</strong> outcome variable. But a lot of environmental data isn’t continuous at all: a site either has an invasive species or it doesn’t; a stream sample either exceeds a safety threshold or it doesn’t; a plot falls into one land-cover category, not a number line. For <strong>categorical</strong> data, none of the tests above apply: you need a different tool entirely, the <strong>chi-square (</strong><span class="math inline">\(\chi^2\)</span>) test <span class="citation" data-cites="Pearson1900">(<a href="references.html#ref-Pearson1900" role="doc-biblioref">Pearson 1900</a>)</span>.</p>
-<p>Chapter 3 introduced the shape of the chi-square distribution: always non-negative, right-skewed, naturally one-tailed, with its exact shape depending on degrees of freedom. <a href="#fig-7chisq-crit" class="quarto-xref">Figure&nbsp;<span>7.6</span></a> shows what the rejection region looks like in practice, using the goodness-of-fit example we’ll run below, which has <span class="math inline">\(df = 3\)</span>. The critical value at <span class="math inline">\(\alpha = .05\)</span> is 7.81, and any statistic beyond that point (the shaded region) occurs less than 5% of the time by chance.</p>
+<p>Chapter 3 introduced the shape of the chi-square distribution: always non-negative, right-skewed, naturally one-tailed, with its exact shape depending on degrees of freedom. Only the upper tail counts against <span class="math inline">\(H_0\)</span>: <span class="math inline">\(\chi^2\)</span> adds up squared gaps between observed and expected, so a mismatch in either direction makes it bigger, and a <span class="math inline">\(\chi^2\)</span> near 0 just means the counts match the expectation closely. <a href="#fig-7chisq-crit" class="quarto-xref">Figure&nbsp;<span>7.6</span></a> shows what the rejection region looks like in practice, using the goodness-of-fit example we’ll run below, which has <span class="math inline">\(df = 3\)</span>. The critical value at <span class="math inline">\(\alpha = .05\)</span> is 7.81, and any statistic beyond that point (the shaded region) occurs less than 5% of the time by chance.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-7chisq-crit" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -833,14 +833,13 @@ Figure&nbsp;7.5: Simulated null distribution of the Mann-Whitney U statistic, bu
 <img src="07-Nonparametric_files/figure-html/fig-7chisq-crit-1.png" class="img-fluid figure-img" style="width:75.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-7chisq-crit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;7.6: The chi-square distribution with df = 3. The shaded region marks the rejection region at alpha = .05 (critical value 7.81). Our goodness-of-fit statistic, X-squared = 5.4, falls short of it.
+Figure&nbsp;7.6: The chi-square distribution with df = 3. The shaded region marks the rejection region at alpha = .05 (critical value 7.81).
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>If you’re wondering how a “nonparametric” test can still have its own named distribution, that’s worth clearing up. “Nonparametric” is an assumption about your <strong>data</strong>, not the test statistic: you don’t need to assume the data came from a specific family like the normal distribution. Every test still needs a known reference distribution for its <strong>test statistic</strong> to produce a <span class="math inline">\(p\)</span>-value. What differs is how that reference distribution gets built.</p>
-<p>The chi-square distribution here, like the Wilcoxon and Mann-Whitney-Wilcoxon distributions earlier in this chapter, is built without any assumption about the data’s shape: chi-square from squared deviations under <span class="math inline">\(H_0\)</span>, the rank tests from all possible rank arrangements. That’s what “distribution-free” actually means. The statistic’s distribution is known, but building it never required assuming anything about the data.</p>
+<p>How can a nonparametric test have its own named distribution? “Nonparametric” describes what you assume about the data: you don’t assume they came from a particular family like the normal. Every test still needs a reference distribution for its test statistic. For the rank tests, that distribution is exact: it comes from every possible arrangement of the ranks under <span class="math inline">\(H_0\)</span>. For the chi-square tests, the chi-square curve is an approximation to the statistic’s distribution under <span class="math inline">\(H_0\)</span>, and it is a good one only when expected counts are large enough. That’s why each chi-square test below comes with an expected-count rule.</p>
 <p>There are two versions of the chi-square test, depending on the question you’re asking.</p>
 <section id="chi-square-goodness-of-fit-does-one-categorical-variable-match-an-expected-pattern" class="level3" data-number="7.4.1">
 <h3 data-number="7.4.1" class="anchored" data-anchor-id="chi-square-goodness-of-fit-does-one-categorical-variable-match-an-expected-pattern"><span class="header-section-number">7.4.1</span> Chi-square goodness-of-fit: does one categorical variable match an expected pattern?</h3>
@@ -895,7 +894,7 @@ Figure&nbsp;7.7: A goodness-of-fit design. There is no dependent variable measur
 <p><strong>The question:</strong> does this year’s distribution across zones differ from the historical 25%-each pattern, or is this the kind of unevenness you’d expect from random sampling alone?</p>
 <ul>
 <li><p><span class="math inline">\(H_0\)</span>: fish are still distributed 25% per zone; the pattern matches the historical baseline.</p></li>
-<li><p><span class="math inline">\(H_A\)</span>: fish are not evenly distributed across zones; the pattern has changed.</p></li>
+<li><p><span class="math inline">\(H_a\)</span>: fish are not evenly distributed across zones; the pattern has changed.</p></li>
 </ul>
 <div class="cell">
 <div class="cell-output-display">
@@ -903,7 +902,7 @@ Figure&nbsp;7.7: A goodness-of-fit design. There is no dependent variable measur
 <caption>Chi-square goodness-of-fit test</caption>
 <thead>
 <tr class="header">
-<th style="text-align: right;" data-quarto-table-cell-role="th">Statistic (χ²)</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Statistic (&lt;U+03C7&gt;&lt;U+00B2&gt;)</th>
 <th style="text-align: right;" data-quarto-table-cell-role="th">df</th>
 <th style="text-align: left;" data-quarto-table-cell-role="th">p-value</th>
 <th style="text-align: left;" data-quarto-table-cell-role="th">Method</th>
@@ -963,7 +962,7 @@ Figure&nbsp;7.7: A goodness-of-fit design. There is no dependent variable measur
 </table>
 </div>
 </div>
-<p>Summing the last column: <span class="math inline">\(2.88+2.42+0.08+0.02 = 5.4\)</span>, matching R’s statistic above. With <span class="math inline">\(df=3\)</span>, the critical value at <span class="math inline">\(\alpha=.05\)</span> is 7.81 (the same one marked on the distribution figure earlier in this chapter); our <span class="math inline">\(5.4\)</span> falls well short of it.</p>
+<p>Summing the last column: <span class="math inline">\(2.88+2.42+0.08+0.02 = 5.4\)</span>, matching R’s statistic above. For goodness-of-fit, <span class="math inline">\(df = k-1\)</span>, where <span class="math inline">\(k\)</span> is the number of categories: <span class="math inline">\(4-1=3\)</span>. With <span class="math inline">\(df=3\)</span>, the critical value at <span class="math inline">\(\alpha=.05\)</span> is 7.81 (the same one marked on the distribution figure earlier in this chapter); our <span class="math inline">\(5.4\)</span> falls well short of it.</p>
 <p><strong>Interpretation.</strong> <span class="math inline">\(\chi^2(3) = 5.4\)</span>, <span class="math inline">\(p = .145\)</span>: not significant. This year’s zone counts are consistent with the historical 25%-each pattern; the unevenness we see is within the range chance alone would produce.</p>
 </section>
 <section id="chi-square-test-of-independence-are-two-categorical-variables-related" class="level3" data-number="7.4.2">
@@ -1018,7 +1017,7 @@ Figure&nbsp;7.8: A test-of-independence design. Two categorical variables are cr
 <p><strong>The question:</strong> is <em>E. coli</em> exceedance <strong>independent</strong> of land use, or are they related?</p>
 <ul>
 <li><p><span class="math inline">\(H_0\)</span>: land use and exceedance are independent; knowing one tells you nothing about the other.</p></li>
-<li><p><span class="math inline">\(H_A\)</span>: land use and exceedance are related; they are not independent.</p></li>
+<li><p><span class="math inline">\(H_a\)</span>: land use and exceedance are related; they are not independent.</p></li>
 </ul>
 <div class="cell">
 <div class="cell-output-display">
@@ -1026,7 +1025,7 @@ Figure&nbsp;7.8: A test-of-independence design. Two categorical variables are cr
 <caption>Chi-square test of independence</caption>
 <thead>
 <tr class="header">
-<th style="text-align: right;" data-quarto-table-cell-role="th">Statistic (χ²)</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Statistic (&lt;U+03C7&gt;^2)</th>
 <th style="text-align: right;" data-quarto-table-cell-role="th">df</th>
 <th style="text-align: left;" data-quarto-table-cell-role="th">p-value</th>
 <th style="text-align: left;" data-quarto-table-cell-role="th">Method</th>
@@ -1108,22 +1107,49 @@ Figure&nbsp;7.8: A test-of-independence design. Two categorical variables are cr
 </table>
 </div>
 </div>
-<p>Summing all six cells: <span class="math inline">\(5.83+8.05+0.55+0.76+2.79+3.86 = 21.84\)</span>, matching R’s statistic above. With <span class="math inline">\(df=2\)</span>, the critical value at <span class="math inline">\(\alpha=.05\)</span> is 5.99; our <span class="math inline">\(21.84\)</span> is more than three times that, which is where <span class="math inline">\(p&lt;.001\)</span> comes from.</p>
-<p><strong>Interpretation.</strong> <span class="math inline">\(\chi^2(2) = 21.84\)</span>, <span class="math inline">\(p &lt; .001\)</span>: significant. <em>E. coli</em> exceedance is not independent of land use: forested sites exceed the threshold far less often (8 of 50) than agricultural (25 of 50) or urban (30 of 50) sites. Note what this test does <em>not</em> tell you: it says the two variables are related, but, just like correlation, it doesn’t by itself establish that land use <em>causes</em> the exceedance.</p>
-<div class="callout callout-style-default callout-important callout-titled" title="Results reporting: rank-based tests">
+<p>Summing all six cells: <span class="math inline">\(5.83+8.05+0.55+0.76+2.79+3.86 = 21.84\)</span>, matching R’s statistic above. For a test of independence, <span class="math inline">\(df=(r-1)(c-1)\)</span> for <span class="math inline">\(r\)</span> rows and <span class="math inline">\(c\)</span> columns: <span class="math inline">\((3-1)(2-1)=2\)</span>. The number of sites never enters. With <span class="math inline">\(df=2\)</span>, the critical value at <span class="math inline">\(\alpha=.05\)</span> is 5.99; our <span class="math inline">\(21.84\)</span> is more than three times that, which is where <span class="math inline">\(p&lt;.001\)</span> comes from.</p>
+<p><strong>Interpretation.</strong> <span class="math inline">\(\chi^2(2) = 21.84\)</span>, <span class="math inline">\(p &lt; .001\)</span>: significant. <em>E. coli</em> exceedance is not independent of land use. The test says the two variables are related; the table says how. Divide within each row to get the exceedance rate for each land use:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Land use</th>
+<th style="text-align: right;">Exceeds / total</th>
+<th style="text-align: right;">Share</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Forested</td>
+<td style="text-align: right;">8 / 50</td>
+<td style="text-align: right;">16%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Agricultural</td>
+<td style="text-align: right;">25 / 50</td>
+<td style="text-align: right;">50%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Urban</td>
+<td style="text-align: right;">30 / 50</td>
+<td style="text-align: right;">60%</td>
+</tr>
+</tbody>
+</table>
+<p>Dividing within a row matters because raw counts only compare fairly when the row totals match. Agricultural and urban sites exceed the threshold three to four times as often as forested ones. Note what this test does <em>not</em> tell you: it says the two variables are related, but, just like correlation, it doesn’t by itself establish that land use <em>causes</em> the exceedance.</p>
+<div class="callout callout-style-default callout-important callout-titled" title="Results reporting: nonparametric and chi-square tests">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Important</span>Results reporting: rank-based tests
+<span class="screen-reader-only">Important</span>Results reporting: nonparametric and chi-square tests
 </div>
 </div>
 <div class="callout-body-container callout-body">
 <p>These tests report differently from a <span class="math inline">\(t\)</span>-test, and the difference matters: there is no mean difference to quote, because none of them used the means. Give the test’s own statistic, the <span class="math inline">\(p\)</span>-value, and a <strong>median</strong> rather than a mean.</p>
 <p>Wilcoxon signed-rank, on the restoration differences:</p>
 <blockquote class="blockquote">
-<p>Soil moisture did not change significantly after restoration, Wilcoxon signed-rank <em>V</em> = 39, <em>p</em> = .057 (median change +1.5 percentage points, <em>n</em> = 9 non-zero differences).</p>
+<p>Soil moisture did not change significantly after restoration, Wilcoxon signed-rank <em>V</em> = 39, <em>p</em> = .057 (median change +1.5 percentage points across all 12 plots; 9 non-zero differences).</p>
 </blockquote>
 <p>Mann-Whitney-Wilcoxon, on the richness comparison:</p>
 <blockquote class="blockquote">
@@ -1148,7 +1174,7 @@ Figure&nbsp;7.8: A test-of-independence design. Two categorical variables are cr
 <li><strong>Nonparametric does not mean assumption-free.</strong> Wilcoxon assumes the differences are symmetric about their median. Mann-Whitney-Wilcoxon assumes the two distributions have the same <em>shape</em>, which is not the same as equal variance. State the assumption you are actually making.</li>
 <li><strong>Check assumptions before you trust a</strong> <span class="math inline">\(p\)</span>-value, not after. Both worked examples in this chapter ran the parametric test first, then went back and found the violation. That order is deliberate, because it is the mistake most people actually make.</li>
 <li><strong>Categorical data needs a different tool entirely.</strong> The <strong>chi-square tests</strong> handle counts: goodness-of-fit asks whether one variable’s counts match an expected pattern, and the test of independence asks whether two categorical variables are related.</li>
-<li><strong>The testing logic never changes.</strong> State <span class="math inline">\(H_0\)</span> and <span class="math inline">\(H_A\)</span>, compute a statistic, and ask how surprising that statistic would be if <span class="math inline">\(H_0\)</span> were true. Only the statistic and its reference distribution differ from test to test.</li>
+<li><strong>The testing logic never changes.</strong> State <span class="math inline">\(H_0\)</span> and <span class="math inline">\(H_a\)</span>, compute a statistic, and ask how surprising that statistic would be if <span class="math inline">\(H_0\)</span> were true. Only the statistic and its reference distribution differ from test to test.</li>
 </ul>
 
 
