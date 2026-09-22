@@ -94,13 +94,13 @@ knitr::kable(
 )
 ```
 
-The Shapiro-Wilk test agrees with the picture: $p=.039$, a violation of our assumption. Three plots didn't change at all, three dropped slightly, and the rest jumped up by quite a lot; that's not symmetric, let alone normal. The $t$-test's "significant" result was built on an assumption the data don't meet. Time for the **Wilcoxon signed-rank test**.
+The Shapiro-Wilk test agrees with the picture ($p=.039$). Three plots didn't change at all, three dropped slightly, and the rest jumped up by quite a lot; that's not symmetric, let alone normal. The $t$-test's "significant" result was built on an assumption the data don't meet. Time for the **Wilcoxon signed-rank test**.
 
 **The question:** did soil moisture systematically change after restoration, or is any change we see just plot-to-plot noise?
 
 -   $H_0$: no systematic shift; the differences are symmetric around a median of 0 (positive and negative ranks are balanced).
 
--   $H_A$: there is a systematic shift; the median difference is not 0.
+-   $H_a$: there is a systematic shift; the median difference is not 0.
 
 **How it works, conceptually.** Instead of using the actual sizes of the differences, the test converts them to ranks: it ranks the *absolute* differences from smallest to largest, then checks whether the positive-signed ranks and negative-signed ranks are roughly balanced. Balanced ranks are the null case, meaning a plot's rank (how extreme its change was) has nothing to do with whether that change was an increase or a decrease. If soil moisture really increased at most plots, the larger ranks should belong mostly to positive differences instead. Because it works with ranks rather than raw values, one wildly extreme plot can't dominate the result the way it could with a mean.
 
@@ -147,7 +147,7 @@ Plugging in our $n=9$ nonzero plots:
 
 $$E[V] = \frac{9 \times 10}{4} = 22.5, \qquad \text{Var}(V) = \frac{9 \times 10 \times 19}{24} = 71.25$$
 
-That's an SD of about 8.4. Our observed $V=39$ sits about 1.96 SDs above that expectation ($\frac{39-22.5}{8.4} \approx 1.96$), which is where R's $p=.057$ comes from: a normal approximation to this exact distribution (with a ties and zeros adjustment). For small, tie-free samples with no zeros, R can instead read the exact enumerated distribution directly.
+That's an SD of about 8.4. Our observed $V=39$ sits about 1.96 SDs above that expectation ($\frac{39-22.5}{8.4} \approx 1.96$). R's $p=.057$ comes from this normal approximation, slightly larger than the .05 a $z$ of 1.96 would give, because R makes two small corrections: one for tied ranks, and one because $V$ moves in steps rather than smoothly. For small, tie-free samples with no zeros, R can instead read the exact enumerated distribution directly.
 
 Where do the critical values actually come from? The same place they always do in this book: we build the null distribution ourselves, by simulating 20,000 experiments where each of the 9 nonzero ranks independently gets a random $+$ or $-$ sign, exactly what $H_0$ says should happen, and adding up the positive ranks each time.
 
@@ -180,7 +180,7 @@ ggplot(tibble(V = sim_V), aes(x = V)) +
   labs(x = "V (sum of positive ranks)", y = "Count out of 20,000 simulations")
 ```
 
-Our observed $V=39$ isn't just close to the critical value; it *is* the critical value, 39, the exact boundary where the two-tailed 5% rejection region begins. That's why $p=.057$ sits so close to $\alpha=.05$ without crossing it. Not significant, but only barely.
+Our observed $V=39$ lands on the upper boundary but not inside the 5% region. $V$ can only take certain values, so the boundary can't fall exactly at 2.5%: a $V$ of 39 or more comes up just over 2.5% of the time under $H_0$, which puts the two-tailed $p$ just over .05. Not significant, but only barely.
 
 **So far:** $t$-test $p=.026$ (significant), Wilcoxon $p=.057$ (not quite). Same 12 plots, two different verdicts, because the $t$-test's numerator and denominator both used the exact magnitudes the Wilcoxon test deliberately ignores.
 
@@ -298,11 +298,11 @@ Both groups fail the Shapiro-Wilk test, the restored group badly ($p=.002$), dri
 
 -   $H_0$: no difference in richness between restored and unrestored plots; ranks are well-mixed between the groups.
 
--   $H_A$: richness tends to rank systematically higher in one group than the other.
+-   $H_a$: richness tends to rank systematically higher in one group than the other.
 
 **How it works, conceptually.** Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups truly don't differ, ranks should be well mixed between them; if one group tends to have higher values, its ranks should be systematically higher too. Critically, that outlier plot still gets *a* rank, but only one rank, the highest one, no matter how far above the pack it sits. Its magnitude, which is what distorted the $t$-test, can't distort the Mann-Whitney-Wilcoxon test the same way.
 
-**Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the **same shape**: it does *not* require normality, and the assumption is **not** "equal variance," even though same-shape distributions happen to have equal variance as a side effect. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as "the medians differ" becomes murkier, since it could be a difference in location, shape, or both. Our two groups are both right-skewed by roughly the same amount, so that's a reasonable assumption here.
+**Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the **same shape**: it does *not* require normality, and the assumption is **not** "equal variance," even though same-shape distributions happen to have equal variance as a side effect. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as "the medians differ" becomes murkier, since it could be a difference in location, shape, or both. Our two groups don't quite share a shape: the restored group's skew comes almost entirely from the one 34-species plot, while the unrestored group is only mildly skewed. So read a result from this test as "richness tends to be higher in one group," not strictly as a difference in medians.
 
 ```{r}
 mww_out <- wilcox.test(restored, unrestored)
@@ -316,7 +316,7 @@ knitr::kable(
 )
 ```
 
-R falls back to the normal approximation again, because both groups share some tied richness values (two plots at 16, two at 11, and so on).
+R labels this statistic $W$; for two groups it is the Mann-Whitney $U$. R falls back to the normal approximation again, because both groups share some tied richness values (two plots at 16, two at 11, and so on).
 
 **How the reference distribution is actually built.** Same idea as the Wilcoxon signed-rank case above, just built from group membership instead of signs. Under $H_0$, both groups are draws from the same population, so once you pool and rank all $N = n_A + n_B = 16$ values, which ranks end up in the restored group is just a matter of chance: any of the $\binom{16}{8}$ ways of splitting those 16 ranks into two groups of 8 is equally likely. That's a real, discrete probability distribution, and its mean and variance are known:
 
@@ -326,7 +326,7 @@ Plugging in our two groups of 8:
 
 $$E[U] = \frac{8 \times 8}{2} = 32, \qquad \text{Var}(U) = \frac{8 \times 8 \times 17}{12} \approx 90.7$$
 
-That's an SD of about 9.5. Our observed $U=50$ sits about 1.9 SDs above that expectation ($\frac{50-32}{9.5} \approx 1.9$), which is where R's $p=.063$ comes from: a normal approximation to this exact distribution (with a small ties adjustment), same mechanism as the Wilcoxon case. For small samples without ties, R can instead read the exact permutation distribution directly, no approximation needed.
+That's an SD of about 9.5. Our observed $U=50$ sits about 1.9 SDs above that expectation ($\frac{50-32}{9.5} \approx 1.9$). R's $p=.063$ comes from this normal approximation, slightly larger than a $z$ of 1.9 alone would give, because of the same two small corrections as in the Wilcoxon case: tied ranks, and $U$ moving in steps rather than smoothly. For small samples without ties, R can instead read the exact permutation distribution directly, no approximation needed.
 
 Same question as before: where do the critical values come from? They come from that same permutation distribution we just described, the $\binom{16}{8}$ equally likely ways to split 16 pooled ranks into two groups of 8. Rather than enumerate every one of those splits by hand, we approximate that distribution the same way as before, by simulation: pool the richness values, then repeatedly shuffle which 8 ranks land in the restored group:
 
@@ -372,11 +372,11 @@ Our observed $U=50$ lands just inside the critical value of $50.5$, matching R's
 
 Every test so far (the $t$-tests in Chapter 6, and the Wilcoxon and Mann-Whitney-Wilcoxon tests above) needs a **continuous** outcome variable. But a lot of environmental data isn't continuous at all: a site either has an invasive species or it doesn't; a stream sample either exceeds a safety threshold or it doesn't; a plot falls into one land-cover category, not a number line. For **categorical** data, none of the tests above apply: you need a different tool entirely, the **chi-square (**$\chi^2$) test [@Pearson1900].
 
-Chapter 3 introduced the shape of the chi-square distribution: always non-negative, right-skewed, naturally one-tailed, with its exact shape depending on degrees of freedom. @fig-7chisq-crit shows what the rejection region looks like in practice, using the goodness-of-fit example we'll run below, which has $df = 3$. The critical value at $\alpha = .05$ is `r round(qchisq(.95, 3), 2)`, and any statistic beyond that point (the shaded region) occurs less than 5% of the time by chance.
+Chapter 3 introduced the shape of the chi-square distribution: always non-negative, right-skewed, naturally one-tailed, with its exact shape depending on degrees of freedom. Only the upper tail counts against $H_0$: $\chi^2$ adds up squared gaps between observed and expected, so a mismatch in either direction makes it bigger, and a $\chi^2$ near 0 just means the counts match the expectation closely. @fig-7chisq-crit shows what the rejection region looks like in practice, using the goodness-of-fit example we'll run below, which has $df = 3$. The critical value at $\alpha = .05$ is `r round(qchisq(.95, 3), 2)`, and any statistic beyond that point (the shaded region) occurs less than 5% of the time by chance.
 
 ```{r}
 #| label: fig-7chisq-crit
-#| fig-cap: "The chi-square distribution with df = 3. The shaded region marks the rejection region at alpha = .05 (critical value 7.81). Our goodness-of-fit statistic, X-squared = 5.4, falls short of it."
+#| fig-cap: "The chi-square distribution with df = 3. The shaded region marks the rejection region at alpha = .05 (critical value 7.81)."
 
 crit <- qchisq(.95, 3)
 x3 <- seq(0.01, 16, length.out = 500)
@@ -386,16 +386,12 @@ ggplot(df3, aes(x, density)) +
   geom_line(linewidth = 1) +
   geom_area(data = filter(df3, x >= crit), fill = "#b22222", alpha = 0.15) +
   geom_vline(xintercept = crit, linetype = 2) +
-  geom_vline(xintercept = 5.4, color = "#10377f", linewidth = 1) +
   annotate("text", x = crit, y = max(df3$density) * 0.9, label = "critical value\n7.81", hjust = -0.1) +
-  annotate("text", x = 5.4, y = max(df3$density) * 0.7, label = "observed\nX² = 5.4", color = "#10377f", hjust = 1.1) +
   theme_classic(base_size = 13) +
   labs(x = expression(chi^2*" (df = 3)"), y = "Density")
 ```
 
-If you're wondering how a "nonparametric" test can still have its own named distribution, that's worth clearing up. "Nonparametric" is an assumption about your **data**, not the test statistic: you don't need to assume the data came from a specific family like the normal distribution. Every test still needs a known reference distribution for its **test statistic** to produce a $p$-value. What differs is how that reference distribution gets built.
-
-The chi-square distribution here, like the Wilcoxon and Mann-Whitney-Wilcoxon distributions earlier in this chapter, is built without any assumption about the data's shape: chi-square from squared deviations under $H_0$, the rank tests from all possible rank arrangements. That's what "distribution-free" actually means. The statistic's distribution is known, but building it never required assuming anything about the data.
+How can a nonparametric test have its own named distribution? "Nonparametric" describes what you assume about the data: you don't assume they came from a particular family like the normal. Every test still needs a reference distribution for its test statistic. For the rank tests, that distribution is exact: it comes from every possible arrangement of the ranks under $H_0$. For the chi-square tests, the chi-square curve is an approximation to the statistic's distribution under $H_0$, and it is a good one only when expected counts are large enough. That's why each chi-square test below comes with an expected-count rule.
 
 There are two versions of the chi-square test, depending on the question you're asking.
 
@@ -433,7 +429,7 @@ knitr::kable(
 
 -   $H_0$: fish are still distributed 25% per zone; the pattern matches the historical baseline.
 
--   $H_A$: fish are not evenly distributed across zones; the pattern has changed.
+-   $H_a$: fish are not evenly distributed across zones; the pattern has changed.
 
 ```{r}
 gof_test <- chisq.test(observed_gof, p = rep(0.25, 4))
@@ -462,7 +458,7 @@ knitr::kable(
 )
 ```
 
-Summing the last column: $2.88+2.42+0.08+0.02 = 5.4$, matching R's statistic above. With $df=3$, the critical value at $\alpha=.05$ is 7.81 (the same one marked on the distribution figure earlier in this chapter); our $5.4$ falls well short of it.
+Summing the last column: $2.88+2.42+0.08+0.02 = 5.4$, matching R's statistic above. For goodness-of-fit, $df = k-1$, where $k$ is the number of categories: $4-1=3$. With $df=3$, the critical value at $\alpha=.05$ is 7.81 (the same one marked on the distribution figure earlier in this chapter); our $5.4$ falls well short of it.
 
 **Interpretation.** $\chi^2(3) = 5.4$, $p = .145$: not significant. This year's zone counts are consistent with the historical 25%-each pattern; the unevenness we see is within the range chance alone would produce.
 
@@ -499,7 +495,7 @@ knitr::kable(tab, caption = "Stream sites by land use and E. coli exceedance")
 
 -   $H_0$: land use and exceedance are independent; knowing one tells you nothing about the other.
 
--   $H_A$: land use and exceedance are related; they are not independent.
+-   $H_a$: land use and exceedance are related; they are not independent.
 
 ```{r}
 indep_test <- chisq.test(tab)
@@ -529,16 +525,24 @@ contrib_tab <- (tab - indep_test$expected)^2 / indep_test$expected
 knitr::kable(round(contrib_tab, 2), caption = "Chi-square contribution by cell")
 ```
 
-Summing all six cells: $5.83+8.05+0.55+0.76+2.79+3.86 = 21.84$, matching R's statistic above. With $df=2$, the critical value at $\alpha=.05$ is `r round(qchisq(.95, 2), 2)`; our $21.84$ is more than three times that, which is where $p<.001$ comes from.
+Summing all six cells: $5.83+8.05+0.55+0.76+2.79+3.86 = 21.84$, matching R's statistic above. For a test of independence, $df=(r-1)(c-1)$ for $r$ rows and $c$ columns: $(3-1)(2-1)=2$. The number of sites never enters. With $df=2$, the critical value at $\alpha=.05$ is `r round(qchisq(.95, 2), 2)`; our $21.84$ is more than three times that, which is where $p<.001$ comes from.
 
-**Interpretation.** $\chi^2(2) = 21.84$, $p < .001$: significant. *E. coli* exceedance is not independent of land use: forested sites exceed the threshold far less often (8 of 50) than agricultural (25 of 50) or urban (30 of 50) sites. Note what this test does *not* tell you: it says the two variables are related, but, just like correlation, it doesn't by itself establish that land use *causes* the exceedance.
+**Interpretation.** $\chi^2(2) = 21.84$, $p < .001$: significant. *E. coli* exceedance is not independent of land use. The test says the two variables are related; the table says how. Divide within each row to get the exceedance rate for each land use:
 
-::: {.callout-important title="Results reporting: rank-based tests"}
+| Land use     | Exceeds / total | Share |
+|:-------------|----------------:|------:|
+| Forested     |          8 / 50 |   16% |
+| Agricultural |         25 / 50 |   50% |
+| Urban        |         30 / 50 |   60% |
+
+Dividing within a row matters because raw counts only compare fairly when the row totals match. Agricultural and urban sites exceed the threshold three to four times as often as forested ones. Note what this test does *not* tell you: it says the two variables are related, but, just like correlation, it doesn't by itself establish that land use *causes* the exceedance.
+
+::: {.callout-important title="Results reporting: nonparametric and chi-square tests"}
 These tests report differently from a $t$-test, and the difference matters: there is no mean difference to quote, because none of them used the means. Give the test's own statistic, the $p$-value, and a **median** rather than a mean.
 
 Wilcoxon signed-rank, on the restoration differences:
 
-> Soil moisture did not change significantly after restoration, Wilcoxon signed-rank *V* = 39, *p* = .057 (median change +1.5 percentage points, *n* = 9 non-zero differences).
+> Soil moisture did not change significantly after restoration, Wilcoxon signed-rank *V* = 39, *p* = .057 (median change +1.5 percentage points across all 12 plots; 9 non-zero differences).
 
 Mann-Whitney-Wilcoxon, on the richness comparison:
 
@@ -562,4 +566,4 @@ Two habits worth keeping. Report the number of non-zero differences for a signed
 -   **Nonparametric does not mean assumption-free.** Wilcoxon assumes the differences are symmetric about their median. Mann-Whitney-Wilcoxon assumes the two distributions have the same *shape*, which is not the same as equal variance. State the assumption you are actually making.
 -   **Check assumptions before you trust a** $p$-value, not after. Both worked examples in this chapter ran the parametric test first, then went back and found the violation. That order is deliberate, because it is the mistake most people actually make.
 -   **Categorical data needs a different tool entirely.** The **chi-square tests** handle counts: goodness-of-fit asks whether one variable's counts match an expected pattern, and the test of independence asks whether two categorical variables are related.
--   **The testing logic never changes.** State $H_0$ and $H_A$, compute a statistic, and ask how surprising that statistic would be if $H_0$ were true. Only the statistic and its reference distribution differ from test to test.
+-   **The testing logic never changes.** State $H_0$ and $H_a$, compute a statistic, and ask how surprising that statistic would be if $H_0$ were true. Only the statistic and its reference distribution differ from test to test.
