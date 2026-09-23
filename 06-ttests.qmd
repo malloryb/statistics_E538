@@ -277,35 +277,29 @@ Remember, if we obtained a single $t$ from one sample we collected, we could con
 
 ```{r}
 #| label: fig-6-t-rejection
-#| fig-cap: 'Two-tailed rejection regions at $\alpha=.05$ for $t_{(df=9)}$. Shaded tails mark unlikely values under $H_0$.'
-#| fig-alt: "A t-distribution curve with 9 degrees of freedom, with dashed vertical lines marking the critical values near plus and minus 2.26. The large central region between the lines is shaded teal and labeled 'retain H0,' while the two tail regions beyond the lines are shaded red and labeled 'rejection region.'"
+#| fig-cap: 'Two-tailed rejection regions at $\alpha=.05$ for $t_{(df=9)}$. The shaded tails beyond the red critical values mark unlikely values under $H_0$.'
+#| fig-alt: "A blue t-distribution curve with 9 degrees of freedom. Red vertical lines mark the critical values near plus and minus 2.26, and the two tails beyond them are shaded red and labeled 'rejection region.' The middle of the curve is labeled 'retain H0.'"
 #| out-width: "80%"
 
 library(tidyverse)
 
 df   <- 9
-xs   <- seq(-4.5, 4.5, length.out = 2000)
-dens <- dt(xs, df)
+xs   <- seq(-4.5, 4.5, by = 0.005)
+t_tibble <- tibble(x = xs, y = dt(xs, df))
+crit <- qt(.975, df)
 
-crit <- qt(c(.025, .975), df)
-
-t_tibble <- tibble(x = xs, y = dens,
-                   tail = ifelse(x <= crit[1] | x >= crit[2], "Rejection region", "Retain"),
-                   region = ifelse(x <= crit[1], "left",
-                             ifelse(x >= crit[2], "right", "mid")))
-
-ggplot(t_tibble, aes(x, y, fill = tail, group = region)) +
-  geom_area(alpha = 0.4, color = NA) +
-  geom_line(aes(group = 1), color = "black", linewidth = 0.9) +
-  geom_vline(xintercept = crit, linetype = 2) +
-  annotate("text", x = -3.2, y = 0.05, label = "rejection\nregion", size = 3.4, color = "grey20") +
-  annotate("text", x = 3.2, y = 0.05, label = "rejection\nregion", size = 3.4, color = "grey20") +
-  annotate("text", x = 0, y = 0.2, label = "retain H0", size = 3.6, color = "grey20") +
-  scale_fill_manual(values = c("Rejection region" = "#F8766D", "Retain" = "#7FCFCB")) +
+ggplot(t_tibble, aes(x, y)) +
+  geom_area(data = subset(t_tibble, x <= -crit), fill = "red", alpha = 0.18) +
+  geom_area(data = subset(t_tibble, x >=  crit), fill = "red", alpha = 0.18) +
+  geom_line(colour = "blue", linetype = "dotdash", linewidth = 1.1) +
+  annotate("segment", x = c(-crit, crit), xend = c(-crit, crit), y = 0,
+           yend = dt(crit, df), colour = "red", linewidth = 0.8) +
+  annotate("text", x = -3.4, y = 0.06, label = "rejection\nregion", size = 3.4, color = "grey20") +
+  annotate("text", x = 3.4, y = 0.06, label = "rejection\nregion", size = 3.4, color = "grey20") +
+  annotate("text", x = 0, y = 0.2, label = "retain~H[0]", parse = TRUE, size = 3.8, color = "grey20") +
+  annotate("text", x = 2.2, y = 0.33, label = "'Under '*H[0]", parse = TRUE, colour = "blue", hjust = 0, size = 4.2) +
   labs(x = "t", y = "Density") +
-  theme_classic(base_size = 12) +
-  theme(legend.position = "none")
-
+  theme_classic(base_size = 12)
 ```
 
 ### Interpreting $t$
