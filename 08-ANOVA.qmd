@@ -300,7 +300,7 @@ We run this simulation 10,000 times. Each time we compute F from the sample data
 ```{r}
 #| label: fig-8fnull
 #| fig-cap: "A simulation of 10,000 experiments from a null population distribution with no group differences. The histogram shows 10,000 $F$-values, one for each simulation. These are values that F can take in this situation. All of these $F$-values were produced by random sampling error."
-#| fig-alt: "Histogram of 10,000 simulated F values from a null population distribution. The histogram starts at zero, rises to a tall peak below 1, and then tapers off in a long right-hand tail, with very few values reaching as high as 5."
+#| fig-alt: "Histogram of 10,000 simulated F values from a null population distribution, with the theoretical F distribution for 2 and 27 degrees of freedom drawn over it as a blue dot-dash curve that follows the bars closely. The histogram starts at zero, rises to a tall peak below 1, and then tapers off in a long right-hand tail, with very few values reaching as high as 5."
 #| fig-asp: 0.5
 #| out-width: "100%"
 
@@ -319,9 +319,15 @@ for (i in 1:10000) {
 plot_df <- data.frame(sims = 1:10000, save_F)
 plot_df <- plot_df[plot_df$save_F < 10, ]
 
+f_curve <- data.frame(x = seq(0.01, 10, length.out = 500))
+f_curve$y <- df(f_curve$x, 2, 27)
+
 ggplot(plot_df, aes(x = save_F)) +
-  geom_histogram(color = "white", bins = 100) +
-  labs(x = "F", y = "Count")
+  geom_histogram(aes(y = after_stat(density)), color = "white", binwidth = 0.1, boundary = 0) +
+  geom_line(data = f_curve, aes(x, y), colour = "blue", linetype = "dotdash", linewidth = 1.1) +
+  annotate("text", x = 3, y = 0.6, label = "'F(2, 27) under '*H[0]", parse = TRUE,
+           colour = "blue", hjust = 0, size = 4.2) +
+  labs(x = "F", y = "Density")
 
 ```
 
@@ -341,31 +347,28 @@ We can use this null distribution of $F$ to decide when a real experiment's resu
 ```{r}
 #| label: fig-8criticalF
 #| fig-cap: "The critical value for $F$ where 5% of all $F$-values lie beyond this point"
-#| fig-alt: "The same right-skewed histogram of 10,000 simulated F values, now with a vertical line at F equal to 3.35 and the region beyond it shaded red and labeled '5% of F-values.' The shaded region covers only the thin tail at the far right of the histogram."
+#| fig-alt: "The same histogram of 10,000 simulated F values with the blue dot-dash F curve over it, now with a red vertical line labeled crit equals 3.35. The bars beyond that line are shaded red and labeled '5% of F-values'; they form only the thin tail at the far right of the histogram."
 #| out-width: "100%"
 #| fig-asp: 0.5
 
+crit_F <- qf(.95, 2, 27)
+plot_df$region <- plot_df$save_F >= crit_F
+
 ggplot(plot_df, aes(x = save_F)) +
-  geom_histogram(color = "white", bins = 100) +
-  geom_vline(xintercept = qf(.95, 2, 27)) +
-  annotate(
-    "rect",
-    xmin = qf(.95, 2, 27),
-    xmax = Inf,
-    ymin = 0,
-    ymax = Inf,
-    alpha = 0.15,
-    fill = "#b22222"
-  ) +
-  geom_label(data = data.frame(
-    x = qf(.95, 2, 27),
-    y = 500,
-    label = round(qf(.95, 2, 27), digits = 2)
-  ), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = 7.5, y = 500, label = "5% of F-values"),
-             aes(x = x, y = y, label = label)) +
-  theme_classic(base_size = 12) +
-  labs(x = "F", y = "Count")
+  # one shared bin grid (an edge at the critical value) and one shared density scale,
+  # so splitting the bars by region doesn't rescale the tail
+  geom_histogram(aes(y = after_stat(count / (nrow(plot_df) * width)), fill = region, alpha = region),
+                 color = "white", binwidth = 0.1, boundary = crit_F) +
+  scale_fill_manual(values = c(`FALSE` = "#008cff", `TRUE` = "red"), guide = "none") +
+  scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = .35), guide = "none") +
+  geom_line(data = f_curve, aes(x, y), colour = "blue", linetype = "dotdash", linewidth = 1.1) +
+  annotate("segment", x = crit_F, xend = crit_F, y = 0, yend = 0.93, colour = "red", linewidth = 0.8) +
+  annotate("text", x = crit_F, y = 0.97, label = paste0("crit = ", round(crit_F, 2)),
+           colour = "red", size = 4.2) +
+  annotate("segment", x = 5.6, xend = 4.1, y = 0.13, yend = 0.03,
+           arrow = arrow(length = unit(.14, "cm")), linewidth = .4) +
+  annotate("text", x = 5.7, y = 0.15, label = "5% of F-values", colour = "grey20", hjust = 0, size = 4.2) +
+  labs(x = "F", y = "Density")
 
 ```
 
@@ -401,7 +404,7 @@ The 10,000 simulated experiments never showed the group means behind each $F$-va
 ```{r}
 #| label: fig-8sigdiffs
 #| fig-cap: "Different patterns of group means under the null when F is above critical value (these are all type I Errors)."
-#| fig-alt: "Ten small panels of red bar charts with three bars each for site types A, B, and C, all filtered to simulations where F exceeded the critical value of 3.35. In every panel at least one bar's error bars do not overlap with another's, giving the visual impression of a real difference even though all ten panels were generated with no true group difference."
+#| fig-alt: "Ten small panels of blue bar charts with three bars each for site types A, B, and C, all filtered to simulations where F exceeded the critical value of 3.35. In every panel at least one bar's error bars do not overlap with another's, giving the visual impression of a real difference even though all ten panels were generated with no true group difference."
 #| out-width: "100%"
 
 all_df <- data.frame()
@@ -422,7 +425,9 @@ for (i in 1:1000) {
   }
 }
 
-all_df$simulations  <- as.factor(all_df$simulations)
+# number the ten kept simulations 1-10 rather than by their loop index
+all_df$simulations <- factor(match(all_df$simulations, unique(all_df$simulations)))
+levels(all_df$site_type) <- c("A", "B", "C")
 
 plot_df <- all_df %>%
   dplyr::group_by(simulations, site_type) %>%
@@ -430,7 +435,7 @@ plot_df <- all_df %>%
                    SEs = sd(abundance) / sqrt(length(abundance)))
 
 ggplot(plot_df, aes(x = site_type, y = means)) +
-  geom_bar(stat = "identity", position = "dodge", fill = "#b22222") +
+  geom_bar(stat = "identity", position = "dodge", fill = "#008cff") +
   geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.25) +
   facet_wrap( ~ simulations, nrow = 2) +
   xlab("Site type") +
