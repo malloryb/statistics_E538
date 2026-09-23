@@ -315,7 +315,7 @@ $$SS_\text{Total} = SS_\text{Regression} + SS_\text{Residual}, \qquad `r sprintf
 
 The pieces line up with Chapter 8's. $SS_\text{Regression}$ is the variation the predictor explains, the role $SS_\text{Between}$ played for group means. $SS_\text{Residual}$ is what's left over around the line, the role $SS_\text{Within}$ played around each group's mean. This is what treating every temperature value as its own group means: instead of one mean per group, the line supplies a predicted mean at each value of $x$.
 
-**R-squared** is the proportion of the total variation the line accounts for:
+**R-squared** is the proportion of the total variation explained by the line:
 
 $$R^2 = \frac{SS_\text{Regression}}{SS_\text{Total}} = \frac{`r sprintf("%.2f", ss_reg)`}{`r sprintf("%.2f", ss_total)`} = `r sprintf("%.2f", ss_reg / ss_total)`$$
 
@@ -334,7 +334,7 @@ $$F = \frac{MS_\text{Regression}}{MS_\text{Residual}} = \frac{`r sprintf("%.2f",
 
 With one predictor, $F$ and the slope's $t$ test the same thing: $F = t^2 = (`r round(fit_tidy$statistic[2],2)`)^2 = `r round(fit_tidy$statistic[2]^2,2)`$, with the same $p$. $F$ is the form that generalizes to models with more than one predictor, which is why software reports both.
 
-Here $R^2 = `r round(fit_glance$r.squared, 2)`$: stream temperature accounts for about `r round(fit_glance$r.squared*100)`% of the variation we observed in dissolved oxygen across sites. The remaining variation comes from everything else the model doesn't capture (discharge, shading, groundwater input, and so on), and it shows up as the residuals.
+Here $R^2 = `r round(fit_glance$r.squared, 2)`$: stream temperature explains about `r round(fit_glance$r.squared*100)`% of the variation we observed in dissolved oxygen across sites. The remaining variation comes from everything else the model doesn't capture (discharge, shading, groundwater input, and so on), and it shows up as the residuals.
 
 ::: {.callout-important title="Results reporting: regression"}
 We report a regression result the same way as any other test: the slope with its confidence interval, the test statistic, degrees of freedom, and $p$, plus $R^2$ as the effect size.
@@ -683,7 +683,7 @@ What this calls for is a different model, not more data or a better-fit line. Fi
 **Core ideas**
 
 -   **The slope is a hypothesis.** Chapter 2's $r$ described a relationship but came with no test of whether it was more than chance. Fitting a line turns that relationship into a model whose slope we can test: $H_0: \beta_1 = 0$ says there is no linear relationship. Testing it uses a $t$-test on the slope divided by its standard error, with $df = n-2$.
--   **Regression partitions variation the way ANOVA does.** $SS_\text{Total}$ splits into $SS_\text{Regression}$ (Chapter 8's between) and $SS_\text{Residual}$ (Chapter 8's within), and $F = MS_\text{Regression}/MS_\text{Residual}$, which equals $t^2$ with one predictor. $R^2$, the proportion of variation the line accounts for, is the effect size. A relationship can be real ($p$ small) and still explain very little, which is why you report both.
+-   **Regression partitions variation the way ANOVA does.** $SS_\text{Total}$ splits into $SS_\text{Regression}$ (Chapter 8's between) and $SS_\text{Residual}$ (Chapter 8's within), and $F = MS_\text{Regression}/MS_\text{Residual}$, which equals $t^2$ with one predictor. $R^2$, the proportion of variation explained by the line, is the effect size. A relationship can be real ($p$ small) and still explain very little, which is why you report both.
 -   **Look at your data, then look at your residuals.** The assumptions that must be met are linearity, independence, constant variance, and roughly normal residuals. A residuals-versus-fitted plot catches violations a formal test can miss entirely, as the outbreak example showed.
 -   **Predict inside your data; extrapolate beyond with caution.** Interpolating within the observed range of $x$ is what regression is for. Extrapolating beyond it is sometimes justified, but only when you have good reason to believe the relationship stays the same shape past the range you observed.
 -   **A good** $R^2$ can still be the wrong model. The outbreak example fit a straight line to exponential growth and got $R^2=`r round(outbreak_tidy$r.squared, 2)`$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast tens of thousands of cases short of reality. The residual plot catches this; a Q-Q plot, which checks a different assumption, does not.
