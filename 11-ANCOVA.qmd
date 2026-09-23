@@ -701,6 +701,13 @@ ggplot(energy, aes(Occupancy, Energy, colour = Type)) +
 
 The raw comparison and the adjusted one point in opposite directions, for the same reason as in the COVID example. The groups differed in a third variable: the retrofitted buildings were busier, and busier buildings use more electricity. Compared at the same occupancy, the retrofit effect shows up.
 
+```{r}
+mse_raw   <- anova(lm(Energy ~ Type, data = energy))["Residuals", "Mean Sq"]
+mse_ancova <- anova(energy_par)["Residuals", "Mean Sq"]
+```
+
+Adjusting for occupancy also shrank the error term. In the raw comparison the error mean square is `r round(mse_raw)`; in the parallel-lines model it is `r round(mse_ancova)`. Much of the building-to-building variation in electricity use comes from occupancy, and once the model accounts for it, that variation no longer counts as error. This is the same way repeated-measures ANOVA gains power in Chapter 8. There the known source of variation was the units themselves (the monitoring stations); here it is a measured covariate. Either way, removing it from $MS_\text{Within}$ makes the denominator of the test smaller, so a real group difference is easier to detect.
+
 ::: {.callout-important title="Results reporting: ANCOVA with parallel slopes"}
 > After adjusting for occupancy, retrofitted buildings used less electricity than standard buildings, `r sprintf("%.1f", b2)` kWh per day, 95% CI [`r sprintf("%.1f", b2r$conf.low)`, `r sprintf("%.1f", b2r$conf.high)`], $t(57) = `r sprintf("%.2f", b2r$statistic)`$, $p `r fmt_p(b2r$p.value)`$. Adjusted means at the average occupancy of `r round(occ_bar, 1)` people were `r sprintf("%.1f", adj_retr)` kWh per day for retrofitted buildings and `r sprintf("%.1f", adj_std)` for standard ones. The occupancy × building type interaction was not significant, $F(1, `r e_f[3]`) = `r sprintf("%.2f", e_int$statistic)`$, $p = `r fmt_p(e_int$p.value)`$, so a common slope was used (`r sprintf("%.2f", b1)` kWh per day per occupant).
 :::
@@ -715,4 +722,5 @@ The raw comparison and the adjusted one point in opposite directions, for the sa
 -   **Check the whole model, then the interaction.** If the whole-model $F$ is not significant, stop. Otherwise test whether the groups' slopes differ ($H_0:\beta_3=0$). That answer decides how everything else gets interpreted.
 -   **A significant interaction means report the two lines, not one number.** If slopes differ, describe how the relationship changes by group instead of collapsing to a single adjusted-mean comparison, which assumes parallel lines that don't actually hold. Test each group's slope with its own regression, since the interaction only says the slopes differ from each other.
 -   **If slopes are parallel, compare adjusted means.** Drop the interaction term and test $\beta_2$, the gap between the parallel lines. When the groups differ on the covariate, the adjusted comparison can point the opposite way from the raw one, as it did for the retrofitted buildings.
+-   **A covariate also shrinks the error term.** Variation the covariate explains leaves $MS_\text{Within}$, which is the same way repeated-measures ANOVA gains power by removing unit-to-unit variation.
 -   **Center the covariate when the intercept should mean something.** Left uncentered, the intercept describes the groups at covariate = 0, a value the data may never actually contain.

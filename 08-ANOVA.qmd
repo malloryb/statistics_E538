@@ -84,7 +84,7 @@ ANOVA solves this by replacing many separate $t$-tests with **one** test that co
 
 $$H_0: \mu_1=\mu_2=\mu_3 \qquad H_a: \text{at least one mean differs}$$
 
-Just like the $t$-test, different research designs call for different kinds of ANOVA: a one-way (between-subjects) ANOVA when every unit is measured once, and a repeated-measures ANOVA when the same units are measured under multiple conditions. This chapter covers the one-way case, and Chapter 10 extends it to two factors.
+Just like the $t$-test, different research designs call for different kinds of ANOVA: a one-way (between-subjects) ANOVA when every unit is measured once, and a repeated-measures ANOVA when the same units are measured under multiple conditions. This chapter covers the one-way case and ends with a short look at repeated measures; Chapter 10 extends the one-way case to two factors.
 
 ## One-way ANOVA
 
@@ -455,7 +455,7 @@ Plethodontid salamanders are sensitive indicators of forest condition: they depe
 ```{r}
 #| label: fig-8salamanderdesign
 #| fig-cap: "The salamander study as a design schematic. Structurally this is the two-group design from Chapters 4 and 6 with one more box added, which is exactly why ANOVA generalizes the t-test rather than replacing it."
-#| fig-alt: "Study design schematic. IV: forest type, categorical. Three boxes labelled Old-growth, Secondary and Managed, each with n = 8 plots. DV: salamander abundance per plot."
+#| fig-alt: "Study design schematic. IV: forest type, categorical. Three boxes labeled Old-growth, Secondary and Managed, each with n = 8 plots. DV: salamander abundance per plot."
 #| fig-asp: 0.34
 #| out-width: "100%"
 
@@ -688,6 +688,66 @@ knitr::kable(
 
 The pattern matches Tukey HSD exactly: Old-growth differs significantly from both Secondary ($p=.011$) and Managed ($p=.004$), while Secondary and Managed do not differ from each other ($p=.49$). The two approaches rest on different assumptions and use different machinery, and they agree here because the parametric assumptions held.
 
+## Repeated-measures ANOVA
+
+Every unit in the salamander study was measured once: 24 plots, 8 per forest type. Many environmental studies instead measure the **same** units under every condition, such as the same monitoring stations in every season or the same streams before, during, and after a drought. That is a **repeated-measures** (within-subjects) design, and it calls for a repeated-measures ANOVA.
+
+This is ANOVA's version of the paired $t$-test from Chapter 6. The paired $t$-test subtracted each plot's before score from its own after score, so differences between plots dropped out and only the change was left. With three or more conditions there is no single difference to take, so repeated-measures ANOVA does the equivalent with sums of squares: it measures how much the units differ from one another and removes that variation from the error term.
+
+### Fine particulate matter at four monitoring stations
+
+An air quality agency has four PM2.5 monitors, ordered from the most rural (A) to the most urban (D). @tbl-8pmdata gives each monitor's mean PM2.5 concentration in winter, spring, and summer. The question is whether concentrations differ by season: $H_0: \mu_\text{Winter}=\mu_\text{Spring}=\mu_\text{Summer}$ vs. $H_a$: at least one seasonal mean differs.
+
+```{r}
+#| label: tbl-8pmdata
+#| tbl-cap: "Seasonal mean PM2.5 (µg/m³) at four monitoring stations, with each station's mean and each season's mean."
+
+pm_df <- data.frame(
+  site   = factor(rep(c("A", "B", "C", "D"), times = 3)),
+  season = factor(rep(c("Winter", "Spring", "Summer"), each = 4),
+                  levels = c("Winter", "Spring", "Summer")),
+  pm25   = c(9, 9, 16, 18,
+             2, 8, 11, 11,
+             4, 7, 12, 13)
+)
+
+pm_wide <- data.frame(
+  Station = c("A", "B", "C", "D", "Season mean"),
+  Winter  = c(pm_df$pm25[pm_df$season == "Winter"], 13),
+  Spring  = c(pm_df$pm25[pm_df$season == "Spring"], 8),
+  Summer  = c(pm_df$pm25[pm_df$season == "Summer"], 9),
+  `Station mean` = c(5, 8, 13, 14, 10),
+  check.names = FALSE
+)
+knitr::kable(pm_wide, align = "lrrrr")
+```
+
+Winter is the highest season at every station. But the stations themselves differ far more than the seasons do. Station A averages 5 µg/m³ and station D averages 14.
+
+### Splitting off the stations
+
+A one-way ANOVA on these 12 numbers would split the variation into two pieces, as before: $SS_\text{Total} = 230$, $SS_\text{Between} = 56$ for seasons, and $SS_\text{Within} = 174$ left over. It would also break the independence assumption, because each station contributes three of the 12 numbers.
+
+Repeated-measures ANOVA splits $SS_\text{Within}$ one more time. Part of it is station-to-station variation, $SS_\text{Subjects}$, computed exactly like $SS_\text{Between}$ but from the station means instead of the season means. Each station mean counts once per season, so
+
+$$SS_\text{Subjects} = 3\left[(5-10)^2 + (8-10)^2 + (13-10)^2 + (14-10)^2\right] = 3(54) = 162.$$
+
+Whatever is left is the error term:
+
+$$SS_\text{Error} = SS_\text{Within} - SS_\text{Subjects} = 174 - 162 = 12,$$
+
+so the full split is
+
+$$SS_\text{Total} = SS_\text{Between} + SS_\text{Subjects} + SS_\text{Error}, \qquad 230 = 56 + 162 + 12.$$
+
+$SS_\text{Error}$ is the part of the within-season variation that the stations' own levels can't explain: how much each station's seasonal pattern departs from the average seasonal pattern. Its degrees of freedom are $(k-1)(n-1) = (3-1)(4-1) = 6$, where $n$ is the number of stations. The stations use up 3 of the 9 degrees of freedom the one-way ANOVA would have had.
+
+$F$ uses the same numerator as before, $MS_\text{Between} = 56/2 = 28$. Only the denominator changes:
+
+$$\text{One-way: } F = \frac{28}{174/9} = \frac{28}{19.33} = 1.45 \qquad \text{Repeated measures: } F = \frac{28}{12/6} = \frac{28}{2} = 14.00$$
+
+Removing the stations shrank the error mean square from 19.33 to 2, and $F$ grew by the same factor. That is why a repeated-measures design has more power than a between-subjects design with the same number of measurements whenever the units differ from one another, as monitoring stations usually do: the unit-to-unit differences are no longer counted as noise. The repeated-measures test finds a significant seasonal effect, $F(2, 6) = 14.00$, $p = .005$. The one-way ANOVA would give $F(2, 9) = 1.45$, $p = .28$, and miss it.
+
 ## Chapter Summary
 
 **Why it matters.** Comparing more than two groups with a stack of $t$-tests inflates your false-positive rate fast. ANOVA solves that by asking one omnibus question first, and its variance-partitioning logic is the same idea that reappears in regression, factorial designs, and ANCOVA.
@@ -701,3 +761,4 @@ The pattern matches Tukey HSD exactly: Old-growth differs significantly from bot
 -   $\eta^2$ is the effect size. $SS_\text{Between}/SS_\text{Total}$ is the proportion of variation the grouping variable accounts for. It is the same quantity as regression's $R^2$, and it does not depend on sample size the way $p$ does, so report it alongside $F$.
 -   **Check the assumptions.** ANOVA needs approximately equal variances across groups (Levene's test) and roughly normal residuals. Treat formal tests as evidence rather than a gate, since they have least power exactly when small samples make violations matter most.
 -   **When assumptions fail.** The **Kruskal-Wallis** test is the rank-based alternative, with `pairwise.wilcox.test()` as its post-hoc counterpart.
+-   **Repeated measures.** When the same units are measured under every condition, repeated-measures ANOVA splits $SS_\text{Within}$ into $SS_\text{Subjects}$ and a smaller $SS_\text{Error}$. The smaller error term is why it has more power, the same reason the paired $t$-test does.
