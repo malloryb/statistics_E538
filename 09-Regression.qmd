@@ -50,7 +50,7 @@ $y = \beta_0 + \beta_1 x + \varepsilon$
 
 *Intercept term*: $\beta_0$.
 
-A linear equation, fit to real data, is a statistical **model**. We never observe $\beta_1$ directly. So, we need one additional term, the **error** $\varepsilon$: the variability in the DV that the population line doesn't explain.
+A linear equation, fit to real data, is a statistical **model**. We never observe $\beta_0$ or $\beta_1$ directly. Real data also do not fall exactly on a line, so the model needs one more term, the **error** $\varepsilon$: the variability in the DV that the population line doesn't explain.
 
 ### Computing the best-fit line by hand
 
@@ -257,7 +257,7 @@ ggplot(t_null, aes(x, y)) +
   labs(x = "t", y = "Density")
 ```
 
-Our observed $t = `r sprintf("%.2f", fit_tidy$statistic[2])`$ sits far past the critical values of about $\pm`r sprintf("%.2f", qt(.975, nrow(stream_df)-2))`$, well outside where 95% of $t$-values would fall if temperature and DO were unrelated. The $p$-value is just the probability of landing that far out (or farther) in either tail under $H_0$: here, $p`r fmt_p(fit_tidy$p.value[2])`$, meaning essentially never. This crosses the conventional $\alpha = .05$ threshold.
+Our observed $t = `r sprintf("%.2f", fit_tidy$statistic[2])`$ sits far past the critical values of about $\pm`r sprintf("%.2f", qt(.975, nrow(stream_df)-2))`$, well outside where 95% of $t$-values would fall if temperature and DO were unrelated. The $p$-value is the probability of a $t$ that far out (or farther) in either tail under $H_0$: here, $p`r fmt_p(fit_tidy$p.value[2])`$. This crosses the conventional $\alpha = .05$ threshold.
 
 We **reject** $H_0$: stream temperature **is** linearly related to dissolved oxygen.
 
@@ -357,7 +357,7 @@ $R^2$ is what tells you how much of the variation is actually being explained.
 
 Neither $p$ alone nor $R^2$ alone tells the whole story, so we must report both.
 
-@fig-9regeffectpanels shows all three combinations this can produce: a strong relationship with a non-significant slope (underpowered), a weak relationship with a significant slope (a large sample), and a relationship that is both strong and significant.
+@fig-9regeffectpanels shows three of these combinations: a strong relationship with a non-significant slope (underpowered), a weak relationship with a significant slope (a large sample), and a relationship that is both strong and significant.
 
 ```{r}
 #| label: fig-9regeffectpanels
@@ -440,7 +440,7 @@ Let's try checking residuals for a different set of data, this time on avian inf
 
 ```{r}
 #| label: fig-9outbreakdesign
-#| fig-cap: "The outbreak data as a design. Structurally identical to the stream example, which is what makes it a fair test of whether a straight line is the right model."
+#| fig-cap: "The outbreak data as a design. Structurally identical to the stream example."
 #| fig-alt: "Study design schematic. IV: day of outbreak, continuous, an arrow running from day 1 to day 14. DV: new cases detected per day."
 #| fig-asp: 0.34
 #| out-width: "100%"
@@ -695,7 +695,7 @@ What this calls for is a different model, not more data or a better-fit line. Fi
 
 **Core ideas**
 
--   **The slope is a hypothesis.** Chapter 2's $r$ described a relationship but came with no test of whether it was more than chance. Fitting a line turns that relationship into a model whose slope we can test: $H_0: \beta_1 = 0$ says there is no linear relationship. Testing it uses a $t$-test on the slope divided by its standard error, with $df = n-2$.
+-   **The slope can be tested.** Chapter 2's $r$ described a relationship but came with no test of whether it was more than chance. Fitting a line turns that relationship into a model whose slope we can test: $H_0: \beta_1 = 0$ says there is no linear relationship. Testing it uses a $t$-test on the slope divided by its standard error, with $df = n-2$.
 -   **Regression partitions variation the way ANOVA does.** $SS_\text{Total}$ splits into $SS_\text{Regression}$ (Chapter 8's between) and $SS_\text{Residual}$ (Chapter 8's within), and $F = MS_\text{Regression}/MS_\text{Residual}$, which equals $t^2$ with one predictor. $R^2$, the proportion of variation explained by the line, is the effect size. A relationship can be real ($p$ small) and still explain very little, which is why you report both.
 -   **Look at your data, then look at your residuals.** The assumptions that must be met are linearity, independence, constant variance, and roughly normal residuals. A residuals-versus-fitted plot catches violations a formal test can miss entirely, as the outbreak example showed.
 -   **Predict inside your data; extrapolate beyond with caution.** Interpolating within the observed range of $x$ is what regression is for. Extrapolating beyond it is sometimes justified, but only when you have good reason to believe the relationship stays the same shape past the range you observed.

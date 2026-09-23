@@ -82,7 +82,7 @@ After calculating $t$ from our data, we compare the observed $t$ to a $t$ distri
 
 ### Comparing $z$ and $t$
 
-When the population SD is known (or we have a large enough sample to assume convergence), the ratio is called $z$; when it's estimated from the data, it's $t$.
+When the population SD is known (or the sample is large enough that $s$ is close to $\sigma$), the ratio is called $z$. When the SD is estimated from the data, the ratio is called $t$.
 
 Under a known population SD ($\sigma$), the standardized mean uses the $z$ statistic: $$z = \frac{\bar{x}-\mu_0}{\sigma/\sqrt{n}}$$
 
@@ -149,7 +149,7 @@ If the population SD $\sigma$ is known *and* the sampling distribution of the sa
 
 ### Degrees of freedom
 
-Every $t$ formula so far has carried $df = n-1$ alongside it, and @fig-6-z-vs-t-linear-log drew a different $t$ curve for each $df$. That number is the degrees of freedom, and it is worth understanding what it means, not just where to find it. It is also the number in parentheses whenever a $t$-test is reported, as in $t(9) = 1.94$.
+Every $t$ formula so far has carried $df = n-1$ alongside it, and @fig-6-z-vs-t-linear-log drew a different $t$ curve for each $df$. That number is the degrees of freedom. It is also the number in parentheses whenever a $t$-test is reported, as in $t(9) = 1.94$.
 
 For one-sample and paired $t$-tests, $df = n-1$. A sample of 10 has $df=9$.
 
@@ -187,14 +187,14 @@ As degrees of freedom increase, the $t$ distribution gets taller in the middle a
 
 ### What t represents
 
-Either way, the ratio asks the same question: how far is the mean from the reference in SE units?
+Whether we use $z$ or $t$, the ratio asks the same question: how far is the mean from the reference in SE units?
 
 $t$ expresses how far a sample mean is from the hypothesized mean, in **standard error units** (signal over noise):
 
 $$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}$$
 
 $t$ can be positive or negative depending on direction. Under $H_0$, $t \sim t_{(df=n-1)}$.\
-**A useful anchor:** at $\alpha=.05$ two-tailed and $df\approx 20$, $|t|\gtrsim 2$ is already uncommon under $H_0$; smaller $df$ pushes that threshold higher, as the critical values above show.
+**Rule of thumb:** at $df\approx 20$, $|t|$ beyond about 2 occurs less than 5% of the time under $H_0$ (two-tailed, $\alpha=.05$). With smaller $df$ the cutoff is higher, as the critical values above show.
 
 ::: {.callout-note title="Note: Standard error, again"}
 Remember that $s/\sqrt{n}$ is the **standard error (SE)**, the standard deviation of the sampling distribution of the sample mean.
@@ -215,7 +215,7 @@ ggplot(data.frame(t_vals), aes(x = t_vals)) +
   labs(x = "t values", y = "Count")
 ```
 
-**Takeaway:** $t$ measures how far the sample mean is from the null expectation, scaled by its uncertainty. It behaves predictably under $H_0$, allowing us to decide whether a difference is likely due to chance.
+**Takeaway:** $t$ measures how far the sample mean is from the null expectation, scaled by its uncertainty. Under $H_0$ it follows a known $t$ distribution, so we can check how often chance alone would produce a $t$ as large as ours.
 
 ### Calculating t from data
 
@@ -252,15 +252,15 @@ We can confirm this with a single R command, `t.test(scores, mu = 50)`:
 
 **Interpretation:** The mean (`r round(x,0)`%) is above chance (50%), but the difference is not statistically significant at $\alpha=.05$.
 
-**Assumptions check:** Observations are independent, and with $n=10$ the data are approximately normal, sufficient for a one-sample $t$-test.
+**Assumptions check:** Observations are independent, and the 10 scores are approximately normal, which is sufficient for a one-sample $t$-test.
 
 ### Assumptions, and what to do when they don't hold
 
-Every test in this book rests on assumptions. Assumptions are conditions that need to be roughly true for the math behind the test to be trustworthy. There are two different kinds of assumptions.
+Every test in this book has assumptions. Assumptions are conditions that need to be roughly true for the math behind the test to be trustworthy. There are two different kinds of assumptions.
 
-**The universal assumption.** Every single test we cover in this class (one-sample $t$, paired $t$, independent $t$, ANOVA, regression) assumes your observations are **independent** and came from a **sound study design** (a fair sample, not one that systematically favors certain values). This assumption is so constant that from here on, we won't re-list it test by test. Keep it in the back of your mind, but if an exam or homework question asks you to "list the assumptions of this test," this isn't the answer they're looking for.
+**The universal assumption.** Every test in this book, including the nonparametric tests in Chapter 7, assumes your observations are **independent** (in paired designs, the pairs) and came from a **sound study design** (a fair sample, not one that systematically favors certain values). This assumption is so constant that from here on, we won't re-list it test by test. Keep it in the back of your mind, but if an exam or homework question asks you to "list the assumptions of this test," this isn't the answer they're looking for.
 
-**Test-specific assumptions.** These come from how a particular test's math actually works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is **approximate normality** of the outcome itself (one-sample) or of the difference scores (paired). Why does this matter? The $t$-distribution we've been using to get $p$-values is *derived* assuming the sampling distribution of the sample mean is normal. If your data are badly skewed and your sample is small, that derivation is on shaky ground, and the $p$-value it hands you may not mean what it claims to mean.
+**Test-specific assumptions.** These come from how a particular test's math actually works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is **approximate normality** of the outcome itself (one-sample) or of the difference scores (paired). The $t$-distribution we've been using to get $p$-values is *derived* assuming the sampling distribution of the sample mean is normal. If your data are badly skewed and your sample is small, that assumption fails, and the $p$-value may not be the true probability of a result this extreme under $H_0$.
 
 **How worried should you be?** It depends enormously on $n$. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the sample mean tends toward normal even when individual observations are skewed, so the $t$-test is fairly **robust** to non-normality once $n$ is reasonably large. A lot of environmental data, particularly field data, instead comes from **small samples that are also skewed**. Examples include a handful of expensive water samples, a short list of monitoring wells, five plots you had time to visit before the storm rolled in. Small $n$ and non-normality reinforcing each other is when a $t$-test's answer becomes questionable.
 
@@ -268,7 +268,7 @@ Every test in this book rests on assumptions. Assumptions are conditions that ne
 
 ### How does t behave?
 
-Extreme sample means are unlikely if $H_0$ is true, which is why large $|t|$ values are rare. Returning to that anchor point, values of $t$ beyond roughly $-2$ or $+2$ occur less than 5% of the time under the null when $df \approx 20$. That's the foundation of the decision rule for $t$ tests: if your observed $t$ lies in those rare tails, you reject $H_0$.
+Extreme sample means are unlikely if $H_0$ is true, which is why large $|t|$ values are rare. Returning to that rule of thumb, values of $t$ beyond roughly $-2$ or $+2$ occur less than 5% of the time under the null when $df \approx 20$. That's the foundation of the decision rule for $t$ tests: if your observed $t$ lies in those rare tails, you reject $H_0$.
 
 Remember, if we obtained a single $t$ from one sample we collected, we could consult the chance window in @fig-6-t-rejection below to find out whether the $t$ we obtained from the sample was likely or unlikely to occur by chance.
 
@@ -428,7 +428,7 @@ Applied to our actual result, $t(9) = 1.94$: the one-tailed $p$ is .042, the two
 
 ### Which one should you use?
 
-The rule is Chapter 4's, unchanged: default to two-tailed, and go one-tailed only when a result in the opposite direction would lead you to do the same thing as no result. What the $t$-test adds is that you can now see the cost directly in the critical value, since $t_{crit}$ for a one-tailed test sits closer to 0 than the two-tailed one at the same $\alpha$.
+The rule is Chapter 4's, unchanged: default to two-tailed, and go one-tailed only when a result in the opposite direction would lead you to do the same thing as no result. With a $t$-test you can see the difference in the critical value: at the same $\alpha$, the one-tailed $t_{crit}$ is closer to 0 than the two-tailed one.
 
 ## Paired t: before/after or matched
 
@@ -467,7 +467,7 @@ t = \frac{\bar d - 0}{s_d/\sqrt{n}}, \quad df=n-1.$$
 
 The **sign of** $t$ matches $\bar d$ and your difference direction.
 
-**Full sample effect.** With all 20 plots, $\bar d$ is similar to the pattern in a smaller subset, but $s_d/\sqrt{n}$ gets smaller as $n$ grows, so $t$ increases. This is the payoff of pairing: more power from the same number of plots.
+**Full sample effect.** With all 20 plots, $\bar d$ is similar to its value in a 5-plot subset, but $s_d/\sqrt{n}$ gets smaller as $n$ grows, so $t$ increases.
 
 **What to report.** $\bar d$ (the mean change), a 95% CI, $t(df)$, and $p$. Optionally add a standardized effect (Cohen's $d=\bar d/s_d$).
 
@@ -551,7 +551,7 @@ knitr::kable(
 )
 ```
 
-At $n=20$, $t(19) = `r round(full20_out$statistic, 2)`$, $p =`r fmt_p(full20_out$p.value)`$: significant. The mean difference (`r round(full20_out$estimate, 1)` percentage points) is in the same range as what the 5-plot subset already suggested; what changed is the standard error, which shrank enough with the larger sample to rule out chance. This is the payoff of pairing: same design, more plots, more power to detect a real effect.
+At $n=20$, $t(19) = `r round(full20_out$statistic, 2)`$, $p =`r fmt_p(full20_out$p.value)`$: significant. The mean difference (`r round(full20_out$estimate, 1)` percentage points) is in the same range as the 5-plot subset suggested. The standard error shrank enough with the larger sample to rule out chance, so the extra plots gave more power to detect a real effect.
 
 ## Two independent groups
 
