@@ -11,9 +11,55 @@ source("global_stuff.R")
 ```{r}
 library(dplyr)
 library(ggplot2)
-library(xtable)
-library(ggpubr)
-library(kableExtra)
+library(broom)
+
+fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = "f"))
+
+# ANOVA table in the book's style: R's row labels, blank F and p on the Residuals row
+anova_kable <- function(fit, caption = NULL) {
+  broom::tidy(fit) |>
+    mutate(
+      sumsq     = round(sumsq, 2),
+      meansq    = round(meansq, 2),
+      statistic = ifelse(is.na(statistic), "", formatC(statistic, digits = 2, format = "f")),
+      p.value   = ifelse(is.na(p.value), "", fmt_p(p.value))
+    ) |>
+    knitr::kable(col.names = c("Source", "df", "SS", "MS", "F", "p"),
+                 align = "lrrrrr", caption = caption)
+}
+
+# One visual system for every stream figure: flow on the x-axis,
+# one line (or bar) per pollution condition, always these colours and line types.
+poll_cols <- c("No Pollution" = "#008cff", "Pollution" = "#b22222")
+poll_lty  <- c("No Pollution" = "solid",   "Pollution" = "dashed")
+flow_levels <- c("Low Flow", "High Flow")
+
+# The stream experiment analysed throughout the chapter: 5 channels per cell
+A <- c(10, 8, 11, 9, 10)   # No Pollution, Low Flow
+B <- c(5, 4, 3, 4, 2)      # Pollution,    Low Flow
+C <- c(12, 13, 14, 11, 13) # No Pollution, High Flow
+D <- c(9, 8, 10, 11, 12)   # Pollution,    High Flow
+
+species   <- c(A, B, C, D)
+pollution <- rep(c("No Pollution", "Pollution", "No Pollution", "Pollution"), each = 5)
+flow      <- rep(c("Low Flow", "Low Flow", "High Flow", "High Flow"), each = 5)
+
+gm          <- mean(species)
+nopoll_mean <- mean(species[pollution == "No Pollution"])
+poll_mean   <- mean(species[pollution == "Pollution"])
+low_mean    <- mean(species[flow == "Low Flow"])
+high_mean   <- mean(species[flow == "High Flow"])
+
+cell_means <- data.frame(
+  Pollution = c("No Pollution", "Pollution", "No Pollution", "Pollution"),
+  Flow      = factor(c("Low Flow", "Low Flow", "High Flow", "High Flow"), levels = flow_levels),
+  mean      = c(mean(A), mean(B), mean(C), mean(D))
+)
+
+simple_low  <- mean(A) - mean(B)   # Delta Pollution | Low Flow
+simple_high <- mean(C) - mean(D)   # Delta Pollution | High Flow
+
+f1 <- function(x) formatC(x, format = "f", digits = 1)  # one decimal, keeps 6.0 and 10.0
 ```
 
 # Factorial ANOVA
@@ -49,38 +95,9 @@ Our single IV (water availability) has three levels (Low, Medium, High). You can
 -   IV1 (Soil pH: Acidic vs. Neutral);
 -   IV2 (Water Availability: Low vs. High)
 
-Now we have two IVs, soil pH and water availability, each with two levels. This is called a **factorial** design, and it's easier to see what that means visually than to define it in words first. Take a look at @fig-10designs.
+Now we have two IVs, soil pH and water availability, each with two levels. This is called a **factorial** design.
 
 ### 2x2 Designs
-
-@fig-10designs lays out our soil pH and water availability example as a grid.
-
-```{r}
-#| label: fig-10designs
-#| fig-cap: "Structure of a 2x2 factorial design: soil pH crossed with water availability."
-#| fig-alt: "A two-by-two grid. Columns are labeled Acidic and Neutral; rows are labeled Low Water and High Water. Each of the four cells is marked DV, indicating that the dependent variable is measured in every combination."
-#| out-width: "75%"
-#| fig-asp: 0.55
-
-soil_cells <- expand.grid(
-  Soil  = factor(c("Acidic", "Neutral"), levels = c("Acidic", "Neutral")),
-  Water = factor(c("Low Water", "High Water"), levels = c("Low Water", "High Water"))
-)
-soil_cells$fill <- c("#F5E2C8", "#F7DDD6", "#CFE3F2", "#DCEEDD")
-
-p_designs <- ggplot(soil_cells, aes(Soil, Water)) +
-  geom_tile(aes(fill = I(fill)), color = "grey30", linewidth = 0.6, width = 0.92, height = 0.92) +
-  geom_text(aes(label = paste0(Soil, "\n", Water)), fontface = "bold", size = 4.1, vjust = -0.4, color = "grey15") +
-  geom_text(aes(label = "DV measured here"), size = 3.2, vjust = 3.6, color = "grey30") +
-  labs(x = "Soil pH", y = "Water availability") +
-  theme_classic(base_size = 13) +
-  theme(axis.ticks = element_blank())
-
-designs_png <- "imgs/figures/fig-10designs-rendered.png"
-ggsave(designs_png, p_designs, width = 6, height = 6 * 0.6, dpi = 150,
-       device = grDevices::png, type = "cairo")
-knitr::include_graphics(designs_png)
-```
 
 Each combination of soil type and water availability creates a unique environment for the plants, giving four distinct scenarios to measure growth rates: 2 IVs, each with 2 levels, for 2x2 = 4 conditions total. The notation directly tells you the number of conditions.
 
@@ -122,93 +139,74 @@ design_crossed("Pollution (categorical) × Flow rate (categorical)",
                note = "5 stream channels in every condition (20 total)")
 ```
 
-Two IVs, two levels each, so you should already be able to name this design: it's a 2x2. Reading the schematic left to right also shows why the notation works the way it does. Crossing two levels with two levels *is* the multiplication that gives four conditions, and "fully crossed" simply means no cell is left empty. @fig-10setup shows those same four conditions as a grid, with what gets measured in each.
+Two IVs, two levels each, so you should already be able to name this design: it's a 2x2. Reading the schematic left to right also shows why the notation works the way it does. Crossing two levels with two levels *is* the multiplication that gives four conditions, and "fully crossed" simply means no cell is left empty.
 
 That four-cell grid resembles the chi-square table from Chapter 7, and the difference between them is worth pinning down. There, the cells held **counts** of stream sites that already had a given land use and *E. coli* level; nobody put them there. Here, the cells are **conditions we assign channels to**, and within each one we then measure something else entirely, the species count. Same shape, opposite direction: one counts where units landed, the other measures an outcome where we placed them.
 
 **Predictions.** No pollution plus high flow should support the most species; pollution plus low flow should support the fewest. The other two combinations are the interesting ones, and a one-factor study could never distinguish them: does pollution matter only when flow is low, with fast water washing its effect away entirely? Or does pollution hurt a stream no matter how fast the water moves? That's exactly what an interaction test in a factorial experiment can tell us.
 
+### Cell means and marginal means
+
+Each combination of conditions, such as no pollution with low flow, is called a **cell**. The **cell mean** is the mean species count across the five channels assigned to that combination. A **marginal mean** is the mean for one level of a factor, averaged across the levels of the other factor: the no-pollution marginal mean averages the two no-pollution cells, one at each flow rate. @tbl-10means shows the means from the experiment this chapter analyzes.
+
 ```{r}
-#| label: fig-10setup
-#| fig-cap: "The 2x2 experimental design. Two pollution conditions crossed with two flow rates gives four stream-channel conditions. In every condition we count how many macroinvertebrate species are present, and each cell is labelled with its pollution condition and flow rate."
-#| fig-alt: "A two-by-two grid. Columns are labeled No Pollution and Pollution; rows are labeled Low Flow and High Flow. Each of the four cells notes five stream channels and is labelled with its pollution condition and flow rate."
-#| out-width: "90%"
-#| fig-asp: 0.62
+#| label: tbl-10means
+#| tbl-cap: "Mean macroinvertebrate species count. The four inner numbers are cell means; the last row and column hold the marginal means, and the corner is the grand mean."
 
-cells <- expand.grid(
-  Pollution = factor(c("No Pollution", "Pollution"), levels = c("No Pollution", "Pollution")),
-  Flow      = factor(c("Low Flow", "High Flow"),     levels = c("Low Flow", "High Flow"))
+means_tbl <- data.frame(
+  ` `             = c("No Pollution", "Pollution", "Marginal mean"),
+  `Low Flow`      = f1(c(mean(A), mean(B), low_mean)),
+  `High Flow`     = f1(c(mean(C), mean(D), high_mean)),
+  `Marginal mean` = c(f1(c(nopoll_mean, poll_mean)), formatC(gm, format = "f", digits = 2)),
+  check.names = FALSE
 )
-cells$fill <- c("#F5E2C8", "#F7DDD6", "#CFE3F2", "#DCEEDD")
-
-p_setup <- ggplot(cells, aes(Pollution, Flow)) +
-  geom_tile(aes(fill = I(fill)), color = "grey30", linewidth = 0.6, width = 0.92, height = 0.92) +
-  geom_text(aes(label = paste0(Pollution, "\n", Flow)),
-            fontface = "bold", size = 4.0, vjust = -0.8, color = "grey15") +
-  geom_text(aes(label = "5 channels each;\ncount species present"), size = 3.0, vjust = 1.6, color = "grey30") +
-  labs(x = "Pollution condition", y = "Flow rate") +
-  coord_cartesian(clip = "off") +
-  theme_classic(base_size = 13) +
-  theme(
-    axis.ticks = element_blank(),
-    plot.margin = margin(t = 10, r = 10, b = 25, l = 10)
-  )
-
-# Emoji glyphs need Cairo's font fallback; the default ragg PNG device used
-# for fig-format: png chunks doesn't resolve color emoji, so we render
-# through grDevices::png(type="cairo") explicitly and embed the file.
-setup_png <- "imgs/figures/fig-10setup-rendered.png"
-ggsave(setup_png, p_setup, width = 7.2, height = 7.2 * 0.62, dpi = 150,
-       device = grDevices::png, type = "cairo")
-knitr::include_graphics(setup_png)
+knitr::kable(means_tbl, align = "lrrr")
 ```
+
+The pollution marginal means (`r round(nopoll_mean, 2)` and `r round(poll_mean, 2)`) average each row across both flow rates. The flow marginal means (`r round(low_mean, 2)` and `r round(high_mean, 2)`) average each column across both pollution conditions. The corner, `r round(gm, 2)`, is the **grand mean** of all 20 channels.
 
 ## Why factorial designs matter
 
-Factorial designs let us ask more nuanced questions than a single-factor study can. Suppose we ignored flow entirely and just compared polluted to unpolluted channels. That gives us a **Pollution effect**: the difference in species count between polluted and unpolluted water, shown in @fig-10biodiversityeffect.
+Factorial designs let us ask more nuanced questions than a single-factor study can. Suppose we ignored flow entirely and just compared polluted to unpolluted channels. That compares the two pollution marginal means, `r round(nopoll_mean, 2)` vs. `r round(poll_mean, 2)` species, shown in @fig-10biodiversityeffect.
 
 ```{r}
 #| label: fig-10biodiversityeffect
-#| fig-cap: "Macroinvertebrate species count under pollution vs. no pollution, ignoring flow."
-#| fig-alt: "Bar chart with two bars: Pollution at 15 species and No Pollution at 30 species, showing species count roughly halved under pollution."
-#| out-width: "100%"
-#| fig.asp: 0.5
+#| fig-cap: "Mean macroinvertebrate species count under no pollution vs. pollution, averaged across flow rate (the pollution marginal means)."
+#| fig-alt: "Bar chart with two bars: No Pollution at about 11 species and Pollution at about 7 species."
+#| out-width: "70%"
+#| fig-asp: 0.6
 
-df <- data.frame(
-  Pollution_Type = c("Pollution", "No Pollution"),
-  Species_Diversity = c(15, 30)
-)
-ggplot(df, aes(x = Pollution_Type, y = Species_Diversity)) +
-  geom_bar(stat = "identity", fill = c("#b22222", "#008cff")) +
-  ylab("Macroinvertebrate Species Count") +
+cell_means |>
+  group_by(Pollution) |>
+  summarise(mean = mean(mean)) |>
+  ggplot(aes(x = Pollution, y = mean, fill = Pollution)) +
+  geom_col(width = 0.6) +
+  scale_fill_manual(values = poll_cols, guide = "none") +
+  coord_cartesian(ylim = c(0, 14)) +
+  ylab("Mean species count") +
   xlab("Pollution condition")
-
 ```
 
-A factorial design lets us ask the follow-up question a one-factor design can't: does the Pollution effect itself depend on flow? With flow rate added as a second IV, there are four condition means instead of two, so we can compare the Pollution effect *within* each flow condition, shown in @fig-10flowB.
+A factorial design lets us ask the follow-up question a one-factor design can't: does the effect of pollution itself depend on flow? With flow rate added as a second IV, there are four cell means instead of two, so we can compare polluted and unpolluted channels *within* each flow rate, shown in @fig-10flowB.
 
 ```{r}
 #| label: fig-10flowB
-#| fig-cap: "The Pollution effect (the gap between the two bars within a flow condition) is larger under low flow than high flow."
-#| fig-alt: "Grouped bar chart with two flow conditions, Low Flow and High Flow, each showing a No Pollution bar and a Pollution bar. Under Low Flow the bars are far apart, 35 versus 15. Under High Flow the bars are much closer together, 30 versus 25, showing a smaller pollution gap."
-#| out-width: "100%"
-#| fig.asp: 0.5
+#| fig-cap: "The effect of pollution within each flow rate (the gap between the two bars) is larger under low flow than under high flow."
+#| fig-alt: "Grouped bar chart with Low Flow and High Flow on the x-axis, each with a No Pollution bar and a Pollution bar. Under Low Flow the bars are far apart, about 10 versus 4 species. Under High Flow they are closer together, about 13 versus 10, showing a smaller pollution gap."
+#| out-width: "85%"
+#| fig-asp: 0.55
 
-df <- data.frame(
-  Flow = rep(c("Low Flow", "High Flow"), times = 2),
-  Pollution = rep(c("No Pollution", "Pollution"), each = 2),
-  Species_Diversity = c(35, 30, 15, 25) # Hypothetical data
-)
-
-ggplot(df, aes(x = Flow, y = Species_Diversity, fill = Pollution)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  ylab("Macroinvertebrate Species Count") +
-  xlab("Flow Rate") +
-  labs(fill = "Pollution Condition")
-
+ggplot(cell_means, aes(x = Flow, y = mean, fill = Pollution)) +
+  geom_col(position = position_dodge(0.7), width = 0.65) +
+  scale_fill_manual(values = poll_cols) +
+  coord_cartesian(ylim = c(0, 14)) +
+  ylab("Mean species count") +
+  xlab("Flow rate") +
+  labs(fill = NULL) +
+  theme(legend.position = "top")
 ```
 
-Under low flow, species count drops sharply with pollution (35 to 15, a difference of 20). Under high flow, the drop is much smaller (30 to 25, a difference of 5). The Pollution effect isn't constant: it depends on flow rate, exactly as we suspected it might.
+Under low flow, species count drops sharply with pollution (`r f1(mean(A))` to `r f1(mean(B))`, a difference of `r f1(simple_low)`). Under high flow, the drop is smaller (`r f1(mean(C))` to `r f1(mean(D))`, a difference of `r f1(simple_high)`). The effect of pollution isn't constant: it depends on flow rate, exactly as we suspected it might.
 
 That's the core payoff of a factorial design: it tells you what changes the size of an effect, not only whether the effect exists.
 
@@ -216,11 +214,13 @@ That's the core payoff of a factorial design: it tells you what changes the size
 
 Those two things, **main effects** and **interactions**, are what any factorial design gives you. How many of each depends on the number of IVs.
 
-A **main effect** is the average difference associated with a single IV, one per IV. A 2x2 design has two IVs, so two main effects: one for Pollution and one for Flow. A 2x2x2 design has three main effects, one per IV; a 3x3x3 design also has three, since the number of main effects tracks the number of IVs, not their levels.
+A **main effect** is the average difference associated with a single IV, the difference between its marginal means, one per IV. A 2x2 design has two IVs, so two main effects: one for Pollution and one for Flow. A 2x2x2 design has three main effects, one per IV; a 3x3x3 design also has three, since the number of main effects tracks the number of IVs, not their levels.
 
-An **interaction** occurs when the effect of one IV depends on the level of another, which is exactly what @fig-10flowB shows: the size of the Pollution effect changed with Flow.
+The effect of one IV at a single level of the other, such as the pollution effect under low flow, is a **simple effect**. @fig-10flowB shows two of them, one per flow rate, and the main effect of pollution is their average: $(`r f1(simple_low)` + `r f1(simple_high)`)/2 = `r f1((simple_low + simple_high)/2)`$, the same `r f1(nopoll_mean - poll_mean)` you get by subtracting the pollution marginal means.
 
-Equivalently, and this framing is worth holding onto because it's what the arithmetic actually computes, an interaction is a **difference between differences**. The Pollution effect is a difference (polluted minus unpolluted). If that difference itself changes across Flow conditions, that's an interaction.
+An **interaction** occurs when the effect of one IV depends on the level of another, which is exactly what @fig-10flowB shows: the simple effect of pollution changed with flow.
+
+Equivalently, and this framing is worth holding onto because it's what the arithmetic actually computes, an interaction is a **difference between differences**. Each simple effect of pollution is a difference (unpolluted minus polluted). If that difference itself changes across flow rates, that's an interaction.
 
 The number of possible interactions scales with the number of IVs. A 2x2 design has exactly one interaction, the combined effect of the two IVs. A design with three IVs (A, B, C) has three two-way interactions (AB, AC, BC) and one three-way interaction (ABC).
 
@@ -246,17 +246,17 @@ We can represent the four combinations of conditions and their mean species coun
 **Main effect of pollution**
 
 -   **Null (**$H_0$): There is no effect of pollution on mean species count.
--   **Alternative (**$H_1$): Pollution affects mean species count.
+-   **Alternative (**$H_a$): Pollution affects mean species count.
 
 **Main effect of flow**
 
 -   **Null (**$H_0$): There is no effect of flow rate on mean species count.
--   **Alternative (**$H_1$): Flow rate affects mean species count.
+-   **Alternative (**$H_a$): Flow rate affects mean species count.
 
 **Pollution × flow interaction**
 
 -   **Null (**$H_0$): The effect of pollution is the same at both flow rates. *(In symbols:* $(\mu_{\text{NoPoll,Low}}-\mu_{\text{Poll,Low}})=(\mu_{\text{NoPoll,High}}-\mu_{\text{Poll,High}})$.)
--   **Alternative (**$H_1$): The effect of pollution differs across flow rates.
+-   **Alternative (**$H_a$): The effect of pollution differs across flow rates.
 
 > **Plain English:** Under the interaction null, the gap between polluted and unpolluted channels is the same whether the water is moving fast or slow. If that gap changes, for example if pollution does far more damage under low flow, you've found an interaction.
 
@@ -266,37 +266,19 @@ You'll sometimes see this written in abstract terms, with "Factor A" and "Factor
 
 ## What the ANOVA is really comparing
 
-Recall from earlier: an interaction is a **difference between differences**. Here's that idea with real numbers, using the four condition means directly, before we touch a single sum of squares.
+Recall from earlier: an interaction is a **difference between differences**. Here's that idea with the four cell means from @tbl-10means, before we touch a single sum of squares. Writing a simple effect as $\Delta$, with the level it is computed at after the bar:
 
-```{r}
-A <- c(10, 8, 11, 9, 10)   # No Pollution, Low Flow
-B <- c(5, 4, 3, 4, 2)      # Pollution,    Low Flow
-C <- c(12, 13, 14, 11, 13) # No Pollution, High Flow
-D <- c(9, 8, 10, 11, 12)   # Pollution,    High Flow
+$$\Delta_\text{Pollution|Low} = \bar{x}_\text{NoPoll,Low} - \bar{x}_\text{Poll,Low} = `r f1(mean(A))` - `r f1(mean(B))` = `r f1(simple_low)`$$
 
-pollution_effect_low  <- mean(A) - mean(B)
-pollution_effect_high <- mean(C) - mean(D)
-diff_of_diffs <- pollution_effect_low - pollution_effect_high
+$$\Delta_\text{Pollution|High} = \bar{x}_\text{NoPoll,High} - \bar{x}_\text{Poll,High} = `r f1(mean(C))` - `r f1(mean(D))` = `r f1(simple_high)`$$
 
-knitr::kable(data.frame(
-  `Pollution effect, Low Flow` = pollution_effect_low,
-  `Pollution effect, High Flow` = pollution_effect_high,
-  `Difference of differences` = diff_of_diffs,
-  check.names = FALSE
-))
-```
-
-Under low flow, the Pollution effect (no-pollution mean minus pollution mean) is `r pollution_effect_low`. Under high flow, it's `r pollution_effect_high`. Those two numbers aren't the same, so the Pollution effect isn't constant across Flow conditions, which is exactly what an interaction means. The gap between them, `r diff_of_diffs`, is a first, informal look at the interaction itself. Whether a gap that size is more than chance would produce is what the formal test below settles.
-
-::: {.callout-caution title="Warning: If your design were repeated measures instead"}
-Here each condition uses a different set of stream channels, a **between-subjects** design. Had the *same* channels been measured under all four conditions, this identical interaction test could be computed as a paired $t$-test on difference scores, agreeing exactly with a repeated-measures ANOVA ($t^2=F$).
-:::
+Those two numbers aren't the same, so the effect of pollution isn't constant across flow rates, which is exactly what an interaction means. The gap between them, $`r f1(simple_low)` - `r f1(simple_high)` = `r f1(simple_low - simple_high)`$, is a first, informal look at the interaction itself. Whether a gap that size is more than chance would produce is what the formal test below settles.
 
 ## Computing a factorial ANOVA by hand
 
-In our **between-subjects** 2x2 design, different stream channels appear in each condition: 5 channels per condition, 20 channels total, no repeats. The logic is the same as the one-way ANOVA in the last chapter: partition the total variance into parts. For a 2x2 design, there's now one more part, the interaction:
+In our **between-subjects** 2x2 design, different stream channels appear in each condition: 5 channels per cell, 20 channels total, no repeats. The logic is the same as the one-way ANOVA in Chapter 8: partition the total variance into parts. For a 2x2 design, there's now one more part, the interaction:
 
-$$SS_\text{Total} = SS_\text{Effect IV1} + SS_\text{Effect IV2} + SS_\text{Effect IV1xIV2} + SS_\text{Error}$$
+$$SS_\text{Total} = SS_\text{Pollution} + SS_\text{Flow} + SS_\text{Interaction} + SS_\text{Error}$$
 
 The tables below build up each piece the same way the one-way ANOVA chapter did: one row per channel, showing what that channel's score gets replaced with, its distance from the grand mean, and that distance squared.
 
@@ -319,17 +301,13 @@ truncate_rows <- function(df, keep_first = 3) {
   rbind(df[1:keep_first, ], ellipsis, df[n, ])
 }
 
-species <- c(A, B, C, D)
-pollution <- rep(c("No Pollution", "Pollution", "No Pollution", "Pollution"), each = 5)
-flow <- rep(c("Low Flow", "Low Flow", "High Flow", "High Flow"), each = 5)
+diff <- species - gm
+diff_sq <- diff^2
 
-gm <- mean(species)
-diff <- round(species - gm, 2)
-diff_sq <- round(diff^2, 2)
-
-df_total <- data.frame(Pollution = pollution, Flow = flow, Species = species, Diff = diff, `Diff Squared` = diff_sq, check.names = FALSE)
+df_total <- data.frame(Pollution = pollution, Flow = flow, Species = species,
+                       Diff = round(diff, 2), `Diff Squared` = round(diff_sq, 2), check.names = FALSE)
 df_total <- truncate_rows(df_total)
-df_total <- rbind(df_total, c("Sums", "", sum(species), rsum(diff), sum(diff_sq)))
+df_total <- rbind(df_total, c("Sums", "", sum(species), rsum(diff), rsum(diff_sq)))
 df_total <- rbind(df_total, c("Means", "", round(mean(species), 2), "", ""))
 
 knitr::kable(df_total, row.names = FALSE)
@@ -339,67 +317,66 @@ The mean of all 20 scores is the **grand mean**, `r round(gm,2)`. The `Diff` col
 
 ### SS Pollution
 
-$SS_\text{Pollution}$ isolates the variation caused by pollution condition alone: replace every score with its own pollution-condition mean, then find that mean's distance from the grand mean.
+$SS_\text{Pollution}$ isolates the variation we can explain by pollution condition alone: replace every score with its pollution marginal mean, then find that mean's distance from the grand mean.
 
 ```{r}
-nopoll_mean <- mean(species[pollution == "No Pollution"])
-poll_mean <- mean(species[pollution == "Pollution"])
 group_mean <- ifelse(pollution == "No Pollution", nopoll_mean, poll_mean)
 
-diff <- round(group_mean - gm, 2)
-diff_sq <- round(diff^2, 2)
+diff <- group_mean - gm
+diff_sq <- diff^2
 
 df_poll <- data.frame(Pollution = pollution, Flow = flow, Species = species,
-                       `Group Mean` = round(group_mean, 2), Diff = diff, `Diff Squared` = diff_sq, check.names = FALSE)
+                       `Marginal Mean` = round(group_mean, 2), Diff = round(diff, 2),
+                       `Diff Squared` = round(diff_sq, 2), check.names = FALSE)
 df_poll <- truncate_rows(df_poll)
-df_poll <- rbind(df_poll, c("Sums", "", sum(species), "", rsum(diff), sum(diff_sq)))
+df_poll <- rbind(df_poll, c("Sums", "", sum(species), "", rsum(diff), rsum(diff_sq)))
 
 knitr::kable(df_poll, row.names = FALSE)
 ```
 
-Every no-pollution channel is replaced by the no-pollution mean, `r round(nopoll_mean,2)`; every pollution channel by the pollution mean, `r round(poll_mean,2)`. Squaring and summing those means' distances from the grand mean gives $SS_\text{Pollution} = `r round(sum(diff_sq),2)`$: the variation explained by pollution condition alone.
+Every no-pollution channel is replaced by the no-pollution marginal mean, `r round(nopoll_mean,2)`; every pollution channel by the pollution marginal mean, `r round(poll_mean,2)`. Squaring and summing those means' distances from the grand mean gives $SS_\text{Pollution} = `r round(sum(diff_sq),2)`$: the variation explained by pollution condition alone.
 
 ### SS Flow
 
 $SS_\text{Flow}$ works the same way, grouping by flow rate instead of pollution condition.
 
 ```{r}
-low_mean <- mean(species[flow == "Low Flow"])
-high_mean <- mean(species[flow == "High Flow"])
 group_mean_flow <- ifelse(flow == "Low Flow", low_mean, high_mean)
 
-diff <- round(group_mean_flow - gm, 2)
-diff_sq <- round(diff^2, 2)
+diff <- group_mean_flow - gm
+diff_sq <- diff^2
 
 df_flow <- data.frame(Pollution = pollution, Flow = flow, Species = species,
-                       `Group Mean` = round(group_mean_flow, 2), Diff = diff, `Diff Squared` = diff_sq, check.names = FALSE)
+                       `Marginal Mean` = round(group_mean_flow, 2), Diff = round(diff, 2),
+                       `Diff Squared` = round(diff_sq, 2), check.names = FALSE)
 df_flow <- truncate_rows(df_flow)
-df_flow <- rbind(df_flow, c("Sums", "", sum(species), "", rsum(diff), sum(diff_sq)))
+df_flow <- rbind(df_flow, c("Sums", "", sum(species), "", rsum(diff), rsum(diff_sq)))
 
 knitr::kable(df_flow, row.names = FALSE)
 ```
 
-Every low-flow channel is replaced by `r round(low_mean,2)`; every high-flow channel by `r round(high_mean,2)`. This gives $SS_\text{Flow} = `r round(sum(diff_sq),2)`$.
+Every low-flow channel is replaced by the low-flow marginal mean, `r round(low_mean,2)`; every high-flow channel by the high-flow marginal mean, `r round(high_mean,2)`. This gives $SS_\text{Flow} = `r round(sum(diff_sq),2)`$.
 
 ### SS Interaction
 
-The interaction is the one genuinely new piece a factorial ANOVA adds. It asks: do the four individual condition means behave differently than the two main effects alone would predict?
+The interaction is the one genuinely new piece a factorial ANOVA adds. It asks: do the four cell means behave differently than the two main effects alone would predict?
 
-Take the Low Flow condition: its own mean was `r round(low_mean,2)`. If pollution's effect were the same regardless of flow, both pollution subgroups within Low Flow should also average close to that. They don't: the no-pollution/low-flow mean is `r round(mean(A),2)`, well above it, and the pollution/low-flow mean is `r round(mean(B),2)`, well below it. That gap, variance the two main effects can't explain on their own, is what the interaction captures.
+If the main effects told the whole story, each cell mean would be the grand mean, shifted by that cell's pollution effect and its flow effect. Take the no-pollution, low-flow cell. The no-pollution marginal mean sits $`r round(nopoll_mean,2)` - `r round(gm,2)` = `r round(nopoll_mean - gm,2)`$ above the grand mean, and the low-flow marginal mean sits $`r round(gm,2)` - `r round(low_mean,2)` = `r round(gm - low_mean,2)`$ below it, so the two main effects predict $`r round(gm,2)` + `r round(nopoll_mean - gm,2)` - `r round(gm - low_mean,2)` = `r round(nopoll_mean + low_mean - gm,2)`$. The observed cell mean is `r f1(mean(A))`. The leftover, `r round(mean(A) - (nopoll_mean + low_mean - gm),2)`, is the part of that cell the two main effects can't explain. Those leftovers, one per cell, are what the interaction captures.
 
-To compute it, replace each score with its own condition mean, then subtract that channel's pollution-group mean and flow-group mean, and add back the grand mean once (to avoid subtracting it twice):
+To compute it, replace each score with its own cell mean, then subtract that channel's pollution marginal mean and flow marginal mean, and add back the grand mean once (to avoid subtracting it twice):
 
-$$\bar{x}_\text{condition} - \bar{x}_\text{Pollution group} - \bar{x}_\text{Flow group} + \bar{x}_\text{Grand mean}$$
+$$\bar{x}_\text{cell} - \bar{x}_\text{Pollution marginal} - \bar{x}_\text{Flow marginal} + \bar{x}_\text{grand}$$
 
 ```{r}
 cond_mean <- ave(species, pollution, flow)
-diff <- round(cond_mean - group_mean - group_mean_flow + gm, 2)
-diff_sq <- round(diff^2, 2)
+diff <- cond_mean - group_mean - group_mean_flow + gm
+diff_sq <- diff^2
 
 df_int <- data.frame(Pollution = pollution, Flow = flow, Species = species,
-                      `Condition Mean` = round(cond_mean, 2), Diff = diff, `Diff Squared` = diff_sq, check.names = FALSE)
+                      `Cell Mean` = round(cond_mean, 2), Diff = round(diff, 2),
+                      `Diff Squared` = round(diff_sq, 2), check.names = FALSE)
 df_int <- truncate_rows(df_int)
-df_int <- rbind(df_int, c("Sums", "", sum(species), "", rsum(diff), sum(diff_sq)))
+df_int <- rbind(df_int, c("Sums", "", sum(species), "", rsum(diff), rsum(diff_sq)))
 
 knitr::kable(df_int, row.names = FALSE)
 ```
@@ -422,17 +399,35 @@ ss_error <- ss_total - ss_poll - ss_flow - ss_int
 
 $$SS_\text{Error} = `r round(ss_total,2)` - `r round(ss_poll,2)` - `r round(ss_flow,2)` - `r round(ss_int,2)` = `r round(ss_error,2)`$$
 
+$SS_\text{Error}$ is the same quantity Chapter 8 called $SS_\text{Within}$: the spread of channels around their own cell mean, the variation none of the three effects can explain.
+
+### Degrees of freedom, mean squares, and F
+
+Each sum of squares becomes a mean square the same way it did in Chapter 8, by dividing by its degrees of freedom. With $a$ levels of pollution, $b$ levels of flow, and $N$ channels in all:
+
+-   $df_\text{Pollution} = a-1 = 1$
+-   $df_\text{Flow} = b-1 = 1$
+-   $df_\text{Interaction} = (a-1)(b-1) = 1$
+-   $df_\text{Error} = N-ab = 20-4 = 16$, one lost for each of the four cell means
+-   $df_\text{Total} = N-1 = 19$, and $1+1+1+16 = 19$
+
+Each effect gets its own $F$, and all three share the same denominator:
+
+$$F_\text{Pollution} = \frac{MS_\text{Pollution}}{MS_\text{Error}}, \qquad F_\text{Flow} = \frac{MS_\text{Flow}}{MS_\text{Error}}, \qquad F_\text{Interaction} = \frac{MS_\text{Interaction}}{MS_\text{Error}}$$
+
+Here $MS_\text{Error} = `r sprintf('%.2f', ss_error)`/16 = `r sprintf('%.2f', ss_error/16)`$. Every effect has 1 degree of freedom, so each effect's $MS$ equals its $SS$, and for pollution $F = `r sprintf('%.2f', ss_poll)`/`r sprintf('%.2f', ss_error/16)` = `r sprintf('%.2f', ss_poll/(ss_error/16))`$.
+
 ### Check your work
 
-Converting each $SS$ to an $F$-value works exactly as it did for the one-way ANOVA: divide by $df$ to get $MS$, then take the ratio of each effect's $MS$ to $MS_\text{Error}$. Instead of repeating that by hand, the check that matters here is that these hand-calculated $SS$ values match what R computes directly.
+R's `aov()` builds the same table directly. The `*` in the formula tells R to include both main effects and their interaction; R writes the interaction row as `Pollution:Flow` and the error row as `Residuals`.
 
 ```{r}
-all_df <- data.frame(Pollution = factor(pollution), Flow = factor(flow), Number_species = species)
-aov_summary <- summary(aov(Number_species ~ Pollution * Flow, all_df))
-knitr::kable(xtable::xtable(aov_summary))
+all_df  <- data.frame(Pollution = factor(pollution), Flow = factor(flow), Number_species = species)
+aov_fit <- aov(Number_species ~ Pollution * Flow, all_df)
+anova_kable(aov_fit)
 ```
 
-The `Sum Sq` column matches the hand-calculated values above: `r round(ss_poll,2)` for Pollution, `r round(ss_flow,2)` for Flow, `r round(ss_int,2)` for the interaction, `r round(ss_error,2)` for Error. All three effects are significant here, including the interaction we previewed informally a moment ago: the Pollution effect really is different at the two flow rates, not just by chance.
+The SS column matches the hand-calculated values above: `r round(ss_poll,2)` for Pollution, `r round(ss_flow,2)` for Flow, `r round(ss_int,2)` for the interaction, `r round(ss_error,2)` for Error. All three effects are significant here, including the interaction we previewed informally a moment ago: the Pollution effect really is different at the two flow rates, not just by chance.
 
 ### Effect size in a factorial design
 
@@ -500,7 +495,7 @@ In any 2x2 ANOVA, there are eight general outcome patterns, different combinatio
 
 We'll create bar and line graphs to illustrate these patterns. Bar graphs are great for seeing differences in means directly, while line graphs help us spot interactions. @fig-10bar22 shows the possible patterns in bar graph form. These are abstract illustrations of every combination that can occur, so a few of them describe patterns you would not expect ecologically; the point is to recognize the shapes, not to defend each one.
 
-Here's what to look for:
+Every figure in this chapter puts flow rate on the x-axis and draws one line (or bar) per pollution condition: blue for no pollution, red for pollution. Here's what to look for:
 
 -   **Parallel lines** → no interaction.
 -   **Non-parallel or crossing lines** → interaction likely.
@@ -508,28 +503,28 @@ Here's what to look for:
 
 For example:
 
--   If the **no-pollution vs. pollution** lines are consistently apart, there's a main effect of pollution.
--   If the lines cross or diverge, the **pollution effect changes across flow rates**, showing an interaction.
--   If one line sits higher overall (say, high flow always supports more species), that's a main effect of flow.
+-   If the no-pollution line sits above the pollution line on average, there's a main effect of pollution.
+-   If the lines converge, diverge, or cross, the **pollution effect changes across flow rates**, showing an interaction.
+-   If the lines rise or fall on average from low to high flow (say, high flow supports more species in both pollution conditions), that's a main effect of flow.
 
 The eight panels below are numbered to match the table above, so panel "Pattern 3" in the figure is row 3 in the table, and so on.
 
 ```{r}
 #| label: fig-10bar22
 #| fig-cap: "Eight example patterns of main effects and interactions in a pollution × flow design, numbered to match the pattern table above."
-#| fig-alt: "Eight small panels of grouped bar charts, each with No Pollution and Pollution bars split by Low Flow and High Flow, one panel per pattern in the table above. Pattern 1 shows four equal-height bars (no effects). Pattern 2 shows a pollution gap that's the same at both flow levels. Pattern 3 shows a pollution gap present at both flow levels but a different size at each. Pattern 4 shows both a pollution gap and an overall flow difference, consistent across conditions. Pattern 5 combines both main effects with a gap that also changes size across flow levels. Pattern 6 shows only a flow difference, no pollution gap. Pattern 7 shows a flow difference where the pollution gap also changes size. Pattern 8 shows bars that are equal on average for each factor alone, but the pollution gap flips direction between flow levels."
+#| fig-alt: "Eight small panels of grouped bar charts, each with Low Flow and High Flow on the x-axis and a No Pollution and a Pollution bar at each, one panel per pattern in the table above. Pattern 1 shows four equal-height bars (no effects). Pattern 2 shows a pollution gap that's the same at both flow levels. Pattern 3 shows a pollution gap present at both flow levels but a different size at each. Pattern 4 shows both a pollution gap and an overall flow difference, consistent across conditions. Pattern 5 combines both main effects with a gap that also changes size across flow levels. Pattern 6 shows only a flow difference, no pollution gap. Pattern 7 shows a flow difference where the pollution gap also changes size. Pattern 8 shows bars that are equal on average for each factor alone, but the pollution gap flips direction between flow levels."
 #| out-width: "100%"
 
 mk <- function(v) data.frame(
   Pollution = c("No Pollution", "No Pollution", "Pollution", "Pollution"),
-  Flow      = c("Low Flow", "High Flow", "Low Flow", "High Flow"),
+  Flow      = factor(c("Low Flow", "High Flow", "Low Flow", "High Flow"), levels = flow_levels),
   means     = v
 )
 
 p1 <- mk(c(5, 5, 5, 5))
 p2 <- mk(c(10, 10, 5, 5))
 p3 <- mk(c(10, 13, 5, 2))
-p4 <- mk(c(5, 10, 10, 15))
+p4 <- mk(c(10, 15, 5, 10))
 p5 <- mk(c(10, 18, 5, 7))
 p6 <- mk(c(5, 10, 5, 10))
 p7 <- mk(c(2, 12, 5, 9))
@@ -551,9 +546,11 @@ type <- c(
 
 all_22s$type <- factor(type, levels = unique(type))
 
-ggplot(all_22s, aes(x = Pollution, y = means, group = Flow, fill = Flow)) +
-  geom_bar(stat = "identity", position = "dodge") +
+ggplot(all_22s, aes(x = Flow, y = means, fill = Pollution)) +
+  geom_col(position = position_dodge(0.8), width = 0.75) +
   facet_wrap(~ type, nrow = 2) +
+  scale_fill_manual(values = poll_cols) +
+  labs(fill = NULL, x = NULL) +
   ylab("Mean species count") +
   theme(
     legend.position = "top",
@@ -568,20 +565,18 @@ ggplot(all_22s, aes(x = Pollution, y = means, group = Flow, fill = Flow)) +
 ```{r}
 #| label: fig-10lines22
 #| fig-cap: "Line graphs showing eight possible outcomes for a pollution × flow design."
-#| fig-alt: "The same eight patterns as the previous bar-chart figure, redrawn as line graphs with one line for No Pollution and one for Pollution, running from Low Flow to High Flow. Patterns 1, 2, 4, and 6 show two straight, parallel lines, meaning no interaction. Patterns 3, 5, 7, and 8 show lines that are not parallel, either converging, diverging, or crossing outright, meaning an interaction is present in each of those four panels."
+#| fig-alt: "The same eight patterns as the previous bar-chart figure, redrawn as line graphs with a solid line for No Pollution and a dashed line for Pollution, running from Low Flow to High Flow. Patterns 1, 2, 4, and 6 show two straight, parallel lines, meaning no interaction. Patterns 3, 5, 7, and 8 show lines that are not parallel, either converging, diverging, or crossing outright, meaning an interaction is present in each of those four panels."
 #| out-width: "100%"
 
-ggplot(all_22s, aes(
-  x = Pollution,
-  y = means,
-  group = Flow,
-  color = Flow
-)) +
+ggplot(all_22s, aes(x = Flow, y = means, colour = Pollution, group = Pollution)) +
+  geom_line(aes(linetype = Pollution)) +
   geom_point() +
-  geom_line() +
   facet_wrap(~ type, nrow = 2) +
+  scale_colour_manual(values = poll_cols) +
+  scale_linetype_manual(values = poll_lty) +
+  labs(colour = NULL, linetype = NULL) +
   ylab("Mean species count") +
-  xlab("")+
+  xlab("") +
   theme(legend.position = "top",
         strip.text = element_text(size = 8),
         axis.text.x = element_text(size = 8))
@@ -591,29 +586,74 @@ In the line graphs, interactions are easiest to see:
 
 -   **Parallel lines** mean no interaction (the pollution effect is the same at both flow rates).
 -   **Crossing lines** mean an interaction (the pollution effect differs by flow).
--   **Vertical shifts** between the two lines reflect a main effect of flow.
+-   The **average gap** between the two lines is the main effect of pollution; the lines' **average rise or fall** from low to high flow is the main effect of flow.
 
 ::: {.callout-tip title="Tip: Which factor goes on the x-axis?"}
-The statistics are identical either way, since the same condition means get plotted regardless. Two rules of thumb make the picture easier to read. Put the factor with more levels on the x-axis, since one long line is easier to follow than several short, crowded ones. And put whichever factor is your main scientific interest there too, since readers compare points along an axis more naturally than separate colored lines.
+The statistics are identical either way, since the same cell means get plotted regardless. Two rules of thumb make the picture easier to read. Put the factor with more levels on the x-axis, since one long line is easier to follow than several short, crowded ones. And draw the factor whose effect you're asking about as the lines, so its simple effect at each level of the other factor is the gap between the lines. That's why this chapter puts flow on the x-axis: the question is how the effect of pollution changes with flow.
 :::
+
+### Simple effects
+
+When an interaction is present, the natural follow-up is to describe each simple effect: the effect of one factor at a single level of the other. Start with the $\Delta$ values from the cell means, as we did earlier:
+
+$$\Delta_\text{Pollution|Low} = `r f1(mean(A))` - `r f1(mean(B))` = `r f1(simple_low)`, \qquad \Delta_\text{Pollution|High} = `r f1(mean(C))` - `r f1(mean(D))` = `r f1(simple_high)`$$
+
+Those two numbers are the interpretation: pollution costs `r f1(simple_low)` species under low flow and `r f1(simple_high)` under high flow. But saying "pollution reduced species count under low flow" is still a claim, and like any claim in this book, it needs its own test, not just a look at the plot.
+
+Testing a simple effect asks whether pollution's effect holds at one specific level of flow, so it looks like a two-sample comparison: no pollution vs. pollution, at low flow only. The temptation is to pull out just the low-flow rows and run a fresh two-sample test on them. Don't. That throws away the high-flow channels entirely when estimating the error variance, using half the data and half the degrees of freedom to estimate noise you already estimated better once, from all 20 channels, when you computed $SS_\text{Error}$ for the omnibus ANOVA above.
+
+The fix is to reuse that pooled estimate. $MS_\text{Error}$ and its 16 degrees of freedom already describe the noise in this design better than any subset could, so the simple-effects test just plugs them into a two-sample $t$:
+
+$$t = \frac{\bar{x}_1 - \bar{x}_2}{\sqrt{MS_\text{Error}\left(\dfrac{1}{n_1}+\dfrac{1}{n_2}\right)}}, \qquad df = df_\text{Error}$$
+
+Using $MS_\text{Error}=`r sprintf('%.2f', ss_error/16)`$ and $df=16$ from the omnibus table computed earlier:
+
+```{r}
+#| label: tbl-10simpleeffects
+#| tbl-cap: "Simple effects of pollution, tested separately within each flow rate, using the pooled error term from the full model."
+
+mse <- ss_error / 16
+edf <- 16
+n_cell <- 5
+se_pooled <- sqrt(mse * (1/n_cell + 1/n_cell))
+
+diffs <- c(simple_low, simple_high)
+ts <- diffs / se_pooled
+ps <- 2 * pt(-abs(ts), df = edf)
+
+knitr::kable(
+  data.frame(
+    `Simple effect` = c("Pollution, within Low Flow", "Pollution, within High Flow"),
+    Difference = diffs,
+    t = round(ts, 2),
+    df = edf,
+    p = fmt_p(ps),
+    check.names = FALSE
+  )
+)
+```
+
+Both comparisons clear the critical value, $t_\text{crit}(16) = 2.12$ at $\alpha=.05$, two-tailed. So the interaction here isn't "pollution matters at low flow but not at all at high flow," that would show up as one significant row and one not. It's "pollution matters everywhere, but far more at low flow," now backed by a number instead of just a plot.
+
+When a factor has only two levels, as Pollution does here, the simple-effects test is the full answer; there's nothing left to compare.
 
 ### Order of interpretation
 
-When we conduct a two-way ANOVA, we always begin by testing the **interaction** term. In our stream example, pollution reduces species count most under low flow and less under high flow. The pollution effect is not constant across flow rates, so the average "main effect" of pollution can mislead if read without context.
+When we conduct a two-way ANOVA, we always begin by reading the **interaction** term, because it decides what the main effects mean.
 
--   If the interaction is **significant**, we **do not** interpret the main effects in isolation, because they are not consistent across conditions. Instead, we report simple effects: how one factor behaves at each level of the other. "Pollution reduced species count sharply under low flow, and only slightly under high flow" is a simple-effects sentence; "there was a main effect of pollution" on its own is not enough. If you report a main effect at all here, qualify it: "There was a main effect of pollution, but it varied by flow rate."
+-   If the interaction is **not significant**, examine the two main effects separately, interpreting each as an overall difference averaged across the other factor. If a significant main effect has three or more levels, follow it with Tukey HSD on that factor, exactly as in Chapter 8.
 
--   If the interaction is **not significant**, we then examine the two main effects separately, interpreting each as an overall difference averaged across the other factor.
+-   If the interaction is **significant**, lead with the simple effects: how one factor behaves at each level of the other. "Pollution reduced species count sharply under low flow, and less under high flow" is a simple-effects sentence; "there was a main effect of pollution" on its own is not enough. Whether the main effect is still worth reporting depends on the direction of the simple effects:
+
+    -   If the simple effects all point the same way and differ only in size, the main effect still describes something real. Report it, qualified by the interaction: "There was a main effect of pollution, qualified by a Pollution × Flow interaction."
+    -   If one simple effect is near zero, or they point in opposite directions, the main effect is an average that describes no actual condition. Don't report it as a general effect of that factor.
 
 -   If **neither** the interaction nor either main effect is significant, there is nothing to follow up on. Do not run, or interpret, post-hoc tests on a result that never cleared the omnibus test in the first place.
 
-::: {.callout-important title="Results reporting: factorial ANOVA"}
-Lead with the interaction, then give the simple effects, then report the main effects only with their qualification attached. Every effect gets its own effect size, labeled so the reader knows whether it is partialed.
-
-> The effect of pollution on macroinvertebrate species count depended on flow rate, *F*(1, 16) = 9.03, *p* = .008, $\eta_p^2 = 0.36$. Under low flow, polluted channels supported 6.0 fewer species than unpolluted ones (3.6 vs. 9.6); under high flow that gap narrowed to 2.6 species (10.0 vs. 12.6). Both main effects were also significant, pollution *F*(1, 16) = 57.78, *p* \< .001, $\eta_p^2 = 0.78$, and flow *F*(1, 16) = 69.03, *p* \< .001, $\eta_p^2 = 0.81$, but each should be read in light of the interaction: pollution costs a stream far more species when the water is moving slowly.
-:::
 
 Here are three generalized examples to help you make sense of these issues:
+
+The three examples below show each case of that rule.
 
 ### A consistent main effect and an interaction
 
@@ -625,14 +665,17 @@ Here are three generalized examples to help you make sense of these issues:
 #| fig-asp: 0.5
 
 p_consistent <- data.frame(
-  Flow       = c("Low Flow", "High Flow", "Low Flow", "High Flow"),
+  Flow       = factor(c("Low Flow", "High Flow", "Low Flow", "High Flow"), levels = flow_levels),
   Pollution  = c("No Pollution", "No Pollution", "Pollution", "Pollution"),
   mean_count = c(12, 14, 5, 11)
 )
 
 ggplot(p_consistent, aes(x = Flow, y = mean_count, color = Pollution, group = Pollution)) +
+  geom_line(aes(linetype = Pollution)) +
   geom_point() +
-  geom_line() +
+  scale_colour_manual(values = poll_cols) +
+  scale_linetype_manual(values = poll_lty) +
+  labs(colour = NULL, linetype = NULL, x = "Flow rate") +
   ylab("Mean species count") +
   theme(legend.position = "top")
 ```
@@ -651,14 +694,17 @@ There was a main effect of pollution, qualified by a Pollution × Flow interacti
 #| fig-asp: 0.5
 
 p_inconsistent <- data.frame(
-  Flow       = c("Low Flow", "High Flow", "Low Flow", "High Flow"),
+  Flow       = factor(c("Low Flow", "High Flow", "Low Flow", "High Flow"), levels = flow_levels),
   Pollution  = c("No Pollution", "No Pollution", "Pollution", "Pollution"),
   mean_count = c(10, 5, 5, 5)
 )
 
 ggplot(p_inconsistent, aes(x = Flow, y = mean_count, color = Pollution, group = Pollution)) +
+  geom_line(aes(linetype = Pollution)) +
   geom_point() +
-  geom_line() +
+  scale_colour_manual(values = poll_cols) +
+  scale_linetype_manual(values = poll_lty) +
+  labs(colour = NULL, linetype = NULL, x = "Flow rate") +
   ylab("Mean species count") +
   theme(legend.position = "top")
 ```
@@ -679,14 +725,17 @@ There was a main effect of pollution, but it was entirely qualified by a Polluti
 #| fig-asp: 0.5
 
 p_masked <- data.frame(
-  Flow       = c("Low Flow", "High Flow", "Low Flow", "High Flow"),
+  Flow       = factor(c("Low Flow", "High Flow", "Low Flow", "High Flow"), levels = flow_levels),
   Pollution  = c("No Pollution", "No Pollution", "Pollution", "Pollution"),
   mean_count = c(8, 8, 4, 12)
 )
 
 ggplot(p_masked, aes(x = Flow, y = mean_count, color = Pollution, group = Pollution)) +
+  geom_line(aes(linetype = Pollution)) +
   geom_point() +
-  geom_line() +
+  scale_colour_manual(values = poll_cols) +
+  scale_linetype_manual(values = poll_lty) +
+  labs(colour = NULL, linetype = NULL, x = "Flow rate") +
   ylab("Mean species count") +
   theme(legend.position = "top")
 ```
@@ -697,46 +746,32 @@ Average across flow rates to get a main effect, and they cancel: unpolluted chan
 
 This is the case the "read the interaction first" rule exists for. A non-significant main effect here would be true and completely misleading in the same breath: pollution has no effect *on average*, and a large effect *in every single condition*. Reporting only the main effect would say less than nothing; it would suggest pollution is irrelevant when it's actually the whole story, just one that runs in different directions depending on flow.
 
-### Testing a simple effect
+### Reporting the stream result
 
-Saying "pollution reduced species count under low flow, but not under high flow" is a claim about a simple effect, and like any claim in this book, it needs its own test, not just a look at the plot.
-
-A simple effect asks whether pollution's effect holds at one specific level of flow, so it looks like a two-sample comparison: no pollution vs. pollution, at low flow only. The temptation is to pull out just the low-flow rows and run a fresh two-sample test on them. Don't. That throws away the high-flow channels entirely when estimating the error variance, using half the data and half the degrees of freedom to estimate noise you already estimated better once, from all 20 channels, when you computed $SS_\text{Error}$ for the omnibus ANOVA above.
-
-The fix is to reuse that pooled estimate. $MS_\text{Error}$ and its 16 degrees of freedom already describe the noise in this design better than any subset could, so the simple-effects test just plugs them into a two-sample $t$:
-
-$$t = \frac{\bar{x}_1 - \bar{x}_2}{\sqrt{MS_\text{Error}\left(\dfrac{1}{n_1}+\dfrac{1}{n_2}\right)}}, \qquad df = df_\text{Error}$$
-
-At low flow, no-pollution channels average 9.6 species and polluted channels average 3.6, a gap of 6.0. At high flow the gap narrows to 2.6 (12.6 vs. 10.0). Using $MS_\text{Error}=1.60$ and $df=16$ from the omnibus table computed earlier:
+Back to the stream experiment. @fig-10workedint plots its four cell means. Pollution lowers species count at both flow rates, so the lines never cross; they converge, because the gap under high flow is smaller. That is the first case of the rule: report the simple effects, and report the main effect of pollution with its qualification attached.
 
 ```{r}
-#| label: tbl-10simpleeffects
-#| tbl-cap: "Simple effects of pollution, tested separately within each flow rate, using the pooled error term from the full model."
+#| label: fig-10workedint
+#| fig-cap: "Cell means from the stream experiment. Pollution lowers species count at both flow rates, by more under low flow."
+#| fig-alt: "Line graph with Low Flow and High Flow on the x-axis. The solid blue No Pollution line rises from about 10 to about 13 species. The dashed red Pollution line rises more steeply, from about 4 to 10, so the lines are far apart at Low Flow and closer at High Flow without crossing."
+#| out-width: "85%"
+#| fig-asp: 0.55
 
-mse <- 1.60
-edf <- 16
-n_cell <- 5
-se_pooled <- sqrt(mse * (1/n_cell + 1/n_cell))
-
-diffs <- c(6.0, 2.6)
-ts <- diffs / se_pooled
-ps <- 2 * pt(-abs(ts), df = edf)
-
-knitr::kable(
-  data.frame(
-    `Simple effect` = c("Pollution, within Low Flow", "Pollution, within High Flow"),
-    Difference = diffs,
-    t = round(ts, 2),
-    df = edf,
-    p = ifelse(ps < .001, "< .001", round(ps, 3)),
-    check.names = FALSE
-  )
-)
+ggplot(cell_means, aes(x = Flow, y = mean, colour = Pollution, group = Pollution)) +
+  geom_line(aes(linetype = Pollution), linewidth = 1) +
+  geom_point(size = 2.5) +
+  scale_colour_manual(values = poll_cols) +
+  scale_linetype_manual(values = poll_lty) +
+  coord_cartesian(ylim = c(0, 14)) +
+  labs(colour = NULL, linetype = NULL, x = "Flow rate", y = "Mean species count") +
+  theme(legend.position = "top")
 ```
 
-Both comparisons clear the critical value, $t_\text{crit}(16) = 2.12$ at $\alpha=.05$, two-tailed. So the interaction here isn't "pollution matters at low flow but not at all at high flow," that would show up as one significant row and one not. It's "pollution matters everywhere, but far more at low flow," now backed by a number instead of just a plot.
+::: {.callout-important title="Results reporting: factorial ANOVA"}
+Lead with the interaction, then give the simple effects. Report a main effect only when the simple effects point the same way, and then with its qualification attached. Every effect gets its own effect size, labeled so the reader knows whether it is partialed.
 
-When a factor has only two levels, as Pollution does here, the simple-effects test is the full answer; there's nothing left to compare. When a factor has three or more levels, a significant simple effect only tells you that *some* pair differs within that level, and the next step is Tukey HSD run separately within each level of the other factor, the same logic from Chapter 8's post-hoc section, just applied inside one slice of the design instead of across the whole sample.
+> The effect of pollution on macroinvertebrate species count depended on flow rate, *F*(1, 16) = 9.03, *p* = .008, $\eta_p^2 = 0.36$. Under low flow, polluted channels supported 6.0 fewer species than unpolluted ones (3.6 vs. 9.6); under high flow that gap narrowed to 2.6 species (10.0 vs. 12.6). Both main effects were also significant, pollution *F*(1, 16) = 57.78, *p* \< .001, $\eta_p^2 = 0.78$, and flow *F*(1, 16) = 69.03, *p* \< .001, $\eta_p^2 = 0.81$, but each should be read in light of the interaction: pollution costs a stream far more species when the water is moving slowly.
+:::
 
 ## More complicated designs
 
@@ -789,12 +824,15 @@ flow_rate <- factor(rep(c("Low", "Medium", "High"), each = 2),
 
 df <- data.frame(species_count, pollution, flow_rate)
 
-ggplot(df, aes(x = flow_rate, y = species_count, color = pollution, group = pollution)) +
+ggplot(df, aes(x = flow_rate, y = species_count, colour = pollution, group = pollution)) +
+  geom_line(aes(linetype = pollution)) +
   geom_point() +
-  geom_line() +
+  scale_colour_manual(values = poll_cols) +
+  scale_linetype_manual(values = poll_lty) +
   ylab("Mean species count") +
   xlab("Flow rate") +
-  labs(color = "Pollution")
+  labs(colour = NULL, linetype = NULL) +
+  theme(legend.position = "top")
 
 ```
 
@@ -822,12 +860,15 @@ flow_rate <- factor(rep(c("Low", "Medium", "High"), each = 2),
 
 df <- data.frame(species_count, pollution, flow_rate)
 
-ggplot(df, aes(x = flow_rate, y = species_count, color = pollution, group = pollution)) +
+ggplot(df, aes(x = flow_rate, y = species_count, colour = pollution, group = pollution)) +
+  geom_line(aes(linetype = pollution)) +
   geom_point() +
-  geom_line() +
+  scale_colour_manual(values = poll_cols) +
+  scale_linetype_manual(values = poll_lty) +
   ylab("Mean species count") +
   xlab("Flow rate") +
-  labs(color = "Pollution")
+  labs(colour = NULL, linetype = NULL) +
+  theme(legend.position = "top")
 ```
 
 What would you say about the interaction if you saw the pattern in @fig-1023int?
@@ -846,12 +887,15 @@ flow_rate <- factor(rep(c("Low", "Medium", "High"), each = 2),
 
 df <- data.frame(species_count, pollution, flow_rate)
 
-ggplot(df, aes(x = flow_rate, y = species_count, color = pollution, group = pollution)) +
+ggplot(df, aes(x = flow_rate, y = species_count, colour = pollution, group = pollution)) +
+  geom_line(aes(linetype = pollution)) +
   geom_point() +
-  geom_line() +
+  scale_colour_manual(values = poll_cols) +
+  scale_linetype_manual(values = poll_lty) +
   ylab("Mean species count") +
   xlab("Flow rate") +
-  labs(color = "Pollution")
+  labs(colour = NULL, linetype = NULL) +
+  theme(legend.position = "top")
 ```
 
 The correct answer is that there is evidence in the means for an interaction. Remember, we are measuring the pollution effect three times, once at each flow rate. The pollution effect is the same at low and medium flow, but it is much smaller at high flow. The size of the pollution effect depends on the level of the flow IV, so here again there is an interaction.
@@ -890,10 +934,10 @@ The interpretation of main effects and interactions is the same, but the error t
 
 -   **Fully crossed means every combination.** A factorial design pairs every level of each IV with every level of the others. The notation says the structure: 2×2 is four conditions, 3×2 is six.
 -   **A 2×2 tests three things.** One main effect per factor, plus their interaction. That means three null hypotheses, and you should be able to state all three in plain language before running anything.
--   **An interaction is a difference between differences.** It asks whether the effect of one factor changes across levels of another. That framing is what the arithmetic is actually computing, and you can compute it directly with a paired $t$-test on difference scores.
--   **The partition extends the one-way logic.** $SS_\text{Total}$ now splits into each main effect, the interaction, and error. Working one table through by hand shows that the interaction term is the only genuinely new piece.
+-   **An interaction is a difference between differences.** It asks whether the effect of one factor changes across levels of another. That framing is what the arithmetic is actually computing.
+-   **The partition extends the one-way logic.** $SS_\text{Total}$ now splits into each main effect, the interaction, and error ($SS_\text{Error}$, Chapter 8's $SS_\text{Within}$). Each effect gets its own $F$, all sharing $MS_\text{Error}$ as the denominator. Working one table through by hand shows that the interaction term is the only genuinely new piece.
 -   **Three tests, three effect sizes.** $\eta^2$ divides each effect's $SS$ by $SS_\text{Total}$; partial $\eta_p^2$ divides it by that effect plus error. Partial values are always larger and do not sum to 1, so label which one you are reporting. A significant effect can still be a small one, which is exactly the case for this chapter's interaction.
--   **Read the interaction first.** If it's significant, do not interpret the main effects on their own, because they are not consistent across conditions. Report simple effects instead: what factor A does at each level of B. Only when the interaction is not significant do the main effects stand on their own.
--   **Learn to read the picture.** In a line plot, parallel lines mean no interaction, crossing or diverging lines mean an interaction, and vertical separation between lines means a main effect. There are eight possible patterns in a 2×2, and recognizing them by eye is faster than parsing the table.
+-   **Read the interaction first.** If it's significant, lead with simple effects: what factor A does at each level of B, as $\Delta$ values from the cell means, tested with the pooled $MS_\text{Error}$. A main effect can still be reported, qualified, when the simple effects all point the same way; when one is near zero or they reverse, the main effect describes no actual condition. When the interaction is not significant, the main effects stand on their own, with Tukey HSD for a factor with three or more levels.
+-   **Learn to read the picture.** In a line plot, parallel lines mean no interaction, and crossing or diverging lines mean an interaction. The average gap between the lines is one main effect, and the lines' average rise or fall is the other. There are eight possible patterns in a 2×2, and recognizing them by eye is faster than parsing the table.
 -   **An averaged main effect can be an artifact.** A factor that matters a lot in one condition and not at all in another will still produce a "significant main effect" once you average across conditions. That number is real arithmetic, but it describes something that never happens in either condition.
 -   **Bigger designs, same tests, harder reading.** A 3×2 has the same three tests as a 2×2, but three points per line are harder to read than two. Beyond that, a three-factor design brings three main effects, three two-way interactions, and a three-way interaction, and interpretability falls off fast. Use only as many factors as your question actually needs.
