@@ -123,7 +123,7 @@ Up to now every design put units into groups and asked whether the groups differ
 set.seed(538)
 n <- 30
 stream_temp <- round(runif(n, 10, 24), 1)
-DO <- round(13.5 - 0.28 * stream_temp + rnorm(n, 0, 0.9), 2)
+DO <- round(13.5 - 0.28 * stream_temp + rnorm(n, 0, 1.8), 2)
 stream_df <- data.frame(stream_temp, DO)
 
 ggplot(stream_df, aes(x = stream_temp, y = DO)) +
@@ -197,15 +197,15 @@ kable(
 
 With the results of the regression, we can get an equation for the fitted line:
 
-$\widehat{DO} = `r round(coef(fit)[1], 2)` `r ifelse(coef(fit)[2] >= 0, "+", "-")` `r abs(round(coef(fit)[2], 2))` \times \text{Temperature}$.
+$\widehat{DO} = `r sprintf("%.2f", coef(fit)[1])` `r ifelse(coef(fit)[2] >= 0, "+", "-")` `r sprintf("%.2f", abs(coef(fit)[2]))` \times \text{Temperature}$.
 
 The hat over $DO$ marks it as a *predicted* value, what the model outputs for a given temperature, as distinct from an actually observed $DO$ measurement.
 
 The "estimate" column in our regression model output for the intercept and the slope are $b_0$ and $b_1$, not $\beta_0$ and $\beta_1$. Recall this line is our model's estimate from this one sample, not the true population line, which we never actually observe.
 
-The intercept ($b_0 = `r round(coef(fit)[1], 2)`$) is the model's predicted DO at 0°C, technically part of the model but outside the range of temperatures we actually sampled (10 to 24°C), so we won't lean on it for interpretation.
+The intercept ($b_0 = `r sprintf("%.2f", coef(fit)[1])`$) is the model's predicted DO at 0°C, technically part of the model but outside the range of temperatures we actually sampled (10 to 24°C), so we won't lean on it for interpretation.
 
-The slope ($b_1 = `r round(coef(fit)[2], 2)`$) is the part we care about most: for every 1°C increase in stream temperature, predicted dissolved oxygen drops by about `r abs(round(coef(fit)[2], 2))` mg/L.
+The slope ($b_1 = `r sprintf("%.2f", coef(fit)[2])`$) is the part we care about most: for every 1°C increase in stream temperature, predicted dissolved oxygen drops by about `r sprintf("%.2f", abs(coef(fit)[2]))` mg/L.
 
 ## Testing the slope
 
@@ -223,7 +223,7 @@ This $t$-test for the regression slope, unlike the tests in earlier chapters, do
 
 The test statistic compares the estimated slope to its standard error, the `Std. Error` column already in the coefficient table above, which measures how much $b_1$ would bounce around from sample to sample if we repeated this study over and over:
 
-$$t = \frac{b_1}{SE(b_1)} = \frac{`r round(coef(fit)[2],3)`}{`r round(fit_tidy$std.error[2],3)`} = `r round(fit_tidy$statistic[2],2)`$$
+$$t = \frac{b_1}{SE(b_1)} = \frac{`r sprintf("%.3f", coef(fit)[2])`}{`r sprintf("%.3f", fit_tidy$std.error[2])`} = `r sprintf("%.2f", fit_tidy$statistic[2])`$$
 
 with $df = n - 2 = `r nrow(stream_df) - 2`$ (one degree of freedom spent estimating the intercept, one for the slope).
 
@@ -232,11 +232,11 @@ with $df = n - 2 = `r nrow(stream_df) - 2`$ (one degree of freedom spent estimat
 ```{r}
 #| label: fig-9regslopenull
 #| fig-cap: "The null distribution of t for the slope test at df = 28 (blue). The shaded tails beyond the red critical values are the rejection region at alpha = .05; the green dotted line marks our observed t, far into the left tail."
-#| fig-alt: "A blue t-distribution curve centered at zero with 28 degrees of freedom. Red vertical lines labeled minus crit and plus crit mark the critical values near plus and minus 2.05, and the tails beyond them are shaded red. A green dotted vertical line marks the observed t of about negative 9.45, far to the left of the lower critical value."
+#| fig-alt: "A blue t-distribution curve centered at zero with 28 degrees of freedom. Red vertical lines labeled minus crit and plus crit mark the critical values near plus and minus 2.05, and the tails beyond them are shaded red. A green dotted vertical line marks the observed t of about negative 5.3, well to the left of the lower critical value."
 
 df_slope <- nrow(stream_df) - 2
 obs_t <- fit_tidy$statistic[2]
-xs <- seq(-11, 11, by = 0.01)
+xs <- seq(-8, 8, by = 0.01)
 t_null <- data.frame(x = xs, y = dt(xs, df_slope))
 crit <- qt(.975, df_slope)
 
@@ -250,18 +250,18 @@ ggplot(t_null, aes(x, y)) +
            colour = "red", size = 4.2) +
   annotate("segment", x = obs_t, xend = obs_t, y = 0, yend = 0.36,
            colour = "#1E9E1E", linetype = "dotted", linewidth = 1.4) +
-  annotate("text", x = obs_t + 0.3, y = 0.37, label = paste0("observed t = ", round(obs_t, 2)),
-           colour = "#1E9E1E", hjust = 0, size = 4) +
+  annotate("text", x = obs_t - 0.2, y = 0.37, label = paste0("observed\nt = ", sprintf("%.2f", obs_t)),
+           colour = "#1E9E1E", hjust = 1, size = 4, lineheight = 0.9) +
   annotate("text", x = 4.5, y = 0.3, label = "'Under '*H[0]", parse = TRUE,
            colour = "blue", hjust = 0, size = 4.5) +
   labs(x = "t", y = "Density")
 ```
 
-Our observed $t = `r round(fit_tidy$statistic[2],2)`$ sits far past the critical values of about $\pm`r round(qt(.975, nrow(stream_df)-2),2)`$, well outside where 95% of $t$-values would fall if temperature and DO were unrelated. The $p$-value is just the probability of landing that far out (or farther) in either tail under $H_0$: here, $p`r fmt_p(fit_tidy$p.value[2])`$, meaning essentially never. This crosses the conventional $\alpha = .05$ threshold.
+Our observed $t = `r sprintf("%.2f", fit_tidy$statistic[2])`$ sits far past the critical values of about $\pm`r sprintf("%.2f", qt(.975, nrow(stream_df)-2))`$, well outside where 95% of $t$-values would fall if temperature and DO were unrelated. The $p$-value is just the probability of landing that far out (or farther) in either tail under $H_0$: here, $p`r fmt_p(fit_tidy$p.value[2])`$, meaning essentially never. This crosses the conventional $\alpha = .05$ threshold.
 
 We **reject** $H_0$: stream temperature **is** linearly related to dissolved oxygen.
 
-The 95% confidence interval for the slope, also in the coefficient table above, is 95% CI [`r round(fit_tidy$conf.low[2],3)`, `r round(fit_tidy$conf.high[2],3)`] mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will.
+The 95% confidence interval for the slope, also in the coefficient table above, is 95% CI [`r sprintf("%.3f", fit_tidy$conf.low[2])`, `r sprintf("%.3f", fit_tidy$conf.high[2])`] mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will.
 
 ## Partitioning variation: regression as ANOVA
 
@@ -278,7 +278,7 @@ After fitting a linear regression model, you also need to know how well it fits.
 #| out-width: "100%"
 
 ybar <- mean(stream_df$DO)
-part_levels <- c("Total: point to mean", "Explained by the line: line to mean",
+part_levels <- c("Total variation: point to mean", "Explained by the line: line to mean",
                  "Residual: point to line")
 part_df <- rbind(
   data.frame(stream_df[, c("stream_temp", "DO")], fit_y = fitted(fit), panel = part_levels[1], y0 = ybar,         y1 = stream_df$DO),
@@ -320,7 +320,7 @@ The pieces line up with Chapter 8's. $SS_\text{Regression}$ is the variation the
 
 $$R^2 = \frac{SS_\text{Regression}}{SS_\text{Total}} = \frac{`r sprintf("%.2f", ss_reg)`}{`r sprintf("%.2f", ss_total)`} = `r sprintf("%.2f", ss_reg / ss_total)`$$
 
-It runs from 0 to 1, and it is the same quantity as $\eta^2$ from Chapter 8. For simple regression with one predictor, $R^2$ is also Pearson's $r$ from Chapter 2, squared: $(`r round(cor(stream_df$stream_temp, stream_df$DO), 3)`)^2 = `r round(cor(stream_df$stream_temp, stream_df$DO)^2, 3)`$.
+It runs from 0 to 1, and it is the same quantity as $\eta^2$ from Chapter 8. For simple regression with one predictor, $R^2$ is also Pearson's $r$ from Chapter 2, squared: $(`r sprintf("%.3f", cor(stream_df$stream_temp, stream_df$DO))`)^2 = `r sprintf("%.3f", cor(stream_df$stream_temp, stream_df$DO)^2)`$.
 
 **The regression ANOVA table.** Dividing each sum of squares by its degrees of freedom gives mean squares, and their ratio is $F$, exactly as in Chapter 8. The regression row uses 1 degree of freedom, one slope; the residual row uses $n-2$, since the line estimated two things, an intercept and a slope.
 
@@ -333,14 +333,14 @@ anova_kable(fit)
 
 $$F = \frac{MS_\text{Regression}}{MS_\text{Residual}} = \frac{`r sprintf("%.2f", ss_reg)`}{`r sprintf("%.3f", ss_res / (nrow(stream_df) - 2))`} = `r sprintf("%.2f", fit_glance$statistic)`$$
 
-With one predictor, $F$ and the slope's $t$ test the same thing: $F = t^2 = (`r round(fit_tidy$statistic[2],2)`)^2 = `r round(fit_tidy$statistic[2]^2,2)`$, with the same $p$. $F$ is the form that generalizes to models with more than one predictor, which is why software reports both.
+With one predictor, $F$ and the slope's $t$ test the same thing: $F = t^2 = (`r sprintf("%.2f", fit_tidy$statistic[2])`)^2 = `r sprintf("%.2f", fit_tidy$statistic[2]^2)`$, with the same $p$. $F$ is the form that generalizes to models with more than one predictor, which is why software reports both.
 
-Here $R^2 = `r round(fit_glance$r.squared, 2)`$: stream temperature explains about `r round(fit_glance$r.squared*100)`% of the variation we observed in dissolved oxygen across sites. The remaining variation comes from everything else the model doesn't capture (discharge, shading, groundwater input, and so on), and it shows up as the residuals.
+Here $R^2 = `r sprintf("%.2f", fit_glance$r.squared)`$: stream temperature explains about `r round(fit_glance$r.squared*100)`% of the variation we observed in dissolved oxygen across sites. The remaining variation comes from everything else the model doesn't capture (discharge, shading, groundwater input, and so on), and it shows up as the residuals.
 
 ::: {.callout-important title="Results reporting: regression"}
 We report a regression result the same way as any other test: the slope with its confidence interval, the test statistic, degrees of freedom, and $p$, plus $R^2$ as the effect size.
 
-> Dissolved oxygen declined significantly with stream temperature, $b_1 = `r round(coef(fit)[2],2)`$ mg/L per °C, 95% CI [`r round(fit_tidy$conf.low[2],2)`, `r round(fit_tidy$conf.high[2],2)`], $t(`r nrow(stream_df)-2`) = `r round(fit_tidy$statistic[2],2)`$, $p < .001$, $R^2 = `r round(fit_glance$r.squared,2)`$.
+> Dissolved oxygen declined significantly with stream temperature, $b_1 = `r sprintf("%.2f", coef(fit)[2])`$ mg/L per °C, 95% CI [`r sprintf("%.2f", fit_tidy$conf.low[2])`, `r sprintf("%.2f", fit_tidy$conf.high[2])`], $t(`r nrow(stream_df)-2`) = `r sprintf("%.2f", fit_tidy$statistic[2])`$, $p < .001$, $R^2 = `r sprintf("%.2f", fit_glance$r.squared)`$.
 :::
 
 ## Consider both significance and effect size
@@ -472,7 +472,7 @@ ggplot(outbreak_df, aes(days, cases)) +
   ylab("New cases detected")
 ```
 
-A straight line fit to these 14 days gives $R^2 = `r round(outbreak_tidy$r.squared, 2)`$ and $p`r fmt_p(outbreak_tidy$p.value)`$, which by the benchmark in the "How big is a good $R^2$?" warning above looks like a solid, significant fit for a field system. Nothing about those numbers alone raises a flag.
+A straight line fit to these 14 days gives $R^2 = `r sprintf("%.2f", outbreak_tidy$r.squared)`$ and $p`r fmt_p(outbreak_tidy$p.value)`$, which by the benchmark in the "How big is a good $R^2$?" warning above looks like a solid, significant fit for a field system. Nothing about those numbers alone raises a flag.
 
 **Check it properly.** The residuals-versus-fitted plot tells a different story than the $R^2$ and slope test did.
 
@@ -562,7 +562,7 @@ The Q-Q plot looks close to straight, and Shapiro-Wilk agrees ($p = `r fmt_p(sh_
 
 Once we've confirmed a real linear relationship, the fitted equation lets us predict DO at any stream temperature. Plugging temperature into the fitted line directly gives the prediction: at 20°C,
 
-$$\widehat{DO} = b_0 + b_1(20) = `r round(coef(fit)[1],2)` + (`r round(coef(fit)[2],2)`)(20) = `r round(coef(fit)[1] + coef(fit)[2]*20, 2)`$$
+$$\widehat{DO} = b_0 + b_1(20) = `r sprintf("%.2f", coef(fit)[1])` + (`r sprintf("%.2f", coef(fit)[2])`)(20) = `r sprintf("%.2f", coef(fit)[1] + coef(fit)[2]*20)`$$
 
 R gives the same number, along with a confidence interval:
 
@@ -577,7 +577,7 @@ kable(
 )
 ```
 
-At 20°C, the model predicts DO of `r round(pred_out[1],2)` mg/L, 95% CI [`r round(pred_out[2],2)`, `r round(pred_out[3],2)`]. Notice that 20°C falls inside our sampled range of 10 to 24°C, this is interpolation, and it's what regression is good for. Predicting DO at, say, 35°C would be extrapolation: nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. @fig-9regextrap shows both zones on the same line.
+At 20°C, the model predicts DO of `r sprintf("%.2f", pred_out[1])` mg/L, 95% CI [`r sprintf("%.2f", pred_out[2])`, `r sprintf("%.2f", pred_out[3])`]. Notice that 20°C falls inside our sampled range of 10 to 24°C, this is interpolation, and it's what regression is good for. Predicting DO at, say, 35°C would be extrapolation: nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. @fig-9regextrap shows both zones on the same line.
 
 ```{r}
 #| label: fig-9regextrap
@@ -699,4 +699,4 @@ What this calls for is a different model, not more data or a better-fit line. Fi
 -   **Regression partitions variation the way ANOVA does.** $SS_\text{Total}$ splits into $SS_\text{Regression}$ (Chapter 8's between) and $SS_\text{Residual}$ (Chapter 8's within), and $F = MS_\text{Regression}/MS_\text{Residual}$, which equals $t^2$ with one predictor. $R^2$, the proportion of variation explained by the line, is the effect size. A relationship can be real ($p$ small) and still explain very little, which is why you report both.
 -   **Look at your data, then look at your residuals.** The assumptions that must be met are linearity, independence, constant variance, and roughly normal residuals. A residuals-versus-fitted plot catches violations a formal test can miss entirely, as the outbreak example showed.
 -   **Predict inside your data; extrapolate beyond with caution.** Interpolating within the observed range of $x$ is what regression is for. Extrapolating beyond it is sometimes justified, but only when you have good reason to believe the relationship stays the same shape past the range you observed.
--   **A good** $R^2$ can still be the wrong model. The outbreak example fit a straight line to exponential growth and got $R^2=`r round(outbreak_tidy$r.squared, 2)`$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast tens of thousands of cases short of reality. The residual plot catches this; a Q-Q plot, which checks a different assumption, does not.
+-   **A good** $R^2$ can still be the wrong model. The outbreak example fit a straight line to exponential growth and got $R^2=`r sprintf("%.2f", outbreak_tidy$r.squared)`$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast tens of thousands of cases short of reality. The residual plot catches this; a Q-Q plot, which checks a different assumption, does not.
