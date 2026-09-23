@@ -14,6 +14,42 @@ library(tidyverse)
 library(broom)
 
 fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = "f"))
+
+# Critical values of a discrete statistic: the most extreme values whose tail
+# share is at most .025. Taken from the exact null (every sign pattern or every
+# split, which the simulation approximates). A raw quantile() can return a value
+# whose tail share is just over .025, putting a non-significant result inside
+# the region.
+exact_crit <- function(null) {
+  v <- sort(unique(null))
+  lo <- max(v[sapply(v, function(x) mean(null <= x)) <= .025])
+  hi <- min(v[sapply(v, function(x) mean(null >= x)) <= .025])
+  # each boundary sits halfway between the critical value and the next value inward
+  c(lo = lo, hi = hi, lo_edge = (lo + min(v[v > lo])) / 2, hi_edge = (hi + max(v[v < hi])) / 2)
+}
+
+# Simulated null histogram: sky bars, red on the part of each bar in the rejection
+# region, full-height labeled critical lines, observed statistic green dotted.
+null_hist <- function(sim, exact, obs, stat, xlab) {
+  cr <- exact_crit(exact)
+  d <- tibble(x = sim, region = sim <= cr["lo"] | sim >= cr["hi"])
+  top <- max(hist(sim, breaks = seq(cr["hi_edge"] - 2 * ceiling((cr["hi_edge"] - min(sim)) / 2) - 2,
+                                    max(sim) + 2, 2), plot = FALSE)$counts)
+  ggplot(d, aes(x = x, fill = region, alpha = region)) +
+    geom_histogram(binwidth = 2, boundary = cr["hi_edge"], closed = "left", colour = "white") +
+    scale_fill_manual(values = c(`FALSE` = "#008cff", `TRUE` = "red"), guide = "none") +
+    scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = .35), guide = "none") +
+    annotate("segment", x = cr[c("lo_edge", "hi_edge")], xend = cr[c("lo_edge", "hi_edge")],
+             y = 0, yend = top * 1.08, colour = "red", linewidth = 0.8) +
+    annotate("text", x = cr[c("lo_edge", "hi_edge")], y = top * 1.13,
+             label = paste0(c("lower crit = ", "upper crit = "), cr[c("lo", "hi")]),
+             colour = "red", size = 3.8) +
+    annotate("segment", x = obs, xend = obs, y = 0, yend = top * 0.9,
+             colour = "#1E9E1E", linetype = "dotted", linewidth = 1.4) +
+    annotate("text", x = obs - 0.8, y = top * 0.95, label = paste0("observed\n", stat, " = ", obs),
+             colour = "#1E9E1E", hjust = 1, size = 3.6, lineheight = 0.9) +
+    labs(x = xlab, y = "Count out of 20,000 simulations")
+}
 ```
 
 # Nonparametric and Categorical Data
@@ -78,10 +114,10 @@ $t(11) = 2.57$, $p = .026$. Significant. Restoration looks like it increased soi
 ```{r}
 #| label: fig-7wilcoxon-hist
 #| fig-cap: "Change in soil moisture per plot. Three plots showed no change at all, and the positive changes stretch out much further than the negative ones: not the symmetric, bell-shaped pattern a paired t-test assumes."
+#| fig-alt: "Histogram of the change in soil moisture for 12 plots. Three plots changed by minus 1 point and three by 0; the other six changed by 3, 4, 6, 6, 7 and 8 points, so the positive side stretches much further than the negative side."
 
 ggplot(tibble(differences = differences), aes(x = differences)) +
   geom_histogram(binwidth = 1, color = "white", fill = "#008cff", boundary = -0.5) +
-  theme_classic(base_size = 13) +
   labs(x = "Change in soil moisture (percentage points)", y = "Number of plots")
 ```
 
@@ -153,7 +189,8 @@ Where do the critical values actually come from? The same place they always do i
 
 ```{r}
 #| label: fig-7wilcoxon-null
-#| fig-cap: "Simulated null distribution of the Wilcoxon signed-rank statistic V, built from 20,000 random sign-flips of the 9 nonzero ranked differences. Shaded regions mark the two-tailed 5% rejection region; our observed V = 39 lands right on the upper boundary."
+#| fig-cap: "Simulated null distribution of the Wilcoxon signed-rank statistic V, built from 20,000 random sign-flips of the 9 nonzero ranked differences. Shaded regions mark the two-tailed 5% rejection region; our observed V = 39 lands just outside the upper boundary."
+#| fig-alt: "Histogram of 20,000 simulated values of V, roughly bell-shaped and centered near 22. Bars at or below 5 and at or above 40 are shaded red, with red vertical lines labeled lower crit equals 5 and upper crit equals 40. A green dotted line marks the observed V of 39, just to the left of the upper critical line."
 
 set.seed(123)
 sim_V <- replicate(20000, {
@@ -161,23 +198,10 @@ sim_V <- replicate(20000, {
   sum(ranks_abs[signs == 1])
 })
 
-crit_lo <- quantile(sim_V, .025)
-crit_hi <- quantile(sim_V, .975)
-obs_V   <- as.numeric(wilcox_out$statistic)
-
-ggplot(tibble(V = sim_V), aes(x = V)) +
-  geom_histogram(binwidth = 2, color = "white", fill = "#008cff", boundary = 0) +
-  annotate("rect", xmin = -Inf, xmax = crit_lo, ymin = 0, ymax = Inf, alpha = 0.15, fill = "#b22222") +
-  annotate("rect", xmin = crit_hi, xmax = Inf, ymin = 0, ymax = Inf, alpha = 0.15, fill = "#b22222") +
-  geom_vline(xintercept = obs_V, color = "#10377f", linewidth = 1) +
-  annotate("text", x = crit_lo, y = Inf, label = paste0("critical value: ", crit_lo),
-           color = "#b22222", vjust = 3, hjust = 1.05, size = 3.3) +
-  annotate("text", x = crit_hi, y = Inf, label = paste0("critical value: ", crit_hi),
-           color = "#b22222", vjust = 3, hjust = -0.05, size = 3.3) +
-  annotate("text", x = obs_V, y = Inf, label = paste0("observed V = ", obs_V),
-           color = "#10377f", vjust = 5.5, hjust = 1.1, size = 3.3) +
-  theme_classic(base_size = 13) +
-  labs(x = "V (sum of positive ranks)", y = "Count out of 20,000 simulations")
+exact_V <- apply(expand.grid(rep(list(0:1), length(ranks_abs))), 1,
+                 function(s) sum(ranks_abs[s == 1]))   # all 2^9 sign patterns
+obs_V <- as.numeric(wilcox_out$statistic)
+null_hist(sim_V, exact_V, obs_V, "V", "V (sum of positive ranks)")
 ```
 
 Our observed $V=39$ lands on the upper boundary but not inside the 5% region. $V$ can only take certain values, so the boundary can't fall exactly at 2.5%: a $V$ of 39 or more comes up just over 2.5% of the time under $H_0$, which puts the two-tailed $p$ just over .05. Not significant, but only barely.
@@ -255,6 +279,7 @@ $t(14) = 2.54$, $p = .024$. Significant. Restoration looks like it increased ric
 ```{r}
 #| label: fig-7richness-boxplot
 #| fig-cap: "Plant species richness by group. The circled restored plot has an unusually high richness count, visibly pulling that group's distribution away from a normal, bell-shaped one."
+#| fig-alt: "Box plots of plant species richness for 8 restored and 8 unrestored plots, with each plot drawn as a point. Restored plots mostly fall between 16 and 22, with one plot at 34 circled in red far above the rest. Unrestored plots fall between 10 and 18."
 
 set.seed(42)
 plot_df <- tibble(
@@ -271,7 +296,6 @@ ggplot(plot_df, aes(x = x_jit, y = Richness)) +
   geom_point(size = 2.5, color = "#10377f") +
   geom_point(data = outlier_row, shape = 21, size = 9, color = "#b22222", stroke = 1.3) +
   scale_x_continuous(breaks = c(1, 2), labels = c("Restored", "Unrestored"), limits = c(0.6, 2.4)) +
-  theme_classic(base_size = 13) +
   labs(y = "Plant species richness", x = NULL)
 ```
 
@@ -333,6 +357,7 @@ Same question as before: where do the critical values come from? They come from 
 ```{r}
 #| label: fig-7mww-null
 #| fig-cap: "Simulated null distribution of the Mann-Whitney U statistic, built from 20,000 random reshuffles of group membership among the pooled, ranked richness values. Shaded regions mark the two-tailed 5% rejection region; our observed U = 50 falls just inside the boundary."
+#| fig-alt: "Histogram of 20,000 simulated values of U, roughly bell-shaped and centered near 32. Bars at or below 13.5 and at or above 50.5 are shaded red, with red vertical lines labeled lower crit and upper crit. A green dotted line marks the observed U of 50, just to the left of the upper critical line."
 
 set.seed(123)
 pooled       <- c(restored, unrestored)
@@ -345,23 +370,10 @@ sim_U <- replicate(20000, {
   sum(ranks_pooled[idx]) - n_a * (n_a + 1) / 2
 })
 
-crit_lo <- quantile(sim_U, .025)
-crit_hi <- quantile(sim_U, .975)
-obs_U   <- as.numeric(wilcox.test(restored, unrestored)$statistic)
-
-ggplot(tibble(U = sim_U), aes(x = U)) +
-  geom_histogram(binwidth = 2, color = "white", fill = "#008cff", boundary = 0) +
-  annotate("rect", xmin = -Inf, xmax = crit_lo, ymin = 0, ymax = Inf, alpha = 0.15, fill = "#b22222") +
-  annotate("rect", xmin = crit_hi, xmax = Inf, ymin = 0, ymax = Inf, alpha = 0.15, fill = "#b22222") +
-  geom_vline(xintercept = obs_U, color = "#10377f", linewidth = 1) +
-  annotate("text", x = crit_lo, y = Inf, label = paste0("critical value: ", crit_lo),
-           color = "#b22222", vjust = 3, hjust = 1.05, size = 3.3) +
-  annotate("text", x = crit_hi, y = Inf, label = paste0("critical value: ", crit_hi),
-           color = "#b22222", vjust = 3, hjust = -0.05, size = 3.3) +
-  annotate("text", x = obs_U, y = Inf, label = paste0("observed U = ", obs_U),
-           color = "#10377f", vjust = 1.5, hjust = 1.1, size = 3.3) +
-  theme_classic(base_size = 13) +
-  labs(x = "U (Mann-Whitney statistic)", y = "Count out of 20,000 simulations")
+exact_U <- apply(combn(N, n_a), 2, function(i)
+  sum(ranks_pooled[i]) - n_a * (n_a + 1) / 2)          # all choose(16, 8) splits
+obs_U <- as.numeric(wilcox.test(restored, unrestored)$statistic)
+null_hist(sim_U, exact_U, obs_U, "U", "U (Mann-Whitney statistic)")
 ```
 
 Our observed $U=50$ lands just inside the critical value of $50.5$, matching R's $p=.063$: close to significant, but not quite.
@@ -377,17 +389,19 @@ Chapter 3 introduced the shape of the chi-square distribution: always non-negati
 ```{r}
 #| label: fig-7chisq-crit
 #| fig-cap: "The chi-square distribution with df = 3. The shaded region marks the rejection region at alpha = .05 (critical value 7.81)."
+#| fig-alt: "A blue dot-dash chi-square curve with 3 degrees of freedom, rising steeply from zero to a peak near 1 and then trailing off to the right. A red vertical line labeled crit equals 7.81 marks the critical value, and the thin tail to its right is shaded red."
 
 crit <- qchisq(.95, 3)
 x3 <- seq(0.01, 16, length.out = 500)
 df3 <- tibble(x = x3, density = dchisq(x3, 3))
 
 ggplot(df3, aes(x, density)) +
-  geom_line(linewidth = 1) +
-  geom_area(data = filter(df3, x >= crit), fill = "#b22222", alpha = 0.15) +
-  geom_vline(xintercept = crit, linetype = 2) +
-  annotate("text", x = crit, y = max(df3$density) * 0.9, label = "critical value\n7.81", hjust = -0.1) +
-  theme_classic(base_size = 13) +
+  geom_area(data = filter(df3, x >= crit), fill = "red", alpha = 0.18) +
+  geom_line(colour = "blue", linetype = "dotdash", linewidth = 1.1) +
+  annotate("segment", x = crit, xend = crit, y = 0, yend = max(df3$density) * 1.02,
+           colour = "red", linewidth = 0.8) +
+  annotate("text", x = crit, y = max(df3$density) * 1.07,
+           label = paste0("crit = ", round(crit, 2)), colour = "red", size = 4.2) +
   labs(x = expression(chi^2*" (df = 3)"), y = "Density")
 ```
 
