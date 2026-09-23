@@ -57,10 +57,6 @@ Using case fatality rate (CFR), here are some illustrative numbers (made up for 
 ```{r}
 #| label: fig-simpson-covid-overall
 #| fig-cap: "Crude case fatality rates. Italy appears to have a higher fatality rate than China when all cases are combined."
-library(ggplot2)
-library(tibble)
-library(tidyverse)
-
 age_levels <- c("0–9","10–19","20–29","30–39","40–49","50–59","60–69","70–79","80+")
 
 dat <- tibble::tribble(
@@ -180,15 +176,15 @@ Same test, same math. The only difference is which term you came to interpret, s
 
 For ANCOVA, you need:
 
-1)  A continuous dependent variable (the main effect you're studying)
+1)  A continuous dependent variable (the response)
 2)  At least one continuous independent variable (covariate)
-3)  At least one categorical independent variable (which can be either a fixed or random factor)
+3)  At least one categorical independent variable (a fixed factor, in this course)
 
-### Indicator (dummy) variables and how they work
+### Indicator variables and how they work
 
 Before we can read real coefficients off an ANCOVA table, it helps to see exactly how one equation can represent two different groups at once.
 
-Categorical predictors get into a linear model by being coded as **indicator variables**. For a factor with $k$ groups you include $k-1$ indicators; the omitted group becomes the **reference**, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:
+Categorical predictors get into a linear model by being coded as **indicator variables** (you'll also see them called dummy variables). For a factor with $k$ groups you include $k-1$ indicators; the omitted group becomes the **reference**, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:
 
 $$G = \begin{cases} 0 & \text{group 1 (the reference group)} \\ 1 & \text{group 2} \end{cases}$$
 
@@ -439,8 +435,6 @@ Now that we've explored the data visually, we can test our hypotheses formally u
 `ancova <- aov(BirdDensity ~ AirPollution * AreaType, data = data)`
 
 ```{r}
-library(broom)
-
 ancova <- aov(BirdDensity ~ AirPollution * AreaType, data = data)
 ancova_tidy <- broom::tidy(ancova)
 
@@ -547,7 +541,6 @@ By centering the covariate (subtracting its mean), we make the intercept represe
 data <- data |> mutate(AirPollution_c = AirPollution - mean(AirPollution))
 fit_centered <- lm(BirdDensity ~ AirPollution_c * AreaType, data = data)
 
-library(broom)
 tidy_centered <- broom::tidy(fit_centered)[, c("term", "estimate", "p.value")]
 
 knitr::kable(
@@ -674,9 +667,9 @@ knitr::kable(
 )
 ```
 
-The `Occupancy` coefficient is the common slope: about `r sprintf("%.2f", b1)` kWh per day for each additional occupant. The `TypeRetrofitted` coefficient is $\beta_2$, the adjusted difference: at the same occupancy, retrofitted buildings use `r sprintf("%.1f", abs(b2))` kWh per day less than standard ones, $t(57) = `r sprintf("%.2f", b2r$statistic)`$, $p `r fmt_p(b2r$p.value)`$. We reject $H_{0,\text{group}}$.
+The `Occupancy` coefficient is the common slope: about `r sprintf("%.2f", b1)` kWh per day for each additional occupant. The `TypeRetrofitted` coefficient is $b_2$, the estimate of $\beta_2$, the adjusted difference: at the same occupancy, retrofitted buildings use `r sprintf("%.1f", abs(b2))` kWh per day less than standard ones, $t(57) = `r sprintf("%.2f", b2r$statistic)`$, $p `r fmt_p(b2r$p.value)`$. We reject $H_{0,\text{group}}$.
 
-@fig-11energyadj shows what that coefficient measures. The adjusted means turn it into two numbers: evaluating each line at the overall mean occupancy, `r round(occ_bar, 1)` people, gives `r sprintf("%.1f", adj_std)` kWh per day for standard buildings and `r sprintf("%.1f", adj_retr)` for retrofitted ones. Their difference is $\beta_2$.
+@fig-11energyadj shows what that coefficient measures. The adjusted means turn it into two numbers: evaluating each line at the overall mean occupancy, `r round(occ_bar, 1)` people, gives `r sprintf("%.1f", adj_std)` kWh per day for standard buildings and `r sprintf("%.1f", adj_retr)` for retrofitted ones. Their difference is $b_2$.
 
 ```{r}
 #| label: fig-11energyadj
