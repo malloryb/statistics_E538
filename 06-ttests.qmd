@@ -22,16 +22,14 @@ fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = 
 hist_t <- function(ts, title = NULL) {
   ggplot(data.frame(t = ts), aes(x = t)) +
     geom_histogram(bins = 30) +
-    labs(x = "Simulated t", y = "Count", title = title) +
-    theme_classic(base_size = 13)
+    labs(x = "Simulated t", y = "Count", title = title)
 }
 
 hist_p <- function(ps, title = NULL) {
   ggplot(data.frame(p = ps), aes(x = p)) +
     geom_histogram(breaks = seq(0, 1, .05)) +
     scale_x_continuous(breaks = seq(0, 1, .1)) +
-    labs(x = "Simulated p-value", y = "Count", title = title) +
-    theme_classic(base_size = 13)
+    labs(x = "Simulated p-value", y = "Count", title = title)
 }
 ```
 
@@ -178,7 +176,6 @@ t_df <- t_df[abs(t_df$ts) < 5, ]
 
 ggplot(t_df, aes(x = ts)) +
   geom_histogram(fill = "#008cff", color = "white") +
-  theme_classic(base_size = 15) +
   facet_wrap( ~ dfs) +
   xlab("t value") +
   ylab("Count")
@@ -278,7 +275,7 @@ Remember, if we obtained a single $t$ from one sample we collected, we could con
 ```{r}
 #| label: fig-6-t-rejection
 #| fig-cap: 'Two-tailed rejection regions at $\alpha=.05$ for $t_{(df=9)}$. The shaded tails beyond the red critical values mark unlikely values under $H_0$.'
-#| fig-alt: "A blue t-distribution curve with 9 degrees of freedom. Red vertical lines mark the critical values near plus and minus 2.26, and the two tails beyond them are shaded red and labeled 'rejection region.' The middle of the curve is labeled 'retain H0.'"
+#| fig-alt: "A blue t-distribution curve with 9 degrees of freedom. Red vertical lines labeled minus crit and plus crit mark the critical values near plus and minus 2.26, and the two tails beyond them are shaded red and labeled 'rejection region.' The middle of the curve is labeled 'retain H0.'"
 #| out-width: "80%"
 
 library(tidyverse)
@@ -293,13 +290,14 @@ ggplot(t_tibble, aes(x, y)) +
   geom_area(data = subset(t_tibble, x >=  crit), fill = "red", alpha = 0.18) +
   geom_line(colour = "blue", linetype = "dotdash", linewidth = 1.1) +
   annotate("segment", x = c(-crit, crit), xend = c(-crit, crit), y = 0,
-           yend = dt(crit, df), colour = "red", linewidth = 0.8) +
+           yend = 0.41, colour = "red", linewidth = 0.8) +
+  annotate("text", x = c(-crit, crit), y = 0.425, label = c("-crit", "+crit"),
+           colour = "red", size = 4.2) +
   annotate("text", x = -3.4, y = 0.06, label = "rejection\nregion", size = 3.4, color = "grey20") +
   annotate("text", x = 3.4, y = 0.06, label = "rejection\nregion", size = 3.4, color = "grey20") +
   annotate("text", x = 0, y = 0.2, label = "retain~H[0]", parse = TRUE, size = 3.8, color = "grey20") +
-  annotate("text", x = 2.2, y = 0.33, label = "'Under '*H[0]", parse = TRUE, colour = "blue", hjust = 0, size = 4.2) +
-  labs(x = "t", y = "Density") +
-  theme_classic(base_size = 12)
+  annotate("text", x = 2.45, y = 0.3, label = "'Under '*H[0]", parse = TRUE, colour = "blue", hjust = 0, size = 4.2) +
+  labs(x = "t", y = "Density")
 ```
 
 ### Interpreting $t$
@@ -309,24 +307,19 @@ We're asking whether our $t$-value could plausibly have come from the null distr
 ```{r}
 #| label: fig-6tnull
 #| fig-cap: "A distribution of $t$-values that can occur by chance alone, when there is no difference between the sample and a population"
-#| fig-alt: "A symmetric t-distribution curve with 9 degrees of freedom, centered at zero with a vertical line marking the center. Labels on the left and right halves each read 50 percent, showing the curve splits evenly into negative and positive t-values."
+#| fig-alt: "A symmetric t-distribution curve with 9 degrees of freedom, centered at zero with a grey vertical line marking the center. Labels on the left and right halves each read 50 percent, showing the curve splits evenly into negative and positive t-values."
 
 
-range <- seq(-3, 3, .1)
+range <- seq(-3, 3, .01)
 null_distribution <- dt(range, 9, log = FALSE)
 plot_df <- data.frame(range, null_distribution)
 
 ggplot(plot_df, aes(x = range, y = null_distribution)) +
-  geom_line() +
-  xlab("t-values") +
-  ylab("Probability") +
-  theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  geom_line(colour = "blue", linetype = "dotdash", linewidth = 1.1) +
+  annotate("segment", x = 0, xend = 0, y = 0, yend = dt(0, 9), colour = "grey40", linewidth = 0.8) +
+  annotate("text", x = c(-.7, .7), y = .1, label = c("50%\n(-)", "50%\n(+)"), size = 4.5, colour = "grey20") +
   scale_x_continuous(breaks = (seq(-3, 3, .5))) +
-  geom_label(data = data.frame(x = -.7, y = .1, label = "50% \n (-)"),
-             aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = .7, y = .1, label = "50% \n (+)"), aes(x = x, y = y, label = label)) +
-  geom_vline(xintercept = 0)+
-  theme_classic(base_size = 20)
+  labs(x = "t", y = "Density")
 
 
 ```
@@ -344,27 +337,24 @@ We can get more precise than a 50/50 split. @fig-6percentregions divides the sam
 ```{r}
 #| label: fig-6percentregions
 #| fig-cap: "Splitting the t distribution up into regions each containing 10% of the $t$-values. The width between the bars narrows as they approach the center of the distribution, where there are more $t$-values."
-#| fig-alt: "The same t-distribution curve with 9 degrees of freedom, divided by nine vertical lines into ten regions, each labeled 10 percent. The regions near the two outer edges are noticeably wider than the regions clustered near the center of the curve."
+#| fig-alt: "The same t-distribution curve with 9 degrees of freedom, divided by nine grey vertical lines into ten regions, each labeled 10 percent. The regions near the two outer edges are noticeably wider than the regions clustered near the center of the curve."
 #| out-width: "100%"
 
-range <- seq(-3, 3, .1)
+range <- seq(-3, 3, .01)
 null_distribution <- dt(range, 9, log = FALSE)
 plot_df <- data.frame(range, null_distribution)
 
 t_ps <- qt(seq(.1, .9, .1), 9)
 
+# Decile boundaries are guides, not critical values, so grey and stopping at the curve.
 ggplot(plot_df, aes(x = range, y = null_distribution)) +
-  geom_line() +
-  xlab("t-values") +
-  ylab("Probability") +
-  geom_vline(xintercept = t_ps) +
-  theme_classic(base_size = 15) +
-  theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
+  geom_line(colour = "blue", linetype = "dotdash", linewidth = 1.1) +
+  annotate("segment", x = t_ps, xend = t_ps, y = 0, yend = dt(t_ps, 9), colour = "grey40", linewidth = 0.7) +
   scale_x_continuous(breaks = seq(-3, 3, 1)) +
-  geom_label(data = data.frame(x = mean(c(-3, t_ps[1])), y = .2, label = "10%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = mean(t_ps[1:2]), y = .12, label = "10%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = mean(t_ps[2:3]), y = .28, label = "10%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = mean(c(t_ps[9], 3)), y = .2, label = "10%"), aes(x = x, y = y, label = label))
+  # one label per region, turned sideways so the narrow central regions fit
+  annotate("text", x = c(-1.75, (t_ps[-9] + t_ps[-1]) / 2, 1.75), y = 0.04, angle = 90,
+           label = "10%", size = 3.6, colour = "grey20") +
+  labs(x = "t", y = "Density")
 
 
 ```
@@ -393,48 +383,45 @@ For our quiz-score example ($df=9$), a one-tailed test only needs to clear 5% of
 ```{r}
 #| label: fig-6critT
 #| fig-cap: "One-tailed critical value at df=9: t-values of 1.83 or greater occur 5% of the time."
-#| fig-alt: "A t-distribution curve with 9 degrees of freedom, with a single vertical line at t equal to 1.83 labeled 'Critical t: 1.83.' The region to the right of that line is shaded red and labeled 5 percent; everything to the left is unshaded."
+#| fig-alt: "A t-distribution curve with 9 degrees of freedom, with a single red vertical line at t equal to 1.83 labeled plus crit equals 1.83. The tail to the right of that line is shaded red and labeled 5 percent; everything to the left is unshaded. A green dotted line marks the observed t of 1.94, just inside the shaded tail."
 
-range <- seq(-3, 3, .1)
-null_distribution <- dt(range, 9, log = FALSE)
-plot_df <- data.frame(range, null_distribution)
+range <- seq(-3.5, 3.5, .01)
+plot_df <- data.frame(range, null_distribution = dt(range, 9))
+crit1 <- qt(.95, 9)
+t_obs <- 1.94   # the quiz example, t(9) = 1.94
 
 ggplot(plot_df, aes(x = range, y = null_distribution)) +
-  geom_line() +
-  xlab("t-values") +
-  ylab("Probability") +
-  geom_vline(xintercept = qt(.95, 9, lower.tail = TRUE)) +
-  theme_classic(base_size = 12) +
-  theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
-  annotate("rect", xmin = qt(.95, 9, lower.tail = TRUE), xmax = 3, ymin = 0, ymax = Inf, alpha = 0.15, fill = "#b22222") +
-  geom_label(data = data.frame(x = 2.4, y = .2, label = "5%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = qt(.95, 9, lower.tail = TRUE), y = .3,
-                               label = paste0("Critical t: ", round(qt(.95, 9, lower.tail = TRUE), 2))),
-             aes(x = x, y = y, label = label))
+  geom_area(data = subset(plot_df, range >= crit1), fill = "red", alpha = 0.18) +
+  geom_line(colour = "blue", linetype = "dotdash", linewidth = 1.1) +
+  annotate("segment", x = crit1, xend = crit1, y = 0, yend = 0.41, colour = "red", linewidth = 0.8) +
+  annotate("text", x = crit1, y = 0.425, label = paste0("+crit = ", round(crit1, 2)), colour = "red", size = 4.2) +
+  annotate("segment", x = t_obs, xend = t_obs, y = 0, yend = 0.33, colour = "#1E9E1E", linetype = "dotted", linewidth = 1.4) +
+  annotate("text", x = t_obs + 0.08, y = 0.36, label = "observed\nt = 1.94", colour = "#1E9E1E", hjust = 0, size = 3.8, lineheight = 0.9) +
+  annotate("text", x = 2.9, y = 0.06, label = "5%", size = 4.2, colour = "grey20") +
+  labs(x = "t", y = "Density")
 ```
 
 ```{r}
 #| label: fig-6twotailedt
 #| fig-cap: "Two-tailed critical values at df=9: t-values beyond ±2.26 occur 5% of the time total, 2.5% in each tail."
-#| fig-alt: "A t-distribution curve with 9 degrees of freedom, with two vertical lines at negative 2.26 and positive 2.26. The regions beyond each line are shaded red and labeled 2.5 percent, one on each side, leaving the large central region between them unshaded."
+#| fig-alt: "A t-distribution curve with 9 degrees of freedom, with two red vertical lines labeled minus crit and plus crit at negative 2.26 and positive 2.26. The tails beyond each line are shaded red and labeled 2.5 percent, one on each side, leaving the large central region between them unshaded. A green dotted line marks the observed t of 1.94, just short of the right critical value."
 
-range <- seq(-4, 4, .1)
-null_distribution <- dt(range, 9, log = FALSE)
-plot_df <- data.frame(range, null_distribution)
+range <- seq(-4, 4, .01)
+plot_df <- data.frame(range, null_distribution = dt(range, 9))
+crit2 <- qt(.975, 9)
+t_obs <- 1.94   # the quiz example, t(9) = 1.94
 
 ggplot(plot_df, aes(x = range, y = null_distribution)) +
-  geom_line() +
-  xlab("t-values") +
-  ylab("Probability") +
-  geom_vline(xintercept = c(qt(.975, 9, lower.tail = TRUE), qt(.025, 9, lower.tail = TRUE))) +
-  theme_classic(base_size = 12) +
-  theme(axis.text.y = element_blank(), axis.ticks = element_blank()) +
-  annotate("rect", xmin = qt(.975, 9, lower.tail = TRUE), xmax = 4, ymin = 0, ymax = Inf, alpha = 0.15, fill = "#b22222") +
-  annotate("rect", xmin = -4, xmax = qt(.025, 9, lower.tail = TRUE), ymin = 0, ymax = Inf, alpha = 0.15, fill = "#b22222") +
-  geom_label(data = data.frame(x = 3.4, y = .2, label = "2.5%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = -3.4, y = .2, label = "2.5%"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = qt(.975, 9, lower.tail = TRUE), y = .3, label = "2.26"), aes(x = x, y = y, label = label)) +
-  geom_label(data = data.frame(x = qt(.025, 9, lower.tail = TRUE), y = .3, label = "-2.26"), aes(x = x, y = y, label = label))
+  geom_area(data = subset(plot_df, range <= -crit2), fill = "red", alpha = 0.18) +
+  geom_area(data = subset(plot_df, range >=  crit2), fill = "red", alpha = 0.18) +
+  geom_line(colour = "blue", linetype = "dotdash", linewidth = 1.1) +
+  annotate("segment", x = c(-crit2, crit2), xend = c(-crit2, crit2), y = 0, yend = 0.41, colour = "red", linewidth = 0.8) +
+  annotate("text", x = c(-crit2, crit2), y = 0.425,
+           label = paste0(c("-crit = -", "+crit = "), round(crit2, 2)), colour = "red", size = 4.2) +
+  annotate("segment", x = t_obs, xend = t_obs, y = 0, yend = 0.33, colour = "#1E9E1E", linetype = "dotted", linewidth = 1.4) +
+  annotate("text", x = t_obs - 0.08, y = 0.36, label = "observed\nt = 1.94", colour = "#1E9E1E", hjust = 1, size = 3.8, lineheight = 0.9) +
+  annotate("text", x = c(-3.4, 3.4), y = 0.06, label = "2.5%", size = 4.2, colour = "grey20") +
+  labs(x = "t", y = "Density")
 ```
 
 Applied to our actual result, $t(9) = 1.94$: the one-tailed $p$ is .042, the two-tailed $p$ is .084, exactly double, since a two-tailed test counts the matching extreme region on both sides instead of just one. Here the choice actually changes the decision: one-tailed, this result is significant at $\alpha=.05$; two-tailed, it isn't. That's exactly why a one-tailed test has to be justified by your theory *before* you see the data, not chosen afterward because it gives the answer you wanted.
@@ -766,13 +753,9 @@ for ( i in 1:1000 ){
 #| fig-cap: "1000 ps for n =100, when there is a true effect"
 #| fig-alt: "Histogram of 1000 simulated p-values from samples of size 100 with the same real underlying difference as the previous figure. Almost every simulation now produces a p-value near zero, with a tall spike in the leftmost bin and almost nothing anywhere else."
 hist_p(save_ps)
-
-
-length(save_ps[save_ps<.05])
-length(save_ps[save_ps<.05])/1000
 ```
 
-Now almost all of the experiments show a $p$-value of less than .05 (using a two-tailed test, the default in R). You can use this simulation process to determine how many subjects you need to reliably detect your effect.
+Now almost all of the experiments (`r sum(save_ps < .05)` of 1000) show a $p$-value of less than .05 (using a two-tailed test, the default in R). You can use this simulation process to determine how many subjects you need to reliably detect your effect.
 
 ## Chapter Summary
 
