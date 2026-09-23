@@ -132,7 +132,7 @@ Those two figures show what a wrong conclusion looks like for one unlucky sample
 #| label: fig-5alpha-beta
 #| fig-cap: 'The two error rates, drawn on sampling distributions. Top: $\alpha$ is the red area in the tails of the curve under $H_0$. Bottom: adding the curve for one specific alternative value $\mu_a$, $\beta$ is the gray area under it between the critical values, and power is the orange area past the right critical value.'
 #| fig-height: 6.6
-#| fig-alt: "Two stacked panels sharing the same axes. The top panel shows a single blue dot-dash bell curve centered at the null mean, marked with a dashed vertical line, with red vertical lines at the critical values on either side and small red shaded tails beyond them, each labeled alpha over two. The bottom panel repeats that curve and adds an orange dot-dash bell curve of the same width centered well to the right. The region under the orange curve lying between the two critical-value lines is shaded gray and labeled beta, while the part of the orange curve past the right critical line is shaded orange and labeled power."
+#| fig-alt: "Two stacked panels sharing the same axes. The top panel shows a single blue dot-dash bell curve centered at the null mean, marked with a magenta dashed vertical line labeled mu sub 0, with red vertical lines labeled minus crit and plus crit at the critical values on either side and small red shaded tails beyond them, each labeled alpha over two. The bottom panel repeats that curve and adds an orange dot-dash bell curve of the same width centered well to the right. The region under the orange curve lying between the two critical-value lines is shaded gray and labeled beta, while the part of the orange curve past the right critical line is shaded orange and labeled power."
 #| out-width: "100%"
 
 mu0_ab <- 0; mua_ab <- 2.5; se_ab <- 1; crit_ab <- 1.96
@@ -148,28 +148,34 @@ leg_ab <- c(
   expression(paste("Sampling distribution of the sample mean under ", H[0])),
   expression(paste("Sampling distribution of the sample mean if ", mu == mu[a])))
 
+# Critical values and mu0 run the full height and are labeled at the top,
+# so it is clear where each boundary comes from.
 shell_ab <- function(p) {
   p +
-    geom_vline(xintercept = c(-crit_ab, crit_ab), color = "red", linewidth = .7) +
-    annotate("segment", x = mu0_ab, xend = mu0_ab, y = 0,
-             yend = dnorm(mu0_ab, mu0_ab, se_ab),
+    annotate("segment", x = c(-crit_ab, crit_ab), xend = c(-crit_ab, crit_ab),
+             y = 0, yend = .52, color = "red", linewidth = .7) +
+    annotate("segment", x = mu0_ab, xend = mu0_ab, y = 0, yend = .52,
              linetype = "dashed", color = "magenta", linewidth = .9) +
+    annotate("text", x = c(-crit_ab, crit_ab), y = .545,
+             label = c("-crit", "+crit"), color = "red", size = 4.2) +
+    annotate("text", x = mu0_ab, y = .545, label = "mu[0]", parse = TRUE,
+             color = "magenta", size = 4.5) +
     scale_color_manual(values = c(null = "blue", alt = "orange"),
                        limits = c("null", "alt"), breaks = c("null", "alt"),
                        labels = leg_ab, drop = FALSE) +
-    coord_cartesian(xlim = c(-4, 6.5), ylim = c(0, 0.52)) +
+    coord_cartesian(xlim = c(-4, 6.5), ylim = c(0, 0.56)) +
     theme_classic() +
     theme(legend.position = "bottom", axis.text = element_blank(),
           axis.title = element_blank(), axis.ticks = element_blank(),
-          legend.text = element_text(size = 9), plot.title = element_text(size = 11)) +
+          legend.text = element_text(size = 11), plot.title = element_text(size = 11)) +
     guides(color = guide_legend(title = NULL, nrow = 2))
 }
 
 null_ab <- geom_line(data = d_ab, aes(x, null, color = "null"), linetype = "dotdash", linewidth = 1.1)
 alt_ab  <- geom_line(data = d_ab, aes(x, alt,  color = "alt"),  linetype = "dotdash", linewidth = 1.1)
 ashade_ab <- list(
-  geom_area(data = subset(d_ab, x <= -crit_ab), aes(x, null), fill = "red", alpha = .25),
-  geom_area(data = subset(d_ab, x >=  crit_ab), aes(x, null), fill = "red", alpha = .25))
+  geom_area(data = subset(d_ab, x <= -crit_ab), aes(x, null), fill = "red", alpha = .18),
+  geom_area(data = subset(d_ab, x >=  crit_ab), aes(x, null), fill = "red", alpha = .18))
 bshade_ab <- geom_area(data = subset(d_ab, x > -crit_ab & x < crit_ab),
                        aes(x, alt), fill = "gray50", alpha = .35)
 alabs_ab <- list(
@@ -184,7 +190,7 @@ blab_ab <- annotate("text", x = 1.30, y = .085, label = "beta", parse = TRUE, si
 # so all three quantities are readable off the same panel rather than two of three.
 pshade_ab <- geom_area(data = subset(d_ab, x >= crit_ab), aes(x, alt),
                        fill = "orange", alpha = .30)
-plab_ab <- annotate("text", x = 3.55, y = .30, label = "power", color = "darkorange3", size = 4.5)
+plab_ab <- annotate("text", x = 3.05, y = .15, label = "power", color = "darkorange3", size = 4.5)
 
 ab_top <- shell_ab(ggplot() + ashade_ab + null_ab + alabs_ab) +
   ggtitle(expression(paste(alpha, ": the rate of rejecting a true ", H[0]))) +
@@ -308,7 +314,7 @@ Let's ground effect size in a concrete example. Suppose we're measuring **final 
 #| out-width: "100%"
 
 
-x_es <- seq(25, 100, 1)
+x_es <- seq(45, 95, .5)
 shifts <- c("d = 0" = 65, "d = 0.5" = 67.5, "d = 1" = 70, "d = 2" = 75)
 
 df <- do.call(rbind, lapply(names(shifts), function(lab) {
@@ -327,8 +333,8 @@ ggplot(df, aes(
   group = condition,
   color = condition
 )) +
-  geom_line() +
-  theme_classic(base_size = 15) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(values = c(A = "blue", B = "orange")) +
   facet_wrap( ~ effect_size) +
   xlab("values") +
   ylab("density")
@@ -433,16 +439,15 @@ In @fig-5.5powercurve, we fix the design to a two-sample $t$-test with $n=10$ pe
 # Exact power for a two-sample t-test (not the normal approximation):
 # power.t.test uses the noncentral t, which is what the test actually uses.
 effect_size <- seq(0, 2, .1)
-power <- sapply(effect_size, function(d) {
-  if (d == 0) return(0.05)                     # at d = 0, rejection rate is alpha
-  power.t.test(n = 10, delta = d, sd = 1, sig.level = 0.05)$power
-})
+# strict = TRUE counts both rejection tails, so power at d = 0 is exactly alpha.
+power <- sapply(effect_size, function(d)
+  power.t.test(n = 10, delta = d, sd = 1, sig.level = 0.05, strict = TRUE)$power)
 
 plot_df <- data.frame(power, effect_size)
 
 ggplot(plot_df, aes(x=effect_size, y=power))+
-  geom_line()+
-  theme_classic()
+  geom_line(color = "#008cff", linewidth = 1.2)+
+  labs(x = "Effect size (Cohen's d)", y = "Power")
 ```
 
 **Walkthrough.**
@@ -455,26 +460,25 @@ This shows that small samples are only sensitive to big, obvious effects.
 
 Now suppose prior research suggests the effect size is small ($d=0.2$). Instead of varying the effect, we can ask: *how many samples per group do we need to have decent power?*
 
-@fig-5.5powercurveN plots power against sample size for detecting $d=0.2$. The green line marks 80% power, a common planning target.
+@fig-5.5powercurveN plots power against sample size for detecting $d=0.2$. The dashed line marks 80% power, a common planning target.
 
 ```{r}
 #| label: fig-5.5powercurveN
-#| fig-cap: 'Power vs. sample size for detecting $d=0.2$ with a two-sample $t$-test at $\alpha=0.05$; green line marks $0.80$ power.'
+#| fig-cap: 'Power vs. sample size for detecting $d=0.2$ with a two-sample $t$-test at $\alpha=0.05$; dashed line marks $0.80$ power.'
 #| fig-alt: "Line graph of power against sample size per group, from 10 to 800. Power starts near zero at small sample sizes and rises in a curve that flattens as it approaches 1.0. A horizontal reference line at 0.80 power crosses the curve around a sample size of roughly 394 per group."
 #| out-width: "100%"
 
 n_seq <- seq(10, 800, 10)
 power <- sapply(n_seq, function(n)
-  power.t.test(n = n, delta = 0.2, sd = 1, sig.level = 0.05)$power)
+  power.t.test(n = n, delta = 0.2, sd = 1, sig.level = 0.05, strict = TRUE)$power)
 
 n_for_80 <- power.t.test(delta = 0.2, sd = 1, sig.level = 0.05, power = 0.80)$n
 
 plot_df <- data.frame(power, n_seq)
 
 ggplot(plot_df, aes(x=n_seq, y=power))+
-  geom_line()+
-  theme_classic()+
-  geom_hline(yintercept=.8, color="green")+
+  geom_line(color = "#008cff", linewidth = 1.2)+
+  geom_hline(yintercept=.8, color="grey40", linetype="dashed")+
   labs(x = "n per group", y = "Power")
 ```
 
