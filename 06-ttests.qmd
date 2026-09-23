@@ -262,15 +262,15 @@ Every test in this book has assumptions. Assumptions are conditions that need to
 
 **Test-specific assumptions.** These come from how a particular test's math actually works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is **approximate normality** of the outcome itself (one-sample) or of the difference scores (paired). The $t$-distribution we've been using to get $p$-values is *derived* assuming the sampling distribution of the sample mean is normal. If your data are badly skewed and your sample is small, that assumption fails, and the $p$-value may not be the true probability of a result this extreme under $H_0$.
 
-**How worried should you be?** It depends enormously on $n$. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the sample mean tends toward normal even when individual observations are skewed, so the $t$-test is fairly **robust** to non-normality once $n$ is reasonably large. A lot of environmental data, particularly field data, instead comes from **small samples that are also skewed**. Examples include a handful of expensive water samples, a short list of monitoring wells, five plots you had time to visit before the storm rolled in. Small $n$ and non-normality reinforcing each other is when a $t$-test's answer becomes questionable.
+**How worried should you be?** It depends enormously on $n$. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the sample mean tends toward normal even when individual observations are skewed, so the $t$-test is fairly **robust** to non-normality once $n$ is reasonably large. A lot of environmental data, particularly field data, instead comes from **small samples that are also skewed**. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit before the storm rolled in. A $t$-test's answer becomes questionable when the sample is small and the data are also non-normal.
 
-**What to do about it.** First, look at your data. A histogram or a QQ-plot will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. Treat it as one more piece of evidence rather than a strict gate though: with a small sample, exactly when a violation matters most, it has low power and will often say "no problem" even when there is one. If your data look like a stretch and your sample is small, you have another option: a **nonparametric test** that doesn't lean on the normality assumption at all. You'll meet these nonparametric alternatives in the next chapter, once we've covered all three t-test forms below.
+**What to do about it.** First, look at your data. A histogram or a QQ-plot will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. Treat it as one more piece of evidence rather than a strict gate though: with a small sample, exactly when a violation matters most, it has low power and will often say "no problem" even when there is one. If your data look far from normal and your sample is small, you have another option: a **nonparametric test**, which does not assume normality. You'll meet these nonparametric alternatives in the next chapter, once we've covered all three t-test forms below.
 
 ### How does t behave?
 
 Extreme sample means are unlikely if $H_0$ is true, which is why large $|t|$ values are rare. Returning to that rule of thumb, values of $t$ beyond roughly $-2$ or $+2$ occur less than 5% of the time under the null when $df \approx 20$. That's the foundation of the decision rule for $t$ tests: if your observed $t$ lies in those rare tails, you reject $H_0$.
 
-Remember, if we obtained a single $t$ from one sample we collected, we could consult the chance window in @fig-6-t-rejection below to find out whether the $t$ we obtained from the sample was likely or unlikely to occur by chance.
+With the single $t$ from our sample, we can check @fig-6-t-rejection to see whether a $t$ that size is likely or unlikely by chance alone.
 
 ```{r}
 #| label: fig-6-t-rejection
@@ -370,13 +370,13 @@ Each range captures the same 10% of the distribution, even though the ranges the
 
 ### Getting the p-values for $t$-values
 
-Where do values like these actually come from? Older textbooks put a table in the back of the book; this one doesn't need one, because software gives you exact $t$ and $p$ values directly. R, Excel, and [online calculators](http://www.socscistatistics.com/pvalues/tdistribution.aspx) all work; you'll get hands-on practice with this in lab, both with software and by simulation.
+Older textbooks listed these values in a table at the back of the book. R, Excel, and [online calculators](http://www.socscistatistics.com/pvalues/tdistribution.aspx) all work; you'll get hands-on practice with this in lab, both with software and by simulation.
 
 Software needs two things from you to compute a $p$-value: the degrees of freedom, which you already have, and whether the test is one-tailed or two-tailed, which comes next.
 
 ### One-tailed vs. two-tailed, applied
 
-Chapter 4 introduced the concept: a two-tailed test asks whether $\mu$ differs from $\mu_0$ in either direction, while a one-tailed test commits to one direction in advance, and is only justified when a result in the other direction would lead to the same action as no result at all. Here's how that choice plays out mechanically for a $t$-test: it changes the critical value, and therefore the $p$-value, for the exact same data.
+Chapter 4 introduced the concept: a two-tailed test asks whether $\mu$ differs from $\mu_0$ in either direction, while a one-tailed test commits to one direction in advance, and is only justified when a result in the other direction would lead to the same action as no result at all. For a $t$-test, that choice changes the critical value, and therefore the $p$-value, for the exact same data.
 
 For our quiz-score example ($df=9$), a one-tailed test only needs to clear 5% of the distribution on one side. A two-tailed test has to clear 2.5% on each side, which pushes the critical value farther out:
 
@@ -449,7 +449,7 @@ design_groups("Restoration (before vs. after)", c("Before", "After"), 20, "plots
               note = "the same 20 plots, measured on both occasions")
 ```
 
-The dashed boxes are doing real work there. In every design so far the boxes held *different* units, and the test compared one set against another. Here both boxes hold the same 20 plots, which is what makes the design paired and what lets us subtract.
+The dashed boxes mark what makes this design paired. In every design so far the boxes held *different* units, and the test compared one set against another. Here both boxes hold the same 20 plots, which is what makes the design paired and what lets us subtract.
 
 **Define differences and their meaning.** Choose an order and stick to it:
 
@@ -479,7 +479,7 @@ The **sign of** $t$ matches $\bar d$ and your difference direction.
 
 ### Calculate t
 
-How do we calculate $t$ for a paired-samples $t$-test? We use the exact same one-sample $t$-test formula from the previous section, just applied to the difference scores instead of raw scores. The paired-samples $t$-test is really just a variation on the one-sample $t$-test: there's still only one group of numbers involved, the differences.
+To calculate $t$ for a paired-samples $t$-test, we use the one-sample $t$-test formula from the previous section, applied to the difference scores instead of raw scores. The paired-samples $t$-test is a one-sample $t$-test on a single group of numbers, the differences.
 
 Let's find $t$ for the mean difference scores:
 
@@ -530,11 +530,11 @@ knitr::kable(
 
 Our t-test results are: t(4) = 1.83, p = .141.
 
-The sign of $t$ matches the sign of the mean difference (ours was $+2.8$ percentage points), so soil moisture increased on average, exactly what $\bar d$ already told us directly. Getting a $p$-value from this $t$, and choosing one-tailed vs. two-tailed, works exactly like it did for the one-sample case (see the One-sample $t$-test section above). Two-tailed, $p=.141$: not significant, this five-plot sample is too small to rule out chance.
+The sign of $t$ matches the sign of the mean difference (ours was $+2.8$ percentage points), so soil moisture increased on average, as $\bar d$ showed. Getting a $p$-value from this $t$, and choosing one-tailed vs. two-tailed, works exactly like it did for the one-sample case (see the One-sample $t$-test section above). Two-tailed, $p=.141$, which is not significant. This five-plot sample is too small to rule out chance.
 
 ### Scaling to the full sample
 
-The five plots above are a subset of the full restoration study, which measured all **20** paired plots. With only $n=5$, $t(4)=1.83$ wasn't enough to distinguish the observed increase from chance ($p=.141$). Here's what changes with the full sample.
+The five plots above are a subset of the full restoration study, which measured all **20** paired plots. With only $n=5$, $t(4)=1.83$ wasn't enough to distinguish the observed increase from chance ($p=.141$).
 
 ```{r, echo=FALSE}
 before_full <- c(18, 22, 16, 25, 21, 27, 26, 23, 28, 23, 19, 19, 20, 25, 15, 24, 23, 16, 18, 21)
@@ -555,11 +555,11 @@ At $n=20$, $t(19) = `r round(full20_out$statistic, 2)`$, $p =`r fmt_p(full20_out
 
 ## Two independent groups
 
-The independent-samples $t$-test is the third and last design in this chapter. The logic is the same as the one-sample and paired cases: a mean difference divided by an estimate of its variability. What changes is the research design.
+The independent-samples $t$-test is the third and last design in this chapter. The logic is the same as the one-sample and paired cases: a mean difference divided by an estimate of its variability. Only the research design is different.
 
 Use an independent-samples $t$-test for a **between-subjects** design: different people or units in each condition, each measured once. With two groups of 10, that's 20 people total, none of them paired. Without repeated measures on the same unit, there's no meaningful way to subtract scores between conditions the way the paired $t$-test does.
 
-The numerator works the same way it always has: the mean difference between groups. The denominator is where independent groups differ from the paired case, since now we need a single estimate of variability built from two separate samples instead of one.
+The numerator works the same way it always has: the mean difference between groups. The denominator differs from the paired case, because now we need a single estimate of variability built from two separate samples instead of one.
 
 A natural first guess is to average the two groups' standard errors:
 
@@ -577,7 +577,7 @@ The pooled test adds two test-specific assumptions: the outcome is approximately
 
 The example below computes $t$ for two small groups by following that formula step by step in R, then checks it against `t.test()`.
 
-Here we deliberately print R's raw console output instead of a formatted table, because this is the block you will actually be looking at in lab, and it is worth seeing that the number you built by hand is the same number sitting in it.
+Here we deliberately print R's raw console output instead of a formatted table, because this is the block you will see in lab, and you can check that the number you built by hand matches the `t = ` value in it.
 
 ```{r, echo=TRUE }
 
@@ -611,7 +611,7 @@ t.test(a,b, paired=FALSE, var.equal = TRUE)
 ```
 
 ::: {.callout-important title="Results reporting: t-tests"}
-All three forms report the same four things: the direction in plain language, the effect size, the test statistic with its df, and $p$. What changes is what counts as the effect.
+All three forms report the same four things: the direction in plain language, the effect size, the test statistic with its df, and $p$. The three forms differ only in what counts as the effect.
 
 One-sample, where the effect is the sample mean against the reference value:
 
@@ -632,7 +632,7 @@ Note the paired write-up never mentions the before and after means separately. T
 
 Chapter 4 simulated *group mean differences* to build a chance window. Here we simulate the **test statistic itself**, which shows two things the earlier simulation could not: what the null distribution of $t$ actually looks like, and what happens to $p$-values when $H_0$ is true.
 
-Simulating under conditions you choose builds intuition for how sampling error affects your results given your design: sample size, the size of the difference you expect, and the amount of variation. The same methods run formal power analyses.
+Simulating under conditions you choose builds intuition for how sampling error affects your results given your design: sample size, the size of the difference you expect, and the amount of variation. Formal power analyses use the same methods.
 
 ### Simulating a one-sample t-test
 
@@ -683,7 +683,7 @@ simulated_ps <- replicate(1000, t.test(rnorm(30, 50, 25), mu = 50)$p.value)
 
 ### The same machinery, other designs
 
-The paired and independent-samples cases behave identically, because they *are* the same machinery on different inputs. A paired test runs a one-sample $t$ on the difference scores; an independent-samples test swaps in the pooled standard error. Simulate either one under $H_0$ and you get the same two pictures: a $t$ distribution centered on zero, and a flat $p$ distribution.
+The paired and independent-samples cases behave the same way, because they use the same $t$ calculation on different inputs. A paired test runs a one-sample $t$ on the difference scores; an independent-samples test swaps in the pooled standard error. Simulate either one under $H_0$ and you get the same two pictures: a $t$ distribution centered on zero, and a flat $p$ distribution.
 
 To adapt the code above, change only the line that generates the data:
 
@@ -696,7 +696,7 @@ t.test(d, mu = 0)$p.value
 t.test(rnorm(10, 10, 5), rnorm(10, 10, 5), var.equal = TRUE)$p.value
 ```
 
-What happens if there actually is a difference in the simulated data, let's set one condition to have a larger mean than the other:
+What happens if there is a real difference in the simulated data? Let's set one condition to have a larger mean than the other:
 
 ```{r, echo=TRUE}
 
@@ -720,7 +720,7 @@ for ( i in 1:1000 ){
 hist_p(save_ps)
 ```
 
-Now you can see that the $p$-value distribution is right-skewed: most of the values pile up near 0, with a long tail toward 1. This is because when there is a true effect, you will get p-values that are less than .05 more often. Or, rather, you get larger $t$ values than you normally would if there were no differences.
+Now you can see that the $p$-value distribution is right-skewed: most of the values pile up near 0, with a long tail toward 1. This is because when there is a true effect, you will get p-values that are less than .05 more often. That happens because a true effect produces larger $t$ values than you would get with no difference.
 
 In this case, we wouldn't be making a type I error if we rejected the null when p was smaller than .05. How many times would we do that out of our 1000 experiments?
 
@@ -729,7 +729,7 @@ length(save_ps[save_ps<.05])
 length(save_ps[save_ps<.05])/1000
 ```
 
-We got `r length(save_ps[save_ps<.05])` simulations where p was less than .05, or `r 100*length(save_ps[save_ps<.05])/1000`% of experiments. A design that detects a real effect that rarely is not one you want to run, which is the argument for designing a better experiment.
+We got `r length(save_ps[save_ps<.05])` simulations where p was less than .05, or `r 100*length(save_ps[save_ps<.05])/1000`% of experiments. A design that rarely detects a real effect needs to be improved before you run it.
 
 The most direct lever is $n$, the number of subjects. Let's increase $n$ from 10 to 100 and see what happens to the number of "significant" simulated experiments.
 
@@ -759,7 +759,7 @@ Now almost all of the experiments (`r sum(save_ps < .05)` of 1000) show a $p$-va
 
 ## Chapter Summary
 
-**Why it matters.** The $t$-test is the first real inferential test in this course, and the logic it runs on, a signal measured against the noise around it, is the same logic behind ANOVA, regression, and everything else that follows. Getting comfortable here pays off for the rest of the semester.
+**Why it matters.** The $t$-test is the first real inferential test in this course, and the logic it runs on, a signal measured against the noise around it, is the same logic behind ANOVA, regression, and everything else that follows.
 
 **Core ideas**
 
@@ -767,5 +767,5 @@ Now almost all of the experiments (`r sum(save_ps < .05)` of 1000) show a $p$-va
 -   **Three forms, one idea.** The one-sample, paired, and independent-samples $t$-tests differ in what goes into the numerator, but all three ask whether an observed difference is large compared to its own standard error. The paired test is just the one-sample test applied to difference scores.
 -   **Why** $t$ and not $z$. When the population SD $\sigma$ is unknown, we estimate it with $s$, which adds uncertainty. The $t$ distribution accounts for that by being fatter in the tails than the normal, and it tightens toward the normal as degrees of freedom grow.
 -   **Assumptions come in two kinds.** *Independence and a sound study design* apply to every test in this book and are assumed from here on. The *test-specific* assumption for these tests is approximate normality, of the outcome for a one-sample test or of the difference scores for a paired test, or of each group, plus similar variances, for an independent-samples test.
--   **How worried to be depends on** $n$. Thanks to the Central Limit Theorem, $t$-tests are fairly robust to non-normality once samples are reasonably large. The danger zone is small *and* skewed, which describes a lot of environmental field data. Plot your data first; treat a Shapiro-Wilk result as evidence rather than a gate, since it has least power exactly when you need it most.
+-   **How worried to be depends on** $n$. Thanks to the Central Limit Theorem, $t$-tests are fairly robust to non-normality once samples are reasonably large. $t$-tests are least trustworthy when samples are small *and* skewed, which describes a lot of environmental field data. Plot your data first, and treat a Shapiro-Wilk result as evidence rather than a gate, since it has the least power with small samples, when a violation matters most.
 -   **Choose your tails before you look.** Default to two-tailed. Reserve one-tailed tests for cases where a difference in the opposite direction would lead to the same action as no difference, and decide before seeing the result.
