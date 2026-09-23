@@ -141,7 +141,7 @@ design_crossed("Pollution (categorical) × Flow rate (categorical)",
 
 Two IVs, two levels each, so you should already be able to name this design: it's a 2x2. Reading the schematic left to right also shows why the notation works the way it does. Crossing two levels with two levels *is* the multiplication that gives four conditions, and "fully crossed" simply means no cell is left empty.
 
-That four-cell grid resembles the chi-square table from Chapter 7, and the difference between them is worth pinning down. There, the cells held **counts** of stream sites that already had a given land use and *E. coli* level; nobody put them there. Here, the cells are **conditions we assign channels to**, and within each one we then measure something else entirely, the species count. Same shape, opposite direction: one counts where units landed, the other measures an outcome where we placed them.
+That four-cell grid resembles the chi-square table from Chapter 7, but the two differ in an important way. There, the cells held **counts** of stream sites that already had a given land use and *E. coli* level; nobody put them there. Here, the cells are **conditions we assign channels to**, and within each one we then measure something else entirely, the species count. Same shape, opposite direction: one counts where units landed, the other measures an outcome where we placed them.
 
 **Predictions.** No pollution plus high flow should support the most species; pollution plus low flow should support the fewest. The other two combinations are the interesting ones, and a one-factor study could never distinguish them: does pollution matter only when flow is low, with fast water washing its effect away entirely? Or does pollution hurt a stream no matter how fast the water moves? That's exactly what an interaction test in a factorial experiment can tell us.
 
@@ -220,7 +220,7 @@ The effect of one IV at a single level of the other, such as the pollution effec
 
 An **interaction** occurs when the effect of one IV depends on the level of another, which is exactly what @fig-10flowB shows: the simple effect of pollution changed with flow.
 
-Equivalently, and this framing is worth holding onto because it's what the arithmetic actually computes, an interaction is a **difference between differences**. Each simple effect of pollution is a difference (unpolluted minus polluted). If that difference itself changes across flow rates, that's an interaction.
+Equivalently, an interaction is a **difference between differences**, which is what the arithmetic actually computes. Each simple effect of pollution is a difference (unpolluted minus polluted). If that difference itself changes across flow rates, that's an interaction.
 
 The number of possible interactions scales with the number of IVs. A 2x2 design has exactly one interaction, the combined effect of the two IVs. A design with three IVs (A, B, C) has three two-way interactions (AB, AC, BC) and one three-way interaction (ABC).
 
@@ -276,7 +276,7 @@ Those two numbers aren't the same, so the effect of pollution isn't constant acr
 
 ## Computing a factorial ANOVA by hand
 
-In our **between-subjects** 2x2 design, different stream channels appear in each condition: 5 channels per cell, 20 channels total, no repeats. The logic is the same as the one-way ANOVA in Chapter 8: partition the total variance into parts. For a 2x2 design, there's now one more part, the interaction:
+In our **between-subjects** 2x2 design, different stream channels appear in each condition: 5 stream channels assigned to each combination of conditions, 20 channels total, no repeats. The logic is the same as the one-way ANOVA in Chapter 8: partition the total variance into parts. For a 2x2 design, there's now one more part, the interaction:
 
 $$SS_\text{Total} = SS_\text{Pollution} + SS_\text{Flow} + SS_\text{Interaction} + SS_\text{Error}$$
 
@@ -359,7 +359,7 @@ Every low-flow channel is replaced by the low-flow marginal mean, `r round(low_m
 
 ### SS Interaction
 
-The interaction is the one genuinely new piece a factorial ANOVA adds. It asks: do the four cell means behave differently than the two main effects alone would predict?
+The interaction is the one new piece a factorial ANOVA adds. It asks: do the four cell means behave differently than the two main effects alone would predict?
 
 If the main effects told the whole story, each cell mean would be the grand mean, shifted by that cell's pollution effect and its flow effect. Take the no-pollution, low-flow cell. The no-pollution marginal mean sits $`r round(nopoll_mean,2)` - `r round(gm,2)` = `r round(nopoll_mean - gm,2)`$ above the grand mean, and the low-flow marginal mean sits $`r round(gm,2)` - `r round(low_mean,2)` = `r round(gm - low_mean,2)`$ below it, so the two main effects predict $`r round(gm,2)` + `r round(nopoll_mean - gm,2)` - `r round(gm - low_mean,2)` = `r round(nopoll_mean + low_mean - gm,2)`$. The observed cell mean is `r f1(mean(A))`. The leftover, `r round(mean(A) - (nopoll_mean + low_mean - gm),2)`, is the part of that cell the two main effects can't explain. Those leftovers, one per cell, are what the interaction captures.
 
@@ -427,7 +427,9 @@ aov_fit <- aov(Number_species ~ Pollution * Flow, all_df)
 anova_kable(aov_fit)
 ```
 
-The SS column matches the hand-calculated values above: `r round(ss_poll,2)` for Pollution, `r round(ss_flow,2)` for Flow, `r round(ss_int,2)` for the interaction, `r round(ss_error,2)` for Error. All three effects are significant here, including the interaction we previewed informally a moment ago: the Pollution effect really is different at the two flow rates, not just by chance.
+The SS column matches the hand-calculated values above: `r round(ss_poll,2)` for Pollution, `r round(ss_flow,2)` for Flow, `r round(ss_int,2)` for the interaction, `r round(ss_error,2)` for Error. All three effects are significant here, including the interaction we previewed informally a moment ago: the effect of pollution really is different at the two flow rates, not just by chance.
+
+This example is balanced: every combination of conditions has the same number of stream channels. With unequal numbers, two things change. The sums of squares depend on the order of terms in `aov()`, because R computes them sequentially, and the marginal means become model-based estimates (estimated marginal means) rather than simple averages of the scores. Balanced designs avoid both complications, one more reason to plan equal sample sizes.
 
 ### Effect size in a factorial design
 
@@ -468,7 +470,7 @@ knitr::kable(
 )
 ```
 
-Flow accounts for the largest share of the total variation, pollution is close behind, and the interaction is much smaller at $\eta^2 = `r round(ss_int/ss_total, 2)`$. That last number is worth sitting with. The interaction is significant, and it is also the smallest of the three effects, which is a common combination and not a contradiction: significance and magnitude answer different questions. The interaction is small in the sense that it accounts for little of the total variation, and consequential in the sense that it changes what the pollution main effect means.
+Flow accounts for the largest share of the total variation, pollution is close behind, and the interaction is much smaller at $\eta^2 = `r round(ss_int/ss_total, 2)`$. The interaction is significant, and it is also the smallest of the three effects, which is a common combination and not a contradiction: significance and magnitude answer different questions. The interaction is small in the sense that it accounts for little of the total variation, and consequential in the sense that it changes what the pollution main effect means.
 
 **Which one to report.** Most statistical software, including SPSS and R's `effectsize` package, gives you partial $\eta_p^2$ by default, and it is the more common choice in published work. Either is defensible, but say which you used, because the two can differ substantially: pollution is $\eta^2 = `r round(ss_poll/ss_total, 2)`$ but $\eta_p^2 = `r round(ss_poll/(ss_poll+ss_error), 2)`$ here. Reporting the larger number without labeling it overstates the effect. Never compare a partial value from one study against an unpartialed value from another.
 
@@ -512,7 +514,7 @@ The eight panels below are numbered to match the table above, so panel "Pattern 
 ```{r}
 #| label: fig-10bar22
 #| fig-cap: "Eight example patterns of main effects and interactions in a pollution × flow design, numbered to match the pattern table above."
-#| fig-alt: "Eight small panels of grouped bar charts, each with Low Flow and High Flow on the x-axis and a No Pollution and a Pollution bar at each, one panel per pattern in the table above. Pattern 1 shows four equal-height bars (no effects). Pattern 2 shows a pollution gap that's the same at both flow levels. Pattern 3 shows a pollution gap present at both flow levels but a different size at each. Pattern 4 shows both a pollution gap and an overall flow difference, consistent across conditions. Pattern 5 combines both main effects with a gap that also changes size across flow levels. Pattern 6 shows only a flow difference, no pollution gap. Pattern 7 shows a flow difference where the pollution gap also changes size. Pattern 8 shows bars that are equal on average for each factor alone, but the pollution gap flips direction between flow levels."
+#| fig-alt: "Eight small panels of grouped bar charts, each with Low Flow and High Flow on the x-axis and a No Pollution and a Pollution bar at each, one panel per pattern in the table above. Pattern 1 shows four equal-height bars (no effects). Pattern 2 shows a pollution gap that's the same at both flow levels. Pattern 3 shows a pollution gap present at both flow levels but a different size at each. Pattern 4 shows both a pollution gap and an overall flow difference, consistent across conditions. Pattern 5 combines both main effects with a gap that also changes size across flow levels. Pattern 6 shows only a flow difference, no pollution gap. Pattern 7 shows a flow difference where the pollution gap reverses direction between flow levels. Pattern 8 shows bars that are equal on average for each factor alone, but the pollution gap flips direction between flow levels."
 #| out-width: "100%"
 
 mk <- function(v) data.frame(
@@ -585,7 +587,7 @@ ggplot(all_22s, aes(x = Flow, y = means, colour = Pollution, group = Pollution))
 In the line graphs, interactions are easiest to see:
 
 -   **Parallel lines** mean no interaction (the pollution effect is the same at both flow rates).
--   **Crossing lines** mean an interaction (the pollution effect differs by flow).
+-   **Crossing lines** mean an interaction (the pollution effect differs by flow). The lines don't have to cross inside the plot: converging or diverging lines would cross if you extended them, so they count too.
 -   The **average gap** between the two lines is the main effect of pollution; the lines' **average rise or fall** from low to high flow is the main effect of flow.
 
 ::: {.callout-tip title="Tip: Which factor goes on the x-axis?"}
@@ -775,13 +777,13 @@ Lead with the interaction, then give the simple effects. Report a main effect on
 
 ## More complicated designs
 
-Up until now we have focused on the simplest case for factorial designs, the 2x2 design, with two IVs, each with 2 levels. It is worth spending some time looking at a few more complicated designs and how to interpret them.
+Up until now we have focused on the simplest case for factorial designs, the 2x2 design, with two IVs, each with 2 levels. The same logic extends to larger designs.
 
 ### 3x2 design
 
 This design works exactly like the 2x2 you already know, it just adds one more level to one factor. The test structure is the same (two main effects and one interaction). What changes is how easy it is to interpret the interaction.
 
-Let's expand our stream example. Suppose we examine macroinvertebrate species count (DV) under two pollution conditions (no pollution vs. pollution) across **three flow rates** (low, medium, high).
+Let's expand our stream example. Suppose we examine macroinvertebrate species count (DV) under **three flow rates** (low, medium, high) crossed with two pollution conditions (no pollution vs. pollution).
 
 -   The **main effect of pollution** tests whether, on average, polluted and unpolluted channels differ in species count across all flow rates.
 -   The **main effect of flow** tests whether mean species count differs among flow rates.
@@ -791,29 +793,29 @@ In a 2x2 design, you can easily spot interactions by looking for non-parallel li
 
 You have three hypotheses in a 3x2 factorial design:
 
-**H₁: Main effect of Flow**
+**Hypothesis 1: Main effect of flow**
 
 -   **Null (**$H_{0,1}$): $\mu_{\text{Low}} = \mu_{\text{Medium}} = \mu_{\text{High}}$
 -   **Alternative (**$H_{a,1}$): At least one flow rate mean differs from the others.
 
-**H₂: Main effect of Pollution**
+**Hypothesis 2: Main effect of pollution**
 
 -   **Null (**$H_{0,2}$): $\mu_{\text{NoPoll}} = \mu_{\text{Poll}}$
 -   **Alternative (**$H_{a,2}$): Mean species count differs between polluted and unpolluted channels.
 
-**H₃: Pollution × Flow interaction**
+**Hypothesis 3: Pollution × flow interaction**
 
 -   **Null (**$H_{0,3}$): The pollution effect is the same across all flow rates. $[ (\mu_{\text{NoPoll,Low}}-\mu_{\text{Poll,Low}}) = (\mu_{\text{NoPoll,Med}}-\mu_{\text{Poll,Med}}) = (\mu_{\text{NoPoll,High}}-\mu_{\text{Poll,High}}) ]$
 -   **Alternative (**$H_{a,3}$): The pollution effect differs across flow rates (i.e., at least one difference of differences is not equal).
 
-Remember, this is far better than running two separate single factor ANOVAs that contrast pollution effects at each flow rate, because you have more statistical power (higher degrees of freedom) for the tests of interest, and you get a formal test of the interaction between factors which is often scientifically interesting.
+Remember, this is far better than running a separate $t$-test of polluted vs. unpolluted channels at each of the three flow rates, because you have more statistical power (higher degrees of freedom) for the tests of interest, and you get a formal test of the interaction between factors which is often scientifically interesting.
 
 We might expect data like shown in @fig-1023design:
 
 ```{r}
 #| label: fig-1023design
 #| fig-cap: "Example means for a 3x2 factorial design in environmental science"
-#| fig-alt: "Line graph with two lines across three flow levels, Low, Medium, and High. The No Pollution line stays roughly level around 9 to 11 across all three. The Pollution line rises steadily from 5 at Low flow to 9 at High flow, converging with the No Pollution line by High flow, so the gap between the lines shrinks from large to zero moving left to right."
+#| fig-alt: "Line graph with two lines across three flow levels, Low, Medium, and High. The No Pollution line declines gently from 11 at Low flow to 9 at High flow. The Pollution line rises steadily from 5 at Low flow to 9 at High flow, converging with the No Pollution line by High flow, so the gap between the lines shrinks from large to zero moving left to right."
 #| out-width: "100%"
 #| fig-asp: 0.5
 
@@ -904,19 +906,19 @@ The correct answer is that there is evidence in the means for an interaction. Re
 
 Once you understand the 2x2 logic, everything else in factorial ANOVA builds from the same foundation. But complexity grows quickly, both in the number of effects and in how hard they are to interpret.
 
-### 2×2×2 (Three-Factor) Designs
+### 2x2x2 (Three-Factor) Designs
 
-A 2×2×2 design includes **three independent variables**, each with two levels. That creates:
+A 2x2x2 design includes **three independent variables**, each with two levels. That creates:
 
 -   three **main effects** (one per variable)
 -   three **two-way interactions** (A×B, A×C, B×C)
 -   one **three-way interaction** (A×B×C)
 
-You can think of it as two 2×2 plots side-by-side; one for each level of the third variable.
+You can think of it as two 2x2 plots side-by-side; one for each level of the third variable.
 
 A **three-way interaction** means that one of the two-way interactions changes across the third variable. For example, the pollution × flow interaction might look different in summer than in winter.
 
-That's all you really need to know: interactions can themselves interact. The math is identical in structure, but the number of effects grows fast, and the graphs become difficult to interpret. In applied research, most studies stop at **two factors** unless there's a strong reason to add more.
+In short, interactions can themselves interact. The math is identical in structure, but the number of effects grows fast, and the graphs become difficult to interpret. In applied research, most studies stop at **two factors** unless there's a strong reason to add more.
 
 ### Mixed Designs
 
@@ -932,12 +934,12 @@ The interpretation of main effects and interactions is the same, but the error t
 
 **Core ideas**
 
--   **Fully crossed means every combination.** A factorial design pairs every level of each IV with every level of the others. The notation says the structure: 2×2 is four conditions, 3×2 is six.
--   **A 2×2 tests three things.** One main effect per factor, plus their interaction. That means three null hypotheses, and you should be able to state all three in plain language before running anything.
+-   **Fully crossed means every combination.** A factorial design pairs every level of each IV with every level of the others. The notation says the structure: 2x2 is four conditions, 3x2 is six.
+-   **A 2x2 tests three things.** One main effect per factor, plus their interaction. That means three null hypotheses, and you should be able to state all three in plain language before running anything.
 -   **An interaction is a difference between differences.** It asks whether the effect of one factor changes across levels of another. That framing is what the arithmetic is actually computing.
--   **The partition extends the one-way logic.** $SS_\text{Total}$ now splits into each main effect, the interaction, and error ($SS_\text{Error}$, Chapter 8's $SS_\text{Within}$). Each effect gets its own $F$, all sharing $MS_\text{Error}$ as the denominator. Working one table through by hand shows that the interaction term is the only genuinely new piece.
--   **Three tests, three effect sizes.** $\eta^2$ divides each effect's $SS$ by $SS_\text{Total}$; partial $\eta_p^2$ divides it by that effect plus error. Partial values are always larger and do not sum to 1, so label which one you are reporting. A significant effect can still be a small one, which is exactly the case for this chapter's interaction.
+-   **The partition extends the one-way logic.** $SS_\text{Total}$ now splits into each main effect, the interaction, and error ($SS_\text{Error}$, Chapter 8's $SS_\text{Within}$). Each effect gets its own $F$, all sharing $MS_\text{Error}$ as the denominator. Working one table through by hand shows that the interaction term is the only new piece.
+-   **Three tests, three effect sizes.** $\eta^2$ divides each effect's $SS$ by $SS_\text{Total}$; partial $\eta_p^2$ divides it by that effect plus error. Partial values are at least as large and do not sum to 1, so label which one you are reporting. A significant effect can still be a small one, which is exactly the case for this chapter's interaction.
 -   **Read the interaction first.** If it's significant, lead with simple effects: what factor A does at each level of B, as $\Delta$ values from the cell means, tested with the pooled $MS_\text{Error}$. A main effect can still be reported, qualified, when the simple effects all point the same way; when one is near zero or they reverse, the main effect describes no actual condition. When the interaction is not significant, the main effects stand on their own, with Tukey HSD for a factor with three or more levels.
--   **Learn to read the picture.** In a line plot, parallel lines mean no interaction, and crossing or diverging lines mean an interaction. The average gap between the lines is one main effect, and the lines' average rise or fall is the other. There are eight possible patterns in a 2×2, and recognizing them by eye is faster than parsing the table.
--   **An averaged main effect can be an artifact.** A factor that matters a lot in one condition and not at all in another will still produce a "significant main effect" once you average across conditions. That number is real arithmetic, but it describes something that never happens in either condition.
--   **Bigger designs, same tests, harder reading.** A 3×2 has the same three tests as a 2×2, but three points per line are harder to read than two. Beyond that, a three-factor design brings three main effects, three two-way interactions, and a three-way interaction, and interpretability falls off fast. Use only as many factors as your question actually needs.
+-   **Learn to read the picture.** In a line plot, parallel lines mean no interaction, and lines that cross, inside the plot or if extended, mean an interaction. The average gap between the lines is one main effect, and the lines' average rise or fall is the other. There are eight possible patterns in a 2x2, and recognizing them by eye is faster than parsing the table.
+-   **An averaged main effect can be an artifact.** A factor that matters a lot in one condition and not at all in another can still produce a "significant main effect" once you average across conditions. That number is real arithmetic, but it describes something that never happens in either condition.
+-   **Bigger designs, same tests, harder reading.** A 3x2 has the same three tests as a 2x2, but three points per line are harder to read than two. Beyond that, a three-factor design brings three main effects, three two-way interactions, and a three-way interaction, and interpretability falls off fast. Use only as many factors as your question actually needs.
