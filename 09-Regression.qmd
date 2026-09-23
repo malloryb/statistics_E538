@@ -128,7 +128,7 @@ stream_df <- data.frame(stream_temp, DO)
 
 ggplot(stream_df, aes(x = stream_temp, y = DO)) +
   geom_point(size=1.5) +
-  geom_smooth(method = "lm", se = FALSE, color = "#10377f") +
+  geom_smooth(method = "lm", se = FALSE, color = "#008cff") +
   xlab(expression("Stream temperature ("*degree*"C)")) +
   ylab("Dissolved oxygen (mg/L)")
 
@@ -174,8 +174,8 @@ fit_glance <- glance(fit)
 stream_df$fitted_line <- fitted(fit)
 
 ggplot(stream_df, aes(x = stream_temp, y = DO)) +
-  geom_smooth(method = "lm", se = FALSE, color = "#10377f") +
-  geom_segment(aes(xend = stream_temp, yend = fitted_line), color = "#b22222", alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE, color = "#008cff") +
+  geom_segment(aes(xend = stream_temp, yend = fitted_line), color = "#b22222", alpha = 0.5) +
   geom_point(size=1.3) +
   geom_point(aes(y = fitted_line), shape = 1) +
   xlab(expression("Stream temperature ("*degree*"C)")) +
@@ -232,7 +232,7 @@ with $df = n - 2 = `r nrow(stream_df) - 2`$ (one degree of freedom spent estimat
 ```{r}
 #| label: fig-9regslopenull
 #| fig-cap: "The null distribution of t for the slope test at df = 28 (blue). The shaded tails beyond the red critical values are the rejection region at alpha = .05; the green dotted line marks our observed t, far into the left tail."
-#| fig-alt: "A blue t-distribution curve centered at zero with 28 degrees of freedom. Red vertical lines mark the critical values near plus and minus 2.05, and the tails beyond them are shaded red. A green dotted vertical line marks the observed t of about negative 9.45, far to the left of the lower critical value."
+#| fig-alt: "A blue t-distribution curve centered at zero with 28 degrees of freedom. Red vertical lines labeled minus crit and plus crit mark the critical values near plus and minus 2.05, and the tails beyond them are shaded red. A green dotted vertical line marks the observed t of about negative 9.45, far to the left of the lower critical value."
 
 df_slope <- nrow(stream_df) - 2
 obs_t <- fit_tidy$statistic[2]
@@ -245,15 +245,16 @@ ggplot(t_null, aes(x, y)) +
   geom_area(data = subset(t_null, x >=  crit), fill = "red", alpha = 0.18) +
   geom_line(colour = "blue", linetype = "dotdash", linewidth = 1.1) +
   annotate("segment", x = c(-crit, crit), xend = c(-crit, crit), y = 0,
-           yend = dt(crit, df_slope), colour = "red", linewidth = 0.8) +
+           yend = 0.41, colour = "red", linewidth = 0.8) +
+  annotate("text", x = c(-crit, crit), y = 0.425, label = c("-crit", "+crit"),
+           colour = "red", size = 4.2) +
   annotate("segment", x = obs_t, xend = obs_t, y = 0, yend = 0.36,
            colour = "#1E9E1E", linetype = "dotted", linewidth = 1.4) +
   annotate("text", x = obs_t + 0.3, y = 0.37, label = paste0("observed t = ", round(obs_t, 2)),
            colour = "#1E9E1E", hjust = 0, size = 4) +
   annotate("text", x = 4.5, y = 0.3, label = "'Under '*H[0]", parse = TRUE,
            colour = "blue", hjust = 0, size = 4.5) +
-  labs(x = "t", y = "Density") +
-  theme_classic(base_size = 12)
+  labs(x = "t", y = "Density")
 ```
 
 Our observed $t = `r round(fit_tidy$statistic[2],2)`$ sits far past the critical values of about $\pm`r round(qt(.975, nrow(stream_df)-2),2)`$, well outside where 95% of $t$-values would fall if temperature and DO were unrelated. The $p$-value is just the probability of landing that far out (or farther) in either tail under $H_0$: here, $p`r fmt_p(fit_tidy$p.value[2])`$, meaning essentially never. This crosses the conventional $\alpha = .05$ threshold.
@@ -296,14 +297,14 @@ mean_labels <- data.frame(panel = factor(part_levels, levels = part_levels))
 
 ggplot(part_df, aes(stream_temp)) +
   geom_hline(yintercept = ybar, linetype = "dashed", colour = "grey40") +
-  geom_line(aes(y = fit_y), colour = "#10377f", linewidth = 0.8) +
+  geom_line(aes(y = fit_y), colour = "#008cff", linewidth = 0.8) +
   geom_segment(aes(xend = stream_temp, y = y0, yend = y1, colour = panel), alpha = 0.8) +
   geom_point(aes(y = DO), size = 1.2, colour = "black") +
   geom_text(data = ss_labels, aes(x = 18.5, y = max(stream_df$DO) + 0.6, label = label),
             inherit.aes = FALSE, parse = TRUE, size = 3.6) +
   geom_text(data = mean_labels, aes(x = 23.5, y = ybar + 0.15, label = "mean DO"),
             inherit.aes = FALSE, hjust = 1, vjust = 0, size = 3.2, colour = "grey40") +
-  scale_colour_manual(values = setNames(c("grey45", "#008cff", "#b22222"), part_levels), guide = "none") +
+  scale_colour_manual(values = setNames(c("grey45", "#10377f", "#b22222"), part_levels), guide = "none") +
   facet_wrap(~panel) +
   labs(x = expression("Stream temperature (" * degree * "C)"), y = "Dissolved oxygen (mg/L)") +
   theme(strip.text = element_text(size = 9))
@@ -384,8 +385,8 @@ all_panels <- rbind(panel_under, panel_huge_n, panel_both)
 all_panels$panel <- factor(all_panels$panel, levels = unique(all_panels$panel))
 
 ggplot(all_panels, aes(x, y)) +
-  geom_point(alpha = 0.5, size = 1.4, color = "#10377f") +
-  geom_smooth(method = "lm", se = FALSE, color = "#b22222") +
+  geom_point(alpha = 0.5, size = 1.4, color = "black") +
+  geom_smooth(method = "lm", se = FALSE, color = "#008cff") +
   facet_wrap(~panel, scales = "free") +
   theme(strip.text = element_text(size = 12))
 ```
@@ -421,8 +422,14 @@ stream_df$fitted <- fitted(fit)
 stream_df$resid <- resid(fit)
 
 ggplot(stream_df, aes(x = fitted, y = resid)) +
-  geom_point(color = "#10377f", size = 1.8) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "#b22222") +
+  geom_point(color = "black", size = 1.8) +
+  # residual 0 = exactly on the fitted line, so the reference takes the line's color
+  geom_hline(yintercept = 0, linetype = "dashed", color = "#008cff", linewidth = 0.8) +
+  # label sits in the right margin, clear of the points
+  annotate("text", x = Inf, y = 0, label = "0 = on the\nregression line", colour = "#008cff",
+           hjust = -0.05, size = 3.6, lineheight = 0.9) +
+  coord_cartesian(clip = "off") +
+  theme(plot.margin = margin(5.5, 95, 5.5, 5.5)) +
   xlab("Fitted values (predicted DO)") +
   ylab("Residuals")
 ```
@@ -459,8 +466,8 @@ fit_outbreak <- lm(cases ~ days, data = outbreak_df)
 outbreak_tidy <- glance(fit_outbreak)
 
 ggplot(outbreak_df, aes(days, cases)) +
-  geom_point(color = "#10377f", size = 1.8) +
-  geom_smooth(method = "lm", se = FALSE, color = "#b22222") +
+  geom_point(color = "black", size = 1.8) +
+  geom_smooth(method = "lm", se = FALSE, color = "#008cff") +
   xlab("Day of outbreak") +
   ylab("New cases detected")
 ```
@@ -478,8 +485,14 @@ outbreak_df$fitted <- fitted(fit_outbreak)
 outbreak_df$resid <- resid(fit_outbreak)
 
 ggplot(outbreak_df, aes(fitted, resid)) +
-  geom_point(color = "#10377f", size = 1.8) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "#b22222") +
+  geom_point(color = "black", size = 1.8) +
+  # residual 0 = exactly on the fitted line, so the reference takes the line's color
+  geom_hline(yintercept = 0, linetype = "dashed", color = "#008cff", linewidth = 0.8) +
+  # label sits in the right margin, clear of the points
+  annotate("text", x = Inf, y = 0, label = "0 = on the\nregression line", colour = "#008cff",
+           hjust = -0.05, size = 3.6, lineheight = 0.9) +
+  coord_cartesian(clip = "off") +
+  theme(plot.margin = margin(5.5, 95, 5.5, 5.5)) +
   xlab("Fitted values (predicted cases)") +
   ylab("Residuals")
 ```
@@ -506,8 +519,8 @@ A Q-Q plot sorts the residuals and compares them to where a perfectly normal dis
 #| fig-alt: "A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality."
 
 ggplot(stream_df, aes(sample = resid)) +
-  stat_qq(color = "#10377f") +
-  stat_qq_line(color = "#b22222") +
+  stat_qq(color = "black", size = 1.8) +
+  stat_qq_line(color = "#008cff") +
   xlab("Theoretical quantiles") +
   ylab("Sample quantiles")
 ```
@@ -533,8 +546,8 @@ Now apply the same two normality checks to the avian influenza model, the one we
 #| fig-alt: "A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality."
 
 ggplot(outbreak_df, aes(sample = resid)) +
-  stat_qq(color = "#10377f", size = 1.8) +
-  stat_qq_line(color = "#b22222") +
+  stat_qq(color = "black", size = 1.8) +
+  stat_qq_line(color = "#008cff") +
   xlab("Theoretical quantiles") +
   ylab("Sample quantiles")
 ```
@@ -587,7 +600,7 @@ ggplot() +
   geom_line(data = extrap_range, aes(stream_temp, DO, color = part, linetype = part), linewidth = 1.5) +
   geom_line(data = obs_range, aes(stream_temp, DO, color = part, linetype = part), linewidth = 1) +
   geom_point(data = stream_df, aes(stream_temp, DO), size = 1.5) +
-  geom_vline(xintercept = c(10, 24), linetype = "dotted", color = "grey60", size=1.2) +
+  geom_vline(xintercept = c(10, 24), linetype = "dotted", color = "grey60", linewidth=1.2) +
   scale_color_manual(values = c("Observed range (interpolation)" = "#008cff", "Beyond observed range (extrapolation)" = "#b22222")) +
   scale_linetype_manual(values = c("Observed range (interpolation)" = "solid", "Beyond observed range (extrapolation)" = "dashed")) +
   labs(x = expression("Stream temperature ("*degree*"C)"), y = "Dissolved oxygen (mg/L)", color = NULL, linetype = NULL) +
