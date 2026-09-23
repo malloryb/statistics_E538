@@ -56,11 +56,11 @@ null_hist <- function(sim, exact, obs, stat, xlab) {
 
 ## Parametric vs. nonparametric tests
 
-Chapter 6 covered three flavors of the $t$-test (one-sample, paired, and independent-samples, also called two-sample). All three need continuous, roughly normal data; the independent-samples test additionally assumes similar variance across the two groups. This chapter covers what to do when those assumptions aren't met. We'll also cover what to do if your data aren't continuous at all.
+Chapter 6 covered three forms of the $t$-test (one-sample, paired, and independent-samples, also called two-sample). All three need continuous, roughly normal data; the independent-samples test additionally assumes similar variance across the two groups. This chapter covers what to do when those assumptions aren't met. We'll also cover what to do if your data aren't continuous at all.
 
 So far, we've been looking at **parametric** tests, without calling them that. Every test needs a known null distribution for its test statistic, since that's the shape we compare our result against to get a $p$-value. A test is parametric when we can only know that shape by assuming something specific about the **population** the data came from.
 
-For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of your raw data, it's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or leaned on the Central Limit Theorem to get there for a large enough sample. Nonparametric tests also end up with a known distribution for their own test statistics. They just don't need to assume anything about the population's shape to get there.
+For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of your raw data, it's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the Central Limit Theorem for a large enough sample. Nonparametric tests also end up with a known distribution for their own test statistics. They do not need to assume anything about the population's shape to derive it.
 
 When the distributional assumptions are met, parametric tests are generally the most powerful available. However, when distributional assumptions are not met, parametric tests can become **unreliable**, and it may be difficult to understand how they become unreliable without extensive simulations. The worse the departures from assumed distributions, the worse the errors that may result.
 
@@ -76,11 +76,11 @@ This chapter covers two different kinds of tools:
 
 We'll state the assumptions explicitly for each test as we go through them.
 
-**A practical bonus of rank-based tests: ordinal data.** Because the Wilcoxon and Mann-Whitney-Wilcoxon tests only need a rank ordering, neither is limited to interval- or ratio-scale measurements the way a $t$-test is. A $t$-test needs a mean, which requires numbers where the *distance* between values means something. Plenty of environmental data doesn't work that way: a water-quality rating (poor, fair, good, excellent), a disturbance-severity class, a Likert-style survey response. You can put those in order, but "the average disturbance class was 2.4" isn't meaningful the way "the average pH was 6.8" is. These rank-based tests only need the ordering, which ordinal data already has, so they apply directly where a $t$-test can't.
+**A practical bonus of rank-based tests: ordinal data.** Because the Wilcoxon and Mann-Whitney-Wilcoxon tests only need a rank ordering, neither is limited to interval- or ratio-scale measurements the way a $t$-test is. A $t$-test needs a mean, which requires numbers where the *distance* between values means something. Plenty of environmental data doesn't work that way: a water-quality rating (poor, fair, good, excellent), a disturbance-severity class, a Likert-style survey response. You can put those in order, but "the average disturbance class was 2.4" isn't meaningful the way "the average pH was 6.8" is.
 
 ## Nonparametric alternative to one-sample & paired t-test: the Wilcoxon signed-rank test
 
-Chapter 6 built the paired $t$-test around this same idea, wetland restoration and soil moisture, with a full 20-plot dataset. Let's run a smaller version of that same design, and this time actually check whether we should trust the result before reporting it.
+Chapter 6 built the paired $t$-test around this same example, wetland restoration and soil moisture, with a full 20-plot dataset. Let's run a smaller version of that design, and this time check whether we should trust the result before reporting it.
 
 ```{r}
 before <- c(20, 15, 22, 18, 16, 24, 19, 14, 21, 17, 25, 20)
@@ -130,7 +130,7 @@ knitr::kable(
 )
 ```
 
-The Shapiro-Wilk test agrees with the picture ($p=.039$). Three plots didn't change at all, three dropped slightly, and the rest jumped up by quite a lot; that's not symmetric, let alone normal. The $t$-test's "significant" result was built on an assumption the data don't meet. Time for the **Wilcoxon signed-rank test**.
+The Shapiro-Wilk test agrees with the picture ($p=.039$). Three plots didn't change at all, three dropped slightly, and the rest rose by 3 to 8 points. That is not symmetric, let alone normal. The $t$-test's "significant" result depends on an assumption the data don't meet, so we turn to the **Wilcoxon signed-rank test**.
 
 **The question:** did soil moisture systematically change after restoration, or is any change we see just plot-to-plot noise?
 
@@ -140,7 +140,7 @@ The Shapiro-Wilk test agrees with the picture ($p=.039$). Three plots didn't cha
 
 **How it works, conceptually.** Instead of using the actual sizes of the differences, the test converts them to ranks: it ranks the *absolute* differences from smallest to largest, then checks whether the positive-signed ranks and negative-signed ranks are roughly balanced. Balanced ranks are the null case, meaning a plot's rank (how extreme its change was) has nothing to do with whether that change was an increase or a decrease. If soil moisture really increased at most plots, the larger ranks should belong mostly to positive differences instead. Because it works with ranks rather than raw values, one wildly extreme plot can't dominate the result the way it could with a mean.
 
-**Its assumption.** The Wilcoxon signed-rank test does not require normality, but it assumes the differences come from a **symmetric distribution around their median**. That's a milder assumption than normality (symmetric-but-not-normal distributions are common), but our histogram above is pushing it: the positive side stretches to 8, the negative side barely reaches -1. We'll run the test anyway, since it's still the better-justified choice here, and note the strain honestly when we interpret the result.
+**Its assumption.** The Wilcoxon signed-rank test does not require normality, but it assumes the differences come from a **symmetric distribution around their median**. That's a milder assumption than normality (symmetric-but-not-normal distributions are common), but our histogram above strains it: the positive side stretches to 8, the negative side barely reaches -1. We'll run the test anyway, since it's still the better-justified choice here, and note the problem when we interpret the result.
 
 ```{r}
 wilcox_out <- wilcox.test(differences, mu = 0)
@@ -156,9 +156,9 @@ knitr::kable(
 
 "Two.sided" in the Tails column just means we tested for a shift in either direction, the same one-vs-two-tailed distinction from Chapter 6.
 
-R falls back to a normal approximation twice over here: once for the tied differences (two plots at $+6$, three at $-1$), and once because three plots showed *no* change at all. Zero differences can't be ranked as positive or negative, so the Wilcoxon test drops them and runs on the remaining 9 plots instead of all 12. That's worth thinking about: the rank test isn't just less sensitive to magnitude than the $t$-test, it can end up with less data entirely.
+R falls back to a normal approximation twice over here: once for the tied differences (two plots at $+6$, three at $-1$), and once because three plots showed *no* change at all. Zero differences can't be ranked as positive or negative, so the Wilcoxon test drops them and runs on the remaining 9 plots instead of all 12. So the rank test is less sensitive to magnitude than the $t$-test, and it can also end up with less data.
 
-**How** $V$ is actually calculated. Drop the zero differences, take the absolute value of what's left, rank those absolute values from smallest to largest (tied absolute values share the average of their ranks), then sum the ranks belonging to the *positive* differences. That sum is $V$.
+**How** $V$ is calculated. Drop the zero differences, take the absolute value of what's left, rank those absolute values from smallest to largest (tied absolute values share the average of their ranks), then sum the ranks belonging to the *positive* differences. That sum is $V$.
 
 ```{r}
 nonzero_diffs <- differences[differences != 0]
@@ -175,7 +175,7 @@ knitr::kable(
 
 $V$ is the sum of the ranks where Sign is "+": $6.5+6.5+5+8+9+4 = 39$, matching the table R gave us above.
 
-**How the null distribution of $V$ is actually built.** Under $H_0$, each plot's rank has an independent 50/50 chance of ending up positive or negative, purely by chance. That gives you $2^n$ equally likely sign patterns for $n$ nonzero differences (here, $n=9$, not 12, since the zeros already dropped out), and summing the positive ranks for every one of those patterns builds the null distribution of $V$, not just a raw count. It has a known mean and variance:
+**How the null distribution of $V$ is built.** Under $H_0$, each plot's rank has an independent 50/50 chance of being positive or negative. That gives $2^n$ equally likely sign patterns for $n$ nonzero differences (here $n=9$, not 12, since the zeros dropped out). Summing the positive ranks for each of those patterns builds the null distribution of $V$. It has a known mean and variance:
 
 $$E[V] = \frac{n(n+1)}{4}, \qquad \text{Var}(V) = \frac{n(n+1)(2n+1)}{24}$$
 
@@ -204,9 +204,9 @@ obs_V <- as.numeric(wilcox_out$statistic)
 null_hist(sim_V, exact_V, obs_V, "V", "V (sum of positive ranks)")
 ```
 
-Our observed $V=39$ lands on the upper boundary but not inside the 5% region. $V$ can only take certain values, so the boundary can't fall exactly at 2.5%: a $V$ of 39 or more comes up just over 2.5% of the time under $H_0$, which puts the two-tailed $p$ just over .05. Not significant, but only barely.
+Our observed $V=39$ lands on the upper boundary but not inside the 5% region. $V$ can only take certain values, so the boundary can't fall exactly at 2.5%: a $V$ of 39 or more comes up just over 2.5% of the time under $H_0$, which puts the two-tailed $p$ just over .05. The result is not significant, though it is close to the cutoff.
 
-**So far:** $t$-test $p=.026$ (significant), Wilcoxon $p=.057$ (not quite). Same 12 plots, two different verdicts, because the $t$-test's numerator and denominator both used the exact magnitudes the Wilcoxon test deliberately ignores.
+**So far:** $t$-test $p=.026$ (significant), Wilcoxon $p=.057$ (not quite). The two tests reach different verdicts on the same 12 plots because the $t$-test's numerator and denominator both used the exact magnitudes the Wilcoxon test deliberately ignores.
 
 **The sign test.** There's an even simpler nonparametric option, the **sign test**, which looks only at whether each difference is positive or negative. It discards the magnitude entirely and asks whether pluses outnumber minuses more than chance would suggest. It has essentially no distributional assumption beyond the universal one (independence of observations, from a sound study design; see Chapter 6), not even symmetry.
 
@@ -228,9 +228,9 @@ Six of the 9 nonzero plots increased. $p=.508$: nowhere close to significant.
 
 **The full picture.** $t$-test: $p=.026$, significant. Wilcoxon signed-rank: $p=.057$, not quite. Sign test: $p=.508$, not close. Same 12 plots, but the three tests don't agree with each other.
 
-Each test uses less of the data than the one before it. The $t$-test uses the full magnitude of every difference, Wilcoxon keeps the ranks but drops the zeros, and the sign test keeps only direction. Less information going in means weaker evidence coming out.
+Each test uses less of the data than the one before it. The $t$-test uses the full magnitude of every difference, Wilcoxon keeps the ranks but drops the zeros, and the sign test keeps only direction.
 
-That's not an argument that nonparametric tests are worse. The $t$-test's answer looked strongest here specifically because it leaned hardest on the assumption that turned out not to hold. Check your assumptions before you report a $p$-value, not after you've already seen one you like.
+That's not an argument that nonparametric tests are worse. The $t$-test gave the smallest $p$-value here because it relied most on the normality assumption, which these data do not meet. Check your assumptions before you report a $p$-value, not after you've already seen one you like.
 
 ## Nonparametric alternative to the independent-samples t-test: the Mann-Whitney-Wilcoxon test
 
@@ -299,7 +299,7 @@ ggplot(plot_df, aes(x = x_jit, y = Richness)) +
   labs(y = "Plant species richness", x = NULL)
 ```
 
-The circled plot has 34 species, nearly double any other plot in either group. We don't just throw away outliers; maybe that plot sits in an unusually favorable microhabitat. Either way, it's a real violation of the normality assumption, not a hypothetical one:
+The circled plot has 34 species, nearly double any other plot in either group. We don't just throw away outliers; maybe that plot sits in an unusually favorable microhabitat. Either way, it violates the normality assumption:
 
 ```{r}
 sh_restored   <- shapiro.test(restored)
@@ -316,7 +316,7 @@ knitr::kable(
 )
 ```
 
-Both groups fail the Shapiro-Wilk test, the restored group badly ($p=.002$), driven almost entirely by that one plot. The $t$-test's "significant" result was built on top of an assumption the data don't actually meet. This is exactly the situation the **Mann-Whitney-Wilcoxon test** was built for.
+Both groups fail the Shapiro-Wilk test, the restored group badly ($p=.002$), driven almost entirely by that one plot. The $t$-test's "significant" result depends on an assumption the data don't meet. The **Mann-Whitney-Wilcoxon test** is designed for this situation.
 
 **The question:** did restoration increase plant species richness, or is the difference we see consistent with random plot-to-plot variation?
 
@@ -324,7 +324,7 @@ Both groups fail the Shapiro-Wilk test, the restored group badly ($p=.002$), dri
 
 -   $H_a$: richness tends to rank systematically higher in one group than the other.
 
-**How it works, conceptually.** Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups truly don't differ, ranks should be well mixed between them; if one group tends to have higher values, its ranks should be systematically higher too. Critically, that outlier plot still gets *a* rank, but only one rank, the highest one, no matter how far above the pack it sits. Its magnitude, which is what distorted the $t$-test, can't distort the Mann-Whitney-Wilcoxon test the same way.
+**How it works, conceptually.** Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups truly don't differ, ranks should be well mixed between them; if one group tends to have higher values, its ranks should be systematically higher too. That outlier plot still gets *a* rank, but only one rank, the highest one, no matter how far above the other plots it is. Its magnitude, which is what distorted the $t$-test, can't distort the Mann-Whitney-Wilcoxon test the same way.
 
 **Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the **same shape**: it does *not* require normality, and the assumption is **not** "equal variance," even though same-shape distributions happen to have equal variance as a side effect. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as "the medians differ" becomes murkier, since it could be a difference in location, shape, or both. Our two groups don't quite share a shape: the restored group's skew comes almost entirely from the one 34-species plot, while the unrestored group is only mildly skewed. So read a result from this test as "richness tends to be higher in one group," not strictly as a difference in medians.
 
@@ -342,7 +342,7 @@ knitr::kable(
 
 R labels this statistic $W$; for two groups it is the Mann-Whitney $U$. R falls back to the normal approximation again, because both groups share some tied richness values (two plots at 16, two at 11, and so on).
 
-**How the null distribution of $U$ is actually built.** Same idea as the Wilcoxon signed-rank case above, just built from group membership instead of signs. Under $H_0$, both groups are draws from the same population, so once you pool and rank all $N = n_A + n_B = 16$ values, which ranks end up in the restored group is just a matter of chance: any of the $\binom{16}{8}$ ways of splitting those 16 ranks into two groups of 8 is equally likely. That's the null distribution of $U$, and its mean and variance are known:
+**How the null distribution of $U$ is built.** The idea is the same as for the Wilcoxon signed-rank test, but the null distribution is built from group membership instead of signs. Under $H_0$, both groups are draws from the same population, so once you pool and rank all $N = n_A + n_B = 16$ values, which ranks end up in the restored group is just a matter of chance: any of the $\binom{16}{8}$ ways of splitting those 16 ranks into two groups of 8 is equally likely. That's the null distribution of $U$, and its mean and variance are known:
 
 $$E[U] = \frac{n_A n_B}{2}, \qquad \text{Var}(U) = \frac{n_A n_B (n_A+n_B+1)}{12}$$
 
@@ -352,7 +352,7 @@ $$E[U] = \frac{8 \times 8}{2} = 32, \qquad \text{Var}(U) = \frac{8 \times 8 \tim
 
 That's an SD of about 9.5. Our observed $U=50$ sits about 1.9 SDs above that expectation ($\frac{50-32}{9.5} \approx 1.9$). R's $p=.063$ comes from this normal approximation, slightly larger than a $z$ of 1.9 alone would give, because of the same two small corrections as in the Wilcoxon case: tied ranks, and $U$ moving in steps rather than smoothly. For small samples without ties, R can instead read the exact null distribution directly, no approximation needed.
 
-Same question as before: where do the critical values come from? They come from that same null distribution we just described, the $\binom{16}{8}$ equally likely ways to split 16 pooled ranks into two groups of 8. Rather than enumerate every one of those splits by hand, we approximate that distribution the same way as before, by simulation: pool the richness values, then repeatedly shuffle which 8 ranks land in the restored group:
+The critical values come from the null distribution just described, the $\binom{16}{8}$ equally likely ways to split 16 pooled ranks into two groups of 8. Rather than enumerate every one of those splits by hand, we approximate that distribution the same way as before, by simulation: pool the richness values, then repeatedly shuffle which 8 ranks land in the restored group:
 
 ```{r}
 #| label: fig-7mww-null
@@ -378,7 +378,7 @@ null_hist(sim_U, exact_U, obs_U, "U", "U (Mann-Whitney statistic)")
 
 Our observed $U=50$ lands just inside the critical value of $50.5$, matching R's $p=.063$: close to significant, but not quite.
 
-**The full picture.** The $t$-test said $p=.024$: significant, restoration works. The Mann-Whitney-Wilcoxon test on the exact same data says $p=.063$: not significant at $\alpha=.05$, right on the boundary. Same 16 plots, same question, two different answers. One outlier plot was doing a lot of the work behind that "significant" $t$-test result, and that's exactly the kind of influence the normality assumption is supposed to rule out. That's not a reason to always prefer the nonparametric test; if the data really had been roughly normal, the $t$-test's extra power would have been the right tool. It's why you check assumptions *before* reporting a $p$-value, not after.
+**The full picture.** The $t$-test said $p=.024$: significant, restoration works. The Mann-Whitney-Wilcoxon test on the exact same data says $p=.063$: not significant at $\alpha=.05$, right on the boundary. The two tests give different answers to the same question on the same 16 plots. One outlier plot was doing a lot of the work behind that "significant" $t$-test result, and that's exactly the kind of influence the normality assumption is supposed to rule out. That's not a reason to always prefer the nonparametric test; if the data really had been roughly normal, the $t$-test's extra power would have been the right tool. It's why you check assumptions *before* reporting a $p$-value, not after.
 
 ## Categorical data: the chi-square tests
 
@@ -413,7 +413,7 @@ There are two versions of the chi-square test, depending on the question you're 
 
 The name comes straight from what the test does: it checks how well ("goodness") your observed counts match ("fit") a specific pattern you'd expect, whether that expectation comes from a historical baseline, a theory, or an assumption of "equally likely." A small chi-square statistic means a good fit (observed counts close to expected); a large one means a poor fit (observed counts far from expected).
 
-A state wildlife agency has historically found fish evenly distributed across four zones of a lake, 25% in each. This year's survey of 200 fish gives a different picture. @fig-7gofdesign lays out the structure, and note how it differs from every design so far in this book.
+A state wildlife agency has historically found fish evenly distributed across four zones of a lake, 25% in each. This year's survey of 200 fish gives a different picture. @fig-7gofdesign lays out the structure, which differs from every design so far in this book.
 
 ```{r}
 #| label: fig-7gofdesign
@@ -428,7 +428,7 @@ design_gof("Lake zone (4 zones)",
            "Do the observed counts match the expected pattern?")
 ```
 
-The labels changed for a reason. Everywhere else in this book we have had an independent variable splitting units into groups and a dependent variable measured on each unit. Here there is only one variable, lake zone, and nothing is measured on the fish beyond which zone they turned up in. The counts *are* the data, and the comparison is against an expectation rather than against another group.
+Everywhere else in this book we have had an independent variable splitting units into groups and a dependent variable measured on each unit. Here there is only one variable, lake zone, and nothing is measured on the fish beyond which zone they turned up in. The counts *are* the data, and the comparison is against an expectation rather than against another group.
 
 ```{r}
 observed_gof <- c(A = 38, B = 61, C = 52, D = 49)
@@ -493,7 +493,7 @@ design_contingency("Land use (3) \u00d7 Exceeds E. coli threshold (2)",
                    "Are the two variables related, or independent?")
 ```
 
-One thing to notice about that table: nobody assigned anything. The sites already had their land use and their *E. coli* level before the researchers arrived, and the cells simply count how many turned out each way. That makes this an observational design, and it is why the cells hold counts of sites rather than measurements taken on them.
+In that table, nobody assigned anything. The sites already had their land use and their *E. coli* level before the researchers arrived, and the cells simply count how many turned out each way. That makes this an observational design, and it is why the cells hold counts of sites rather than measurements taken on them.
 
 ```{r}
 tab <- matrix(c(42, 8,
@@ -529,7 +529,7 @@ knitr::kable(
 knitr::kable(round(indep_test$expected, 1), caption = "Expected counts under H0 (independence)")
 ```
 
-All six expected counts are between 21 and 29, well above the 5-count minimum from the assumption check above; that's a separate question from whether the test is significant, just whether the chi-square approximation is trustworthy here.
+All six expected counts are between 21 and 29, well above the 5-count minimum. This check does not tell us whether the test is significant. It only tells us whether the chi-square approximation is trustworthy here.
 
 **Where** $\chi^2$ actually comes from. Same formula as the goodness-of-fit test, applied cell by cell instead of category by category: $\chi^2 = \sum \frac{(O-E)^2}{E}$, using the observed table and the expected table above.
 
@@ -541,7 +541,7 @@ knitr::kable(round(contrib_tab, 2), caption = "Chi-square contribution by cell")
 
 Summing all six cells: $5.83+8.05+0.55+0.76+2.79+3.86 = 21.84$, matching R's statistic above. For a test of independence, $df=(r-1)(c-1)$ for $r$ rows and $c$ columns: $(3-1)(2-1)=2$. The number of sites never enters. With $df=2$, the critical value at $\alpha=.05$ is `r round(qchisq(.95, 2), 2)`; our $21.84$ is more than three times that, which is where $p<.001$ comes from.
 
-**Interpretation.** $\chi^2(2) = 21.84$, $p < .001$: significant. *E. coli* exceedance is not independent of land use. The test says the two variables are related; the table says how. Divide within each row to get the exceedance rate for each land use:
+**Interpretation.** $\chi^2(2) = 21.84$, $p < .001$: significant. *E. coli* exceedance is not independent of land use. To see how the two variables are related, look at the table. Divide within each row to get the exceedance rate for each land use:
 
 | Land use     | Exceeds / total | Share |
 |:-------------|----------------:|------:|
@@ -549,10 +549,10 @@ Summing all six cells: $5.83+8.05+0.55+0.76+2.79+3.86 = 21.84$, matching R's sta
 | Agricultural |         25 / 50 |   50% |
 | Urban        |         30 / 50 |   60% |
 
-Dividing within a row matters because raw counts only compare fairly when the row totals match. Agricultural and urban sites exceed the threshold three to four times as often as forested ones. Note what this test does *not* tell you: it says the two variables are related, but, just like correlation, it doesn't by itself establish that land use *causes* the exceedance.
+Dividing within a row matters because raw counts only compare fairly when the row totals match. Agricultural and urban sites exceed the threshold three to four times as often as forested ones. The test says the two variables are related, but, like correlation, it does not by itself establish that land use *causes* the exceedance.
 
 ::: {.callout-important title="Results reporting: nonparametric and chi-square tests"}
-These tests report differently from a $t$-test, and the difference matters: there is no mean difference to quote, because none of them used the means. Give the test's own statistic, the $p$-value, and a **median** rather than a mean.
+These tests report differently from a $t$-test. There is no mean difference to quote, because none of them used the means. Give the test's own statistic, the $p$-value, and a **median** rather than a mean.
 
 Wilcoxon signed-rank, on the restoration differences:
 
@@ -566,12 +566,12 @@ Chi-square, where the counts themselves are the result:
 
 > *E. coli* exceedance was not independent of land use, $\chi^2(2) = 21.84$, *p* \< .001. Forested sites exceeded the threshold in 8 of 50 cases, compared with 25 of 50 agricultural and 30 of 50 urban sites.
 
-Two habits worth keeping. Report the number of non-zero differences for a signed-rank test, since dropped zeros change the effective sample size. And for chi-square, give the actual counts, not just the statistic: the counts are what a reader can interpret.
+Report the number of non-zero differences for a signed-rank test, since dropped zeros change the effective sample size. And for chi-square, give the actual counts, not just the statistic: the counts are what a reader can interpret.
 :::
 
 ## Chapter Summary
 
-**Why it matters.** Real environmental data often breaks the rules a $t$-test needs: small samples, skewed distributions, or outcomes that are counts and categories rather than measurements. This chapter is the toolkit for those cases, and for recognizing when you are in one.
+**Why it matters.** Real environmental data often fails the assumptions a $t$-test needs: small samples, skewed distributions, or outcomes that are counts and categories rather than measurements. This chapter covers the tests for those cases and how to tell when you need one.
 
 **Core ideas**
 
