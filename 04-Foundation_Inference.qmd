@@ -129,16 +129,16 @@ plot_distributions_no_error <- function(
 
 An experiment asks whether a manipulation causes a change in what we measure. Some manipulations are so overwhelming that no statistics are required to see them. Flip a light switch up and the light comes on; flip it down and it goes off, every time. You don't need a $t$-test to tell you that flipping the light switch is the cause of the change in brightness.
 
-Nothing in environmental science behaves like this. Effects are real signals buried in noisy, variable measurements, where flipping the switch changes the outcome *on average*. Not in every instance, and not by the same amount every time.
+Nothing in environmental science behaves like this. Effects are real signals buried in noisy measurements. Flipping the switch changes the outcome *on average*, but not in every instance and not by the same amount every time.
 
-Random chance can produce apparent differences between groups even when no real difference exists. We have already seen this with sampling: two samples from the same distribution come out differently. The same principle applies when we compare group means. This is a fundamental problem for inference.
+Random chance can produce apparent differences between groups even when no real difference exists. We have already seen this with sampling: two samples from the same distribution come out differently. The same principle applies when we compare group means. So a difference between group means is not, by itself, evidence of a real effect.
 
 Consider a scenario where we expect to find no real difference. A researcher surveys 10 caves for white-nose syndrome, a fungal disease that has killed millions of North American bats, capturing 20 bats at each cave and counting how many show visible signs of infection. @fig-4batdesign lays out the design.
 
 ```{r}
 #| label: fig-4batdesign
-#| fig-cap: "The bat-cave scenario study design. The split into two groups is arbitrary, which is the whole point: there is no real difference for the test to find."
-#| fig-alt: "Study design schematic. IV: group assignment, arbitrary. Two boxes labelled Group A and Group B, each with n = 5 caves. DV: infected bats out of 20 captured."
+#| fig-cap: "The bat-cave scenario study design. The split into two groups is arbitrary, so there is no real difference for the test to find."
+#| fig-alt: "Study design schematic. IV: group assignment, arbitrary. Two boxes labeled Group A and Group B, each with n = 5 caves. DV: infected bats out of 20 captured."
 #| fig-asp: 0.34
 #| out-width: "100%"
 
@@ -147,7 +147,7 @@ design_groups("Group assignment (arbitrary)", c("Group A", "Group B"), 5, "caves
               "With no real difference, what can chance alone produce?")
 ```
 
-The key feature is that all 10 caves are drawn from the same population. There is no treatment, no environmental gradient, nothing systematic separating them, so the true infection rate is identical everywhere. Splitting them into two groups of 5 is arbitrary. Any difference we see between those groups therefore *has* to be sampling error, which makes this the cleanest possible look at what chance alone can manufacture.
+All 10 caves are drawn from the same population. There is no treatment, no environmental gradient, nothing systematic separating them, so the true infection rate is identical everywhere. Splitting them into two groups of 5 is arbitrary. Any difference we see between those groups therefore *has* to be sampling error, so this scenario shows what chance alone can produce.
 
 @fig-4gumballA shows one run of this scenario: the mean number of infected bats in each group.
 
@@ -174,7 +174,7 @@ The bars are not the same height: Group A and Group B have different mean counts
 
 This is the core inference problem: differences appear even when nothing real caused them. **How can we tell whether an observed difference is real or just the result of chance?**
 
-Chapter 2 showed that chance alone can produce spurious correlations. The same is true for group means, and it can be pinned down: run the same arbitrary split many times and record what comes out. We summarize each run as a single **difference score**: the mean count for Group A minus the mean count for Group B. @fig-4gumballdiffs shows the difference scores for 10 replications of the survey, each one sampling all 10 caves from the same population, splitting them 5 and 5, and computing the means.
+Chapter 2 showed that chance alone can produce spurious correlations. The same is true for group means, and we can measure how large those chance differences get: run the same arbitrary split many times and record each result. We summarize each run as a single **difference score**: the mean count for Group A minus the mean count for Group B. @fig-4gumballdiffs shows the difference scores for 10 replications of the survey, each one sampling all 10 caves from the same population, splitting them 5 and 5, and computing the means.
 
 ```{r}
 #| label: fig-4gumballdiffs
@@ -205,7 +205,7 @@ A bar at zero means the two groups had the same mean count in that replication. 
 
 ```{r}
 #| label: fig-4histdiffgumball
-#| fig-cap: "Histogram of mean count differences between Group A and Group B over 10,000 replications. All differences arise from chance alone. The most frequent difference is near zero; larger differences occur less often. Chance cannot produce everything."
+#| fig-cap: "Histogram of mean count differences between Group A and Group B over 10,000 replications. All differences arise from chance alone. The most frequent difference is near zero; larger differences occur less often. Differences beyond about ±3 almost never occur."
 #| fig-alt: "Histogram of 10,000 A-minus-B difference scores, tallest at zero in the center and tapering off symmetrically toward both larger positive and larger negative differences, with almost nothing beyond roughly plus or minus 3."
 
 group <- rep(rep(c("A", "B"), each = 5), 10000)
@@ -232,7 +232,7 @@ We can use this window to evaluate any observed difference. If a study found a d
 
 ## Chance vs. not chance
 
-The window tells us what chance can do. It does not tell us where to draw the line between "chance could have" and "chance didn't." That is a judgment, not a calculation.
+The window tells us what chance can do. It does not tell us where to draw the line between "chance could have" and "chance didn't." Where to draw that line is a judgment call.
 
 @fig-4simdecision draws lines on the same bat histogram from above. The boundaries are the smallest and largest differences chance actually produced across the 10,000 replications.
 
@@ -271,7 +271,7 @@ ggplot(data.frame(differences), aes(x = differences)) +
 Across the 10,000 replications, chance produced differences from about `r round(diff_min,1)` to `r round(diff_max,1)` bats.
 
 - **Chance (grey).** Chance produced differences like this routinely. No grounds for suspicion.
-- **Ambiguous (gold).** The edges of what chance produced. Chance *can* land here, but rarely: probably not chance, but not ruled out.
+- **Ambiguous (gold).** The edges of what chance produced. Chance *can* produce differences this large, but rarely, so chance is unlikely here but not ruled out.
 - **Not chance (red).** Chance never produced a difference this large in 10,000 tries. Real grounds to suspect something beyond sampling error.
 
 ### How rare is rare enough?
@@ -282,7 +282,7 @@ Environmental scientists already have a working vocabulary for this: the **100-y
 
 Many people do, and often regret it, because a 1% annual chance still adds up over a 30-year mortgage (roughly a 26% chance of at least one such flood in that span). A location with a 1-in-10,000 annual flood risk is very different: over the same 30 years, the cumulative chance is under 0.3%.
 
-That's the intuition we need going forward: **rare events still happen, but how rare something is changes what you're willing to conclude from seeing it.**
+Rare events still happen, and how rare an event is changes what we are willing to conclude from seeing it.
 
 Where the gold zone ends is a judgment call. A stricter line means fewer false alarms and more missed real effects; a looser line means the reverse. Science standardizes that call with a convention, $\alpha = .05$, defined later in this chapter. It is about 1 in 20, far looser than the red zone's never in 10,000.
 
@@ -302,14 +302,14 @@ $$H_0:\ \mu = \mu_0 \qquad H_a:\ \mu \neq \mu_0$$
 
 ### From simulation to a formal test
 
-Everything so far was built by brute force: thousands of replications, piled into a histogram, with hypothetical results laid against the pile. Nobody wants to rebuild a chance window for every question. Chapter 3 already supplies a shortcut: sample means have a predictable distribution of their own: centered on the population mean, with spread $\sigma/\sqrt{n}$, and close to normal once the sample is large enough (the Central Limit Theorem). That lets us replace the simulated chance window with a curve whose shape we already know. The logic does not change, only the bookkeeping does.
+Everything so far was built by brute force: thousands of replications, piled into a histogram, with hypothetical results laid against the pile. Nobody wants to rebuild a chance window for every question. Chapter 3 already supplies a shortcut. Sample means have a predictable distribution of their own: centered on the population mean, with spread $\sigma/\sqrt{n}$, and close to normal once the sample is large enough (the Central Limit Theorem). That lets us replace the simulated chance window with a curve whose shape we already know. The reasoning is the same as with the simulated chance window.
 
 ::: {.callout-note title="Note: Which curves have to be normal"}
 The tests in this chapter and the next two read their answers off a normal curve, or its close relative, the $t$ curve. Two different reasons put a normal curve there.
 
 - **For the sampling distribution of the sample mean**, it is the Central Limit Theorem at work: whatever the population looks like, sample means pile up in a roughly normal shape once the sample is large enough.
 
-- **For a population, it is not required.** A test reads its answer off the sampling distribution of the sample mean, not off the population. The population's shape only matters when the sample is small, because the Central Limit Theorem needs a large enough sample to promise a normal shape for sample means. With a small sample, the normal curve for $\bar{x}$ rests on the population itself being roughly normal, and the only check we have is the sample: a histogram with no strong skew and no extreme outliers.
+- **For a population, it is not required.** A test reads its answer off the sampling distribution of the sample mean, not off the population. The population's shape only matters when the sample is small, because the Central Limit Theorem needs a large enough sample to promise a normal shape for sample means. With a small sample, the normal curve for $\bar{x}$ requires the population itself to be roughly normal, and the only check we have is the sample: a histogram with no strong skew and no extreme outliers.
 
 When the sample says the normal assumption is not reasonable, the nonparametric tests in Chapter 7 take over.
 :::
@@ -401,7 +401,7 @@ if (knitr::is_html_output()) {
 
 ### Seeing them together
 
-The players are easier to hold onto as a picture than as a table. Let's build that picture a curve or two at a time.
+The figures below draw the players a curve or two at a time.
 
 The population curves in these figures are drawn as normal for clarity; the note in the previous section explains why a test does not need them to be.
 
@@ -492,11 +492,11 @@ print(p4)
 knitr::include_graphics("imgs/gifs/ch4_step4.gif")
 ```
 
-**5. The same move on the null side.** The **sampling distribution of the sample mean under $H_0$** is centered at $\mu_0$, and its spread is again the standard error, the null population's standard deviation divided by $\sqrt{n}$ (with $\sigma$ treated as known, the same standard error as in step 4): $N(\mu_0, SE_{\bar{x}}^2)$. It describes where $\bar{x}$ would land across many samples if $H_0$ were true, which makes it the formal version of the chance window. The critical values later in the chapter come from it.
+**5. From the null population to sample means.** The **sampling distribution of the sample mean under $H_0$** is centered at $\mu_0$, and its spread is again the standard error, the null population's standard deviation divided by $\sqrt{n}$ (with $\sigma$ treated as known, the same standard error as in step 4): $N(\mu_0, SE_{\bar{x}}^2)$. It describes where $\bar{x}$ would land across many samples if $H_0$ were true, which makes it the formal version of the chance window. The critical values later in the chapter come from it.
 
 ```{r}
 #| label: fig-4key.null_to_sampling
-#| fig-cap: 'The same move on the null side: the null population distribution (blue solid) and the sampling distribution of the sample mean under $H_0$ (blue dot-dash) share a center, $\mu_0$. Dividing the spread by $\sqrt{n}$ makes the second much narrower.'
+#| fig-cap: 'From the null population to sample means: the null population distribution (blue solid) and the sampling distribution of the sample mean under $H_0$ (blue dot-dash) share a center, $\mu_0$. Dividing the spread by $\sqrt{n}$ makes the second much narrower.'
 #| fig-alt: "A wide solid blue bell curve and a much narrower, taller blue dot-dash bell curve, both centered on a magenta dashed line."
 #| out-width: "100%"
 
@@ -531,7 +531,7 @@ ggplot(null_pair, aes(x, y, color = curve, linetype = curve)) +
 knitr::include_graphics("imgs/gifs/ch4_players.gif")
 ```
 
-**The two curves a decision uses.** Strip the picture back to the two sampling distributions of the sample mean (@fig-4two-sampling). Everything in the next section runs on these two: critical values and the $p$-value read off the one built from $H_0$, and the confidence interval comes from the one built from the sample.
+**The two curves a decision uses.** Strip the picture back to the two sampling distributions of the sample mean (@fig-4two-sampling). The next section uses only these two: the critical values and the $p$-value come from the one built from $H_0$, and the confidence interval comes from the one built from the sample.
 
 ```{r}
 #| label: fig-4two-sampling
@@ -578,7 +578,7 @@ Put together, this chapter's test statistic is $z$:
 
 $$z = \frac{\bar{x} - \mu_0}{\sigma/\sqrt{n}}$$
 
-That is the whole idea, and every test in this book is a version of it. A difference of 2 units is not impressive or unimpressive on its own. It is impressive only relative to how much difference chance produces for a study of this size, which is exactly what the chance window measured earlier in this chapter. The test statistic is that comparison written as a single number: how many units of ordinary noise is this effect worth?
+That is the whole idea, and every test in this book is a version of it. A difference of 2 units is not impressive or unimpressive on its own. It is impressive only relative to how much difference chance produces for a study of this size, which is exactly what the chance window measured earlier in this chapter. The test statistic writes that comparison as a single number: how many standard errors the effect spans.
 
 **How the $z$ statistic relates to Chapter 3's $z$-score.**
 
@@ -589,7 +589,7 @@ That is the whole idea, and every test in this book is a version of it. A differ
 
 Both divide a distance by a spread, but the spread comes from a different distribution. A $z$-score places one value on the population distribution, where the spread is $\sigma$. A $z$ statistic places $\bar{x}$ on the sampling distribution of the sample mean under $H_0$, which is narrower, so the spread is $SE = \sigma/\sqrt{n}$. Dividing $\bar{x} - \mu_0$ by $\sigma$ instead of $SE$ is a mistake to watch for: it uses the wide curve to answer a question about the narrow one.
 
-Large statistic means the effect is big compared to the noise. Small statistic means it is not. Everything after this is bookkeeping about where to draw the line.
+Large statistic means the effect is big compared to the noise. Small statistic means it is not. The rest of this section sets where to draw the line between a large statistic and a small one.
 
 **Significance level (**$\alpha$). Chosen *before* the test. $\alpha$ is the long-run probability of a Type I error (rejecting a true $H_0$; more on error types next chapter). A common choice is $\alpha = 0.05$. Smaller $\alpha$ makes tests more cautious and produces wider confidence intervals.
 
@@ -739,7 +739,7 @@ mu0_panel <- function(mu0) {
 grid.arrange(mu0_panel(0), mu0_panel(-0.9), ncol = 2)
 ```
 
-The right panel is worth a second look. A single reading at that $\mu_0$ would be unremarkable: it sits well inside the wide estimated population of @fig-4key.sample_to_sampling. It is simply not a plausible value for the *mean*, because sample means vary much less than individual readings do.
+In the right panel, a single reading at that $\mu_0$ would be unremarkable: it falls well inside the wide estimated population of @fig-4key.sample_to_sampling. It is not a plausible value for the *mean*, because sample means vary much less than individual readings do.
 
 For common models, a two-tailed level-$\alpha$ test of $H_0:\ \mu=\mu_0$ is equivalent to checking whether $\mu_0$ lies inside the $100(1-\alpha)\%$ confidence interval. The **CI** is often the most intuitive way to see this: it shows both the decision (reject or not) *and* the range of parameter values still consistent with the data.
 
@@ -861,7 +861,7 @@ Every hypothesis test in this book asks one question: could chance alone have pr
 
 Other methods start from two or more candidate explanations, say a steady linear decline versus a sharp threshold response, and ask which one the data support better.
 
-Ruling out chance tells you that *something* is going on, but not always *what*. It is worth knowing the difference, because "significant" only ever answers the first question.
+Ruling out chance tells you that *something* is going on, but not always *what*. "Significant" answers only the first of those questions.
 :::
 
 ## One- and two-tailed tests {#sec-tails}
@@ -894,7 +894,7 @@ grid.arrange(
   ncol = 3)
 ```
 
-The test handles those claims through where $\alpha$ goes. A two-tailed test splits $\alpha$ between both tails of the sampling distribution of the sample mean under $H_0$. A one-tailed test puts all of $\alpha$ in the one tail $H_a$ points toward (@fig-4tails).
+The test builds in those claims by where it places $\alpha$. A two-tailed test splits $\alpha$ between both tails of the sampling distribution of the sample mean under $H_0$. A one-tailed test puts all of $\alpha$ in the one tail $H_a$ points toward (@fig-4tails).
 
 ```{r}
 #| label: fig-4tails
@@ -946,20 +946,20 @@ grid.arrange(
 - Two-tailed (default): You care whether $\mu$ differs from $\mu_0$ **in either direction**.
 - One-tailed (only if justified): Differences in the opposite direction are **scientifically irrelevant** and **would not change your decision or action**.
 
-Default to two-tailed. Go one-tailed only when a result in the other direction would lead you to do the same thing as no result at all. At $\alpha = .05$, a one-tailed test's critical value is 1.645 instead of 1.96, so it rejects on less evidence, but only in the direction you named in advance. If the effect goes the other way, a one-tailed test cannot detect it at all, however large it is, and that is usually too high a price: a result that surprises you by running the wrong way is often the most useful thing a study can find.
+Default to two-tailed. Go one-tailed only when a result in the other direction would lead you to do the same thing as no result at all. At $\alpha = .05$, a one-tailed test's critical value is 1.645 instead of 1.96, so it rejects on less evidence, but only in the direction you named in advance. If the effect goes the other way, a one-tailed test cannot detect it at all, however large it is. That is usually too high a price, because a result in the unexpected direction is often the most useful thing a study finds.
 
 That is why the direction has to be chosen before you see the data. Picking the tail afterward, because it gives the smaller $p$-value, makes your real chance of a false positive higher than the $\alpha$ you report.
 
 ## Chapter Summary
 
-**Why it matters.** This chapter is the bridge between describing data and drawing conclusions from it. Everything after this point is a variation on one move: work out what chance alone could produce, then ask whether your result is rare enough under chance, by a standard set in advance ($\alpha$), to rule chance out.
+**Why it matters.** This chapter connects describing data to drawing conclusions from it. Every test after this point follows the same steps: work out what chance alone could produce, then ask whether your result is rare enough under chance, by a standard set in advance ($\alpha$), to rule chance out.
 
 **Core ideas**
 
-- **Chance produces differences on its own.** Split one population into two arbitrary groups and their means will differ anyway, from sampling error alone. The question is never "is there a difference," it is "is this difference bigger than chance can account for."
-- **The chance window is buildable.** Repeat a study thousands of times under conditions where you know nothing real is going on, collect the differences, and you have a picture of exactly what chance is capable of for a design your size.
+- **Chance produces differences on its own.** Split one population into two arbitrary groups and their means will differ anyway, from sampling error alone. The question to ask is whether the difference is bigger than chance can account for.
+- **You can build the chance window.** Repeat a study thousands of times under conditions where you know nothing real is going on, collect the differences, and you have a picture of exactly what chance is capable of for a design your size.
 - **Rarity is a judgment, and it needs a convention.** The 100-year flood shows the reasoning already exists outside statistics: a 1% annual chance is not zero, but it changes what you build. $\alpha = .05$ is that same judgment, standardized so researchers aren't each drawing their own line.
 - **A hypothesis test is the practical shortcut.** Once you can assume a known reference distribution, the simulated chance window becomes a curve, and the decision becomes a calculation. The logic is the same.
 - **Two pairs of curves.** From the sample: the estimated population distribution and the sampling distribution of the sample mean, which gives the confidence interval. Under $H_0$: the null population distribution and the sampling distribution of the sample mean under $H_0$, which gives the critical values and $p$-value. The true population distribution is never known.
-- **Three routes, one decision.** A test statistic against a critical value, a confidence interval, and a $p$-value are three ways of asking the same question. For a two-tailed test at the same $\alpha$ they always agree; a one-tailed test checked against a two-sided confidence interval can disagree near the boundary.
+- **Three routes give the same decision.** A test statistic against a critical value, a confidence interval, and a $p$-value are three ways of asking the same question. For a two-tailed test at the same $\alpha$ they always agree; a one-tailed test checked against a two-sided confidence interval can disagree near the boundary.
 - **Commit to one- or two-tailed in advance.** A one-tailed test is only justified when a difference in the other direction would lead to the same action as no difference at all. Choosing after seeing the data raises your real error rate above the $\alpha$ you claimed.
