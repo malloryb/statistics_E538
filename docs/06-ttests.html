@@ -317,7 +317,7 @@ window.Quarto = {
   <li><a href="#simulating-data-for-t-tests" id="toc-simulating-data-for-t-tests" class="nav-link" data-scroll-target="#simulating-data-for-t-tests"><span class="header-section-number">6.6</span> Simulating data for t-tests</a>
   <ul class="collapse">
   <li><a href="#simulating-a-one-sample-t-test" id="toc-simulating-a-one-sample-t-test" class="nav-link" data-scroll-target="#simulating-a-one-sample-t-test"><span class="header-section-number">6.6.1</span> Simulating a one-sample t-test</a></li>
-  <li><a href="#the-same-machinery-other-designs" id="toc-the-same-machinery-other-designs" class="nav-link" data-scroll-target="#the-same-machinery-other-designs"><span class="header-section-number">6.6.2</span> The same machinery, other designs</a></li>
+  <li><a href="#simulating-paired-and-independent-samples-tests" id="toc-simulating-paired-and-independent-samples-tests" class="nav-link" data-scroll-target="#simulating-paired-and-independent-samples-tests"><span class="header-section-number">6.6.2</span> Simulating paired and independent-samples tests</a></li>
   </ul></li>
   <li><a href="#chapter-summary" id="toc-chapter-summary" class="nav-link" data-scroll-target="#chapter-summary"><span class="header-section-number">6.7</span> Chapter Summary</a></li>
   </ul>
@@ -346,7 +346,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 23, 2026</p>
+      <p class="date-modified">September 29, 2026</p>
     </div>
   </div>
     
@@ -360,13 +360,13 @@ window.Quarto = {
 <section id="intro" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="intro"><span class="header-section-number">6.1</span> Intro</h2>
 <p>In the early 1900s, William Sealy Gosset joined <strong>Guinness</strong>, then the world’s largest brewery. Guinness hired scientifically trained brewers and gave them latitude to pursue research that improved the product. As production scaled, quality control mattered: a pint should taste the same in Dublin as in Detroit. Until then, hop quality was judged mostly by appearance and smell, which was unreliable. Chemical assays could measure ingredients, but the core problem was statistical. Inference relied on the normal (Z) distribution, which works well when samples are large enough for a normal approximation. In practice, Guinness could not destroy large volumes of beer or ingredients just to test them.</p>
-<p>Gosset set out to quantify the extra uncertainty introduced by <strong>small</strong> samples. How much wider is the error around an estimate when <span class="math inline">\(n=10\)</span> instead of <span class="math inline">\(n=1000\)</span>? He derived a new sampling distribution that accounts for small-sample variability, now known as the <strong>Student’s</strong> <span class="math inline">\(t\)</span> distribution. Because Guinness restricted external publications, he published the 1908 paper under the pseudonym <strong>“Student”</strong> <span class="citation" data-cites="Student1908">(<a href="references.html#ref-Student1908" role="doc-biblioref">Student 1908</a>)</span>. That is why we still say <strong>Student’s</strong> <span class="math inline">\(t\)</span>-test. The core idea you will use today is the same: measure a signal, scale it by its standard error, and compare the resulting <span class="math inline">\(t\)</span> to the appropriate <span class="math inline">\(t\)</span> distribution for your <span class="math inline">\(n-1\)</span> degrees of freedom.</p>
-<p><strong>Why this matters.</strong> We often compare a sample mean to a reference (drinking-water standard, historical average) or compare two conditions (before/after, site A vs site B). A t-test asks whether the observed difference is larger than you would expect from sampling variation alone, given your <span class="math inline">\(n\)</span> and variability.</p>
-<p><strong>Three common t-tests you will use.</strong></p>
+<p>Gosset set out to quantify the extra uncertainty introduced by <strong>small</strong> samples. How much wider is the error around an estimate when <span class="math inline">\(n=10\)</span> instead of <span class="math inline">\(n=1000\)</span>? He derived a new sampling distribution that accounts for small-sample variability, now known as the <strong>Student’s</strong> <span class="math inline">\(t\)</span> distribution. Because Guinness restricted external publications, he published the 1908 paper under the pseudonym <strong>“Student”</strong> <span class="citation" data-cites="Student1908">(<a href="references.html#ref-Student1908" role="doc-biblioref">Student 1908</a>)</span>. That is why we still say <strong>Student’s</strong> <span class="math inline">\(t\)</span>-test. This chapter uses the same idea: measure a signal, scale it by its standard error, and compare the resulting <span class="math inline">\(t\)</span> to the <span class="math inline">\(t\)</span> distribution for your <span class="math inline">\(n-1\)</span> degrees of freedom.</p>
+<p><strong>Why this matters.</strong> We often compare a sample mean to a reference (drinking-water standard, historical average) or compare two conditions (before/after, site A vs site B). A <span class="math inline">\(t\)</span>-test asks whether the observed difference is larger than you would expect from sampling variation alone, given your <span class="math inline">\(n\)</span> and variability.</p>
+<p><strong>Three common <span class="math inline">\(t\)</span>-tests you will use.</strong></p>
 <ol type="1">
-<li><strong>One-sample t-test.</strong> Compare a sample mean to a target (<span class="math inline">\(\mu_0\)</span>).</li>
-<li><strong>Paired t-test.</strong> Compare before/after (or matched) measurements on the same units by running a one-sample t on the <em>differences</em>.</li>
-<li><strong>Independent-samples t-test (also called two-sample t-test)</strong> Compare means from two groups measured on different units. The pooled version assumes the two groups have similar spread; Welch’s version <span class="citation" data-cites="Welch1947">(<a href="references.html#ref-Welch1947" role="doc-biblioref">Welch 1947</a>)</span> does not, and it is what R’s <code>t.test()</code> runs unless you set <code>var.equal = TRUE</code>.</li>
+<li><strong>One-sample <span class="math inline">\(t\)</span>-test.</strong> Compare a sample mean to a target (<span class="math inline">\(\mu_0\)</span>).</li>
+<li><strong>Paired <span class="math inline">\(t\)</span>-test.</strong> Compare before/after (or matched) measurements on the same units by running a one-sample <span class="math inline">\(t\)</span>-test on the <em>differences</em>.</li>
+<li><strong>Independent-samples <span class="math inline">\(t\)</span>-test (also called two-sample <span class="math inline">\(t\)</span>-test).</strong> Compare means from two groups measured on different units. The pooled version assumes the two groups have similar spread; Welch’s version <span class="citation" data-cites="Welch1947">(<a href="references.html#ref-Welch1947" role="doc-biblioref">Welch 1947</a>)</span> does not, and it is what R’s <code>t.test()</code> runs unless you set <code>var.equal = TRUE</code>.</li>
 </ol>
 <div class="callout callout-style-default callout-tip callout-titled" title="Tip: What you will report">
 <div class="callout-header d-flex align-content-center">
@@ -385,7 +385,7 @@ window.Quarto = {
 <li>the test statistic with its df</li>
 <li>the <span class="math inline">\(p\)</span>-value</li>
 </ul>
-<p>Example: “Mean change was -0.42 units (95% CI [-0.73, -0.11]; <em>t</em>(11) = -2.92; p = 0.014).”</p>
+<p>Example: “Mean change was -0.42 units (95% CI [-0.73, -0.11]; <em>t</em>(11) = -2.92; <em>p</em> = .014).”</p>
 </div>
 </div>
 </section>
@@ -395,7 +395,6 @@ window.Quarto = {
 <p><span class="math display">\[\text{statistic}=\frac{\text{effect}}{\text{error}}\]</span></p>
 <p>The <span class="math inline">\(t\)</span>-test is the first place we fill that in with real quantities. The effect is the distance between the sample mean and the value <span class="math inline">\(H_0\)</span> names. The error is not the raw standard deviation, though: it is the <strong>standard error</strong>, <span class="math inline">\(s/\sqrt{n}\)</span>, because what varies from study to study is the <em>mean</em>, not an individual observation.</p>
 <p><span class="math display">\[t = \frac{\text{effect}}{\text{standard error}} = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}\]</span></p>
-<p>We now turn that ratio into a test statistic for a <em>single mean</em>.</p>
 </section>
 <section id="one-sample-t-test" class="level2" data-number="6.3">
 <h2 data-number="6.3" class="anchored" data-anchor-id="one-sample-t-test"><span class="header-section-number">6.3</span> One-sample t-test</h2>
@@ -404,7 +403,6 @@ window.Quarto = {
 <p>After calculating <span class="math inline">\(t\)</span> from our data, we compare the observed <span class="math inline">\(t\)</span> to a <span class="math inline">\(t\)</span> distribution with <span class="math inline">\(n-1\)</span> degrees of freedom to get a <span class="math inline">\(p\)</span>-value and a decision at <span class="math inline">\(\alpha\)</span>.</p>
 <section id="comparing-z-and-t" class="level3" data-number="6.3.1">
 <h3 data-number="6.3.1" class="anchored" data-anchor-id="comparing-z-and-t"><span class="header-section-number">6.3.1</span> Comparing <span class="math inline">\(z\)</span> and <span class="math inline">\(t\)</span></h3>
-<p>When the population SD is known (or the sample is large enough that <span class="math inline">\(s\)</span> is close to <span class="math inline">\(\sigma\)</span>), the ratio is called <span class="math inline">\(z\)</span>. When the SD is estimated from the data, the ratio is called <span class="math inline">\(t\)</span>.</p>
 <p>Under a known population SD (<span class="math inline">\(\sigma\)</span>), the standardized mean uses the <span class="math inline">\(z\)</span> statistic: <span class="math display">\[z = \frac{\bar{x}-\mu_0}{\sigma/\sqrt{n}}\]</span></p>
 <p>When <span class="math inline">\(\sigma\)</span> is <strong>unknown</strong> (the usual case), we estimate it with the sample SD (<span class="math inline">\(s\)</span>) and use the <span class="math inline">\(t\)</span> statistic: <span class="math display">\[t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1\]</span></p>
 <p>Because <span class="math inline">\(s\)</span> varies from sample to sample, the <span class="math inline">\(t\)</span> distribution has <strong>heavier tails</strong> than the standard normal. As <span class="math inline">\(n\)</span> grows, <span class="math inline">\(s\)</span> stabilizes and <span class="math inline">\(t\)</span> <strong>converges</strong> to <span class="math inline">\(z\)</span>.</p>
@@ -447,7 +445,7 @@ Figure&nbsp;6.1: Normal (<span class="math inline">\(z\)</span>) vs <span class=
 <p>For one-sample and paired <span class="math inline">\(t\)</span>-tests, <span class="math inline">\(df = n-1\)</span>. A sample of 10 has <span class="math inline">\(df=9\)</span>.</p>
 <p>Degrees of freedom counts how many values are still free to vary once something has been estimated from the data. Consider three numbers with a mean of 2: pick the first two freely, say 51 and <span class="math inline">\(-3\)</span>, and the third number is no longer free. It has to be <span class="math inline">\(-42\)</span> for the mean to come out to 2. Two of the three numbers had freedom; the third didn’t. That’s <span class="math inline">\(df=n-1=2\)</span> for three numbers.</p>
 <p>In a <span class="math inline">\(t\)</span>-test, the mean is the thing estimated, and the <span class="math inline">\(df\)</span> tells you how much information is left for estimating the spread, <span class="math inline">\(s\)</span>. With few degrees of freedom, <span class="math inline">\(s\)</span> can land well above or below <span class="math inline">\(\sigma\)</span>, so large <span class="math inline">\(t\)</span> values turn up more often and the <span class="math inline">\(t\)</span> curve has heavier tails. As <span class="math inline">\(df\)</span> grows, <span class="math inline">\(s\)</span> settles close to <span class="math inline">\(\sigma\)</span> and the <span class="math inline">\(t\)</span> curve approaches the normal. That is why each <span class="math inline">\(df\)</span> gets its own curve.</p>
-<p><strong>Simulating how degrees of freedom affects the</strong> <span class="math inline">\(t\)</span> distribution.</p>
+<p><strong>Simulating how degrees of freedom affect the</strong> <span class="math inline">\(t\)</span> distribution.</p>
 <p>We can see the effect of degrees of freedom directly by simulating the <span class="math inline">\(t\)</span> distribution at two different sample sizes. <a href="#fig-6dft" class="quarto-xref">Figure&nbsp;<span>6.2</span></a> compares <span class="math inline">\(df=9\)</span> (a sample of 10) to <span class="math inline">\(df=100\)</span> (a much larger sample).</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -457,7 +455,7 @@ Figure&nbsp;6.1: Normal (<span class="math inline">\(z\)</span>) vs <span class=
 <img src="06-ttests_files/figure-html/fig-6dft-1.png" class="img-fluid figure-img" style="width:100.0%" alt="Two side-by-side histograms of 10,000 simulated t values each, one for 9 degrees of freedom and one for 100 degrees of freedom. The 9-degrees-of-freedom histogram is visibly shorter and wider, with more values spread into the tails, while the 100-degrees-of-freedom histogram is taller and narrower, concentrated closer to zero.">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-6dft-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;6.2: The width of the t distribution shrinks as sample size and degrees of freedom (from 9 to 100) increases.
+Figure&nbsp;6.2: The width of the t distribution shrinks as sample size and degrees of freedom (from 9 to 100) increase.
 </figcaption>
 </figure>
 </div>
@@ -467,7 +465,6 @@ Figure&nbsp;6.2: The width of the t distribution shrinks as sample size and degr
 </section>
 <section id="what-t-represents" class="level3" data-number="6.3.3">
 <h3 data-number="6.3.3" class="anchored" data-anchor-id="what-t-represents"><span class="header-section-number">6.3.3</span> What t represents</h3>
-<p>Whether we use <span class="math inline">\(z\)</span> or <span class="math inline">\(t\)</span>, the ratio asks the same question: how far is the mean from the reference in SE units?</p>
 <p><span class="math inline">\(t\)</span> expresses how far a sample mean is from the hypothesized mean, in <strong>standard error units</strong> (signal over noise):</p>
 <p><span class="math display">\[t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}\]</span></p>
 <p><span class="math inline">\(t\)</span> can be positive or negative depending on direction. Under <span class="math inline">\(H_0\)</span>, <span class="math inline">\(t \sim t_{(df=n-1)}\)</span>.<br>
@@ -504,7 +501,7 @@ Figure&nbsp;6.3: Histogram of 1,000 simulated <span class="math inline">\(t\)</s
 </section>
 <section id="calculating-t-from-data" class="level3" data-number="6.3.4">
 <h3 data-number="6.3.4" class="anchored" data-anchor-id="calculating-t-from-data"><span class="header-section-number">6.3.4</span> Calculating t from data</h3>
-<p>Let’s calculate a one-sample <span class="math inline">\(t\)</span> statistic step by step using a short example. Ten students each took a 5-question true/false quiz (50% expected by chance). Their scores (percent correct) are:</p>
+<p>Let’s calculate a one-sample <span class="math inline">\(t\)</span> statistic step by step using a short example. Ten students each took a 10-question true/false quiz (50% expected by chance). Their scores (percent correct) are:</p>
 <p><strong>Scores</strong>: 50, 70, 60, 40, 80, 30, 90, 60, 70, 60</p>
 <p>By hand, the standard error of the mean is the sample SD divided by the square root of <span class="math inline">\(n\)</span>:</p>
 <p><span class="math display">\[\text{SE} = \frac{s}{\sqrt{n}} = \frac{17.92}{\sqrt{10}} = 5.67\]</span></p>
@@ -520,8 +517,8 @@ Figure&nbsp;6.3: Histogram of 1,000 simulated <span class="math inline">\(t\)</s
 <p>Every test in this book has assumptions. Assumptions are conditions that need to be roughly true for the math behind the test to be trustworthy. There are two different kinds of assumptions.</p>
 <p><strong>The universal assumption.</strong> Every test in this book, including the nonparametric tests in Chapter 7, assumes your observations are <strong>independent</strong> (in paired designs, the pairs) and came from a <strong>sound study design</strong> (a fair sample, not one that systematically favors certain values). This assumption is so constant that from here on, we won’t re-list it test by test. Keep it in the back of your mind, but if an exam or homework question asks you to “list the assumptions of this test,” this isn’t the answer they’re looking for.</p>
 <p><strong>Test-specific assumptions.</strong> These come from how a particular test’s math actually works, and they differ test to test. For the one-sample and paired <span class="math inline">\(t\)</span>-tests, the specific assumption is <strong>approximate normality</strong> of the outcome itself (one-sample) or of the difference scores (paired). The <span class="math inline">\(t\)</span>-distribution we’ve been using to get <span class="math inline">\(p\)</span>-values is <em>derived</em> assuming the sampling distribution of the sample mean is normal. If your data are badly skewed and your sample is small, that assumption fails, and the <span class="math inline">\(p\)</span>-value may not be the true probability of a result this extreme under <span class="math inline">\(H_0\)</span>.</p>
-<p><strong>How worried should you be?</strong> It depends enormously on <span class="math inline">\(n\)</span>. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the sample mean tends toward normal even when individual observations are skewed, so the <span class="math inline">\(t\)</span>-test is fairly <strong>robust</strong> to non-normality once <span class="math inline">\(n\)</span> is reasonably large. A lot of environmental data, particularly field data, instead comes from <strong>small samples that are also skewed</strong>. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit before the storm rolled in. A <span class="math inline">\(t\)</span>-test’s answer becomes questionable when the sample is small and the data are also non-normal.</p>
-<p><strong>What to do about it.</strong> First, look at your data. A histogram or a QQ-plot will usually tell you whether “approximately normal” is a reasonable description or a stretch. You can also run a formal normality test, the <strong>Shapiro-Wilk test</strong> (<code>shapiro.test()</code> in R), which tests <span class="math inline">\(H_0\)</span>: the data came from a normal distribution. Treat it as one more piece of evidence rather than a strict gate though: with a small sample, exactly when a violation matters most, it has low power and will often say “no problem” even when there is one. If your data look far from normal and your sample is small, you have another option: a <strong>nonparametric test</strong>, which does not assume normality. You’ll meet these nonparametric alternatives in the next chapter, once we’ve covered all three t-test forms below.</p>
+<p><strong>How worried should you be?</strong> It depends on <span class="math inline">\(n\)</span>. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the sample mean tends toward normal even when individual observations are skewed, so the <span class="math inline">\(t\)</span>-test is fairly <strong>robust</strong> to non-normality once <span class="math inline">\(n\)</span> is reasonably large. A lot of environmental data, particularly field data, instead comes from <strong>small samples that are also skewed</strong>. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit before the storm rolled in. A <span class="math inline">\(t\)</span>-test’s answer becomes questionable when the sample is small and the data are also non-normal.</p>
+<p><strong>What to do about it.</strong> First, look at your data. A histogram or a QQ-plot will usually tell you whether “approximately normal” is a reasonable description or a stretch. You can also run a formal normality test, the <strong>Shapiro-Wilk test</strong> (<code>shapiro.test()</code> in R), which tests <span class="math inline">\(H_0\)</span>: the data came from a normal distribution. Treat it as one more piece of evidence, though, rather than a strict gate. With a small sample, exactly when a violation matters most, it has low power and will often say “no problem” even when there is one. If your data look far from normal and your sample is small, you have another option: a <strong>nonparametric test</strong>, which does not assume normality. You’ll meet these nonparametric alternatives in the next chapter, once we’ve covered all three <span class="math inline">\(t\)</span>-test forms below.</p>
 </section>
 <section id="how-does-t-behave" class="level3" data-number="6.3.6">
 <h3 data-number="6.3.6" class="anchored" data-anchor-id="how-does-t-behave"><span class="header-section-number">6.3.6</span> How does t behave?</h3>
@@ -627,7 +624,7 @@ Figure&nbsp;6.8: Two-tailed critical values at df=9: t-values beyond ±2.26 occu
 </div>
 </div>
 </div>
-<p>Applied to our actual result, <span class="math inline">\(t(9) = 1.94\)</span>: the one-tailed <span class="math inline">\(p\)</span> is .042, the two-tailed <span class="math inline">\(p\)</span> is .084, exactly double, since a two-tailed test counts the matching extreme region on both sides instead of just one. Here the choice actually changes the decision: one-tailed, this result is significant at <span class="math inline">\(\alpha=.05\)</span>; two-tailed, it isn’t. That’s exactly why a one-tailed test has to be justified by your theory <em>before</em> you see the data, not chosen afterward because it gives the answer you wanted.</p>
+<p>Applied to our actual result, <span class="math inline">\(t(9) = 1.94\)</span>: the one-tailed <span class="math inline">\(p\)</span> is .042, the two-tailed <span class="math inline">\(p\)</span> is .084, exactly double, since a two-tailed test counts the matching extreme region on both sides instead of just one. Here the choice actually changes the decision: one-tailed, this result is significant at <span class="math inline">\(\alpha=.05\)</span>; two-tailed, it isn’t. That’s why a one-tailed test has to be justified by your theory <em>before</em> you see the data, not chosen afterward because it gives the answer you wanted.</p>
 </section>
 <section id="which-one-should-you-use" class="level3" data-number="6.3.10">
 <h3 data-number="6.3.10" class="anchored" data-anchor-id="which-one-should-you-use"><span class="header-section-number">6.3.10</span> Which one should you use?</h3>
@@ -652,7 +649,7 @@ Figure&nbsp;6.9: A paired design. The dashed boxes and the note underneath mark 
 </div>
 </div>
 </div>
-<p>The dashed boxes mark what makes this design paired. In every design so far the boxes held <em>different</em> units, and the test compared one set against another. Here both boxes hold the same 20 plots, which is what makes the design paired and what lets us subtract.</p>
+<p>The dashed boxes mark what makes this design paired. In every design so far the boxes held <em>different</em> units, and the test compared one set against another. Here both boxes hold the same 20 plots, so each plot’s Before value can be subtracted from its own After value.</p>
 <p><strong>Define differences and their meaning.</strong> Choose an order and stick to it:</p>
 <ul>
 <li><span class="math inline">\(d_i = \text{After}_i - \text{Before}_i\)</span></li>
@@ -665,7 +662,6 @@ Figure&nbsp;6.9: A paired design. The dashed boxes and the note underneath mark 
 s_d=\text{SD}(d_1,\ldots,d_n), \quad
 t = \frac{\bar d - 0}{s_d/\sqrt{n}}, \quad df=n-1.\]</span></p>
 <p>The <strong>sign of</strong> <span class="math inline">\(t\)</span> matches <span class="math inline">\(\bar d\)</span> and your difference direction.</p>
-<p><strong>Full sample effect.</strong> With all 20 plots, <span class="math inline">\(\bar d\)</span> is similar to its value in a 5-plot subset, but <span class="math inline">\(s_d/\sqrt{n}\)</span> gets smaller as <span class="math inline">\(n\)</span> grows, so <span class="math inline">\(t\)</span> increases.</p>
 <p><strong>What to report.</strong> <span class="math inline">\(\bar d\)</span> (the mean change), a 95% CI, <span class="math inline">\(t(df)\)</span>, and <span class="math inline">\(p\)</span>. Optionally add a standardized effect (Cohen’s <span class="math inline">\(d=\bar d/s_d\)</span>).</p>
 <p><strong>R pointers (you’ll do this in lab).</strong></p>
 <ul>
@@ -799,12 +795,12 @@ t = \frac{\bar d - 0}{s_d/\sqrt{n}}, \quad df=n-1.\]</span></p>
 </table>
 </div>
 </div>
-<p>Our t-test results are: t(4) = 1.83, p = .141.</p>
-<p>The sign of <span class="math inline">\(t\)</span> matches the sign of the mean difference (ours was <span class="math inline">\(+2.8\)</span> percentage points), so soil moisture increased on average, as <span class="math inline">\(\bar d\)</span> showed. Getting a <span class="math inline">\(p\)</span>-value from this <span class="math inline">\(t\)</span>, and choosing one-tailed vs.&nbsp;two-tailed, works exactly like it did for the one-sample case (see the One-sample <span class="math inline">\(t\)</span>-test section above). Two-tailed, <span class="math inline">\(p=.141\)</span>, which is not significant. This five-plot sample is too small to rule out chance.</p>
+<p>Our <span class="math inline">\(t\)</span>-test results are: <em>t</em>(4) = 1.83, <em>p</em> = .141.</p>
+<p>The sign of <span class="math inline">\(t\)</span> matches the sign of the mean difference (ours was <span class="math inline">\(+2.8\)</span> percentage points), so soil moisture increased on average, as <span class="math inline">\(\bar d\)</span> showed. Getting a <span class="math inline">\(p\)</span>-value from this <span class="math inline">\(t\)</span>, and choosing one-tailed vs.&nbsp;two-tailed, works exactly like it did for the one-sample case (see the One-sample <span class="math inline">\(t\)</span>-test section above). Two-tailed, <span class="math inline">\(p=.141\)</span>, which is not significant. With only five plots, a mean increase this large would not be unusual even if restoration had no effect on soil moisture.</p>
 </section>
 <section id="scaling-to-the-full-sample" class="level3" data-number="6.4.2">
 <h3 data-number="6.4.2" class="anchored" data-anchor-id="scaling-to-the-full-sample"><span class="header-section-number">6.4.2</span> Scaling to the full sample</h3>
-<p>The five plots above are a subset of the full restoration study, which measured all <strong>20</strong> paired plots. With only <span class="math inline">\(n=5\)</span>, <span class="math inline">\(t(4)=1.83\)</span> wasn’t enough to distinguish the observed increase from chance (<span class="math inline">\(p=.141\)</span>).</p>
+<p>The five plots above are a subset of the full restoration study, which measured all <strong>20</strong> paired plots. With only <span class="math inline">\(n=5\)</span>, <span class="math inline">\(t(4)=1.83\)</span> was not significant (<span class="math inline">\(p=.141\)</span>).</p>
 <div class="cell">
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -828,7 +824,7 @@ t = \frac{\bar d - 0}{s_d/\sqrt{n}}, \quad df=n-1.\]</span></p>
 </table>
 </div>
 </div>
-<p>At <span class="math inline">\(n=20\)</span>, <span class="math inline">\(t(19) = 2.5\)</span>, <span class="math inline">\(p =0.022\)</span>: significant. The mean difference (1.9 percentage points) is in the same range as the 5-plot subset suggested. The standard error shrank enough with the larger sample to rule out chance, so the extra plots gave more power to detect a real effect.</p>
+<p>At <span class="math inline">\(n=20\)</span>, <span class="math inline">\(t(19) = 2.5\)</span>, <span class="math inline">\(p =0.022\)</span>: significant. The mean difference (1.9 percentage points) is in the same range as the 5-plot subset suggested. The standard error shrank enough with the larger sample that a mean increase this large would be unlikely if restoration had no effect, so the extra plots gave more power to detect a real effect.</p>
 </section>
 </section>
 <section id="two-independent-groups" class="level2" data-number="6.5">
@@ -838,7 +834,7 @@ t = \frac{\bar d - 0}{s_d/\sqrt{n}}, \quad df=n-1.\]</span></p>
 <p>The numerator works the same way it always has: the mean difference between groups. The denominator differs from the paired case, because now we need a single estimate of variability built from two separate samples instead of one.</p>
 <p>A natural first guess is to average the two groups’ standard errors:</p>
 <p><span class="math display">\[t = \frac{\bar{A}-\bar{B}}{\left(\dfrac{SE_A+SE_B}{2}\right)}\]</span></p>
-<p>That average, however, is a biased estimator of the variability under the null. Instead, the independent-samples <span class="math inline">\(t\)</span>-test <strong>pools</strong> the two groups’ variances, weighted by their degrees of freedom, into a single estimate for the denominator:</p>
+<p>That average understates how much a difference between two means varies. The standard error of a difference between two independent means is <span class="math inline">\(\sqrt{SE_A^2 + SE_B^2}\)</span>, which is always larger than the average of the two SEs. Instead of averaging, the independent-samples <span class="math inline">\(t\)</span>-test <strong>pools</strong> the two groups’ variances, weighted by their degrees of freedom, into a single estimate for the denominator:</p>
 <p><span class="math display">\[t = \frac{\bar{x}_A-\bar{x}_B}{s_p\sqrt{\dfrac{1}{n_A}+\dfrac{1}{n_B}}}\]</span></p>
 <p>where the pooled standard deviation <span class="math inline">\(s_p\)</span> is (note <span class="math inline">\(s_A^2\)</span> and <span class="math inline">\(s_B^2\)</span> here are variances, not standard deviations):</p>
 <p><span class="math display">\[s_p = \sqrt{\frac{(n_A-1)s_A^2 + (n_B-1)s_B^2}{n_A+n_B-2}}\]</span></p>
@@ -906,7 +902,7 @@ t = \frac{\bar d - 0}{s_d/\sqrt{n}}, \quad df=n-1.\]</span></p>
 </blockquote>
 <p>Independent-samples, where the effect is the difference between two group means:</p>
 <blockquote class="blockquote">
-<p>Group A scored lower than Group B, a mean difference of -2.6, <em>t</em>(8) = -2.02, <em>p</em> = .078.</p>
+<p>Group A scored lower than Group B, a mean difference of -2.6, <em>t</em>(8) = -2.02, <em>p</em> = .078, 95% CI [-5.57, 0.37].</p>
 </blockquote>
 <p>Note the paired write-up never mentions the before and after means separately. The difference score <em>is</em> the unit of analysis, so that single number plus its CI is the whole result.</p>
 </div>
@@ -959,8 +955,8 @@ Figure&nbsp;6.11: The distribution of <span class="math inline">\(p\)</span>-val
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>simulated_ps <span class="ot">&lt;-</span> <span class="fu">replicate</span>(<span class="dv">1000</span>, <span class="fu">t.test</span>(<span class="fu">rnorm</span>(<span class="dv">30</span>, <span class="dv">50</span>, <span class="dv">25</span>), <span class="at">mu =</span> <span class="dv">50</span>)<span class="sc">$</span>p.value)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="the-same-machinery-other-designs" class="level3" data-number="6.6.2">
-<h3 data-number="6.6.2" class="anchored" data-anchor-id="the-same-machinery-other-designs"><span class="header-section-number">6.6.2</span> The same machinery, other designs</h3>
+<section id="simulating-paired-and-independent-samples-tests" class="level3" data-number="6.6.2">
+<h3 data-number="6.6.2" class="anchored" data-anchor-id="simulating-paired-and-independent-samples-tests"><span class="header-section-number">6.6.2</span> Simulating paired and independent-samples tests</h3>
 <p>The paired and independent-samples cases behave the same way, because they use the same <span class="math inline">\(t\)</span> calculation on different inputs. A paired test runs a one-sample <span class="math inline">\(t\)</span> on the difference scores; an independent-samples test swaps in the pooled standard error. Simulate either one under <span class="math inline">\(H_0\)</span> and you get the same two pictures: a <span class="math inline">\(t\)</span> distribution centered on zero, and a flat <span class="math inline">\(p\)</span> distribution.</p>
 <p>To adapt the code above, change only the line that generates the data:</p>
 <div class="cell">
@@ -971,7 +967,7 @@ Figure&nbsp;6.11: The distribution of <span class="math inline">\(p\)</span>-val
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># independent samples: two separate groups</span></span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">t.test</span>(<span class="fu">rnorm</span>(<span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">5</span>), <span class="fu">rnorm</span>(<span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">5</span>), <span class="at">var.equal =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>p.value</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>What happens if there is a real difference in the simulated data? Let’s set one condition to have a larger mean than the other:</p>
+<p>Next, give one condition a larger mean than the other, so the simulated data contain a real difference:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>save_ps <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">1000</span>)</span>
@@ -993,21 +989,21 @@ Figure&nbsp;6.11: The distribution of <span class="math inline">\(p\)</span>-val
 <img src="06-ttests_files/figure-html/fig-6simtrueps-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Histogram of 1000 simulated p-values from samples of size 10 with a real underlying difference. Unlike the flat null histogram, this one is right-skewed, with the tallest bars near zero and progressively shorter bars moving toward 1.">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-6simtrueps-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;6.12: 1000 ps when there is a true difference
+Figure&nbsp;6.12: 1,000 simulated <span class="math inline">\(p\)</span>-values (<span class="math inline">\(n = 10\)</span>) when there is a true difference.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>Now you can see that the <span class="math inline">\(p\)</span>-value distribution is right-skewed: most of the values pile up near 0, with a long tail toward 1. This is because when there is a true effect, you will get p-values that are less than .05 more often. That happens because a true effect produces larger <span class="math inline">\(t\)</span> values than you would get with no difference.</p>
-<p>In this case, we wouldn’t be making a type I error if we rejected the null when p was smaller than .05. How many times would we do that out of our 1000 experiments?</p>
+<p>Now you can see that the <span class="math inline">\(p\)</span>-value distribution is right-skewed: most of the values pile up near 0, with a long tail toward 1. A true effect produces larger <span class="math inline">\(t\)</span> values than chance alone would, so <span class="math inline">\(p\)</span>-values below .05 turn up more often.</p>
+<p>Here <span class="math inline">\(H_0\)</span> is false, so rejecting it when <span class="math inline">\(p &lt; .05\)</span> is a correct decision, not a Type I error. The code below counts how often that happens in the 1,000 experiments.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(save_ps[save_ps<span class="sc">&lt;</span>.<span class="dv">05</span>])</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 249</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(save_ps[save_ps<span class="sc">&lt;</span>.<span class="dv">05</span>])<span class="sc">/</span><span class="dv">1000</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.249</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>We got 249 simulations where p was less than .05, or 24.9% of experiments. A design that rarely detects a real effect needs to be improved before you run it.</p>
+<p>We got 249 simulations where p was less than .05, or 24.9% of experiments. That percentage is the design’s power. A study with power this low will usually miss a difference that is really there, so running it as designed spends the time and money of data collection on a result that is most likely to come back not significant. Improve the design before you run it.</p>
 <p>The most direct lever is <span class="math inline">\(n\)</span>, the number of subjects. Let’s increase <span class="math inline">\(n\)</span> from 10 to 100 and see what happens to the number of “significant” simulated experiments.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a></span>
@@ -1030,7 +1026,7 @@ Figure&nbsp;6.12: 1000 ps when there is a true difference
 <img src="06-ttests_files/figure-html/fig-6simpsB-1.png" class="img-fluid figure-img" style="width:75.0%" alt="Histogram of 1000 simulated p-values from samples of size 100 with the same real underlying difference as the previous figure. Almost every simulation now produces a p-value near zero, with a tall spike in the leftmost bin and almost nothing anywhere else.">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-6simpsB-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;6.13: 1000 ps for n =100, when there is a true effect
+Figure&nbsp;6.13: 1,000 simulated <span class="math inline">\(p\)</span>-values (<span class="math inline">\(n = 100\)</span>) when there is a true difference.
 </figcaption>
 </figure>
 </div>
@@ -1041,13 +1037,13 @@ Figure&nbsp;6.13: 1000 ps for n =100, when there is a true effect
 </section>
 <section id="chapter-summary" class="level2" data-number="6.7">
 <h2 data-number="6.7" class="anchored" data-anchor-id="chapter-summary"><span class="header-section-number">6.7</span> Chapter Summary</h2>
-<p><strong>Why it matters.</strong> The <span class="math inline">\(t\)</span>-test is the first real inferential test in this course, and the logic it runs on, a signal measured against the noise around it, is the same logic behind ANOVA, regression, and everything else that follows.</p>
+<p><strong>Why it matters.</strong> The <span class="math inline">\(t\)</span>-test measures a signal against the noise around it. ANOVA, regression, and the rest of the course use the same logic.</p>
 <p><strong>Core ideas</strong></p>
 <ul>
 <li><strong>Signal over noise.</strong> A difference is only impressive relative to the variability around it. Every <span class="math inline">\(t\)</span> statistic is a ratio: the effect you observed on top, an estimate of how much that effect could bounce around by chance on the bottom.</li>
 <li><strong>Three forms, one idea.</strong> The one-sample, paired, and independent-samples <span class="math inline">\(t\)</span>-tests differ in what goes into the numerator, but all three ask whether an observed difference is large compared to its own standard error. The paired test is just the one-sample test applied to difference scores.</li>
 <li><strong>Why</strong> <span class="math inline">\(t\)</span> and not <span class="math inline">\(z\)</span>. When the population SD <span class="math inline">\(\sigma\)</span> is unknown, we estimate it with <span class="math inline">\(s\)</span>, which adds uncertainty. The <span class="math inline">\(t\)</span> distribution accounts for that by being fatter in the tails than the normal, and it tightens toward the normal as degrees of freedom grow.</li>
-<li><strong>Assumptions come in two kinds.</strong> <em>Independence and a sound study design</em> apply to every test in this book and are assumed from here on. The <em>test-specific</em> assumption for these tests is approximate normality, of the outcome for a one-sample test or of the difference scores for a paired test, or of each group, plus similar variances, for an independent-samples test.</li>
+<li><strong>Assumptions come in two kinds.</strong> <em>Independence and a sound study design</em> apply to every test in this book and are assumed from here on. The <em>test-specific</em> assumption is approximate normality: of the outcome (one-sample), of the difference scores (paired), or of each group (independent samples). The pooled independent-samples test also assumes similar variances.</li>
 <li><strong>How worried to be depends on</strong> <span class="math inline">\(n\)</span>. Thanks to the Central Limit Theorem, <span class="math inline">\(t\)</span>-tests are fairly robust to non-normality once samples are reasonably large. <span class="math inline">\(t\)</span>-tests are least trustworthy when samples are small <em>and</em> skewed, which describes a lot of environmental field data. Plot your data first, and treat a Shapiro-Wilk result as evidence rather than a gate, since it has the least power with small samples, when a violation matters most.</li>
 <li><strong>Choose your tails before you look.</strong> Default to two-tailed. Reserve one-tailed tests for cases where a difference in the opposite direction would lead to the same action as no difference, and decide before seeing the result.</li>
 </ul>
