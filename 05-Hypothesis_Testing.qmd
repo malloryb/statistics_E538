@@ -68,7 +68,7 @@ error_panel <- function(xbar, mu, se = err_se, sigma = err_sigma, mu0 = 0,
 >
 > Attributed to John Maynard Keynes
 
-The previous chapter built the machinery of a hypothesis test and left you with a yes or no: reject $H_0$, or fail to reject it.
+Chapter 4 ended with a hypothesis test that either rejects $H_0$ or fails to reject it.
 
 This chapter first asks how often that decision is wrong, and in which direction. It then asks how large the effect is and whether the study had enough data to detect it. It closes with how to report a result.
 
@@ -87,7 +87,7 @@ Sometimes, even when we apply the test correctly, sampling variability can lead 
 
 For a fixed sample size and effect size, lowering $\alpha$ raises $\beta$, because a stricter standard for rejecting $H_0$ makes it easier to miss a real difference.
 
-Errors happen because samples are imperfect representations of the true population.
+@fig-5recap-gif recaps the test from Chapter 4. The distance between the two sampling distributions, in standard errors, decides whether we reject $H_0$.
 
 ```{r}
 #| label: fig-5recap-gif
@@ -205,9 +205,9 @@ In @fig-5alpha-beta, $\mu_a$ is `r mua_ab / se_ab` standard errors above $\mu_0$
 
 ### Effect of sample size on errors
 
-With fixed $\alpha$ and correct assumptions, the long-run Type I error rate is $\alpha$ for any $n$.
+**Sample size mainly affects Type II error.** With a fixed $\alpha$ and correct assumptions, the long-run Type I error rate is $\alpha$ for any $n$. With small $n$, the sampling distribution is wide, true effects are harder to detect, and $\beta$ increases (power decreases). As $n$ grows, the sampling distribution tightens, $\beta$ falls, and power rises. Apparent changes in the Type I rate at small $n$ usually reflect assumption violations (e.g., non-normality, poor variance estimates, multiple looks), not $n$ itself.
 
-**Sample size mainly affects Type II error.** With small $n$, the sampling distribution is wide, true effects are harder to detect, and $\beta$ increases (power decreases). As $n$ grows, the sampling distribution tightens, $\beta$ falls, and power rises. Apparent changes in the Type I rate at small $n$ usually reflect assumption violations (e.g., non-normality, poor variance estimates, multiple looks), not $n$ itself.
+@fig-5type2-samplesize shows this with the same $\mu_0$, the same true $\mu$, and the same unlucky sample, in which $\bar{x}$ lands 2.5 standard errors below $\mu$. With the smaller sample, the confidence interval still catches $\mu_0$ and we fail to reject. With four times the sample, the standard error halves, the interval clears $\mu_0$, and we reject $H_0$.
 
 ```{r}
 #| label: fig-5type2-samplesize
@@ -349,7 +349,7 @@ ggplot(df, aes(
 -   **Panel 3 ($d=1$).** A 5-point shift (70).
 -   **Panel 4 ($d=2$).** A large 10-point shift (75).
 
-Effect size puts raw differences on a standard-deviation scale. A half-SD shift ($d=0.5$) is noticeable but modest; a two-SD shift ($d=2$) is very large. In practice, we rarely know beforehand how big a shift to expect.
+In @fig-5.5effectdistsB, a half-SD shift ($d = 0.5$, 2.5 points) leaves the two curves mostly overlapping, and a two-SD shift ($d = 2$, 10 points) pulls them mostly apart. In practice, we rarely know beforehand how big a shift to expect.
 
 ## Power
 
@@ -366,7 +366,7 @@ For planning, the practical question is how large $n$ must be to reach 80% power
 
 ### Simulation walkthrough
 
-Let's see how design choices affect power with a simple simulation. Suppose we have two groups, each with $n=10$. Group A (control) is sampled from a normal distribution with mean = 10 and $SD = 5$. Group B (treatment) has a mean = 12.5, a shift of 2.5 points (Cohen's $d=0.5$), considered a medium effect.
+Let's see how design choices affect power with a simple simulation. We simulate two groups of $n=10$ each. We draw Group A (control) from a normal distribution with mean 10 and $SD = 5$, and Group B (treatment) from one with mean 12.5, a shift of 2.5 points, or Cohen's $d=0.5$, a medium effect.
 
 If we simulate this experiment 1,000 times and run an independent-samples $t$-test each time, how often do we reject $H_0$ at $\alpha=0.05$?
 
@@ -428,9 +428,7 @@ Power is now about `r round(power_big * 100)`%. A 2-SD difference is detected in
 
 ### Power curves
 
-A design's power depends on how large the true effect is. A power curve plots the power of one fixed design against a range of effect sizes.
-
-@fig-5.5powercurve fixes the design at a two-sample $t$-test with $n=10$ per group and $\alpha=0.05$, and plots power against the true effect size, Cohen's $d$.
+A design's power depends on how large the true effect is. A power curve plots the power of one fixed design against a range of effect sizes. @fig-5.5powercurve fixes the design at a two-sample $t$-test with $n=10$ per group and $\alpha=0.05$, and plots power against the true effect size, Cohen's $d$.
 
 ```{r}
 #| label: fig-5.5powercurve
@@ -452,7 +450,9 @@ ggplot(plot_df, aes(x=effect_size, y=power))+
   labs(x = "Effect size (Cohen's d)", y = "Power")
 ```
 
-With 10 per group, this design detects a medium effect ($d=0.5$) only about `r round(power_n10_exact * 100)`% of the time. The simulation above estimated the same quantity at about `r round(power_n10 * 100)`%. The two differ because 1,000 repetitions give an estimate, while the curve is computed exactly. A larger effect ($d=0.8$) is detected about 40% of the time, and only very large effects ($d=2$) are detected almost every time (about 99%). With $n = 10$ per group, only large effects are detected reliably.
+With 10 per group, this design detects a medium effect ($d=0.5$) only about `r round(power_n10_exact * 100)`% of the time, a larger effect ($d=0.8$) about 40% of the time, and a very large effect ($d=2$) almost every time (about 99%). With $n = 10$ per group, only large effects are detected reliably.
+
+The simulation above estimated power at $d = 0.5$ as about `r round(power_n10 * 100)`%. The two numbers differ because 1,000 simulated experiments give an estimate, while the curve is computed exactly.
 
 The second curve holds the effect size fixed and varies the sample size. Suppose prior research suggests the effect is small ($d=0.2$). @fig-5.5powercurveN plots power against sample size for $d=0.2$, with a dashed line at 80% power, a common planning target.
 
@@ -496,7 +496,7 @@ This sequence is a **formal power analysis**. It applies when you are about to c
 Do not compute power after the fact for the effect you observed. This **post-hoc power** is a restatement of the $p$-value, so a non-significant result always has low post-hoc power. Power for a difference chosen in advance, such as the smallest effect that matters, is fine to report.
 :::
 
-Small-$n$ designs can reliably detect only very large effects, and large-$n$ designs can reliably detect much smaller ones. Plan the design so it can reliably detect the effects it is meant to measure.
+With 10 per group, only effects near $d = 2$ are detected reliably, and detecting $d = 0.2$ with 80% power takes about `r ceiling(n_for_80)` per group. Plan the design so it can reliably detect the effects it is meant to measure.
 
 ### Two cautions
 
@@ -539,7 +539,7 @@ ggplot(type_I_error, aes(x = p_value, y = abs(effect_size),
 
 ## Reporting results
 
-A results statement gives the plain-language conclusion and the key statistics in a fixed order. Aim for one clean sentence plus context.
+A results statement is one sentence that states the finding in plain language and ends with the key statistics, in a fixed order, in parentheses.
 
 **Template (two-sided test):** *Plain-language finding.* *(test, statistic, df or n, value of statistic, p-value, effect size/CI if relevant).*
 
