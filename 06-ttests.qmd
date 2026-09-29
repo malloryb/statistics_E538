@@ -37,9 +37,9 @@ hist_p <- function(ps, title = NULL) {
 
 ## Intro
 
-In the early 1900s, William Sealy Gosset joined **Guinness**, then the world's largest brewery. Guinness hired scientifically trained brewers and gave them latitude to pursue research that improved the product. As production scaled, quality control mattered: a pint should taste the same in Dublin as in Detroit. Until then, hop quality was judged mostly by appearance and smell, which was unreliable. Chemical assays could measure ingredients, but the core problem was statistical. Inference relied on the normal (Z) distribution, which works well when samples are large enough for a normal approximation. In practice, Guinness could not destroy large volumes of beer or ingredients just to test them.
+In the early 1900s, William Sealy Gosset joined Guinness, then the world's largest brewery. Guinness hired scientifically trained brewers and gave them latitude to pursue research that improved the product. As production scaled, quality control mattered: a pint should taste the same in Dublin as in Detroit. Until then, hop quality was judged mostly by appearance and smell, which was unreliable. Chemical assays could measure ingredients, but the core problem was statistical. Inference relied on the normal (Z) distribution, which works well when samples are large enough for a normal approximation. In practice, Guinness could not destroy large volumes of beer or ingredients just to test them.
 
-Gosset set out to quantify the extra uncertainty introduced by **small** samples. How much wider is the error around an estimate when $n=10$ instead of $n=1000$? He derived a new sampling distribution that accounts for small-sample variability, now known as the **Student's** $t$ distribution. Because Guinness restricted external publications, he published the 1908 paper under the pseudonym **"Student"** [@Student1908]. That is why we still say **Student's** $t$-test. This chapter uses the same idea: measure a signal, scale it by its standard error, and compare the resulting $t$ to the $t$ distribution for your $n-1$ degrees of freedom.
+Gosset set out to quantify the extra uncertainty introduced by small samples. How much wider is the error around an estimate when $n=10$ instead of $n=1000$? He derived a new sampling distribution that accounts for small-sample variability, now known as the **Student's $t$ distribution**. Because Guinness restricted external publications, he published the 1908 paper under the pseudonym "Student" [@Student1908]. That is why we still say Student's $t$-test. This chapter uses the same idea: measure a signal, scale it by its standard error, and compare the resulting $t$ to the $t$ distribution for your $n-1$ degrees of freedom.
 
 **Why this matters.** We often compare a sample mean to a reference (drinking-water standard, historical average) or compare two conditions (before/after, site A vs site B). A $t$-test asks whether the observed difference is larger than you would expect from sampling variation alone, given your $n$ and variability.
 
@@ -66,7 +66,7 @@ Chapter 4 introduced the general shape of a test statistic: the effect you obser
 
 $$\text{statistic}=\frac{\text{effect}}{\text{error}}$$
 
-The $t$-test is the first place we fill that in with real quantities. The effect is the distance between the sample mean and the value $H_0$ names. The error is not the raw standard deviation, though: it is the **standard error**, $s/\sqrt{n}$, because what varies from study to study is the *mean*, not an individual observation.
+The $t$-test is the first place we fill that in with real quantities. The effect is the distance between the sample mean and the value $H_0$ names. The error is not the raw standard deviation, though: it is the standard error, $s/\sqrt{n}$, because what varies from study to study is the *mean*, not an individual observation.
 
 $$t = \frac{\text{effect}}{\text{standard error}} = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}$$
 
@@ -82,9 +82,9 @@ After calculating $t$ from our data, we compare the observed $t$ to a $t$ distri
 
 Under a known population SD ($\sigma$), the standardized mean uses the $z$ statistic: $$z = \frac{\bar{x}-\mu_0}{\sigma/\sqrt{n}}$$
 
-When $\sigma$ is **unknown** (the usual case), we estimate it with the sample SD ($s$) and use the $t$ statistic: $$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1$$
+When $\sigma$ is *unknown* (the usual case), we estimate it with the sample SD ($s$) and use the $t$ statistic: $$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1$$
 
-Because $s$ varies from sample to sample, the $t$ distribution has **heavier tails** than the standard normal. As $n$ grows, $s$ stabilizes and $t$ **converges** to $z$.
+Because $s$ varies from sample to sample, the $t$ distribution has heavier tails than the standard normal. As $n$ grows, $s$ stabilizes and $t$ converges to $z$.
 
 ```{r}
 #| label: fig-6-z-vs-t-linear-log
@@ -145,7 +145,7 @@ If the population SD $\sigma$ is known *and* the sampling distribution of the sa
 
 ### Degrees of freedom
 
-Every $t$ formula so far has carried $df = n-1$ alongside it, and @fig-6-z-vs-t-linear-log drew a different $t$ curve for each $df$. That number is the degrees of freedom. It is also the number in parentheses whenever a $t$-test is reported, as in $t(9) = 1.94$.
+Every $t$ formula so far has carried $df = n-1$ alongside it, and @fig-6-z-vs-t-linear-log drew a different $t$ curve for each $df$. That number is the **degrees of freedom**. It is also the number in parentheses whenever a $t$-test is reported, as in $t(9) = 1.94$.
 
 For one-sample and paired $t$-tests, $df = n-1$. A sample of 10 has $df=9$.
 
@@ -153,7 +153,7 @@ Degrees of freedom counts how many values are still free to vary once something 
 
 In a $t$-test, the mean is the thing estimated, and the $df$ tells you how much information is left for estimating the spread, $s$. With few degrees of freedom, $s$ can land well above or below $\sigma$, so large $t$ values turn up more often and the $t$ curve has heavier tails. As $df$ grows, $s$ settles close to $\sigma$ and the $t$ curve approaches the normal. That is why each $df$ gets its own curve.
 
-**Simulating how degrees of freedom affect the** $t$ distribution.
+**Simulating how degrees of freedom affect the $t$ distribution.**
 
 We can see the effect of degrees of freedom directly by simulating the $t$ distribution at two different sample sizes. @fig-6dft compares $df=9$ (a sample of 10) to $df=100$ (a much larger sample).
 
@@ -183,15 +183,15 @@ As degrees of freedom increase, the $t$ distribution gets taller in the middle a
 
 ### What t represents
 
-$t$ expresses how far a sample mean is from the hypothesized mean, in **standard error units** (signal over noise):
+$t$ expresses how far a sample mean is from the hypothesized mean, in standard error units (signal over noise):
 
 $$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}$$
 
 $t$ can be positive or negative depending on direction. Under $H_0$, $t \sim t_{(df=n-1)}$.\
-**Rule of thumb:** at $df\approx 20$, $|t|$ beyond about 2 occurs less than 5% of the time under $H_0$ (two-tailed, $\alpha=.05$). With smaller $df$ the cutoff is higher, as the critical values above show.
+**Rule of thumb.** At $df\approx 20$, $|t|$ beyond about 2 occurs less than 5% of the time under $H_0$ (two-tailed, $\alpha=.05$). With smaller $df$ the cutoff is higher, as the critical values above show.
 
 ::: {.callout-note title="Note: Standard error, again"}
-Remember that $s/\sqrt{n}$ is the **standard error (SE)**, the standard deviation of the sampling distribution of the sample mean.
+Remember that $s/\sqrt{n}$ is the standard error (SE), the standard deviation of the sampling distribution of the sample mean.
 :::
 
 Let's see how $t$ values behave when samples really come from the null hypothesis. Under the null hypothesis, $t$ follows a $t$ distribution with $df = n-1$.
@@ -209,13 +209,13 @@ ggplot(data.frame(t_vals), aes(x = t_vals)) +
   labs(x = "t values", y = "Count")
 ```
 
-**Takeaway:** $t$ measures how far the sample mean is from the null expectation, scaled by its uncertainty. Under $H_0$ it follows a known $t$ distribution, so we can check how often chance alone would produce a $t$ as large as ours.
+**Takeaway.** $t$ measures how far the sample mean is from the null expectation, scaled by its uncertainty. Under $H_0$ it follows a known $t$ distribution, so we can check how often chance alone would produce a $t$ as large as ours.
 
 ### Calculating t from data
 
 Let's calculate a one-sample $t$ statistic step by step using a short example. Ten students each took a 10-question true/false quiz (50% expected by chance). Their scores (percent correct) are:
 
-**Scores**: 50, 70, 60, 40, 80, 30, 90, 60, 70, 60
+**Scores:** 50, 70, 60, 40, 80, 30, 90, 60, 70, 60
 
 ```{r}
 #| label: ex-onesample-t
@@ -244,19 +244,19 @@ We can confirm this with a single R command, `t.test(scores, mu = 50)`:
 
 **Results:** $t(9)=`r round(tt$statistic,2)`$, $p=`r signif(tt$p.value,3)`$; mean $=`r round(tt$estimate,2)`$ (95% CI \[`r ci_lo`, `r ci_hi`\]).
 
-**Interpretation:** The mean (`r round(x,0)`%) is above chance (50%), but the difference is not statistically significant at $\alpha=.05$.
+**Interpretation.** The mean (`r round(x,0)`%) is above chance (50%), but the difference is not statistically significant at $\alpha=.05$.
 
-**Assumptions check:** Observations are independent, and the 10 scores are approximately normal, which is sufficient for a one-sample $t$-test.
+**Assumptions check.** Observations are independent, and the 10 scores are approximately normal, which is sufficient for a one-sample $t$-test.
 
 ### Assumptions, and what to do when they don't hold
 
 Every test in this book has assumptions. Assumptions are conditions that need to be roughly true for the math behind the test to be trustworthy. There are two different kinds of assumptions.
 
-**The universal assumption.** Every test in this book, including the nonparametric tests in Chapter 7, assumes your observations are **independent** (in paired designs, the pairs) and came from a **sound study design** (a fair sample, not one that systematically favors certain values). This assumption is so constant that from here on, we won't re-list it test by test. Keep it in the back of your mind, but if an exam or homework question asks you to "list the assumptions of this test," this isn't the answer they're looking for.
+**The universal assumption.** Every test in this book, including the nonparametric tests in Chapter 7, assumes your observations are independent (in paired designs, the pairs) and came from a sound study design (a fair sample, not one that systematically favors certain values). This assumption is so constant that from here on, we won't re-list it test by test. Keep it in the back of your mind, but if an exam or homework question asks you to "list the assumptions of this test," this isn't the answer they're looking for.
 
-**Test-specific assumptions.** These come from how a particular test's math actually works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is **approximate normality** of the outcome itself (one-sample) or of the difference scores (paired). The $t$-distribution we've been using to get $p$-values is *derived* assuming the sampling distribution of the sample mean is normal. If your data are badly skewed and your sample is small, that assumption fails, and the $p$-value may not be the true probability of a result this extreme under $H_0$.
+**Test-specific assumptions.** These come from how a particular test's math actually works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is approximate normality of the outcome itself (one-sample) or of the difference scores (paired). The $t$-distribution we've been using to get $p$-values is *derived* assuming the sampling distribution of the sample mean is normal. If your data are badly skewed and your sample is small, that assumption fails, and the $p$-value may not be the true probability of a result this extreme under $H_0$.
 
-**How worried should you be?** It depends on $n$. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the sample mean tends toward normal even when individual observations are skewed, so the $t$-test is fairly **robust** to non-normality once $n$ is reasonably large. A lot of environmental data, particularly field data, instead comes from **small samples that are also skewed**. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit before the storm rolled in. A $t$-test's answer becomes questionable when the sample is small and the data are also non-normal.
+**How worried should you be?** It depends on $n$. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the sample mean tends toward normal even when individual observations are skewed, so the $t$-test is fairly **robust** to non-normality once $n$ is reasonably large. A lot of environmental data, particularly field data, instead comes from small samples that are also skewed. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit before the storm rolled in. A $t$-test's answer becomes questionable when the sample is small and the data are also non-normal.
 
 **What to do about it.** First, look at your data. A histogram or a QQ-plot will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. Treat it as one more piece of evidence, though, rather than a strict gate. With a small sample, exactly when a violation matters most, it has low power and will often say "no problem" even when there is one. If your data look far from normal and your sample is small, you have another option: a **nonparametric test**, which does not assume normality. You'll meet these nonparametric alternatives in the next chapter, once we've covered all three $t$-test forms below.
 
@@ -426,9 +426,9 @@ The rule is Chapter 4's, unchanged: default to two-tailed, and go one-tailed onl
 
 ## Paired t: before/after or matched
 
-When the **same units** are measured twice (before/after, matched pairs), the question is whether they **changed**. The natural data unit is the **within-unit difference**.
+When the same units are measured twice (before/after, matched pairs), the question is whether they changed. The natural data unit is the **within-unit difference**.
 
-**Design in this worked example.** Ecologists measured soil moisture at 20 field plots before wetland restoration and again one year later, to see whether restoration **increased** moisture enough to support plant reestablishment and carbon sequestration. @fig-6paireddesign shows the design.
+**Design in this worked example.** Ecologists measured soil moisture at 20 field plots before wetland restoration and again one year later, to see whether restoration increased moisture enough to support plant reestablishment and carbon sequestration. @fig-6paireddesign shows the design.
 
 ```{r}
 #| label: fig-6paireddesign
@@ -448,18 +448,18 @@ The dashed boxes mark what makes this design paired. In every design so far the 
 **Define differences and their meaning.** Choose an order and stick to it:
 
 -   $d_i = \text{After}_i - \text{Before}_i$
--   $d_i>0$: plot had **more** soil moisture after restoration (increase)
--   $d_i<0$: plot had **less** soil moisture after restoration (decrease)
+-   $d_i>0$: plot had more soil moisture after restoration (increase)
+-   $d_i<0$: plot had less soil moisture after restoration (decrease)
 
-This subtraction **cancels between-plot variability** (some plots are naturally wetter than others) and focuses on **within-plot change**.
+This subtraction cancels between-plot variability (some plots are naturally wetter than others) and focuses on within-plot change.
 
-**Test on differences (paired** $t$). Compute one difference per plot, then run a **one-sample** $t$ against 0:
+**Test on differences (paired $t$).** Compute one difference per plot, then run a one-sample $t$ against 0:
 
 $$\bar d=\frac{1}{n}\sum_{i=1}^n d_i, \quad
 s_d=\text{SD}(d_1,\ldots,d_n), \quad
 t = \frac{\bar d - 0}{s_d/\sqrt{n}}, \quad df=n-1.$$
 
-The **sign of** $t$ matches $\bar d$ and your difference direction.
+The sign of $t$ matches $\bar d$ and your difference direction.
 
 **What to report.** $\bar d$ (the mean change), a 95% CI, $t(df)$, and $p$. Optionally add a standardized effect (Cohen's $d=\bar d/s_d$).
 
@@ -526,7 +526,7 @@ The sign of $t$ matches the sign of the mean difference (ours was $+2.8$ percent
 
 ### Scaling to the full sample
 
-The five plots above are a subset of the full restoration study, which measured all **20** paired plots. With only $n=5$, $t(4)=1.83$ was not significant ($p=.141$).
+The five plots above are a subset of the full restoration study, which measured all 20 paired plots. With only $n=5$, $t(4)=1.83$ was not significant ($p=.141$).
 
 ```{r, echo=FALSE}
 before_full <- c(18, 22, 16, 25, 21, 27, 26, 23, 28, 23, 19, 19, 20, 25, 15, 24, 23, 16, 18, 21)
@@ -557,7 +557,7 @@ A natural first guess is to average the two groups' standard errors:
 
 $$t = \frac{\bar{A}-\bar{B}}{\left(\dfrac{SE_A+SE_B}{2}\right)}$$
 
-That average understates how much a difference between two means varies. The standard error of a difference between two independent means is $\sqrt{SE_A^2 + SE_B^2}$, which is always larger than the average of the two SEs. Instead of averaging, the independent-samples $t$-test **pools** the two groups' variances, weighted by their degrees of freedom, into a single estimate for the denominator:
+That average understates how much a difference between two means varies. The standard error of a difference between two independent means is $\sqrt{SE_A^2 + SE_B^2}$, which is always larger than the average of the two SEs. Instead of averaging, the independent-samples $t$-test pools the two groups' variances, weighted by their degrees of freedom, into a single estimate for the denominator:
 
 $$t = \frac{\bar{x}_A-\bar{x}_B}{s_p\sqrt{\dfrac{1}{n_A}+\dfrac{1}{n_B}}}$$
 
@@ -622,7 +622,7 @@ Note the paired write-up never mentions the before and after means separately. T
 
 ## Simulating data for t-tests
 
-Chapter 4 simulated *group mean differences* to build a chance window. Here we simulate the **test statistic itself**, which shows two things the earlier simulation could not: what the null distribution of $t$ actually looks like, and what happens to $p$-values when $H_0$ is true.
+Chapter 4 simulated *group mean differences* to build a chance window. Here we simulate the test statistic itself, which shows two things the earlier simulation could not: what the null distribution of $t$ actually looks like, and what happens to $p$-values when $H_0$ is true.
 
 Simulating under conditions you choose builds intuition for how sampling error affects your results given your design: sample size, the size of the difference you expect, and the amount of variation. Formal power analyses use the same methods.
 
@@ -757,7 +757,7 @@ Now almost all of the experiments (`r sum(save_ps < .05)` of 1000) show a $p$-va
 
 -   **Signal over noise.** A difference is only impressive relative to the variability around it. Every $t$ statistic is a ratio: the effect you observed on top, an estimate of how much that effect could bounce around by chance on the bottom.
 -   **Three forms, one idea.** The one-sample, paired, and independent-samples $t$-tests differ in what goes into the numerator, but all three ask whether an observed difference is large compared to its own standard error. The paired test is just the one-sample test applied to difference scores.
--   **Why** $t$ and not $z$. When the population SD $\sigma$ is unknown, we estimate it with $s$, which adds uncertainty. The $t$ distribution accounts for that by being fatter in the tails than the normal, and it tightens toward the normal as degrees of freedom grow.
+-   **Why $t$ and not $z$.** When the population SD $\sigma$ is unknown, we estimate it with $s$, which adds uncertainty. The $t$ distribution accounts for that by being fatter in the tails than the normal, and it tightens toward the normal as degrees of freedom grow.
 -   **Assumptions come in two kinds.** *Independence and a sound study design* apply to every test in this book and are assumed from here on. The *test-specific* assumption is approximate normality: of the outcome (one-sample), of the difference scores (paired), or of each group (independent samples). The pooled independent-samples test also assumes similar variances.
--   **How worried to be depends on** $n$. Thanks to the Central Limit Theorem, $t$-tests are fairly robust to non-normality once samples are reasonably large. $t$-tests are least trustworthy when samples are small *and* skewed, which describes a lot of environmental field data. Plot your data first, and treat a Shapiro-Wilk result as evidence rather than a gate, since it has the least power with small samples, when a violation matters most.
+-   **How worried to be depends on $n$.** Thanks to the Central Limit Theorem, $t$-tests are fairly robust to non-normality once samples are reasonably large. $t$-tests are least trustworthy when samples are small *and* skewed, which describes a lot of environmental field data. Plot your data first, and treat a Shapiro-Wilk result as evidence rather than a gate, since it has the least power with small samples, when a violation matters most.
 -   **Choose your tails before you look.** Default to two-tailed. Reserve one-tailed tests for cases where a difference in the opposite direction would lead to the same action as no difference, and decide before seeing the result.

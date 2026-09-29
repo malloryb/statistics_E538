@@ -66,7 +66,7 @@ f1 <- function(x) formatC(x, format = "f", digits = 1)  # one decimal, keeps 6.0
 
 In science, outcomes rarely depend on just one thing. Climate, soil type, and water availability all act together to influence ecosystems in ways a single-factor design can't capture. *Factorial designs* let us study several factors, and how they interact with each other, at once.
 
-This chapter covers both halves of that. First, **how to compute** a factorial ANOVA, including a full by-hand walkthrough of the sums-of-squares arithmetic. Second, **how to interpret** the result. This can be tricky with multiple factors. When an *interaction* is present, it changes what every other number in your results table means.
+This chapter covers both halves of that. First, how to compute a factorial ANOVA, including a full by-hand walkthrough of the sums-of-squares arithmetic. Second, how to interpret the result. This can be tricky with multiple factors. When an *interaction* is present, it changes what every other number in your results table means.
 
 ## Factorial basics
 
@@ -103,7 +103,7 @@ Each combination of soil type and water availability creates a unique environmen
 
 ### Factorial Notation
 
-Anytime **all of the levels** of each IV in a design are fully crossed, so that they all occur for each level of every other IV, we can say the design is a **fully factorial** design.
+Anytime all of the levels of each IV in a design are fully crossed, so that they all occur for each level of every other IV, we can say the design is a **fully factorial** design.
 
 The notation system indicates the structure of the factorial design. Each IV gets a number representing its levels. Here are a few examples:
 
@@ -121,7 +121,7 @@ The rest of this chapter uses one example throughout.
 
 **The question.** Streams are affected by pollution, but also by how fast the water moves. Fast-moving water flushes contaminants downstream and re-oxygenates the channel; slow water lets them sit. So pollution might do more damage in a sluggish stream than a fast one. To measure that damage, we need to operationalize stream health.
 
-**The dependent variable** is **macroinvertebrate species count**: how many distinct kinds of aquatic insects, snails, worms, and crustaceans live in a stream. This is a standard measure of stream health. These animals sit in the middle of the food web, many are pollution-sensitive, and they can't flee a degraded stream the way fish can. More species present means a healthier stream.
+The dependent variable is macroinvertebrate species count: how many distinct kinds of aquatic insects, snails, worms, and crustaceans live in a stream. This is a standard measure of stream health. These animals sit in the middle of the food web, many are pollution-sensitive, and they can't flee a degraded stream the way fish can. More species present means a healthier stream.
 
 **The design.** We run an experiment in artificial stream channels, each assigned one pollution condition and one flow rate. @fig-10design summarizes it.
 
@@ -141,7 +141,7 @@ design_crossed("Pollution (categorical) × Flow rate (categorical)",
 
 Two IVs, two levels each, so you should already be able to name this design: it's a 2x2. Reading the schematic left to right also shows why the notation works the way it does. Crossing two levels with two levels *is* the multiplication that gives four conditions, and "fully crossed" means no cell is left empty.
 
-That four-cell grid resembles the chi-square table from Chapter 7, but the cells mean different things. There, the cells held **counts** of stream sites that already had a given land use and *E. coli* level; nobody put them there. Here, the cells are **conditions we assign channels to**, and within each one we then measure something else entirely, the species count.
+That four-cell grid resembles the chi-square table from Chapter 7, but the cells mean different things. There, the cells held *counts* of stream sites that already had a given land use and *E. coli* level; nobody put them there. Here, the cells are *conditions we assign channels to*, and within each one we then measure something else entirely, the species count.
 
 **Predictions.** No pollution plus high flow should support the most species; pollution plus low flow should support the fewest. The other two combinations are the interesting ones, and a one-factor study could never distinguish them: does pollution matter only when flow is low, with fast water washing its effect away entirely? Or does pollution hurt a stream no matter how fast the water moves? An interaction test in a factorial experiment answers that question.
 
@@ -163,7 +163,7 @@ means_tbl <- data.frame(
 knitr::kable(means_tbl, align = "lrrr")
 ```
 
-The pollution marginal means (`r round(nopoll_mean, 2)` and `r round(poll_mean, 2)`) average each row across both flow rates. The flow marginal means (`r round(low_mean, 2)` and `r round(high_mean, 2)`) average each column across both pollution conditions. The corner, `r round(gm, 2)`, is the **grand mean** of all 20 channels.
+The pollution marginal means (`r round(nopoll_mean, 2)` and `r round(poll_mean, 2)`) average each row across both flow rates. The flow marginal means (`r round(low_mean, 2)` and `r round(high_mean, 2)`) average each column across both pollution conditions. The corner, `r round(gm, 2)`, is the grand mean of all 20 channels.
 
 ## Why factorial designs matter
 
@@ -212,7 +212,7 @@ A factorial design can show what changes the size of an effect, in addition to w
 
 ### Main effects and interactions
 
-A factorial design gives you two kinds of results: **main effects** and **interactions**. How many of each depends on the number of IVs.
+A factorial design gives you two kinds of results: main effects and interactions. How many of each depends on the number of IVs.
 
 A **main effect** is the average difference associated with a single IV, the difference between its marginal means, one per IV. A 2x2 design has two IVs, so two main effects: one for Pollution and one for Flow. A 2x2x2 design has three main effects, one per IV; a 3x3x3 design also has three, since the number of main effects tracks the number of IVs, not their levels.
 
@@ -226,7 +226,7 @@ The number of possible interactions scales with the number of IVs. A 2x2 design 
 
 ## What a 2x2 actually tests
 
-A two-way ANOVA tests **three effects** and therefore has **three null hypotheses**:
+A two-way ANOVA tests three effects and therefore has three null hypotheses:
 
 1.  a main effect of pollution,
 2.  a main effect of flow, and
@@ -245,20 +245,20 @@ We can represent the four combinations of conditions and their mean species coun
 
 **Main effect of pollution**
 
--   **Null (**$H_0$): There is no effect of pollution on mean species count.
--   **Alternative (**$H_a$): Pollution affects mean species count.
+-   **Null ($H_0$):** There is no effect of pollution on mean species count.
+-   **Alternative ($H_a$):** Pollution affects mean species count.
 
 **Main effect of flow**
 
--   **Null (**$H_0$): There is no effect of flow rate on mean species count.
--   **Alternative (**$H_a$): Flow rate affects mean species count.
+-   **Null ($H_0$):** There is no effect of flow rate on mean species count.
+-   **Alternative ($H_a$):** Flow rate affects mean species count.
 
 **Pollution × flow interaction**
 
--   **Null (**$H_0$): The effect of pollution is the same at both flow rates. *(In symbols:* $(\mu_{\text{NoPoll,Low}}-\mu_{\text{Poll,Low}})=(\mu_{\text{NoPoll,High}}-\mu_{\text{Poll,High}})$.)
--   **Alternative (**$H_a$): The effect of pollution differs across flow rates.
+-   **Null ($H_0$):** The effect of pollution is the same at both flow rates. *(In symbols:* $(\mu_{\text{NoPoll,Low}}-\mu_{\text{Poll,Low}})=(\mu_{\text{NoPoll,High}}-\mu_{\text{Poll,High}})$.)
+-   **Alternative ($H_a$):** The effect of pollution differs across flow rates.
 
-> **Plain English:** Under the interaction null, the gap between polluted and unpolluted channels is the same whether the water is moving fast or slow. If that gap changes, for example if pollution does far more damage under low flow, you've found an interaction.
+> **Plain English.** Under the interaction null, the gap between polluted and unpolluted channels is the same whether the water is moving fast or slow. If that gap changes, for example if pollution does far more damage under low flow, you've found an interaction.
 
 ::: {.callout-note title="Note: General form"}
 You'll sometimes see this written in abstract terms, with "Factor A" and "Factor B." For example: $H_0: (\mu_{A1,B1}-\mu_{A2,B1})=(\mu_{A1,B2}-\mu_{A2,B2})$. It's the same logic: just replace A and B with your own variables.
@@ -266,7 +266,7 @@ You'll sometimes see this written in abstract terms, with "Factor A" and "Factor
 
 ## What the ANOVA compares
 
-Recall from earlier: an interaction is a **difference between differences**. Here's that idea with the four cell means from @tbl-10means, before we touch a single sum of squares. Writing a simple effect as $\Delta$, with the level it is computed at after the bar:
+Recall from earlier: an interaction is a difference between differences. Here's that idea with the four cell means from @tbl-10means, before we touch a single sum of squares. Writing a simple effect as $\Delta$, with the level it is computed at after the bar:
 
 $$\Delta_\text{Pollution|Low} = \bar{x}_\text{NoPoll,Low} - \bar{x}_\text{Poll,Low} = `r f1(mean(A))` - `r f1(mean(B))` = `r f1(simple_low)`$$
 
@@ -276,7 +276,7 @@ Those two numbers aren't the same, so the effect of pollution isn't constant acr
 
 ## Computing a factorial ANOVA by hand
 
-In our **between-subjects** 2x2 design, different stream channels appear in each condition: 5 stream channels assigned to each combination of conditions, 20 channels total, no repeats. The logic is the same as the one-way ANOVA in Chapter 8: partition the total variance into parts. For a 2x2 design, there's now one more part, the interaction:
+In our between-subjects 2x2 design, different stream channels appear in each condition: 5 stream channels assigned to each combination of conditions, 20 channels total, no repeats. The logic is the same as the one-way ANOVA in Chapter 8: partition the total variance into parts. For a 2x2 design, there's now one more part, the interaction:
 
 $$SS_\text{Total} = SS_\text{Pollution} + SS_\text{Flow} + SS_\text{Interaction} + SS_\text{Error}$$
 
@@ -313,7 +313,7 @@ df_total <- rbind(df_total, c("Means", "", round(mean(species), 2), "", ""))
 knitr::kable(df_total, row.names = FALSE)
 ```
 
-The mean of all 20 scores is the **grand mean**, `r round(gm,2)`. The `Diff` column holds every channel's distance from it; `Diff Squared` squares those distances so they don't cancel (the same reason we squared deviations for the one-way ANOVA). Summing the squared column gives $SS_\text{Total} = `r round(sum(diff_sq),2)`$.
+The mean of all 20 scores is the grand mean, `r round(gm,2)`. The `Diff` column holds every channel's distance from it; `Diff Squared` squares those distances so they don't cancel (the same reason we squared deviations for the one-way ANOVA). Summing the squared column gives $SS_\text{Total} = `r round(sum(diff_sq),2)`$.
 
 ### SS Pollution
 
@@ -482,7 +482,7 @@ It's convenient to think of a main effect as one manipulation's consistent influ
 
 ### Reading patterns in a 2x2
 
-In any 2x2 ANOVA, there are eight general outcome patterns, different combinations of main effects and interactions. You don't need to memorize all eight, but you should learn to **read them in a line plot**:
+In any 2x2 ANOVA, there are eight general outcome patterns, different combinations of main effects and interactions. You don't need to memorize all eight, but you should learn to read them in a line plot:
 
 | Pattern | Main Effect: Pollution | Main Effect: Flow | Interaction |
 |:-------:|:----------------------:|:-----------------:|:-----------:|
@@ -506,7 +506,7 @@ Every figure in this chapter puts flow rate on the x-axis and draws one line (or
 For example:
 
 -   If the no-pollution line sits above the pollution line on average, there's a main effect of pollution.
--   If the lines converge, diverge, or cross, the **pollution effect changes across flow rates**, showing an interaction.
+-   If the lines converge, diverge, or cross, the pollution effect changes across flow rates, showing an interaction.
 -   If the lines rise or fall on average from low to high flow (say, high flow supports more species in both pollution conditions), that's a main effect of flow.
 
 The eight panels below are numbered to match the table above, so panel "Pattern 3" in the figure is row 3 in the table, and so on.
@@ -588,7 +588,7 @@ In the line graphs, interactions are easiest to see:
 
 -   **Parallel lines** mean no interaction (the pollution effect is the same at both flow rates).
 -   **Crossing lines** mean an interaction (the pollution effect differs by flow). The lines don't have to cross inside the plot: converging or diverging lines would cross if you extended them, so they count too.
--   The **average gap** between the two lines is the main effect of pollution; the lines' **average rise or fall** from low to high flow is the main effect of flow.
+-   The average gap between the two lines is the main effect of pollution; the lines' average rise or fall from low to high flow is the main effect of flow.
 
 ::: {.callout-tip title="Tip: Which factor goes on the x-axis?"}
 The statistics are identical either way, since the same cell means get plotted regardless. Two rules of thumb make the picture easier to read. Put the factor with more levels on the x-axis, since one long line is easier to follow than several short, crowded ones. And draw the factor whose effect you're asking about as the lines, so its simple effect at each level of the other factor is the gap between the lines. That's why this chapter puts flow on the x-axis: the question is how the effect of pollution changes with flow.
@@ -641,16 +641,16 @@ When a factor has only two levels, as Pollution does here, the simple-effects te
 
 ### Order of interpretation
 
-When we conduct a two-way ANOVA, we always begin by reading the **interaction** term, because it decides what the main effects mean.
+When we conduct a two-way ANOVA, we always begin by reading the interaction term, because it decides what the main effects mean.
 
--   If the interaction is **not significant**, examine the two main effects separately, interpreting each as an overall difference averaged across the other factor. If a significant main effect has three or more levels, follow it with Tukey HSD on that factor, exactly as in Chapter 8.
+-   If the interaction is *not significant*, examine the two main effects separately, interpreting each as an overall difference averaged across the other factor. If a significant main effect has three or more levels, follow it with Tukey HSD on that factor, exactly as in Chapter 8.
 
--   If the interaction is **significant**, lead with the simple effects: how one factor behaves at each level of the other. "Pollution reduced species count sharply under low flow, and less under high flow" is a simple-effects sentence; "there was a main effect of pollution" on its own is not enough. Whether the main effect is still worth reporting depends on the direction of the simple effects:
+-   If the interaction is significant, lead with the simple effects: how one factor behaves at each level of the other. "Pollution reduced species count sharply under low flow, and less under high flow" is a simple-effects sentence; "there was a main effect of pollution" on its own is not enough. Whether the main effect is still worth reporting depends on the direction of the simple effects:
 
     -   If the simple effects all point the same way and differ only in size, the main effect still describes something real. Report it, qualified by the interaction: "There was a main effect of pollution, qualified by a Pollution × Flow interaction."
     -   If one simple effect is near zero, or they point in opposite directions, the main effect is an average that describes no actual condition. Don't report it as a general effect of that factor.
 
--   If **neither** the interaction nor either main effect is significant, there is nothing to follow up on. Do not run, or interpret, post-hoc tests on a result that never cleared the omnibus test in the first place.
+-   If *neither* the interaction nor either main effect is significant, there is nothing to follow up on. Do not run, or interpret, post-hoc tests on a result that never cleared the omnibus test in the first place.
 
 
 The three examples below show each case of that rule.
@@ -781,11 +781,11 @@ Up until now we have focused on the simplest case for factorial designs, the 2x2
 
 This design works like the 2x2, with one more level added to one factor. The test structure is the same (two main effects and one interaction). The interaction is harder to interpret.
 
-Let's expand our stream example. Suppose we examine macroinvertebrate species count (DV) under **three flow rates** (low, medium, high) crossed with two pollution conditions (no pollution vs. pollution).
+Let's expand our stream example. Suppose we examine macroinvertebrate species count (DV) under three flow rates (low, medium, high) crossed with two pollution conditions (no pollution vs. pollution).
 
--   The **main effect of pollution** tests whether, on average, polluted and unpolluted channels differ in species count across all flow rates.
--   The **main effect of flow** tests whether mean species count differs among flow rates.
--   The **interaction** tests whether the pollution effect (unpolluted − polluted) changes with flow rate.
+-   The main effect of pollution tests whether, on average, polluted and unpolluted channels differ in species count across all flow rates.
+-   The main effect of flow tests whether mean species count differs among flow rates.
+-   The interaction tests whether the pollution effect (unpolluted − polluted) changes with flow rate.
 
 In a 2x2 design, you can easily spot interactions by looking for non-parallel lines. In a 3x2, the idea is the same, but with three points per line the patterns are harder to read.
 
@@ -793,18 +793,18 @@ You have three hypotheses in a 3x2 factorial design:
 
 **Hypothesis 1: Main effect of flow**
 
--   **Null (**$H_{0,1}$): $\mu_{\text{Low}} = \mu_{\text{Medium}} = \mu_{\text{High}}$
--   **Alternative (**$H_{a,1}$): At least one flow rate mean differs from the others.
+-   **Null ($H_{0,1}$):** $\mu_{\text{Low}} = \mu_{\text{Medium}} = \mu_{\text{High}}$
+-   **Alternative ($H_{a,1}$):** At least one flow rate mean differs from the others.
 
 **Hypothesis 2: Main effect of pollution**
 
--   **Null (**$H_{0,2}$): $\mu_{\text{NoPoll}} = \mu_{\text{Poll}}$
--   **Alternative (**$H_{a,2}$): Mean species count differs between polluted and unpolluted channels.
+-   **Null ($H_{0,2}$):** $\mu_{\text{NoPoll}} = \mu_{\text{Poll}}$
+-   **Alternative ($H_{a,2}$):** Mean species count differs between polluted and unpolluted channels.
 
 **Hypothesis 3: Pollution × flow interaction**
 
--   **Null (**$H_{0,3}$): The pollution effect is the same across all flow rates. $[ (\mu_{\text{NoPoll,Low}}-\mu_{\text{Poll,Low}}) = (\mu_{\text{NoPoll,Med}}-\mu_{\text{Poll,Med}}) = (\mu_{\text{NoPoll,High}}-\mu_{\text{Poll,High}}) ]$
--   **Alternative (**$H_{a,3}$): The pollution effect differs across flow rates (i.e., at least one difference between differences is not equal).
+-   **Null ($H_{0,3}$):** The pollution effect is the same across all flow rates. $[ (\mu_{\text{NoPoll,Low}}-\mu_{\text{Poll,Low}}) = (\mu_{\text{NoPoll,Med}}-\mu_{\text{Poll,Med}}) = (\mu_{\text{NoPoll,High}}-\mu_{\text{Poll,High}}) ]$
+-   **Alternative ($H_{a,3}$):** The pollution effect differs across flow rates (i.e., at least one difference between differences is not equal).
 
 Remember, this is far better than running a separate $t$-test of polluted vs. unpolluted channels at each of the three flow rates, because you have more statistical power (higher degrees of freedom) for the tests of interest, and you get a formal test of the interaction between factors which is often scientifically interesting.
 
@@ -838,11 +838,11 @@ ggplot(df, aes(x = flow_rate, y = species_count, colour = pollution, group = pol
 
 The figure shows made-up means for all six conditions.
 
-1.  **Main Effect of Pollution**: The main effect of pollution is evident. Averaged across flow rates, unpolluted channels support higher species counts (10 vs. 7.3). The "No Pollution" line sits above the "Pollution" line at low and medium flow, and the two coincide at high flow.
+1.  **Main Effect of Pollution.** The main effect of pollution is evident. Averaged across flow rates, unpolluted channels support higher species counts (10 vs. 7.3). The "No Pollution" line sits above the "Pollution" line at low and medium flow, and the two coincide at high flow.
 
-2.  **Main Effect of Flow**: There is a main effect of flow as well. Averaged over pollution condition, species counts are lowest at low flow (8) and higher at medium and high flow (9 each).
+2.  **Main Effect of Flow.** There is a main effect of flow as well. Averaged over pollution condition, species counts are lowest at low flow (8) and higher at medium and high flow (9 each).
 
-3.  **Interaction Between Pollution and Flow**: There is an interaction. Remember, an interaction occurs when the effect of one IV depends on the levels of another. The pollution gap is 6 species at low flow, 2 at medium, and 0 at high. So the size of the pollution effect changes with flow rate, which is also why the pollution main effect above describes no single flow condition well. You would have to conduct an inferential test on the interaction term to see if these differences were likely or unlikely to be due to sampling error.
+3.  **Interaction Between Pollution and Flow.** There is an interaction. Remember, an interaction occurs when the effect of one IV depends on the levels of another. The pollution gap is 6 species at low flow, 2 at medium, and 0 at high. So the size of the pollution effect changes with flow rate, which is also why the pollution main effect above describes no single flow condition well. You would have to conduct an inferential test on the interaction term to see if these differences were likely or unlikely to be due to sampling error.
 
 If there was no interaction and no main effect of flow, we would see something like the pattern in @fig-1023one.
 
@@ -906,21 +906,21 @@ Larger factorial designs use the same logic as the 2x2. But complexity grows qui
 
 ### 2x2x2 (Three-Factor) Designs
 
-A 2x2x2 design includes **three independent variables**, each with two levels. That creates:
+A 2x2x2 design includes three independent variables, each with two levels. That creates:
 
--   three **main effects** (one per variable)
+-   three main effects (one per variable)
 -   three **two-way interactions** (A×B, A×C, B×C)
--   one **three-way interaction** (A×B×C)
+-   one three-way interaction (A×B×C)
 
 You can think of it as two 2x2 plots side-by-side; one for each level of the third variable.
 
 A **three-way interaction** means that one of the two-way interactions changes across the third variable. For example, the pollution × flow interaction might look different in summer than in winter.
 
-In short, interactions can themselves interact. The math is identical in structure, but the number of effects grows fast, and the graphs become difficult to interpret. In applied research, most studies stop at **two factors** unless there's a strong reason to add more.
+In short, interactions can themselves interact. The math is identical in structure, but the number of effects grows fast, and the graphs become difficult to interpret. In applied research, most studies stop at two factors unless there's a strong reason to add more.
 
 ### Mixed Designs
 
-Sometimes one factor is **between-subjects** (e.g., different sites or treatments) and another is **within-subjects** (e.g., repeated measures over time). This is called a **mixed design**.
+Sometimes one factor is between-subjects (e.g., different sites or treatments) and another is within-subjects (e.g., repeated measures over time). This is called a **mixed design**.
 
 The interpretation of main effects and interactions is the same, but the error terms used in the F-tests differ, and the data structure must account for repeated measures. These models are important in longitudinal and environmental time-series studies, but they're beyond our current scope.
 

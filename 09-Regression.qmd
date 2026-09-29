@@ -34,11 +34,11 @@ library(broom)
 library(knitr)
 ```
 
-Back in Chapter 2, we used the covariance between two variables to quantify the strength and direction of a relationship (**Pearson's** $r$), and fit a best-fit line through a scatterplot. We could not yet ask the **inference question** every other test in this book has asked:
+Back in Chapter 2, we used the covariance between two variables to quantify the strength and direction of a relationship (Pearson's $r$), and fit a best-fit line through a scatterplot. We could not yet ask the inference question every other test in this book has asked:
 
 *Could chance alone plausibly have produced our result?*
 
-Now that we've learned hypothesis testing, sampling distributions, and the logic of comparing an observed statistic to a null distribution, we can apply that same logic to the regression line and test whether a given **slope** is evidence of a real relationship.
+Now that we've learned hypothesis testing, sampling distributions, and the logic of comparing an observed statistic to a null distribution, we can apply that same logic to the regression line and test whether a given slope is evidence of a real relationship.
 
 ## Regression Basics
 
@@ -85,18 +85,18 @@ $intercept = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^
 
 $slope = b_1 = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2} = \frac{7*231-34*39}{7*200-34^2} = 1.19$
 
-With $b_0$ and $b_1$ in hand, we can compute a **residual** for any observed point: the difference between what we observed and what the line predicts, $e = y - \hat y$, where $\hat y = b_0 + b_1x$. For the first row above ($x=1, y=2$): $\hat y = -.221 + 1.19(1) = .969$, so $e = 2 - .969 = 1.031$. That point sits above the line. Repeating this for every point, then squaring and summing the residuals, gives the quantity that $b_0$ and $b_1$ were chosen to minimize. The residual $e$ is the sample's version of the error $\varepsilon$. The error $\varepsilon$ belongs to the population line, which we never see, and the residual $e$ belongs to the line we fit.
+With $b_0$ and $b_1$ in hand, we can compute a residual for any observed point: the difference between what we observed and what the line predicts, $e = y - \hat y$, where $\hat y = b_0 + b_1x$. For the first row above ($x=1, y=2$): $\hat y = -.221 + 1.19(1) = .969$, so $e = 2 - .969 = 1.031$. That point sits above the line. Repeating this for every point, then squaring and summing the residuals, gives the quantity that $b_0$ and $b_1$ were chosen to minimize. The residual $e$ is the sample's version of the error $\varepsilon$. The error $\varepsilon$ belongs to the population line, which we never see, and the residual $e$ belongs to the line we fit.
 
 **Parameters and sample statistics**
 
-The beta coefficients in the model are **population parameters**. Like other population parameters, they belong to a population distribution that we infer but never know for certain.
+The beta coefficients in the model are population parameters. Like other population parameters, they belong to a population distribution that we infer but never know for certain.
 
 | Symbol             | What is it?                         | Do we know it?                                  |
 |--------------------|-------------------------------------|-------------------------------------------------|
 | $\beta_0, \beta_1$ | True population intercept and slope | Almost never known for sure                     |
 | $b_0, b_1$         | Sample intercept and slope          | Yes, calculated by fitting the line to our data |
 
-Drawing the best-fit line through our data gives a *sample slope*, usually written $b_1$.
+Drawing the best-fit line through our data gives a **sample slope**, usually written $b_1$.
 
 ## Worked regression example: stream temperature and dissolved oxygen
 
@@ -227,7 +227,7 @@ $$t = \frac{b_1}{SE(b_1)} = \frac{`r sprintf("%.3f", coef(fit)[2])`}{`r sprintf(
 
 with $df = n - 2 = `r nrow(stream_df) - 2`$ (one degree of freedom spent estimating the intercept, one for the slope).
 
-**Where the** $p$-value comes from. If temperature and DO were truly unrelated in the population, repeating this study many times would still produce a nonzero $b_1$ just by chance, and a $t$-statistic that follows a $t$-distribution with $df = `r nrow(stream_df) - 2`$. @fig-9regslopenull shows that distribution, with the critical values marking the boundary of the most extreme 5% under $H_0$, and our observed $t$ marked against it.
+**Where the $p$-value comes from.** If temperature and DO were truly unrelated in the population, repeating this study many times would still produce a nonzero $b_1$ just by chance, and a $t$-statistic that follows a $t$-distribution with $df = `r nrow(stream_df) - 2`$. @fig-9regslopenull shows that distribution, with the critical values marking the boundary of the most extreme 5% under $H_0$, and our observed $t$ marked against it.
 
 ```{r}
 #| label: fig-9regslopenull
@@ -259,7 +259,7 @@ ggplot(t_null, aes(x, y)) +
 
 Our observed $t = `r sprintf("%.2f", fit_tidy$statistic[2])`$ sits far past the critical values of about $\pm`r sprintf("%.2f", qt(.975, nrow(stream_df)-2))`$, well outside where 95% of $t$-values would fall if temperature and DO were unrelated. The $p$-value is the probability of a $t$ that far out (or farther) in either tail under $H_0$: here, $p`r fmt_p(fit_tidy$p.value[2])`$. This crosses the conventional $\alpha = .05$ threshold.
 
-We **reject** $H_0$: stream temperature **is** linearly related to dissolved oxygen.
+We reject $H_0$: stream temperature is linearly related to dissolved oxygen.
 
 The 95% confidence interval for the slope, also in the coefficient table above, is 95% CI [`r sprintf("%.3f", fit_tidy$conf.low[2])`, `r sprintf("%.3f", fit_tidy$conf.high[2])`] mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will.
 
@@ -345,13 +345,13 @@ We report a regression result the same way as any other test: the slope with its
 
 ## Consider both significance and effect size
 
-As with all our tests, our significance test isn't the whole picture. In addition to testing our slope (is $\beta_1$ significantly different from 0?), we also consider $R^2$, which is regression's **effect size**.
+As with all our tests, our significance test isn't the whole picture. In addition to testing our slope (is $\beta_1$ significantly different from 0?), we also consider $R^2$, which is regression's effect size.
 
 A significant slope does not guarantee a large $R^2$, and a large $R^2$ does not guarantee a significant slope.
 
-A **very large sample**, the kind common in remote sensing and other big-data environmental work, can make a trivial effect statistically significant: more observations shrink the standard error until almost any nonzero slope clears $p<.05$, no matter how little variance it explains.
+A very large sample, the kind common in remote sensing and other big-data environmental work, can make a trivial effect statistically significant: more observations shrink the standard error until almost any nonzero slope clears $p<.05$, no matter how little variance it explains.
 
-A **small sample** tends to fail the opposite way, missing a real, sizeable effect because the standard error is too large for it to reach significance.
+A small sample tends to fail the opposite way, missing a real, sizeable effect because the standard error is too large for it to reach significance.
 
 $R^2$ tells you how much of the variation the line explains.
 
@@ -399,13 +399,13 @@ It depends on the field. In studies of human behavior, where many unmeasured fac
 
 Simple linear regression assumes:
 
--   **Linearity**: the true relationship between $X$ and $Y$ is a straight line.
+-   **Linearity.** The true relationship between $X$ and $Y$ is a straight line.
 
--   **Independence**: each observation's error is unrelated to the others'. This is the universal assumption from Chapter 6. Check it against the design: sites along the same stream, or repeated measurements over time, can violate it.
+-   **Independence.** Each observation's error is unrelated to the others'. This is the universal assumption from Chapter 6. Check it against the design: sites along the same stream, or repeated measurements over time, can violate it.
 
--   **Constant variance (homoscedasticity)**: the spread of residuals is roughly the same across the whole range of $X$.
+-   **Constant variance (homoscedasticity).** The spread of residuals is roughly the same across the whole range of $X$.
 
--   **Normality of residuals**: the residuals are approximately normally distributed.
+-   **Normality of residuals.** The residuals are approximately normally distributed.
 
 ### Sometimes the truth isn't a line at all
 
@@ -509,7 +509,7 @@ Fixes typically include:
 
 ### Checking normality
 
-For normality, we check the residuals two ways: visually, with a **Q-Q plot**, and formally, with the **Shapiro-Wilk test**.
+For normality, we check the residuals two ways: visually, with a **Q-Q plot**, and formally, with the Shapiro-Wilk test.
 
 A Q-Q plot sorts the residuals and compares them to where a perfectly normal distribution would place values at the same percentiles. If the residuals are normal, the points fall close to the diagonal line; a systematic curve or S-shape means they don't.
 
@@ -556,7 +556,7 @@ ggplot(outbreak_df, aes(sample = resid)) +
 sh_outbreak <- shapiro.test(resid(fit_outbreak))
 ```
 
-The Q-Q plot looks close to straight, and Shapiro-Wilk agrees ($p = `r fmt_p(sh_outbreak$p.value)`$, not significant). Both checks pass on a model we already know is the wrong shape. That is because they check **normality of the residuals**, which is a different assumption than linearity, and a model can badly violate linearity while its residuals still look roughly normal.
+The Q-Q plot looks close to straight, and Shapiro-Wilk agrees ($p = `r fmt_p(sh_outbreak$p.value)`$, not significant). Both checks pass on a model we already know is the wrong shape. That is because they check *normality of the residuals*, which is a different assumption than linearity, and a model can badly violate linearity while its residuals still look roughly normal.
 
 ## Using the model: prediction
 
@@ -699,4 +699,4 @@ This problem calls for a different model. More data or a better-fitting straight
 -   **Regression partitions variation the way ANOVA does.** $SS_\text{Total}$ splits into $SS_\text{Regression}$ (Chapter 8's between) and $SS_\text{Residual}$ (Chapter 8's within), and $F = MS_\text{Regression}/MS_\text{Residual}$, which equals $t^2$ with one predictor. $R^2$, the proportion of variation explained by the line, is the effect size. A relationship can be real ($p$ small) and still explain very little, which is why you report both.
 -   **Look at your data, then look at your residuals.** The assumptions that must be met are linearity, independence, constant variance, and roughly normal residuals. A residuals-versus-fitted plot catches violations a formal test can miss entirely, as the outbreak example showed.
 -   **Predict inside your data; extrapolate beyond with caution.** Interpolating within the observed range of $x$ is what regression is for. Extrapolating beyond it is sometimes justified, but only when you have good reason to believe the relationship stays the same shape past the range you observed.
--   **A good** $R^2$ can still be the wrong model. The outbreak example fit a straight line to exponential growth and got $R^2=`r sprintf("%.2f", outbreak_tidy$r.squared)`$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast tens of thousands of cases short of reality. The residual plot catches this; a Q-Q plot, which checks a different assumption, does not.
+-   **A good $R^2$ can still be the wrong model.** The outbreak example fit a straight line to exponential growth and got $R^2=`r sprintf("%.2f", outbreak_tidy$r.squared)`$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast tens of thousands of cases short of reality. The residual plot catches this; a Q-Q plot, which checks a different assumption, does not.
