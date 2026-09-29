@@ -179,7 +179,7 @@ ggplot(t_df, aes(x = ts)) +
 
 ```
 
-As degrees of freedom increase, the $t$ distribution gets taller in the middle and narrower in the tails. With more data the sample SD is a more reliable stand-in for $\sigma$, so $t$ behaves more like $z$.
+As degrees of freedom increase, the $t$ distribution gets taller in the middle and thinner in the tails. With more data the sample SD is a more reliable stand-in for $\sigma$, so $t$ behaves more like $z$.
 
 ### What t represents
 
@@ -188,7 +188,7 @@ $t$ expresses how far a sample mean is from the hypothesized mean, in standard e
 $$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}$$
 
 $t$ can be positive or negative depending on direction. Under $H_0$, $t \sim t_{(df=n-1)}$.\
-**Rule of thumb.** At $df\approx 20$, $|t|$ beyond about 2 occurs less than 5% of the time under $H_0$ (two-tailed, $\alpha=.05$). With smaller $df$ the cutoff is higher, as the critical values above show.
+**Rule of thumb.** Under $H_0$, $|t|$ beyond about 2 is rare. The exact two-tailed cutoff at $\alpha = .05$ is 2.09 at $df = 20$, and higher for smaller $df$ (2.26 at $df = 9$).
 
 ::: {.callout-note title="Note: Standard error, again"}
 Remember that $s/\sqrt{n}$ is the standard error (SE), the standard deviation of the sampling distribution of the sample mean.
@@ -198,7 +198,7 @@ Let's see how $t$ values behave when samples really come from the null hypothesi
 
 ```{r}
 #| label: fig-6t-sim
-#| fig-cap: 'Histogram of 1,000 simulated $t$ values ($n=10$) drawn from a population with $\mu_0=0$. Most $t$s cluster near 0; large positive or negative values are rare.'
+#| fig-cap: 'Histogram of 1,000 simulated $t$ values ($n=10$) from a population whose mean equals $\mu_0 = 0$. Most $t$s cluster near 0; large positive or negative values are rare.'
 #| fig-alt: "Histogram of 1000 simulated t values, tallest near zero and tapering off symmetrically toward both larger positive and larger negative values, with very few beyond about plus or minus 3."
 t_vals <- replicate(1000, {
   s <- rnorm(10, 0, 1)
@@ -248,53 +248,11 @@ We can confirm this with a single R command, `t.test(scores, mu = 50)`:
 
 **Interpretation.** The mean (`r round(x,0)`%) is above chance (50%), but the difference is not statistically significant at $\alpha=.05$.
 
-**Assumptions check.** Observations are independent, and the 10 scores are approximately normal, which is sufficient for a one-sample $t$-test.
-
-### Assumptions, and what to do when they don't hold
-
-Every test in this book has assumptions. Assumptions are conditions that need to be roughly true for the math behind the test to be trustworthy. There are two different kinds of assumptions.
-
-**The universal assumption.** Every test in this book, including the nonparametric tests in Chapter 7, assumes your observations are independent (in paired designs, the pairs) and came from a sound study design (a fair sample, not one that systematically favors certain values). This assumption is so constant that from here on, we won't re-list it test by test. Keep it in the back of your mind, but if an exam or homework question asks you to "list the assumptions of this test," this isn't the answer they're looking for.
-
-**Test-specific assumptions.** These come from how a particular test's math actually works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is approximate normality of the outcome itself (one-sample) or of the difference scores (paired). The $t$-distribution we've been using to get $p$-values is *derived* assuming the sampling distribution of the sample mean is normal. If your data are badly skewed and your sample is small, that assumption fails, and the $p$-value may not be the true probability of a result this extreme under $H_0$.
-
-**How worried should you be?** It depends on $n$. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the sample mean tends toward normal even when individual observations are skewed, so the $t$-test is fairly **robust** to non-normality once $n$ is reasonably large. A lot of environmental data, particularly field data, instead comes from small samples that are also skewed. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit before the storm rolled in. A $t$-test's answer becomes questionable when the sample is small and the data are also non-normal.
-
-**What to do about it.** First, look at your data. A histogram or a Q-Q plot will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. Treat it as one more piece of evidence, though, rather than a strict gate. With a small sample, exactly when a violation matters most, it has low power and will often say "no problem" even when there is one. If your data look far from normal and your sample is small, you have another option: a **nonparametric test**, which does not assume normality. You'll meet these nonparametric alternatives in the next chapter, once we've covered all three $t$-test forms below.
+**Assumptions check.** The 10 scores spread evenly around 60 with no outliers, so approximate normality is reasonable. @sec-6assumptions covers how to check this.
 
 ### How does t behave?
 
-Extreme sample means are unlikely if $H_0$ is true, which is why large $|t|$ values are rare. Returning to that rule of thumb, values of $t$ beyond roughly $-2$ or $+2$ occur less than 5% of the time under the null when $df \approx 20$. That's the foundation of the decision rule for $t$ tests: if your observed $t$ lies in those rare tails, you reject $H_0$.
-
-With the single $t$ from our sample, we can check @fig-6-t-rejection to see whether a $t$ that size is likely or unlikely by chance alone.
-
-```{r}
-#| label: fig-6-t-rejection
-#| fig-cap: 'Two-tailed rejection regions at $\alpha=.05$ for $t_{(df=9)}$. The shaded tails beyond the red critical values mark unlikely values under $H_0$.'
-#| fig-alt: "A blue t-distribution curve with 9 degrees of freedom. Red vertical lines labeled minus crit and plus crit mark the critical values near plus and minus 2.26, and the two tails beyond them are shaded red and labeled 'rejection region.' The middle of the curve is labeled 'retain H0.'"
-#| out-width: "80%"
-
-library(tidyverse)
-
-df   <- 9
-xs   <- seq(-4.5, 4.5, by = 0.005)
-t_tibble <- tibble(x = xs, y = dt(xs, df))
-crit <- qt(.975, df)
-
-ggplot(t_tibble, aes(x, y)) +
-  geom_area(data = subset(t_tibble, x <= -crit), fill = "red", alpha = 0.18) +
-  geom_area(data = subset(t_tibble, x >=  crit), fill = "red", alpha = 0.18) +
-  geom_line(colour = "blue", linetype = "dotdash", linewidth = 1.1) +
-  annotate("segment", x = c(-crit, crit), xend = c(-crit, crit), y = 0,
-           yend = 0.41, colour = "red", linewidth = 0.8) +
-  annotate("text", x = c(-crit, crit), y = 0.425, label = c("-crit", "+crit"),
-           colour = "red", size = 4.2) +
-  annotate("text", x = -3.4, y = 0.06, label = "rejection\nregion", size = 3.4, color = "grey20") +
-  annotate("text", x = 3.4, y = 0.06, label = "rejection\nregion", size = 3.4, color = "grey20") +
-  annotate("text", x = 0, y = 0.2, label = "retain~H[0]", parse = TRUE, size = 3.8, color = "grey20") +
-  annotate("text", x = 2.45, y = 0.3, label = "'Under '*H[0]", parse = TRUE, colour = "blue", hjust = 0, size = 4.2) +
-  labs(x = "t", y = "Density")
-```
+Extreme sample means are unlikely if $H_0$ is true, which is why large $|t|$ values are rare. That is the basis of the decision rule for $t$-tests: if your observed $t$ falls beyond the critical values, you reject $H_0$.
 
 ### Interpreting $t$
 
@@ -302,7 +260,7 @@ We're asking whether our $t$-value could plausibly have come from the null distr
 
 ```{r}
 #| label: fig-6tnull
-#| fig-cap: "A distribution of $t$-values that can occur by chance alone, when there is no difference between the sample and a population"
+#| fig-cap: 'The distribution of $t$-values that chance alone produces when the population mean equals $\mu_0$ ($df = 9$).'
 #| fig-alt: "A symmetric t-distribution curve with 9 degrees of freedom, centered at zero with a grey vertical line marking the center. Labels on the left and right halves each read 50 percent, showing the curve splits evenly into negative and positive t-values."
 
 
@@ -322,11 +280,7 @@ ggplot(plot_df, aes(x = range, y = null_distribution)) +
 
 $t$ is most likely to land near zero, which makes sense: this is the distribution of *no* differences, so most of the time chance alone won't push it far from 0. Because the distribution is symmetric, a $t$-value from the null distribution is just as likely to be positive as negative.
 
-That symmetry gives us a few basic probabilities for free:
-
-1.  $t$ is always zero, positive, or negative, so $p(t=0 \text{ or } t>0 \text{ or } t<0) = 1$.
-2.  $p(t \geq 0) = .5$: half of all $t$-values are zero or greater.
-3.  $p(t \leq 0) = .5$: half are zero or smaller.
+Because the distribution is symmetric, half of all $t$-values are at or above zero and half are at or below.
 
 We can get more precise than a 50/50 split. @fig-6percentregions divides the same distribution into ten regions, each containing 10% of the distribution. Notice the regions get wider out in the tails: since most $t$-values cluster near 0, it takes a wider interval out there to capture the same 10%.
 
@@ -366,7 +320,7 @@ Each range captures the same 10% of the distribution, even though the ranges the
 
 ### Getting the p-values for $t$-values
 
-Older textbooks listed these values in a table at the back of the book. R, Excel, and [online calculators](http://www.socscistatistics.com/pvalues/tdistribution.aspx) all work; you'll get hands-on practice with this in lab, both with software and by simulation.
+Older textbooks printed $p$-values for $t$ in a table at the back of the book. R, Excel, and [online calculators](http://www.socscistatistics.com/pvalues/tdistribution.aspx) all work; you'll get hands-on practice with this in lab, both with software and by simulation.
 
 Software needs two things from you to compute a $p$-value: the degrees of freedom, which you already have, and whether the test is one-tailed or two-tailed, which comes next.
 
@@ -426,6 +380,18 @@ Applied to our actual result, $t(9) = 1.94$: the one-tailed $p$ is .042, the two
 
 The rule is Chapter 4's, unchanged: default to two-tailed, and go one-tailed only when a result in the opposite direction would lead you to do the same thing as no result. With a $t$-test you can see the difference in the critical value: at the same $\alpha$, the one-tailed $t_{crit}$ is closer to 0 than the two-tailed one.
 
+### Assumptions, and what to do when they don't hold {#sec-6assumptions}
+
+Every test in this book has assumptions. Assumptions are conditions that need to be roughly true for the math behind the test to be trustworthy. There are two different kinds of assumptions.
+
+**The universal assumption.** Every test in this book, including the nonparametric tests in Chapter 7, assumes your observations are independent (in paired designs, the pairs) and came from a sound study design (a fair sample, not one that systematically favors certain values). This assumption is so constant that from here on, we won't re-list it test by test. Keep it in the back of your mind, but if an exam or homework question asks you to "list the assumptions of this test," this isn't the answer they're looking for.
+
+**Test-specific assumptions.** These come from how a particular test's math actually works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is approximate normality of the outcome itself (one-sample) or of the difference scores (paired). The $t$-distribution we've been using to get $p$-values is *derived* assuming the population is normal, which makes the sample mean normally distributed too. If your data are badly skewed and your sample is small, that assumption fails, and the $p$-value may not be the true probability of a result this extreme under $H_0$.
+
+**How worried should you be?** It depends on $n$. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the sample mean tends toward normal even when individual observations are skewed, so the $t$-test is fairly **robust** to non-normality once $n$ is reasonably large. A lot of environmental data, particularly field data, instead comes from small samples that are also skewed. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit before the storm rolled in. A $t$-test's answer becomes questionable when the sample is small and the data are also non-normal.
+
+**What to do about it.** First, look at your data. A histogram or a Q-Q plot will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. Treat it as one more piece of evidence, though, rather than a strict gate. With a small sample, exactly when a violation matters most, it has low power and will often say "no problem" even when there is one. If your data look far from normal and your sample is small, you have another option: a **nonparametric test**, which does not assume normality. You'll meet these nonparametric alternatives in the next chapter, once we've covered all three $t$-test forms below.
+
 ## Paired t: before/after or matched
 
 When the same units are measured twice (before/after, matched pairs), the question is whether they changed. The natural data unit is the **within-unit difference**.
@@ -463,7 +429,7 @@ t = \frac{\bar d - 0}{s_d/\sqrt{n}}, \quad df=n-1.$$
 
 The sign of $t$ matches $\bar d$ and your difference direction.
 
-**What to report.** $\bar d$ (the mean change), a 95% CI, $t(df)$, and $p$. Optionally add a standardized effect (Cohen's $d=\bar d/s_d$).
+**What to report.** $\bar d$ (the mean change), a 95% CI, $t(df)$, and $p$. Optionally add a standardized effect size, $\bar d / s_d$, the paired version of Cohen's $d$.
 
 **R pointers (you'll do this in lab).**
 
@@ -505,8 +471,12 @@ paired_sample_df <- paired_sample_df %>%
   rbind(c(" ", " ", " ", " ", "t",   mean(differences)/round(sd(paired_sample_df[1:5, 4])/sqrt(5), digits=3)))
 paired_sample_df[6, 5] <- 0
 paired_sample_df[7, 5] <- 0
-knitr::kable(paired_sample_df)
+knitr::kable(paired_sample_df,
+             col.names = c("Plot", "Before", "After", "Difference",
+                           "Deviation from mean difference", "Squared deviation"))
 ```
+
+The five differences average 2.8 percentage points, with $s_d = 3.42$, so $SE = 3.42/\sqrt{5} = 1.53$ and $t = 2.8/1.53 = 1.83$.
 
 If we did this test using R, we would obtain almost the same numbers (there is a little bit of rounding in the table).
 
@@ -528,7 +498,7 @@ The sign of $t$ matches the sign of the mean difference (ours was $+2.8$ percent
 
 ### Scaling to the full sample
 
-The five plots above are a subset of the full restoration study, which measured all 20 paired plots. With only $n=5$, $t(4)=1.83$ was not significant ($p=.141$).
+The five plots above are a subset of the full restoration study, which measured all 20 paired plots.
 
 ```{r, echo=FALSE}
 before_full <- c(18, 22, 16, 25, 21, 27, 26, 23, 28, 23, 19, 19, 20, 25, 15, 24, 23, 16, 18, 21)
@@ -545,13 +515,13 @@ knitr::kable(
 )
 ```
 
-At $n=20$, $t(19) = `r round(full20_out$statistic, 2)`$, $p =`r fmt_p(full20_out$p.value)`$: significant. The mean difference (`r round(full20_out$estimate, 1)` percentage points) is in the same range as the 5-plot subset suggested. The standard error shrank enough with the larger sample that a mean increase this large would be unlikely if restoration had no effect, so the extra plots gave more power to detect a real effect.
+At $n=20$, $t(19) = `r round(full20_out$statistic, 2)`$, $p =`r fmt_p(full20_out$p.value)`$: significant. The mean difference (`r round(full20_out$estimate, 1)` percentage points) is smaller than the 5-plot subset's `r round(mean(differences), 1)`. The larger $t$ comes from the standard error, which fell from `r round(sd(differences)/sqrt(5), 2)` to `r round(sd(after_full - before_full)/sqrt(20), 2)` with four times as many plots. A mean increase of `r round(full20_out$estimate, 1)` points would be unlikely if restoration had no effect, so the extra plots gave more power to detect a real effect.
 
 ## Two independent groups
 
 The independent-samples $t$-test is the third and last design in this chapter. The logic is the same as the one-sample and paired cases: a mean difference divided by an estimate of its variability. Only the research design is different.
 
-Use an independent-samples $t$-test for a **between-subjects** design: different people or units in each condition, each measured once. With two groups of 10, that's 20 people total, none of them paired. Without repeated measures on the same unit, there's no meaningful way to subtract scores between conditions the way the paired $t$-test does.
+Use an independent-samples $t$-test for a **between-subjects** design: different people or units in each condition, each measured once. With two groups of 5, that's 10 units in total, none of them paired. Without repeated measures on the same unit, there's no meaningful way to subtract scores between conditions the way the paired $t$-test does.
 
 The numerator works the same way it always has: the mean difference between groups. The denominator differs from the paired case, because now we need a single estimate of variability built from two separate samples instead of one.
 
@@ -566,6 +536,8 @@ $$t = \frac{\bar{x}_A-\bar{x}_B}{s_p\sqrt{\dfrac{1}{n_A}+\dfrac{1}{n_B}}}$$
 where the pooled standard deviation $s_p$ is (note $s_A^2$ and $s_B^2$ here are variances, not standard deviations):
 
 $$s_p = \sqrt{\frac{(n_A-1)s_A^2 + (n_B-1)s_B^2}{n_A+n_B-2}}$$
+
+The pooled test has $df = n_A + n_B - 2$, one degree of freedom used for each group's mean. With two groups of 5, that is $df = 8$, the 8 in $t(8)$ below.
 
 The pooled test adds two test-specific assumptions: the outcome is approximately normal within each group, and the two groups have similar variances. When the spreads clearly differ, use Welch's version instead.
 
@@ -603,6 +575,18 @@ t.test(a,b, paired=FALSE, var.equal = TRUE)
 
 
 ```
+
+@tbl-6three-tests sets the three forms side by side. Each one divides an effect by its standard error. The design decides what counts as the effect and how its standard error is estimated.
+
+| | One-sample | Paired | Independent-samples |
+|---|---|---|---|
+| Design | One sample against a reference value | The same units measured twice | Two separate groups |
+| Effect (numerator) | $\bar{x} - \mu_0$ | $\bar{d}$ | $\bar{x}_A - \bar{x}_B$ |
+| Standard error (denominator) | $s/\sqrt{n}$ | $s_d/\sqrt{n}$ | $s_p\sqrt{1/n_A + 1/n_B}$ |
+| $df$ | $n - 1$ | $n - 1$ ($n$ = number of pairs) | $n_A + n_B - 2$ |
+| R call | `t.test(x, mu = 50)` | `t.test(after, before, paired = TRUE)` | `t.test(a, b, var.equal = TRUE)` |
+
+: The three $t$-tests compared. {#tbl-6three-tests}
 
 ::: {.callout-important title="Results reporting: t-tests"}
 All three forms report the same four things: the direction in plain language, the effect size, the test statistic with its df, and $p$. The three forms differ only in what counts as the effect.
@@ -699,8 +683,7 @@ save_ts <- numeric(1000)
 for ( i in 1:1000 ){
   condition_A <- rnorm(10,10,5)
   condition_B <- rnorm(10,13,5)
-  differences <- condition_A - condition_B
-  t_test <- t.test(differences, mu=0)
+  t_test <- t.test(condition_A, condition_B, var.equal = TRUE)
   save_ps[i] <- t_test$p.value
   save_ts[i] <- t_test$statistic
 }
@@ -734,8 +717,7 @@ save_ts <- numeric(1000)
 for ( i in 1:1000 ){
   condition_A <- rnorm(100,10,5)
   condition_B <- rnorm(100,13,5)
-  differences <- condition_A - condition_B
-  t_test <- t.test(differences, mu=0)
+  t_test <- t.test(condition_A, condition_B, var.equal = TRUE)
   save_ps[i] <- t_test$p.value
   save_ts[i] <- t_test$statistic
 }
@@ -758,7 +740,7 @@ Now almost all of the experiments (`r sum(save_ps < .05)` of 1000) show a $p$-va
 **Core ideas**
 
 -   **Signal over noise.** A difference is only impressive relative to the variability around it. Every $t$ statistic is a ratio: the effect you observed on top, an estimate of how much that effect could bounce around by chance on the bottom.
--   **Three forms, one idea.** The one-sample, paired, and independent-samples $t$-tests differ in what goes into the numerator, but all three ask whether an observed difference is large compared to its own standard error. The paired test is just the one-sample test applied to difference scores.
+-   **Three forms, one idea.** The one-sample, paired, and independent-samples $t$-tests differ in how they compute the effect and its standard error, but all three ask whether an observed difference is large compared to its own standard error. The paired test is just the one-sample test applied to difference scores.
 -   **Why $t$ and not $z$.** When the population SD $\sigma$ is unknown, we estimate it with $s$, which adds uncertainty. The $t$ distribution accounts for that by being fatter in the tails than the normal, and it tightens toward the normal as degrees of freedom grow.
 -   **Assumptions come in two kinds.** *Independence and a sound study design* apply to every test in this book and are assumed from here on. The *test-specific* assumption is approximate normality: of the outcome (one-sample), of the difference scores (paired), or of each group (independent samples). The pooled independent-samples test also assumes similar variances.
 -   **How worried to be depends on $n$.** Thanks to the Central Limit Theorem, $t$-tests are fairly robust to non-normality once samples are reasonably large. $t$-tests are least trustworthy when samples are small *and* skewed, which describes a lot of environmental field data. Plot your data first, and treat a Shapiro-Wilk result as evidence rather than a gate, since it has the least power with small samples, when a violation matters most.
