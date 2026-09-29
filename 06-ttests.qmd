@@ -39,7 +39,7 @@ hist_p <- function(ps, title = NULL) {
 
 In the early 1900s, William Sealy Gosset joined Guinness, then the world's largest brewery. Guinness hired scientifically trained brewers and gave them latitude to pursue research that improved the product. As production scaled, quality control mattered: a pint should taste the same in Dublin as in Detroit. Until then, hop quality was judged mostly by appearance and smell, which was unreliable. Chemical assays could measure ingredients, but the core problem was statistical. Inference relied on the normal ($z$) distribution, which works well when samples are large enough for a normal approximation. In practice, Guinness could not destroy large volumes of beer or ingredients just to test them.
 
-Gosset set out to quantify the extra uncertainty introduced by small samples. How much wider is the error around an estimate when $n=10$ instead of $n=1000$? He derived a new sampling distribution that accounts for small-sample variability, now known as the **Student's $t$ distribution**. Because Guinness restricted external publications, he published the 1908 paper under the pseudonym "Student" [@Student1908]. That is why we still say Student's $t$-test. This chapter uses the same idea: measure a signal, scale it by its standard error, and compare the resulting $t$ to the $t$ distribution for your $n-1$ degrees of freedom.
+Gosset set out to quantify the extra uncertainty introduced by small samples. How much wider is the error around an estimate when $n=10$ instead of $n=1000$? He derived a new sampling distribution that accounts for small-sample variability, now known as the **Student's $t$ distribution**. Because Guinness restricted external publications, he published the 1908 paper under the pseudonym "Student" [@Student1908]. That is why we still say Student's $t$-test. This chapter uses Gosset's approach. We measure a signal, divide it by its standard error, and compare the resulting $t$ to the $t$ distribution for $n-1$ degrees of freedom.
 
 **Why this matters.** We often compare a sample mean to a reference (drinking-water standard, historical average) or compare two conditions (before/after, site A vs site B). A $t$-test asks whether the observed difference is larger than you would expect from sampling variation alone, given your $n$ and variability.
 
@@ -62,17 +62,17 @@ Example: "Mean change was -0.42 units (95% CI \[-0.73, -0.11\]; *t*(11) = -2.92;
 
 ## Signal over noise, for a mean
 
-Chapter 4 introduced the general shape of a test statistic: the effect you observed, divided by an estimate of how much it could move by chance.
+Chapter 4 introduced the general shape of a test statistic: the effect you observed, divided by an estimate of how much it could vary by chance.
 
 $$\text{statistic}=\frac{\text{effect}}{\text{error}}$$
 
-The $t$-test is the first place we fill that in with real quantities. The effect is the distance between the sample mean and the value $H_0$ names. The error is not the raw standard deviation, though: it is the standard error, $s/\sqrt{n}$, because what varies from study to study is the *mean*, not an individual observation.
+The $t$-test is the first place we fill that in with real quantities. The effect is the distance between the sample mean and the value $H_0$ names. The error is the standard error, $s/\sqrt{n}$, not the raw standard deviation, because what varies from study to study is the *mean*, not an individual observation.
 
 $$t = \frac{\text{effect}}{\text{standard error}} = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}$$
 
 ## One-sample t-test
 
-Use a one-sample $t$ when you want to test whether a sample mean differs from a reference value ($\mu_0$). The question: is the observed difference bigger than you'd expect from sampling variability, given $n$ and your sample SD $s$?
+Use a one-sample $t$ when you want to test whether a sample mean differs from a reference value ($\mu_0$). It asks whether the observed difference is bigger than you'd expect from sampling variability, given $n$ and your sample SD $s$.
 
 $$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1$$
 
@@ -151,7 +151,7 @@ For one-sample and paired $t$-tests, $df = n-1$. A sample of 10 has $df=9$.
 
 Degrees of freedom counts how many values are still free to vary once something has been estimated from the data. Consider three numbers with a mean of 2: pick the first two freely, say 51 and $-3$, and the third number is no longer free. It has to be $-42$ for the mean to come out to 2. Two of the three numbers had freedom; the third didn't. That's $df=n-1=2$ for three numbers.
 
-In a $t$-test, the mean is the thing estimated, and the $df$ tells you how much information is left for estimating the spread, $s$. With few degrees of freedom, $s$ can land well above or below $\sigma$, so large $t$ values turn up more often and the $t$ curve has heavier tails. As $df$ grows, $s$ settles close to $\sigma$ and the $t$ curve approaches the normal. That is why each $df$ gets its own curve.
+In a $t$-test, the mean is the thing estimated, and the $df$ tells you how much information is left for estimating the spread, $s$. With few degrees of freedom, $s$ can be well above or below $\sigma$, so large $t$ values turn up more often and the $t$ curve has heavier tails. As $df$ grows, $s$ settles close to $\sigma$ and the $t$ curve approaches the normal. That is why each $df$ gets its own curve.
 
 **Simulating how degrees of freedom affect the $t$ distribution.**
 
@@ -179,7 +179,7 @@ ggplot(t_df, aes(x = ts)) +
 
 ```
 
-As degrees of freedom increase, the $t$ distribution gets taller in the middle and thinner in the tails. With more data the sample SD is a more reliable stand-in for $\sigma$, so $t$ behaves more like $z$.
+As degrees of freedom increase, the $t$ distribution gets taller in the middle and thinner in the tails. With more data the sample SD is a more reliable estimate of $\sigma$, so $t$ behaves more like $z$.
 
 ### What t represents
 
@@ -194,7 +194,7 @@ $t$ can be positive or negative depending on direction. Under $H_0$, $t \sim t_{
 Remember that $s/\sqrt{n}$ is the standard error (SE), the standard deviation of the sampling distribution of the sample mean.
 :::
 
-Let's see how $t$ values behave when samples really come from the null hypothesis. Under the null hypothesis, $t$ follows a $t$ distribution with $df = n-1$.
+To see how $t$ behaves when $H_0$ is true, we can simulate it.
 
 ```{r}
 #| label: fig-6t-sim
@@ -211,7 +211,7 @@ ggplot(data.frame(t_vals), aes(x = t_vals)) +
 
 @fig-6t-sim shows 1,000 $t$ values from samples of 10 drawn with $H_0$ true. Most fall between $-2$ and $2$, and very few are beyond $\pm 3$.
 
-**Takeaway.** $t$ measures how far the sample mean is from the null expectation, scaled by its uncertainty. Under $H_0$ it follows a known $t$ distribution, so we can check how often chance alone would produce a $t$ as large as ours.
+$t$ measures how far the sample mean is from the null expectation, scaled by its uncertainty. Under $H_0$ it follows a known $t$ distribution, so we can check how often chance alone would produce a $t$ as large as ours.
 
 ### Calculating t from data
 
@@ -278,9 +278,7 @@ ggplot(plot_df, aes(x = range, y = null_distribution)) +
 
 ```
 
-$t$ is most likely to land near zero, which makes sense: this is the distribution of *no* differences, so most of the time chance alone won't push it far from 0. Because the distribution is symmetric, a $t$-value from the null distribution is just as likely to be positive as negative.
-
-Because the distribution is symmetric, half of all $t$-values are at or above zero and half are at or below.
+Under $H_0$, $t$ is most likely to be near zero, because chance alone rarely produces a large difference. The distribution is symmetric, so half of all $t$-values are at or above zero and half are at or below.
 
 We can get more precise than a 50/50 split. @fig-6percentregions divides the same distribution into ten regions, each containing 10% of the distribution. Notice the regions get wider out in the tails: since most $t$-values cluster near 0, it takes a wider interval out there to capture the same 10%.
 
@@ -320,7 +318,7 @@ Each range captures the same 10% of the distribution, even though the ranges the
 
 ### Getting the p-values for $t$-values
 
-Older textbooks printed $p$-values for $t$ in a table at the back of the book. R, Excel, and [online calculators](http://www.socscistatistics.com/pvalues/tdistribution.aspx) all work; you'll get hands-on practice with this in lab, both with software and by simulation.
+Older textbooks printed $p$-values for $t$ in a table at the back of the book. Today R, Excel, and [online calculators](http://www.socscistatistics.com/pvalues/tdistribution.aspx) give them directly. You'll practice this in lab, both with software and by simulation.
 
 Software needs two things from you to compute a $p$-value: the degrees of freedom, which you already have, and whether the test is one-tailed or two-tailed, which comes next.
 
@@ -374,23 +372,23 @@ ggplot(plot_df, aes(x = range, y = null_distribution)) +
   labs(x = "t", y = "Density")
 ```
 
-Applied to our actual result, $t(9) = 1.94$: the one-tailed $p$ is .042, the two-tailed $p$ is .084, exactly double, since a two-tailed test counts the matching extreme region on both sides instead of just one. Here the choice actually changes the decision: one-tailed, this result is significant at $\alpha=.05$; two-tailed, it isn't. That's why a one-tailed test has to be justified by your theory *before* you see the data, not chosen afterward because it gives the answer you wanted.
+For our result, $t(9) = 1.94$, the one-tailed $p$ is .042 and the two-tailed $p$ is .084, exactly double, because a two-tailed test counts the matching region in both tails. The choice changes the decision here. One-tailed, the result is significant at $\alpha = .05$; two-tailed, it is not. A one-tailed test therefore has to be justified *before* you see the data, not chosen afterward because it gives the answer you wanted.
 
 ### Which one should you use?
 
-The rule is Chapter 4's, unchanged: default to two-tailed, and go one-tailed only when a result in the opposite direction would lead you to do the same thing as no result. With a $t$-test you can see the difference in the critical value: at the same $\alpha$, the one-tailed $t_{crit}$ is closer to 0 than the two-tailed one.
+Chapter 4's rule still applies. Default to two-tailed, and go one-tailed only when a result in the opposite direction would lead you to do the same thing as no result. At the same $\alpha$, the one-tailed $t_{crit}$ is closer to 0 than the two-tailed one.
 
 ### Assumptions, and what to do when they don't hold {#sec-6assumptions}
 
 Every test in this book has assumptions. Assumptions are conditions that need to be roughly true for the math behind the test to be trustworthy. There are two different kinds of assumptions.
 
-**The universal assumption.** Every test in this book, including the nonparametric tests in Chapter 7, assumes your observations are independent (in paired designs, the pairs) and came from a sound study design (a fair sample, not one that systematically favors certain values). This assumption is so constant that from here on, we won't re-list it test by test. Keep it in the back of your mind, but if an exam or homework question asks you to "list the assumptions of this test," this isn't the answer they're looking for.
+**The universal assumption.** Every test in this book, including the nonparametric tests in Chapter 7, assumes your observations are independent (in paired designs, the pairs) and came from a sound study design (a fair sample, not one that systematically favors certain values). Because it applies everywhere, we won't list it test by test from here on. When an exam or homework question asks you to "list the assumptions of this test," it means the test-specific assumptions below.
 
-**Test-specific assumptions.** These come from how a particular test's math actually works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is approximate normality of the outcome itself (one-sample) or of the difference scores (paired). The $t$-distribution we've been using to get $p$-values is *derived* assuming the population is normal, which makes the sample mean normally distributed too. If your data are badly skewed and your sample is small, that assumption fails, and the $p$-value may not be the true probability of a result this extreme under $H_0$.
+**Test-specific assumptions.** These come from how a particular test's math works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is approximate normality of the outcome itself (one-sample) or of the difference scores (paired). The $t$-distribution we've been using to get $p$-values is *derived* assuming the population is normal, which makes the sample mean normally distributed too. If your data are badly skewed and your sample is small, that assumption fails, and the $p$-value may not be the true probability of a result this extreme under $H_0$.
 
-**How worried should you be?** It depends on $n$. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the sample mean tends toward normal even when individual observations are skewed, so the $t$-test is fairly **robust** to non-normality once $n$ is reasonably large. A lot of environmental data, particularly field data, instead comes from small samples that are also skewed. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit before the storm rolled in. A $t$-test's answer becomes questionable when the sample is small and the data are also non-normal.
+**How worried should you be?** It depends on $n$. With a large sample, the Central Limit Theorem does a lot of the work for you. The sampling distribution of the sample mean tends toward normal even when individual observations are skewed, so the $t$-test is fairly **robust** to non-normality once $n$ is reasonably large. A lot of environmental data, particularly field data, instead comes from small samples that are also skewed. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit in a season. A $t$-test's answer becomes questionable when the sample is small and the data are also non-normal.
 
-**What to do about it.** First, look at your data. A histogram or a Q-Q plot will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. Treat it as one more piece of evidence, though, rather than a strict gate. With a small sample, exactly when a violation matters most, it has low power and will often say "no problem" even when there is one. If your data look far from normal and your sample is small, you have another option: a **nonparametric test**, which does not assume normality. You'll meet these nonparametric alternatives in the next chapter, once we've covered all three $t$-test forms below.
+**What to do about it.** First, look at your data. A histogram or a Q-Q plot will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. Treat it as one more piece of evidence, though, rather than a strict gate. With a small sample, exactly when a violation matters most, it has low power and will often say "no problem" even when there is one. If your data look far from normal and your sample is small, you can use a **nonparametric test** instead, which does not assume normality. You'll meet these nonparametric alternatives in the next chapter, once we've covered all three $t$-test forms below.
 
 ## Paired t: before/after or matched
 
@@ -468,7 +466,7 @@ paired_sample_df <- paired_sample_df %>%
   rbind(c("Means", colMeans(paired_sample_df[1:5, 2:6]))) %>%
   rbind(c(" ", " ", " ", " ", "sd",  round(sd(paired_sample_df[1:5, 4]), digits=3))) %>%
   rbind(c(" ", " ", " ", " ", "SE",  round(sd(paired_sample_df[1:5, 4])/sqrt(5), digits=3))) %>%
-  rbind(c(" ", " ", " ", " ", "t",   mean(differences)/round(sd(paired_sample_df[1:5, 4])/sqrt(5), digits=3)))
+  rbind(c(" ", " ", " ", " ", "t",   round(mean(differences)/round(sd(paired_sample_df[1:5, 4])/sqrt(5), digits=3), 2)))
 paired_sample_df[6, 5] <- 0
 paired_sample_df[7, 5] <- 0
 knitr::kable(paired_sample_df,
@@ -492,9 +490,7 @@ knitr::kable(
 )
 ```
 
-Our $t$-test results are: *t*(4) = 1.83, *p* = .141.
-
-The sign of $t$ matches the sign of the mean difference (ours was $+2.8$ percentage points), so soil moisture increased on average, as $\bar d$ showed. Getting a $p$-value from this $t$, and choosing one-tailed vs. two-tailed, works exactly like it did for the one-sample case (see the One-sample $t$-test section above). Two-tailed, $p=.141$, which is not significant. With only five plots, a mean increase this large would not be unusual even if restoration had no effect on soil moisture.
+The sign of $t$ matches the sign of the mean difference (ours was $+2.8$ percentage points), so soil moisture increased on average, as $\bar d$ showed. Getting a $p$-value from this $t$, and choosing one-tailed vs. two-tailed, works exactly like it did for the one-sample case (see the One-sample $t$-test section above). Two-tailed, $t(4) = 1.83$, $p = .141$, which is not significant. With only five plots, a mean increase this large would not be unusual even if restoration had no effect on soil moisture.
 
 ### Scaling to the full sample
 
@@ -523,7 +519,7 @@ The independent-samples $t$-test is the third and last design in this chapter. T
 
 Use an independent-samples $t$-test for a **between-subjects** design: different people or units in each condition, each measured once. With two groups of 5, that's 10 units in total, none of them paired. Without repeated measures on the same unit, there's no meaningful way to subtract scores between conditions the way the paired $t$-test does.
 
-The numerator works the same way it always has: the mean difference between groups. The denominator differs from the paired case, because now we need a single estimate of variability built from two separate samples instead of one.
+The numerator is the mean difference between groups, as in the other two tests. The denominator differs from the paired case, because now we need a single estimate of variability built from two separate samples instead of one.
 
 A natural first guess is to average the two groups' standard errors:
 
@@ -608,7 +604,7 @@ Note the paired write-up never mentions the before and after means separately. T
 
 ## Simulating data for t-tests
 
-Chapter 4 simulated *group mean differences* to build a chance window. Here we simulate the test statistic itself, which shows two things the earlier simulation could not: what the null distribution of $t$ actually looks like, and what happens to $p$-values when $H_0$ is true.
+Chapter 4 simulated *group mean differences* to build a chance window. Here we simulate the test statistic itself, which shows two things the earlier simulation could not: what the null distribution of $t$ looks like, and what happens to $p$-values when $H_0$ is true.
 
 Simulating under conditions you choose builds intuition for how sampling error affects your results given your design: sample size, the size of the difference you expect, and the amount of variation. Formal power analyses use the same methods.
 
@@ -650,7 +646,7 @@ hist_t(save_ts)
 hist_p(save_ps)
 ```
 
-The simulated $t$ distribution looks like a $t$ distribution should, and it shows us how often we get $t$ values of particular sizes. The $p$-distribution is flat under the null, which we are simulating here. This means you have the same chance of getting a $t$ with a p-value between 0 and 0.05 as you would of getting one between .90 and .95. Those ranges are both ranges of 5%, so they hold an equal share of the $t$ values by definition.
+The simulated $t$ values in @fig-6nullt have the bell shape of a $t$ distribution, centered on zero. The $p$-values in @fig-6flatp are flat, as they should be when $H_0$ is true. This means you have the same chance of getting a $t$ with a p-value between 0 and 0.05 as you would of getting one between .90 and .95. Those ranges are both ranges of 5%, so they hold an equal share of the $t$ values by definition.
 
 You can write the same simulation more compactly with `replicate()` instead of a `for` loop; it produces the same two distributions above:
 
@@ -739,7 +735,7 @@ Now almost all of the experiments (`r sum(save_ps < .05)` of 1000) show a $p$-va
 
 **Core ideas**
 
--   **Signal over noise.** A difference is only impressive relative to the variability around it. Every $t$ statistic is a ratio: the effect you observed on top, an estimate of how much that effect could bounce around by chance on the bottom.
+-   **Signal over noise.** A difference is only impressive relative to the variability around it. Every $t$ statistic is a ratio: the effect you observed on top, an estimate of how much that effect could vary by chance on the bottom.
 -   **Three forms, one idea.** The one-sample, paired, and independent-samples $t$-tests differ in how they compute the effect and its standard error, but all three ask whether an observed difference is large compared to its own standard error. The paired test is just the one-sample test applied to difference scores.
 -   **Why $t$ and not $z$.** When the population SD $\sigma$ is unknown, we estimate it with $s$, which adds uncertainty. The $t$ distribution accounts for that by being fatter in the tails than the normal, and it tightens toward the normal as degrees of freedom grow.
 -   **Assumptions come in two kinds.** *Independence and a sound study design* apply to every test in this book and are assumed from here on. The *test-specific* assumption is approximate normality: of the outcome (one-sample), of the difference scores (paired), or of each group (independent samples). The pooled independent-samples test also assumes similar variances.
