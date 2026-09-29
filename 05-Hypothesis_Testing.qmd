@@ -85,7 +85,7 @@ Sometimes, even when we apply the test correctly, sampling variability can lead 
 | **Reject $H_0$**         | Type I error (prob = $\alpha$) | Correct (prob = 1 - $\beta$)    |
 | **Fail to reject $H_0$** | Correct (prob = 1 - $\alpha$)  | Type II error (prob = $\beta$)  |
 
-> **Takeaway.** As $\alpha$ gets smaller, $\beta$ gets bigger, and vice-versa.
+For a fixed sample size and effect size, lowering $\alpha$ raises $\beta$: a stricter standard for rejecting $H_0$ makes it easier to miss a real difference.
 
 Errors happen because samples are imperfect representations of the true population.
 
@@ -201,11 +201,13 @@ ab_bot <- shell_ab(ggplot() + bshade_ab + pshade_ab + ashade_ab + null_ab + alt_
 patchwork::wrap_plots(ab_top, ab_bot, ncol = 1)
 ```
 
-In @fig-5alpha-beta, $\mu_a$ sits `r mua_ab / se_ab` standard errors above $\mu_0$, which leaves $\beta = `r round(beta_ab, 2)`$ and power $= `r round(power_ab, 2)`$: this design misses a real difference of that size in almost three tries out of ten. Slide the orange curve further right, meaning a larger real difference, and the gray area shrinks. Move the red lines outward, meaning a smaller $\alpha$, and the gray area grows. That is the tradeoff the table above states in words.
+In @fig-5alpha-beta, $\mu_a$ sits `r mua_ab / se_ab` standard errors above $\mu_0$, which leaves $\beta = `r round(beta_ab, 2)`$ and power $= `r round(power_ab, 2)`$: this design misses a real difference of that size in almost three tries out of ten. Slide the orange curve further right, meaning a larger real difference, and the gray area shrinks. Move the red lines outward, meaning a smaller $\alpha$, and the gray area grows. That is the tradeoff between $\alpha$ and $\beta$ described above.
 
 ### Effect of Sample Size on Errors
 
-With fixed $\alpha$ and correct assumptions, the long-run Type I error rate is $\alpha$ for any $n$. Sample size mainly affects Type II error: with small $n$, the sampling distribution is wide, true effects are harder to detect, and $\beta$ increases (power decreases). As $n$ grows, the sampling distribution tightens, $\beta$ falls, and power rises. Apparent changes in the Type I rate at small $n$ usually reflect assumption violations (e.g., non-normality, poor variance estimates, multiple looks), not $n$ itself.
+With fixed $\alpha$ and correct assumptions, the long-run Type I error rate is $\alpha$ for any $n$.
+
+**Sample size mainly affects Type II error.** With small $n$, the sampling distribution is wide, true effects are harder to detect, and $\beta$ increases (power decreases). As $n$ grows, the sampling distribution tightens, $\beta$ falls, and power rises. Apparent changes in the Type I rate at small $n$ usually reflect assumption violations (e.g., non-normality, poor variance estimates, multiple looks), not $n$ itself.
 
 ```{r}
 #| label: fig-5type2-samplesize
@@ -426,9 +428,9 @@ Power is now about `r round(power_big * 100)`%: a difference that large is almos
 
 ### Power curves
 
-It's best to think of power as a profile, not a single number. A power curve shows how sensitive a design is across a range of possible effects.
+A design's power depends on how large the true effect is. A power curve shows that dependence: for a fixed design, it plots power against the range of effect sizes the design might face.
 
-In @fig-5.5powercurve, we fix the design to a two-sample $t$-test with $n=10$ per group and $\alpha=0.05$. Power is plotted on the y-axis, and the true effect size (Cohen's $d$) is on the x-axis.
+@fig-5.5powercurve fixes the design at a two-sample $t$-test with $n=10$ per group and $\alpha=0.05$, and plots power against the true effect size, Cohen's $d$.
 
 ```{r}
 #| label: fig-5.5powercurve
@@ -450,17 +452,9 @@ ggplot(plot_df, aes(x=effect_size, y=power))+
   labs(x = "Effect size (Cohen's d)", y = "Power")
 ```
 
-**Walkthrough.**
+With 10 per group, this design detects a medium effect ($d=0.5$) only about `r round(power_n10_exact * 100)`% of the time. The simulation above estimated the same quantity at about `r round(power_n10 * 100)`%. The two differ because 1,000 repetitions give an estimate, while the curve is computed exactly. A larger effect ($d=0.8$) is detected about 40% of the time, and only very large effects ($d=2$) are detected almost every time (about 99%). With samples this small, only large effects are detected reliably.
 
--   With $n=10$, the design only detects a medium effect ($d=0.5$) about `r round(power_n10_exact * 100)`% of the time. This is the same quantity the simulation above estimated at about `r round(power_n10 * 100)`%. The two differ because 1,000 repetitions give an estimate, not an exact answer; the curve is computed exactly.
--   A larger effect ($d=0.8$) is caught about 40% of the time.
--   Very large effects ($d=2$) are detected almost every time (about 99%).
-
-This shows that small samples can reliably detect only large effects.
-
-Now suppose prior research suggests the effect size is small ($d=0.2$). Instead of varying the effect, we can ask: *how many samples per group do we need to have decent power?*
-
-@fig-5.5powercurveN plots power against sample size for detecting $d=0.2$. The dashed line marks 80% power, a common planning target.
+The second curve turns the question around. Suppose prior research suggests the effect is small ($d=0.2$). How many samples per group does the design need? @fig-5.5powercurveN plots power against sample size for $d=0.2$, with a dashed line at 80% power, a common planning target.
 
 ```{r}
 #| label: fig-5.5powercurveN
@@ -482,17 +476,9 @@ ggplot(plot_df, aes(x=n_seq, y=power))+
   labs(x = "n per group", y = "Power")
 ```
 
-**Walkthrough.**
+At 10 per group, power to detect $d=0.2$ is near zero. Reaching 80% power takes about `r ceiling(n_for_80)` per group. Even at that size, 20% of studies of a real effect this small would fail to reject $H_0$.
 
--   At $n=10$ per group, power to detect $d=0.2$ is near zero.
--   To reach 80% power, we need about `r ceiling(n_for_80)` per group.
--   Even then, 20% of studies would still fail to reject $H_0$ just by chance.
-
-**Takeaway:**
-
--   A power curve shows, for a fixed design, how power rises as the true effect grows.
--   A power-vs-$n$ curve shows how many samples you need to hit a target power for a specific effect.
--   Power analysis is mainly a planning tool, not a results-reporting tool. When you design a study, don't just aim for "power = 0.8." Always state the assumed effect size and the standard deviation you used for that calculation. Otherwise, "0.8" has no meaning: power depends entirely on those assumptions.
+Power analysis is a planning tool. A target such as "power = 0.8" means something only alongside the effect size and standard deviation it assumes, so state those assumptions with it.
 
 ### Planning your design
 
