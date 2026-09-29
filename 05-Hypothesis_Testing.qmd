@@ -12,46 +12,54 @@ library(dplyr)
 library(gridExtra)
 library(kableExtra)
 
-# NOTE: this is Chapter 4's plot_distributions(), copied verbatim so both
-# chapters draw the same curves with the same names, colors and scale.
-# Two copies is the known cost; consolidate into global_stuff.R next year.
-plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, inferred_mean, inferred_sd, true_mean, true_sd, show_ci = TRUE, show_samp = TRUE, y_top = 1.4, show_null = TRUE, show_true = TRUE, show_xbar = FALSE) {
-  x_vals <- seq(-6, 6, by=0.01)
-  
-  h0 <- dnorm(x_vals, mean=null_mean, sd=null_sd)
-  sampling_mean <- dnorm(x_vals, mean=sample_mean, sd=sample_sd)
-  inferred_parent <- dnorm(x_vals, mean=inferred_mean, sd=inferred_sd)
-  true_parent <- dnorm(x_vals, mean=true_mean, sd=true_sd)
-  CI_left <- qnorm(0.025, mean=sample_mean, sd=sample_sd)
-  CI_right <- qnorm(0.975, mean=sample_mean, sd=sample_sd)
-  y_intersect = dnorm(null_mean, mean=null_mean, sd=null_sd)
+# Type I / Type II figures: Chapter 4's reject/fail figure (decision_panel()),
+# same curves, colors, line types and labels, plus the truth in orange:
+# the true population distribution and a line at its mean, mu.
+# x-bar is lime (label a darker green for legibility) so it reads first.
+# Positions are in standard errors. Type I x-bar matches where the recap GIF stops.
+err_se      <- 0.4   # standard error, as in Ch4's decision figures
+err_sigma   <- 0.8   # population SD: twice the standard error, so n = 4
+t1_xbar_se  <- 2.4   # Type I:  mu = mu0, x-bar 2.4 SE out, past the critical value
+t2_mu_se    <- 4.0   # Type II: mu 4.0 SE from mu0
+t2_xbar_se  <- 1.5   # Type II: x-bar 1.5 SE from mu0, inside the critical value, 2.5 SE below mu
 
-  
-  p <- ggplot() + 
-    { if (show_null) geom_line(aes(x=x_vals, y=h0, color="Null Population Distribution"), size=1.5) } +
-    { if (show_samp) geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) } +
-    { if (show_true) geom_line(aes(x=x_vals, y=true_parent, color="True Population Distribution"), size=1.5) } +
-    geom_line(aes(x=x_vals, y=inferred_parent, color="Estimated Population Distribution"), linetype="dashed", size=1.5) +
-    { if (show_ci) geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) } +
-    { if (show_xbar) annotate("segment", x = inferred_mean, xend = inferred_mean, y = 0, yend = y_top * 0.92, linetype = "dotted", linewidth = 0.9) } +
-    { if (show_xbar) annotate("text", x = inferred_mean, y = y_top * 0.97, label = "bar(x)", parse = TRUE, size = 4.5) } +
-    { if (show_null) geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0), linetype="dashed", color="magenta", size=1) } +
-    coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, y_top)) +  # shared axes across the four-color figures
-    theme_classic() + 
-    theme(legend.position='bottom', 
-          axis.text = element_blank(), 
-          axis.title = element_blank(), 
-          axis.ticks = element_blank(), 
-          legend.text = element_text(size = 12)) + 
-    guides(color=guide_legend(title=NULL, nrow=2)) +
-    scale_color_manual(values=c("Null Population Distribution"="blue", 
-                                "Sampling Distribution of the Sample Mean"="darkgreen", 
-                                "Estimated Population Distribution"="green3", 
-                                "True Population Distribution"="orange"))
-
-  return(p)
+error_panel <- function(xbar, mu, se = err_se, sigma = err_sigma, mu0 = 0,
+                        xlim = c(-2.2, 3.6), y_top = 1.38, verdict = NULL) {
+  k <- y_top / 1.38
+  xs <- seq(xlim[1], xlim[2], by = 0.005)
+  crit <- 1.96 * se
+  h0 <- data.frame(x = xs, y = dnorm(xs, mu0, se))
+  ggplot() +
+    geom_area(data = subset(h0, x <= mu0 - crit), aes(x, y), fill = "red", alpha = 0.18) +
+    geom_area(data = subset(h0, x >= mu0 + crit), aes(x, y), fill = "red", alpha = 0.18) +
+    geom_line(aes(xs, dnorm(xs, mu, sigma)), colour = "orange", linewidth = 1.2) +
+    geom_line(data = h0, aes(x, y), colour = "blue", linetype = "dotdash", linewidth = 1.2) +
+    geom_line(aes(xs, dnorm(xs, xbar, se)), colour = "darkgreen", linetype = "dotdash", linewidth = 1.2) +
+    annotate("segment", x = mu0 + c(-crit, crit), xend = mu0 + c(-crit, crit), y = 0,
+             yend = dnorm(crit, 0, se), colour = "red", linewidth = 0.8) +
+    annotate("segment", x = xbar - crit, xend = xbar + crit, y = -0.04 * k, yend = -0.04 * k,
+             colour = "darkgreen", linewidth = 3) +
+    # orange mu line first, so where mu = mu0 the magenta dashes show over it
+    annotate("segment", x = mu, xend = mu, y = -0.04 * k, yend = 1.22 * k, colour = "orange", linewidth = 0.9) +
+    annotate("segment", x = mu0, xend = mu0, y = -0.04 * k, yend = 1.22 * k, colour = "magenta",
+             linetype = "dashed", linewidth = 1) +
+    annotate("segment", x = xbar, xend = xbar, y = -0.04 * k, yend = 1.22 * k, colour = "limegreen", linetype = "dotted", linewidth = 1.6) +
+    annotate("text", x = mu0 - 0.08, y = 1.3 * k, label = "mu[0]", parse = TRUE, hjust = 1, colour = "magenta", size = 5) +
+    annotate("text", x = mu + 0.08, y = 1.3 * k, label = "mu", parse = TRUE, hjust = 0, colour = "orange", size = 5) +
+    # x-bar label level with the others; drops only if it would collide with the mu label
+    annotate("text", x = xbar + 0.08, y = if (xbar < mu && mu - xbar < 0.35) 1.18 * k else 1.3 * k,
+             label = "bar(x)", parse = TRUE, hjust = 0, colour = "#1E9E1E", size = 5.5, fontface = "bold") +
+    annotate("text", x = xlim[1] + 0.05, y = 1.12 * k, label = "'Under '*H[0]", parse = TRUE, hjust = 0, colour = "blue", size = 4.5) +
+    annotate("text", x = xlim[1] + 0.05, y = 1.02 * k, label = "From the sample", hjust = 0, colour = "darkgreen", size = 4.5) +
+    annotate("text", x = xlim[1] + 0.05, y = 0.92 * k, label = "The truth", hjust = 0, colour = "orange", size = 4.5) +
+    coord_cartesian(xlim = xlim, ylim = c(-0.08 * k, y_top)) +
+    { if (!is.null(verdict)) annotate("label", x = xlim[2] - 0.1, y = 0.55 * y_top, label = verdict, hjust = 1,
+                                      size = 7, fontface = "bold", colour = if (verdict == "Reject") "red3" else "grey25",
+                                      fill = "white", label.size = 0.9, label.padding = unit(0.35, "lines")) } +
+    labs(x = NULL, y = NULL) +
+    theme_classic() +
+    theme(axis.text = element_blank(), axis.ticks = element_blank())
 }
-
 ```
 
 # Errors, Power, and Effect Size
@@ -60,7 +68,7 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
 >
 > Attributed to John Maynard Keynes
 
-The previous chapter built the machinery of a hypothesis test and left you with a yes or no: reject $H_0$, or fail to reject it. That decision is only part of the story.
+The previous chapter built the machinery of a hypothesis test and left you with a yes or no: reject $H_0$, or fail to reject it.
 
 Two questions remain. First, how often will that decision be wrong, and in which direction? Second, when we do reject, how *large* is the effect we found, and was the study ever capable of detecting it in the first place? This chapter answers both, then closes with how to report the answers.
 
@@ -79,37 +87,42 @@ Sometimes, even when we apply the test correctly, sampling variability can lead 
 
 > **Takeaway:** As $\alpha$ gets smaller, $\beta$ gets bigger, and vice-versa.
 
-Errors happen because samples are imperfect.
+Errors happen because samples are imperfect representations of the true population.
 
--   In @fig-5key.type1_error, the true population distribution (orange) is almost identical to the null population distribution (blue). By chance, however, the sample mean lands far away, and the CI excludes $\mu_0$. The test rejects $H_0$ even though it is true: a **Type I error**.
+```{r}
+#| label: fig-5recap-gif
+#| fig-cap: 'The two sampling distributions of the sample mean from Chapter 4. The distance between them, in standard errors, decides the test: past 1.96, reject $H_0$.'
+#| fig-alt: "Animation. A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails, appears first. A dark-green dot-dash curve of the same width is added, centered on a lime-green dotted line labeled x-bar, with a confidence interval bar underneath and an arrow showing the distance between mu sub 0 and x-bar in standard errors. The green curve slides right in steps from 0.8 to 2.4 standard errors; a gray Fail to reject box turns into a red Reject box once the distance passes 1.96."
+#| out-width: "100%"
+
+knitr::include_graphics("imgs/gifs/ch5_recap.gif")
+```
+
+-   In @fig-5key.type1_error, the true population mean (orange) is the same as $\mu_0$. By chance, however, the sample mean lands far away, and the CI excludes $\mu_0$. The test rejects $H_0$ even though it is true: a **Type I error**.
 
 ```{r}
 #| label: fig-5key.type1_error
 #| fig-cap: 'Type I error: $H_0$ is true ($\mu=\mu_0$), but the sample leads us to reject $H_0$.'
-#| fig-height: 3.96
-#| fig-alt: "Four overlaid normal curves: a blue null population distribution and an orange true population distribution sit almost on top of each other, both centered near negative 0.5, while a dashed estimated-population curve and a dot-dash sampling-distribution curve are centered far to the right, near 2. A thick horizontal bar marking the 95 percent confidence interval sits around that same right-shifted location and does not reach back to the null mean, marked with a dashed vertical line, so the interval excludes the null value even though the true and null distributions are nearly identical."
+#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. A solid orange line labeled mu sits exactly on the magenta line, and a wide, low orange bell curve is centered there too. A dark-green dot-dash bell curve of the same width as the blue one sits to the right, centered on a thick lime-green dotted line labeled x-bar that lies just past the right critical value. The thick dark-green confidence interval bar under it starts just to the right of mu sub 0, so it excludes mu sub 0."
 #| out-width: "100%"
 
-p8 <- plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=2, sample_sd=0.5, inferred_mean=2, inferred_sd=1, true_mean=-0.52, true_sd=1, y_top = 1.05)  # crop the empty space, same scale as Ch4
-print(p8)
+error_panel(xbar = t1_xbar_se * err_se, mu = 0, verdict = "Reject")
 ```
 
--   In @fig-5key.type2_error, the true population mean (orange) is far from $\mu_0$, but the particular sample looks close to the null population distribution. The CI includes $\mu_0$, so the test fails to reject when it should reject the null: a **Type II error**.
+-   In @fig-5key.type2_error, the true population mean (orange) is far from $\mu_0$, but the particular sample looks close to $\mu_0$. The CI includes $\mu_0$, so the test fails to reject when it should reject the null: a **Type II error**.
 
 ```{r}
 #| label: fig-5key.type2_error
 #| fig-cap: 'Type II error: $H_0$ is false (true population mean differs from $\mu_0$), but the sample leads us to fail to reject $H_0$.'
-#| fig-height: 3.96
-#| fig-alt: "Four overlaid normal curves: a blue null population distribution centered near negative 0.5, an orange true population distribution centered far to the right near 3, and a dashed estimated-population curve with a dot-dash sampling-distribution curve both centered near 0, much closer to the null population distribution than to the true population distribution. A thick horizontal bar marking the 95 percent confidence interval sits near 0 and reaches back to include the null mean, marked with a dashed vertical line, so the interval fails to exclude the null value even though the true population is far away."
+#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0, with red critical-value lines and shaded tails. Well to the right, a solid orange line labeled mu marks the center of a wide, low orange bell curve. A dark-green dot-dash bell curve of the same width as the blue one sits between them, centered on a thick lime-green dotted line labeled x-bar that lies inside the right critical value. The thick dark-green confidence interval bar under it reaches back past mu sub 0, so it includes mu sub 0."
 #| out-width: "100%"
 
-p9 <- plot_distributions(null_mean=-0.5, null_sd=1, sample_mean=0, sample_sd=0.4, inferred_mean=0, inferred_sd=1, true_mean=3, true_sd=1, y_top = 1.05)  # crop the empty space, same scale as Ch4
-print(p9)
+error_panel(xbar = t2_xbar_se * err_se, mu = t2_mu_se * err_se, verdict = "Fail to reject")
 ```
 
-Those two figures show what a wrong conclusion looks like for one unlucky sample. They do not show how *often* it happens. For that we stop looking at a single sample and look instead at where the sample mean lands across many of them, which is the sampling distribution of the sample mean from Chapter 4.
+Those two figures show what a wrong conclusion looks like for one unlucky sample. They do not show how *often* it happens. The green curve in them is built from that one sample, centered on its $\bar{x}$. To see how often an error happens, center the sampling distribution on a possible truth instead. That shows where the sample mean lands across all the samples we could have drawn.
 
-@fig-5alpha-beta does that. The blue curve is the **sampling distribution of the sample mean under** $H_0$, the one that sets the critical values. The orange curve is new here: the **sampling distribution of the sample mean if** $\mu = \mu_a$. Chapter 4 drew the possible true populations under $H_a$ as a family of curves sitting on either side of $\mu_0$; $\mu_a$ is the center of one of them, picked out and named so we can compute with it. It is not something we know. We choose a value and ask what would follow if that were the truth, and the answer changes with the value we choose: the larger the difference we ask about, the harder it is to miss.
+@fig-5alpha-beta does that. The blue curve is the **sampling distribution of the sample mean under** $H_0$, the one that sets the critical values. The orange curve is the **sampling distribution of the sample mean if** $\mu = \mu_a$. Chapter 4 drew the possible true populations under $H_a$ as a family of curves sitting on either side of $\mu_0$; $\mu_a$ is the center of one of them, picked out and named so we can compute with it. It is not something we know. We choose a value and ask what would follow if that were the truth, and the answer depends on the value we choose. The larger the difference we ask about, the less likely the test is to miss it.
 
 -   $\alpha$ is the red area in the tails of the blue curve, past the critical values. If $H_0$ is true, that is how often the sample mean lands in the rejection region anyway.
 -   $\beta$ is the gray area under the orange curve *between* the critical values. If $\mu = \mu_a$, that is how often the sample mean fails to reach the rejection region and a real difference goes undetected.
@@ -117,9 +130,9 @@ Those two figures show what a wrong conclusion looks like for one unlucky sample
 
 ```{r}
 #| label: fig-5alpha-beta
-#| fig-cap: 'The two error rates, drawn on sampling distributions. Top: $\alpha$ is the red area in the tails of the null curve. Bottom: adding the curve for one specific alternative value $\mu_a$, $\beta$ is the gray area under it between the critical values.'
+#| fig-cap: 'The two error rates, drawn on sampling distributions. Top: $\alpha$ is the red area in the tails of the curve under $H_0$. Bottom: adding the curve for one specific alternative value $\mu_a$, $\beta$ is the gray area under it between the critical values, and power is the orange area past the right critical value.'
 #| fig-height: 6.6
-#| fig-alt: "Two stacked panels sharing the same axes. The top panel shows a single blue dot-dash bell curve centered at the null mean, marked with a dashed vertical line, with red vertical lines at the critical values on either side and small red shaded tails beyond them, each labeled alpha over two. The bottom panel repeats that curve and adds an orange dot-dash bell curve of the same width centered well to the right. The region under the orange curve lying between the two critical-value lines is shaded gray and labeled beta, while the part of the orange curve past the right critical line is unshaded."
+#| fig-alt: "Two stacked panels sharing the same axes. The top panel shows a single blue dot-dash bell curve centered at the null mean, marked with a magenta dashed vertical line labeled mu sub 0, with red vertical lines labeled minus crit and plus crit at the critical values on either side and small red shaded tails beyond them, each labeled alpha over two. The bottom panel repeats that curve and adds an orange dot-dash bell curve of the same width centered well to the right. The region under the orange curve lying between the two critical-value lines is shaded gray and labeled beta, while the part of the orange curve past the right critical line is shaded orange and labeled power."
 #| out-width: "100%"
 
 mu0_ab <- 0; mua_ab <- 2.5; se_ab <- 1; crit_ab <- 1.96
@@ -135,43 +148,54 @@ leg_ab <- c(
   expression(paste("Sampling distribution of the sample mean under ", H[0])),
   expression(paste("Sampling distribution of the sample mean if ", mu == mu[a])))
 
+# Critical values and mu0 run the full height and are labeled at the top,
+# so it is clear where each boundary comes from.
 shell_ab <- function(p) {
   p +
-    geom_vline(xintercept = c(-crit_ab, crit_ab), color = "red", linewidth = .7) +
-    annotate("segment", x = mu0_ab, xend = mu0_ab, y = 0,
-             yend = dnorm(mu0_ab, mu0_ab, se_ab),
+    annotate("segment", x = c(-crit_ab, crit_ab), xend = c(-crit_ab, crit_ab),
+             y = 0, yend = .52, color = "red", linewidth = .7) +
+    annotate("segment", x = mu0_ab, xend = mu0_ab, y = 0, yend = .52,
              linetype = "dashed", color = "magenta", linewidth = .9) +
+    annotate("text", x = c(-crit_ab, crit_ab), y = .545,
+             label = c("-crit", "+crit"), color = "red", size = 4.2) +
+    annotate("text", x = mu0_ab, y = .545, label = "mu[0]", parse = TRUE,
+             color = "magenta", size = 4.5) +
     scale_color_manual(values = c(null = "blue", alt = "orange"),
                        limits = c("null", "alt"), breaks = c("null", "alt"),
                        labels = leg_ab, drop = FALSE) +
-    coord_cartesian(xlim = c(-4, 6.5), ylim = c(0, 0.52)) +
+    coord_cartesian(xlim = c(-4, 6.5), ylim = c(0, 0.56)) +
     theme_classic() +
     theme(legend.position = "bottom", axis.text = element_blank(),
           axis.title = element_blank(), axis.ticks = element_blank(),
-          legend.text = element_text(size = 9), plot.title = element_text(size = 11)) +
+          legend.text = element_text(size = 11), plot.title = element_text(size = 11)) +
     guides(color = guide_legend(title = NULL, nrow = 2))
 }
 
 null_ab <- geom_line(data = d_ab, aes(x, null, color = "null"), linetype = "dotdash", linewidth = 1.1)
 alt_ab  <- geom_line(data = d_ab, aes(x, alt,  color = "alt"),  linetype = "dotdash", linewidth = 1.1)
 ashade_ab <- list(
-  geom_area(data = subset(d_ab, x <= -crit_ab), aes(x, null), fill = "red", alpha = .25),
-  geom_area(data = subset(d_ab, x >=  crit_ab), aes(x, null), fill = "red", alpha = .25))
+  geom_area(data = subset(d_ab, x <= -crit_ab), aes(x, null), fill = "red", alpha = .18),
+  geom_area(data = subset(d_ab, x >=  crit_ab), aes(x, null), fill = "red", alpha = .18))
 bshade_ab <- geom_area(data = subset(d_ab, x > -crit_ab & x < crit_ab),
                        aes(x, alt), fill = "gray50", alpha = .35)
 alabs_ab <- list(
-  annotate("segment", x = -3.05, xend = -2.25, y = .072, yend = .022,
+  annotate("segment", x = -3.05, xend = -2.25, y = .088, yend = .022,
            arrow = arrow(length = unit(.14, "cm")), linewidth = .4),
-  annotate("text", x = -3.15, y = .085, label = "alpha/2", parse = TRUE, size = 4.5),
-  annotate("segment", x = 3.30, xend = 2.30, y = .072, yend = .022,
+  annotate("text", x = -3.2, y = .125, label = "alpha/2", parse = TRUE, size = 4.5),
+  annotate("segment", x = 3.30, xend = 2.30, y = .088, yend = .022,
            arrow = arrow(length = unit(.14, "cm")), linewidth = .4),
-  annotate("text", x = 3.45, y = .085, label = "alpha/2", parse = TRUE, size = 4.5))
+  annotate("text", x = 3.45, y = .125, label = "alpha/2", parse = TRUE, size = 4.5))
 blab_ab <- annotate("text", x = 1.30, y = .085, label = "beta", parse = TRUE, size = 5.5)
+# Power is the rest of the alternative curve, past the critical value. Shade it,
+# so all three quantities are readable off the same panel rather than two of three.
+pshade_ab <- geom_area(data = subset(d_ab, x >= crit_ab), aes(x, alt),
+                       fill = "orange", alpha = .30)
+plab_ab <- annotate("text", x = 3.05, y = .15, label = "power", color = "darkorange3", size = 4.5)
 
 ab_top <- shell_ab(ggplot() + ashade_ab + null_ab + alabs_ab) +
   ggtitle(expression(paste(alpha, ": the rate of rejecting a true ", H[0]))) +
   theme(legend.position = "none")
-ab_bot <- shell_ab(ggplot() + bshade_ab + ashade_ab + null_ab + alt_ab + blab_ab) +
+ab_bot <- shell_ab(ggplot() + bshade_ab + pshade_ab + ashade_ab + null_ab + alt_ab + blab_ab + plab_ab) +
   ggtitle(expression(paste(beta, ": the rate of missing a real difference of this size")))
 
 patchwork::wrap_plots(ab_top, ab_bot, ncol = 1)
@@ -183,32 +207,51 @@ In @fig-5alpha-beta, $\mu_a$ sits `r mua_ab / se_ab` standard errors above $\mu_
 
 With fixed $\alpha$ and correct assumptions, the long-run Type I error rate is $\alpha$ for any $n$. **Sample size mainly affects Type II error:** with small $n$, the sampling distribution is wide, true effects are harder to detect, and $\beta$ increases (power decreases). As $n$ grows, the sampling distribution tightens, $\beta$ falls, and power rises. Apparent changes in the Type I rate at small $n$ usually reflect **assumption violations** (e.g., non-normality, poor variance estimates, multiple looks), not $n$ itself.
 
+```{r}
+#| label: fig-5type2-samplesize
+#| fig-cap: 'The Type II situation at two sample sizes, with the same $\mu_0$, true $\mu$ and population. In both, $\bar{x}$ lands 2.5 standard errors below $\mu$. Top: the confidence interval catches $\mu_0$, so we fail to reject. Bottom: with four times the sample, the standard error halves, the same bad luck leaves the interval clear of $\mu_0$, and we reject.'
+#| fig-alt: "Two stacked panels on the same axes. Both show a blue dot-dash curve centered on a magenta dashed line labeled mu sub 0 with red critical lines, a wide orange curve centered on an orange line labeled mu well to the right, and a dark-green dot-dash curve centered on a lime-green dotted line labeled x-bar between them, with a dark-green confidence interval bar underneath. Top panel: the blue and green curves are wide and short, the interval bar reaches back past mu sub 0, and a gray box reads Fail to reject. Bottom panel: the blue and green curves are half as wide and twice as tall, x-bar sits closer to mu, the interval bar ends well to the right of mu sub 0, and a red box reads Reject. The orange curve is the same in both panels."
+#| fig-height: 9
+#| out-width: "100%"
 
-**The one-tailed cost, made precise.** Chapter 4 said that habitually running one-tailed tests makes you reject more often than your stated $\alpha$ implies. Here is what that means: a one-tailed test at $\alpha = .05$ puts the whole 5% in one tail, so if you pick the tail *after* seeing which way the data went, you have effectively run a two-tailed test at $\alpha = .10$ and doubled your Type I error rate. The test itself is not wrong. Choosing its direction from the data is.
+n_mu  <- t2_mu_se * err_se           # the Type II figure's true mean
+n_yt  <- 2.2                         # shared y range: fits the taller 4n curves
+n_vdt <- function(xb, se) if (abs(xb) >= 1.96 * se) "Reject" else "Fail to reject"
+n_se  <- c(err_se, err_se / 2)       # n, then 4n
+n_xb  <- n_mu - 2.5 * n_se           # the same bad luck in both: 2.5 SE below mu
+patchwork::wrap_plots(
+  error_panel(xbar = n_xb[1], mu = n_mu, se = n_se[1], y_top = n_yt, verdict = n_vdt(n_xb[1], n_se[1])) +
+    ggtitle("Sample size n"),
+  error_panel(xbar = n_xb[2], mu = n_mu, se = n_se[2], y_top = n_yt, verdict = n_vdt(n_xb[2], n_se[2])) +
+    ggtitle("Sample size 4n: the standard error halves"),
+  ncol = 1)
+```
+
+
+**The one-tailed cost, made precise.** Chapter 4 said to choose the tail before you see the data. That's because picking it afterward makes you reject more often than your stated $\alpha$ implies. A one-tailed test at $\alpha = .05$ puts the whole 5% in one tail, so if you pick the tail *after* seeing which way the data went, you have effectively run a two-tailed test at $\alpha = .10$ and doubled your Type I error rate. A one-tailed test with its direction chosen in advance keeps the Type I error rate at $\alpha$.
 
 ### How to interpret $p$-values
 
 A $p$-value is the probability, **assuming** $H_0$ is true, of obtaining a test statistic **at least as extreme** as the one we observed. We **reject** at level $\alpha$ when $p<\alpha$.
 
-**Tails.** Match the tail(s) to $H_a$:
-
--   Two-sided ($H_a:\ \mu \neq \mu_0$): $p = 2\cdot P(\text{tail beyond }|z_{\text{obs}}|)$\
--   One-sided ($H_a:\ \mu > \mu_0$): $p = P(Z \ge z_{\text{obs}})$\
--   One-sided ($H_a:\ \mu < \mu_0$): $p = P(Z \le z_{\text{obs}})$
+**Tails.** Count only the tail or tails that $H_a$ points to: both tails for a two-tailed test, one tail for a one-tailed test.
 
 ::: {.callout-caution title="Warning: Common mistakes to avoid"}
 1.  $p$ is **not** the probability that $H_0$ is true.
-2.  A smaller $p$ does **not** imply a larger effect; report effect size and a CI.
-3.  With very **large** $n$, tiny effects can yield tiny $p$; assess practical importance.
-4.  With small $n$, true effects can yield large $p$ (low power).
+2.  A tiny $p$ is not "super significant." It means the data would be very unlikely if $H_0$ were true, and that is all. The effect itself can still be tiny and not worth acting on, especially with a large $n$. Report an effect size and a CI so a reader can judge whether it matters.
+3.  With small $n$, true effects can yield large $p$ (low power).
 :::
 
 
 ## Beyond the 0.05 Cutoff
 
-Why go beyond a yes/no at $\alpha=0.05$? Because scientists, managers, policymakers, and communities need to know **how large** an effect is and **how likely** a study is to detect it. That's what **effect size** and **power** provide.
+A yes/no at $\alpha=0.05$ is not enough, because scientists, managers, policymakers, and communities need to know **how large** an effect is and **how likely** a study is to detect it. **Effect size** and **power** answer those two questions.
 
 **Working definitions**
+
+-   **Statistical significance**: the result is unlikely under $H_0$, at your chosen $\alpha$.
+
+-   **Practical significance**: the effect is large enough to change what someone does about it. This is a judgment about the world, not a calculation. With a large enough $n$, a result can be statistically significant and practically trivial. With too small an $n$, a result can be practically important and still not statistically significant.
 
 -   **Effect size**: how big the result is, not just whether it cleared the threshold.
 
@@ -218,28 +261,28 @@ Why go beyond a yes/no at $\alpha=0.05$? Because scientists, managers, policymak
 
 ## Effect Size
 
-Effect size comes in two currencies. You can express it in **original units**, which carry practical meaning, or in **standardized units**, which let you compare across scales.
+Effect size comes in two kinds of units. You can express it in **original units**, which carry practical meaning, or in **standardized units**, which let you compare across scales.
 
 **Practical (original units).** Use the scale stakeholders recognize.
 
 -   Exams: "Treatment improved scores by **5 percentage points**" (a letter-grade-sized change).
 -   Time-on-task: "New training reduces practice time by **1,000 hours** out of 10,000" (a 10% reduction).
 
-These statements are easy to interpret, but they don't travel well across contexts or measures.
+These statements are easy to interpret, but they are hard to compare across contexts or measures.
 
-**Standardized (unitless).** When units are unfamiliar or scales differ, standardize by typical variability. The most common standardized effect size metric is *Cohen's d* [@Cohen1988]. For two means with a common SD $\sigma$,
+**Standardized (unitless).** When units are unfamiliar or scales differ, standardize by typical variability. The most common standardized effect size metric is *Cohen's d* [@Cohen1988]. It divides the raw difference, $\Delta$, by the population standard deviation:
 
-$$d = \frac{\mu_1 - \mu_2}{\sigma}$$
+$$d = \frac{\Delta}{\sigma}$$
 
-Now "how big?" is expressed in **SD units**. The same form covers a single mean tested against a reference value: put $\mu - \mu_0$ on top in place of $\mu_1 - \mu_2$. Either way the numerator is the difference you care about and the denominator is the population standard deviation.
+$\Delta$ is $\mu_1 - \mu_2$ when comparing two groups, or $\mu - \mu_0$ when testing one mean against a reference value. Now "how big?" is expressed in **SD units**.
 
-**This is the same ratio as a test statistic, with one part swapped.** Chapter 4 gave the general shape, effect over error, and the $t$-test filled it in as
+**This is the same ratio as a test statistic, with one part swapped.** Chapter 4 gave the general shape, effect over error, and filled it in with the $z$:
 
-$$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}} \qquad \text{versus} \qquad d = \frac{\mu_1-\mu_2}{\sigma}$$
+$$z = \frac{\bar{x}-\mu_0}{\sigma/\sqrt{n}} \qquad \text{versus} \qquad d = \frac{\mu_1-\mu_2}{\sigma}$$
 
-Same numerator: the effect. Different denominator, and that difference is the whole point. The $t$ statistic divides by the **standard error**, which shrinks as $n$ grows, so $t$ gets larger with more data even when the effect stays exactly the same. Cohen's $d$ divides by the **standard deviation**, which does not shrink with $n$, so $d$ reports the size of the effect itself.
+The numerator is the same: the effect. The denominator differs. The test statistic divides by the **standard error**, which shrinks as $n$ grows, so $z$ gets larger with more data even when the effect stays exactly the same. Cohen's $d$ divides by the **standard deviation**, which does not shrink with $n$, so $d$ reports the size of the effect itself.
 
-That is why a large $t$ does not mean a large effect, and why the two numbers answer different questions. Collect enough data and you can drive $t$ as high as you like off a trivial difference. You cannot do that to $d$.
+That is why a large test statistic does not mean a large effect, and why the two numbers answer different questions. Collect enough data and you can drive $z$ as high as you like off a trivial difference. You cannot do that to $d$. The next chapter's $t$ slots into exactly the same place: it is the same ratio with an estimated $s$ in place of a known $\sigma$, so the same argument applies to it unchanged.
 
 **Environmental example (biodiversity index).** Suppose an index increases from 3 to 4 after reforestation.
 
@@ -250,15 +293,7 @@ That is why a large $t$ does not mean a large effect, and why the two numbers an
     -   If the SD across sites is 1.0, then $d = 1.0$: a large shift.
     -   If the SD is 10, then $d = 0.10$: a small shift.
 
-**The raw difference has a name when you are planning.** Designing a study means asking how often you would catch a difference of a given size. The size you ask about is the raw distance between the two values being compared, the candidate value and the null value for a one-sample test, or the two group means for a two-group comparison:
-
-$$\Delta = |\mu_a - \mu_0|$$
-
-Cohen's $d$ is that same distance measured in standard deviations,
-
-$$d = \frac{\Delta}{\sigma}$$
-
-These are one quantity in two units, not two quantities, which is why the biodiversity example gives $d = 1.0$ or $d = 0.10$ from the same $\Delta$ of one index point. Neither one is known: both describe a population, and after collecting data you estimate both from the sample. What differs is the unit the question gets asked in. A study reports $d$, because it compares across studies. A study is planned in $\Delta$, because the smallest difference worth detecting is a judgment about the real world, made in the units the decision is made in: milligrams per liter, degrees, index points.
+**Planning uses $\Delta$.** To plan a study, $\Delta$ is enough: it is the size of the effect you expect to see, in the units of the study, and there is no need to standardize it. Cohen's $d$ standardizes it so that effect sizes can be compared across studies.
 
 
 **Notes for practice**
@@ -268,7 +303,7 @@ These are one quantity in two units, not two quantities, which is why the biodiv
 -   A "small" $d$ can still be important (e.g., small reductions in lead or $\mathrm{PM}_{2.5}$ can matter for health).
 -   Pair effect sizes with **95% CIs** to show precision, not just magnitude.
 
-Let's ground effect size in a concrete example. Suppose we're measuring **final exam performance** (percent correct). The class mean is 65% with a standard deviation of 5%. Group A is a control, while Group B receives some instructional treatment.
+Suppose we're measuring **final exam performance** (percent correct). The class mean is 65% with a standard deviation of 5%. Group A is a control, while Group B receives some instructional treatment.
 
 @fig-5.5effectdistsB shows four possible scenarios:
 
@@ -279,7 +314,7 @@ Let's ground effect size in a concrete example. Suppose we're measuring **final 
 #| out-width: "100%"
 
 
-x_es <- seq(25, 100, 1)
+x_es <- seq(45, 95, .5)
 shifts <- c("d = 0" = 65, "d = 0.5" = 67.5, "d = 1" = 70, "d = 2" = 75)
 
 df <- do.call(rbind, lapply(names(shifts), function(lab) {
@@ -298,8 +333,8 @@ ggplot(df, aes(
   group = condition,
   color = condition
 )) +
-  geom_line() +
-  theme_classic(base_size = 15) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(values = c(A = "blue", B = "orange")) +
   facet_wrap( ~ effect_size) +
   xlab("values") +
   ylab("density")
@@ -312,11 +347,11 @@ ggplot(df, aes(
 -   **Panel 3 (**$d=1$): A 5-point shift (70).
 -   **Panel 4 (**$d=2$): A large 10-point shift (75).
 
-The takeaway is that effect size puts raw differences into a standard-deviation scale. A half-SD shift ($d=0.5$) is noticeable but modest; a two-SD shift ($d=2$) is very large. In practice, we rarely know beforehand how big a shift to expect. That is why we conduct the study.
+Effect size puts raw differences on a standard-deviation scale. A half-SD shift ($d=0.5$) is noticeable but modest; a two-SD shift ($d=2$) is very large. In practice, we rarely know beforehand how big a shift to expect.
 
 ## Power
 
-When a real effect exists, your design needs to be sensitive enough to detect it, otherwise the test has little value. We've already seen that effects can vary in size. Now we add a second idea: study designs differ in their ability to reliably detect those effects. This sensitivity is called **statistical power**.
+When a real effect exists, your design needs to be sensitive enough to detect it, otherwise the test has little value. We've already seen that effects can vary in size. Study designs also differ in how reliably they detect those effects. This sensitivity is called **statistical power**.
 
 Power rises when:
 
@@ -404,16 +439,15 @@ In @fig-5.5powercurve, we fix the design to a two-sample $t$-test with $n=10$ pe
 # Exact power for a two-sample t-test (not the normal approximation):
 # power.t.test uses the noncentral t, which is what the test actually uses.
 effect_size <- seq(0, 2, .1)
-power <- sapply(effect_size, function(d) {
-  if (d == 0) return(0.05)                     # at d = 0, rejection rate is alpha
-  power.t.test(n = 10, delta = d, sd = 1, sig.level = 0.05)$power
-})
+# strict = TRUE counts both rejection tails, so power at d = 0 is exactly alpha.
+power <- sapply(effect_size, function(d)
+  power.t.test(n = 10, delta = d, sd = 1, sig.level = 0.05, strict = TRUE)$power)
 
 plot_df <- data.frame(power, effect_size)
 
 ggplot(plot_df, aes(x=effect_size, y=power))+
-  geom_line()+
-  theme_classic()
+  geom_line(color = "#008cff", linewidth = 1.2)+
+  labs(x = "Effect size (Cohen's d)", y = "Power")
 ```
 
 **Walkthrough.**
@@ -422,30 +456,29 @@ ggplot(plot_df, aes(x=effect_size, y=power))+
 -   A larger effect ($d=0.8$) is caught about 40% of the time.
 -   Very large effects ($d=2$) are detected almost every time (about 99%).
 
-This shows that small samples are only sensitive to big, obvious effects.
+This shows that small samples can reliably detect only large effects.
 
 Now suppose prior research suggests the effect size is small ($d=0.2$). Instead of varying the effect, we can ask: *how many samples per group do we need to have decent power?*
 
-@fig-5.5powercurveN plots power against sample size for detecting $d=0.2$. The green line marks 80% power, a common planning target.
+@fig-5.5powercurveN plots power against sample size for detecting $d=0.2$. The dashed line marks 80% power, a common planning target.
 
 ```{r}
 #| label: fig-5.5powercurveN
-#| fig-cap: 'Power vs. sample size for detecting $d=0.2$ with a two-sample $t$-test at $\alpha=0.05$; green line marks $0.80$ power.'
+#| fig-cap: 'Power vs. sample size for detecting $d=0.2$ with a two-sample $t$-test at $\alpha=0.05$; dashed line marks $0.80$ power.'
 #| fig-alt: "Line graph of power against sample size per group, from 10 to 800. Power starts near zero at small sample sizes and rises in a curve that flattens as it approaches 1.0. A horizontal reference line at 0.80 power crosses the curve around a sample size of roughly 394 per group."
 #| out-width: "100%"
 
 n_seq <- seq(10, 800, 10)
 power <- sapply(n_seq, function(n)
-  power.t.test(n = n, delta = 0.2, sd = 1, sig.level = 0.05)$power)
+  power.t.test(n = n, delta = 0.2, sd = 1, sig.level = 0.05, strict = TRUE)$power)
 
 n_for_80 <- power.t.test(delta = 0.2, sd = 1, sig.level = 0.05, power = 0.80)$n
 
 plot_df <- data.frame(power, n_seq)
 
 ggplot(plot_df, aes(x=n_seq, y=power))+
-  geom_line()+
-  theme_classic()+
-  geom_hline(yintercept=.8, color="green")+
+  geom_line(color = "#008cff", linewidth = 1.2)+
+  geom_hline(yintercept=.8, color="grey40", linetype="dashed")+
   labs(x = "n per group", y = "Power")
 ```
 
@@ -463,7 +496,7 @@ ggplot(plot_df, aes(x=n_seq, y=power))+
 
 ### Planning your design
 
-Our discussion of effect size and power highlights the importance of understanding the statistical limitations of an experimental design. Planning a study means working through the following, in order:
+Planning a study means working through the following, in order:
 
 -   **Define a meaningful effect,** $\Delta$: the smallest difference from $\mu_0$ that would change what you do. State it in the units of the measurement.
 -   **Choose** $\alpha$ (often 0.05; justify if different).
@@ -471,15 +504,23 @@ Our discussion of effect size and power highlights the importance of understandi
 -   **Compute** $n$ for $\ge 80\%$ power (or explain tradeoffs if you can't reach it).
 -   **Pre-specify** one- vs two-tailed before data collection.
 
-As a general rule of thumb, small-$n$ designs can only reliably detect very large effects, whereas large-$n$ designs can reliably detect much smaller effects. As a researcher, it is your responsibility to plan your design accordingly so that it is capable of reliably detecting the kinds of effects it is intended to measure.
+::: {.callout-note title="When you actually do this"}
+This sequence is a **formal power analysis**, and it is for a study you are about to run: one where you still control how much data you collect, and where collecting it costs something. How many plots to establish, how many sites to add to a monitoring network, how many samples a permit application commits you to. There the five steps are a real obligation, and funders, agencies and review boards often ask to see them.
+
+A great deal of environmental work, including your project for this course, starts from data someone else already collected. You are working with the $n$ you have, so there is no power calculation to do. What you owe a reader then is different: report the effect and its interval, and say plainly what a design this size could and could not have detected.
+
+What you should not do is compute power after the fact for the effect you happened to observe. That is **post-hoc power**, and it adds nothing: it is the $p$-value restated, and a non-significant result always comes out with low post-hoc power. Asking what power the design had for a difference picked *in advance* is a different question, and a fair one.
+:::
+
+As a general rule of thumb, small-$n$ designs can only reliably detect very large effects, whereas large-$n$ designs can reliably detect much smaller effects. Plan the design so it can reliably detect the effects it is meant to measure.
 
 ### Two cautions (common pitfalls)
 
 -   **Low power inflates doubt, even when** $p<0.05$. Underpowered studies rarely replicate. A design with only 30% power to detect an expected effect might, by luck, produce a "significant" result, but most replications will not. Worse, false positives from small samples tend to look exaggerated: if a spurious finding reaches significance, the estimated effect size is often large enough to seem convincing.
 
--   **Huge** $n$ finds tiny effects. With very large samples, trivial differences can register as statistically significant. For example, a billion-person trial might show a drug reduces pain by 0.01%. That effect is "real" but practically meaningless. This is why effect size and confidence intervals should be reported alongside $p$-values: significance alone is not enough.
+-   **Huge** $n$ finds tiny effects. With very large samples, trivial differences can register as statistically significant. For example, a satellite image can contain millions of pixels, so a difference of a fraction of a percent in greenness between two land-cover types can come out statistically significant. That difference is "real" but practically meaningless. Significance alone is not enough. This is why effect size and confidence intervals should be reported alongside $p$-values.
 
-@fig-5.5effectsizeType1 shows the first pitfall graphically. Even when the null hypothesis is true, 5% of tests are expected to fall below $\alpha = 0.05$. In small samples, those false positives tend to be paired with large apparent effect sizes. This can give the illusion of a strong, replicable finding when in reality it is just sampling noise.
+@fig-5.5effectsizeType1 shows the first pitfall graphically. Even when the null hypothesis is true, 5% of tests are expected to fall below $\alpha = 0.05$. In small samples, those false positives tend to be paired with large apparent effect sizes. What looks like a strong finding could just be sampling error.
 
 ```{r}
 #| label: fig-5.5effectsizeType1
@@ -557,6 +598,6 @@ A results statement gives the plain-language conclusion and the key statistics i
 -   **Two ways to be wrong.** A Type I error rejects a true $H_0$, at a rate you set with $\alpha$. A Type II error fails to reject a false one. Tightening one loosens the other, which is why $\alpha = .05$ is a balance rather than a fact about nature.
 -   **What a** $p$-value is not. It is not the probability that $H_0$ is true, and on its own it says nothing about how large an effect is.
 -   **Significance is not size.** With a large enough $n$, a trivially small difference clears any threshold. Report an effect size and a confidence interval next to every $p$-value so a reader can judge whether the result matters, not just whether it cleared a line.
--   **Effect size in two currencies.** The same difference can be written in original units, $\Delta$, which carry practical meaning for the people who act on your result, or in standard deviations, Cohen's $d = \Delta/\sigma$, which makes results comparable across studies and scales. These are one quantity in two units, not two quantities. Report both when you can, and plan in $\Delta$, because the smallest difference worth detecting is a judgment made in real units.
+-   **Effect size in two kinds of units.** The same difference can be written in original units, $\Delta$, which carry practical meaning for the people who act on your result, or in standard deviations, Cohen's $d = \Delta/\sigma$, which makes results comparable across studies and scales. These are one quantity in two units, not two quantities. Report both when you can, and plan in $\Delta$, because the smallest difference worth detecting is a judgment made in real units.
 -   **Power is a design decision.** Power depends on $n$, effect size, $\alpha$, and variability together. An underpowered study fails twice over: it usually misses real effects, and when it does reach significance the effect it reports tends to be inflated. That is why power analysis belongs *before* data collection.
--   **A result is a sentence, not a number.** State the direction in words, then give the test, the statistic with its df or $n$, the $p$-value, and an effect size or confidence interval. "Significant" on its own tells a reader nothing about direction, magnitude, or precision.
+-   **Report a result as a sentence.** State the direction in words, then give the test, the statistic with its df or $n$, the $p$-value, and an effect size or confidence interval. "Significant" on its own tells a reader nothing about direction, magnitude, or precision.
