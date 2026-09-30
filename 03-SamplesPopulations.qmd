@@ -59,7 +59,7 @@ Imagine a soccer game between Arsenal and West Ham. You say Arsenal has an 80% c
 
 2.  Betting odds: you'd only take a wager if payoffs reflected an 80/20 split.
 
-3.  Subjective belief: your confidence in Arsenal is four times stronger than in West Ham.
+3.  Subjective belief: your confidence that Arsenal wins is four times your confidence that it doesn't.
 
 All three interpretations follow the same rules but reflect different philosophies.
 
@@ -209,19 +209,19 @@ The probability is about $0.5$%.
 pbinom(q = 4, size = 20, prob = 0.5)
 ```
 
-The probability is about $0.6$%
+The probability is about $0.6$%.
 
 The probability is slightly higher here, because it also includes the probability of getting 3, 2, 1, or 0 heads.
 
 ::: {.callout-note title="Note: R's distribution helpers"}
 Every distribution in R comes with the same four:
 
-- d\* = exact probability (PDF)
+- d\* = exact probability for a discrete distribution, or density (the curve's height) for a continuous one
 - p\* = cumulative probability $P(X \le q)$
 - q\* = quantile (inverse of p\*)
 - r\* = random draws
 
-For binomial: dbinom, pbinom, qbinom, rbinom. For discrete distributions, some percentiles don't exist exactly; qbinom returns the smallest x with P(X \le x) \ge p.
+For binomial: dbinom, pbinom, qbinom, rbinom. For discrete distributions, some percentiles don't exist exactly; `qbinom()` returns the smallest $x$ with $P(X \le x) \ge p$.
 :::
 
 ### The normal distribution (continuous)
@@ -240,7 +240,7 @@ It looks like @fig-normal.
 
 ```{r}
 #| label: fig-normal
-#| fig-cap: "Standard normal Probability Distribution Function (PDF), where μ = 0, σ = 1. For continuous variables, probabilities are *areas* under the curve."
+#| fig-cap: "Standard normal probability density function (PDF), where μ = 0, σ = 1. For continuous variables, probabilities are *areas* under the curve."
 #| fig-alt: "A smooth, symmetric bell-shaped curve centered at 0. The curve peaks at zero and tapers toward both tails, approaching but never touching the horizontal axis."
 library(ggplot2); library(tibble); library(dplyr)
 x <- seq(-4,4,length=400)
@@ -347,7 +347,7 @@ Suppose we have a bag with 10 chips, each uniquely labeled, some black and some 
 
 ```{r}
 #| label: fig-srs1
-#| fig-cap: "Simple random sampling without replacement from a finite population"
+#| fig-cap: "Simple random sampling without replacement from a finite population."
 #| fig-alt: "A row of ten lettered chips, four shaded black and six white, labeled as the population. Three arrows point from the population to three separate groups of four chips each, labeled as simple random samples drawn without replacement, showing that each sample mixes black and white chips without any letter repeating within a sample."
 
 draw_sampling_diagram <- function(samples, black_chips, title1, title2) {
@@ -398,7 +398,7 @@ Now imagine a different procedure: someone peeks inside and deliberately picks o
 
 ```{r}
 #| label: fig-brs
-#| fig-cap: "Biased sampling without replacement from a finite populations."
+#| fig-cap: "Biased sampling without replacement from a finite population."
 #| fig-alt: "The same ten-chip population, with arrows pointing to three samples of four chips each, but every sampled chip is one of the four black ones. None of the six white chips ever appears, illustrating a biased sample restricted to just one subgroup."
 
 samples_brs <- replicate(3, sample(black_chips, 4, replace = FALSE), simplify = FALSE)
@@ -556,8 +556,8 @@ For example, suppose we draw numbers from a uniform distribution on 1 to 10: @fi
 
 ```{r}
 #| label: fig-3Unif
-#| fig-cap: "A uniform distribution illustrating the probabilites of sampling the numbers 1 to 10. In a uniform distribution, all numbers have an equal probability of being sampled, so the line is flat indicating all numbers have the same probability"
-#| fig-alt: "Ten points at the values 1 through 10, each sitting at a probability of 0.1, connected by a flat horizontal reference line. The flat line shows that every number from 1 to 10 has the same probability of being drawn."
+#| fig-cap: "A uniform distribution over the numbers 1 to 10. Every number has the same probability of being sampled, 0.1, so the line is flat."
+#| fig-alt: "A flat horizontal line at a probability of 0.1 spanning the numbers 1 through 10, showing that every number from 1 to 10 has the same probability of being drawn."
 
 library(ggplot2)
 
@@ -590,7 +590,7 @@ df<-data.frame(a,sample=rep(1:10000,each=20))
 df2<-aggregate(a~sample,df,mean)
 
 ggplot(df2, aes(x=a))+
-  geom_histogram(color="white")+
+  geom_histogram(binwidth = 0.05, boundary = 0.025, color="white")+
   theme_classic(base_size=15)+
   ggtitle("Histogram of 10,000 sample means")+
   xlab("value")
@@ -606,7 +606,7 @@ The sample mean is the most important case, because most of classical inference 
 
 ```{r}
 #| label: fig-3samplestats
-#| fig-cap: "Each panel shows a histogram of a different sampling statistic"
+#| fig-cap: "Each panel shows a histogram of a different sample statistic."
 #| fig-alt: "Four histograms arranged in a 2 by 2 grid, one each for the sample mean, sample standard deviation, sample maximum, and sample median, computed from 10,000 samples of size 50 drawn from a normal population with mean 100 and standard deviation 20. The sample mean and median histograms are narrow and symmetric around 100, the standard deviation histogram is narrower and centered below 20, and the maximum histogram is shifted well above 100 with a longer tail."
 #| out.width: "100%"
 
@@ -880,7 +880,7 @@ This is what later chapters mean by "once the sample is large enough." A small s
 
 A **z-score** is a standardized way to express how far a value is from its mean, measured in units of standard deviation. Z-scores are useful because (i) areas under the normal curve translate directly into probabilities, and (ii) by the CLT, many averages (e.g., sample means) are approximately normal, so z-scores let us read off probabilities for those, too.
 
-First, recall the geometry of the normal curve. In @fig-3normalSDspercents we draw vertical lines at 0, ±1, ±2, and ±3 standard deviations for a standard normal ($\mu=0,\sigma=1$). The labels show familiar areas: about 34.1% between 0 and 1, 13.6% between 1 and 2, and so on. Altogether, about 68.2% of values lie between −1 and +1 SD.
+First, recall the geometry of the normal curve. In @fig-3normalSDspercents we draw vertical lines at 0, ±1, ±2, and ±3 standard deviations for a standard normal ($\mu=0,\sigma=1$). The labels show familiar areas: about 34.1% between 0 and 1, 13.6% between 1 and 2, and so on. Altogether, about 68.3% of values lie between −1 and +1 SD.
 
 ```{r}
 #| label: fig-3normalSDspercents
@@ -928,7 +928,7 @@ Those same proportions hold for any normal distribution, regardless of its mean 
 
 ```{r}
 #| label: fig-3normalSDspercentsB
-#| fig-cap: "The same area rules apply for any normal: one SD on either side covers ~68.2%, etc."
+#| fig-cap: "The same area rules apply for any normal: one SD on either side covers ~68.3%, etc."
 #| fig-alt: "The same normal bell curve shape, now centered at 100 with vertical lines at 25, 50, 75, 100, 125, 150, and 175. The labeled areas between adjacent lines match the earlier standard normal figure exactly, about 0.341 nearest the center on each side, confirming the same proportions apply regardless of the mean and standard deviation."
 
 dnorm_vec <- dnorm(seq(0,200,.1),mean=100,sd=25)
@@ -991,7 +991,7 @@ Because z-scores put everything on the same scale, you can compare values across
 
 If the population mean and SD are known, use them in the formula. In practice they're often unknown, so we standardize with the sample mean $\bar{x}$ and sample SD $s$ as estimates.
 
-Example: generate ten observations from a $N(100, 25^2)$ distribution, then standardize:
+Example: generate ten observations from a $\text{Normal}(100, 25)$ distribution, then standardize:
 
 ```{r}
 scores <- round(rnorm(10,100,25),digits=2)
@@ -1020,8 +1020,8 @@ Not every named distribution is symmetric like the normal. The **chi-square** ($
 
 ```{r}
 #| label: fig-3chisq-shapes
-#| fig-cap: "Chi-square distributions for three degrees of freedom. Unlike the (symmetric) normal distribution, chi-square is always non-negative and right-skewed; as df increases, the distribution shifts right and becomes more symmetric."
-#| fig-alt: "Three overlaid density curves for chi-square distributions with 2, 4, and 8 degrees of freedom, each a different color. All three start at zero on the horizontal axis, rise to a peak, and trail off to the right in a long tail. The curve with 2 degrees of freedom peaks highest and closest to zero; as degrees of freedom increase, the peak shifts right, flattens, and the curve becomes more symmetric."
+#| fig-cap: "Chi-square distributions with 2, 4, and 8 degrees of freedom. Unlike the (symmetric) normal distribution, chi-square is always non-negative and right-skewed; as df increases, the distribution shifts right and becomes more symmetric."
+#| fig-alt: "Three overlaid density curves for chi-square distributions with 2, 4, and 8 degrees of freedom, each a different color. The curve with 2 degrees of freedom starts highest, at 0.5, and falls steadily to the right. The curves with 4 and 8 degrees of freedom start at zero, rise to a peak, and trail off to the right in a long tail. As degrees of freedom increase, the peak shifts right, flattens, and the curve becomes more symmetric."
 
 library(tidyverse)
 
@@ -1365,7 +1365,7 @@ First, compare the top row (divide by $n$) to the bottom row (divide by $n-1$): 
 Two ideas from earlier in this chapter bear directly on what we just saw:
 
 - **Law of large numbers.** As $n$ grows, both $\bar{x}$ and $s$ converge on their population values, exactly the pattern in @fig-sdbias-simulation.
-- **Central limit theorem.** The CLT describes the sampling distribution of the *mean*, not the standard deviation. The histograms above look bell-shaped, but we cannot assume sample SDs are normal at any $n$.
+- **Central limit theorem.** The CLT describes the sampling distribution of the *mean*, not the standard deviation. The $n = 30$ histograms above look bell-shaped, but the $n = 3$ histograms are clearly right-skewed. We cannot assume sample SDs are normal at any $n$.
 :::
 
 To summarize:
