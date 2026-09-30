@@ -98,14 +98,14 @@ The difference is that $F$ uses variances for both the numerator and the denomin
 
 $$F = \frac{\text{Can explain}}{\text{Can't explain}}$$
 
-When the two are about the same size, $F\approx 1$: group differences are no bigger than ordinary sampling noise. When explained variance is much larger than unexplained variance, $F$ climbs well above 1, which is evidence that the groups differ. When it's smaller, $F$ drops below 1. An $F$ of 5 means the group means are spread out five times more than the noise within groups would spread them on its own. An $F$ of 0.6 means they are spread out less than that noise alone would typically produce.
+When the two are about the same size, $F\approx 1$: group differences are no bigger than ordinary sampling noise. When explained variance is much larger than unexplained variance, $F$ climbs well above 1, which is evidence that the groups differ. When it's smaller, $F$ drops below 1. An $F$ of 5 means the group means vary five times as much as within-group noise alone would make them vary, measured in squared units. An $F$ of 0.6 means they vary less than that noise alone would typically produce.
 
 @fig-8betweenwithin shows both situations with the same noise. On the left, the group means differ by no more than the scatter within each group would produce. On the right, the means are separated by much more than that scatter. $F$ measures that separation relative to the within-group scatter.
 
 ```{r}
 #| label: fig-8betweenwithin
 #| fig-cap: "The same within-group noise with no real differences (left) and with the group means shifted (right). Three groups of 12; small points are individual scores, large dots are group means, bars are 95% confidence intervals."
-#| fig-alt: "Two side-by-side panels on the same vertical scale, each showing three groups of 12 jittered points with a group mean and 95% confidence interval. In the left panel, labeled no real differences, the three means sit near 10 and their intervals overlap heavily. In the right panel, labeled means shifted, the means climb from about 10 to about 12 to about 16 and the intervals no longer overlap, while the spread of points within each group is the same as on the left."
+#| fig-alt: "Two side-by-side panels on the same vertical scale, each showing three groups of 12 jittered points with a group mean and 95% confidence interval. In the left panel, labeled no real differences, the three means sit near 10 and their intervals overlap heavily. In the right panel, labeled means shifted, the means climb from about 10 to about 12 to about 16. The Group C interval is clear of the other two, and A and B overlap only slightly, while the spread of points within each group is the same as on the left."
 #| fig-asp: 0.4
 #| out-width: "100%"
 
@@ -257,7 +257,7 @@ $df_\text{Total} = N-1$, and it splits the same way the sums of squares do: $df_
 
 ### Mean squares
 
-We're building toward $F=\dfrac{\text{measure of effect}}{\text{measure of error}}$, and it's tempting to just divide $SS_\text{Between}$ by $SS_\text{Within}$ directly. The problem is that $SS_\text{Within}$ sums over all 9 individual scores while $SS_\text{Between}$ sums over only 3 group means, so $SS_\text{Within}$ is almost always the much larger number, and the raw ratio wouldn't be interpretable the way $t$ or $z$ are.
+We're building toward $F=\dfrac{\text{measure of effect}}{\text{measure of error}}$, and it's tempting to just divide $SS_\text{Between}$ by $SS_\text{Within}$ directly. The problem is that each sum of squares grows with the number of independent pieces that go into it. $SS_\text{Between}$ is built from 3 group means and $SS_\text{Within}$ from 9 individual deviations, so their raw ratio has no fixed scale to compare against the way $t$ or $z$ does.
 
 The fix is to convert each sum of squares into an average, or **mean square**, by dividing by its degrees of freedom (rather than its raw count, since these are estimated quantities):
 
@@ -265,7 +265,7 @@ $$MS_\text{Between} = \frac{SS_\text{Between}}{df_\text{Between}} = \frac{72}{2}
 
 $$MS_\text{Within} = \frac{SS_\text{Within}}{df_\text{Within}} = \frac{230}{6} = 38.33$$
 
-Both are variances: $MS_\text{Between}$ measures how much the group means vary, and $MS_\text{Within}$ measures how much individual scores vary around their own group's mean.
+Both are variances. $MS_\text{Within}$ measures how much individual scores vary around their own group's mean. $MS_\text{Between}$ measures how much the group means vary, multiplied by the number of scores per group, which puts it on the same scale as $MS_\text{Within}$.
 
 ### Calculate $F$
 
@@ -300,7 +300,7 @@ We run this simulation 10,000 times. Each time we compute $F$ from the sample da
 ```{r}
 #| label: fig-8fnull
 #| fig-cap: "A simulation of 10,000 experiments from a null population distribution with no group differences. The histogram shows 10,000 $F$-values, one for each simulation. These are values that F can take in this situation. All of these $F$-values were produced by random sampling error."
-#| fig-alt: "Histogram of 10,000 simulated F values from a null population distribution, with the theoretical F distribution for 2 and 27 degrees of freedom drawn over it as a blue dot-dash curve that follows the bars closely. The histogram starts at zero, rises to a tall peak below 1, and then tapers off in a long right-hand tail, with very few values reaching as high as 5."
+#| fig-alt: "Histogram of 10,000 simulated F values from a null population distribution, with the theoretical F distribution for 2 and 27 degrees of freedom drawn over it as a blue dot-dash curve that follows the bars closely. The histogram is tallest at zero and falls off steadily into a long right-hand tail, with very few values reaching as high as 5."
 #| fig-asp: 0.5
 #| out-width: "100%"
 
@@ -346,7 +346,7 @@ We can use this null distribution of $F$ to decide when a real experiment's resu
 
 ```{r}
 #| label: fig-8criticalF
-#| fig-cap: "The critical value for $F$ where 5% of all $F$-values lie beyond this point"
+#| fig-cap: "The critical value of $F$ at $\\alpha = .05$ for df = 2 and 27. Five percent of the simulated $F$-values lie beyond it."
 #| fig-alt: "The same histogram of 10,000 simulated F values with the blue dot-dash F curve over it, now with a red vertical line labeled crit equals 3.35. The bars beyond that line are shaded red and labeled '5% of F-values'; they form only the thin tail at the far right of the histogram."
 #| out-width: "100%"
 #| fig-asp: 0.5
@@ -358,7 +358,7 @@ ggplot(plot_df, aes(x = save_F)) +
   # one shared bin grid (an edge at the critical value) and one shared density scale,
   # so splitting the bars by region doesn't rescale the tail
   geom_histogram(aes(y = after_stat(count / (nrow(plot_df) * width)), fill = region, alpha = region),
-                 color = "white", binwidth = 0.1, boundary = crit_F) +
+                 color = "white", breaks = c(0, seq(crit_F %% 0.1, 10.1, by = 0.1))) +
   scale_fill_manual(values = c(`FALSE` = "#008cff", `TRUE` = "red"), guide = "none") +
   scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = .35), guide = "none") +
   geom_line(data = f_curve, aes(x, y), colour = "blue", linetype = "dotdash", linewidth = 1.1) +
@@ -380,7 +380,7 @@ An $F$-value and its $p$-value don't, by themselves, tell us what the group mean
 
 A large $F$ with a small $p$-value does tell us one thing: we have evidence that the group means differ somewhere, because the variance explained by group membership (the numerator of $F$) is large relative to the variance within groups. Finding *which* means differ requires a separate step.
 
-**ANOVA is an omnibus test.**
+### ANOVA is an omnibus test
 
 This is why ANOVA is called an omnibus test: omnibus meaning "comprising several items." It answers one overall question that stands in for several pairwise ones at once.
 
@@ -397,13 +397,13 @@ d.  $A\neq B$, $B\neq C$, and $A\neq C$ (all three differ)
 
 A small $F$ with a large $p$-value means we don't reject the hypothesis of no differences: we have no evidence the three group means differ, and whatever gaps exist could easily be chance. A large $F$ with a small $p$-value (below $\alpha$) means we reject that hypothesis and conclude at least one group mean differs from the others. That's the omnibus test: it tells us *whether* the means differ, not yet *which* ones.
 
-**What group means look like when $F$ exceeds the critical value.**
+### What group means look like when $F$ exceeds the critical value
 
 The 10,000 simulated experiments never showed the group means behind each $F$-value. Earlier we found a critical value of 3.35: only 5% of $F$-values from this null distribution exceed it. @fig-8sigdiffs shows the group means for 10 simulations with $F>3.35$. Every one of them was still drawn from the same null population distribution, with no real group differences. Rejecting the null whenever $F$ clears 3.35 is the right long-run decision rule, but every one of these particular simulations would be a Type I error if we did.
 
 ```{r}
 #| label: fig-8sigdiffs
-#| fig-cap: "Different patterns of group means under the null when F is above critical value (these are all type I Errors)."
+#| fig-cap: "Group means from 10 null simulations in which $F$ exceeded the critical value. Every one of them is a Type I error."
 #| fig-alt: "Ten small panels of blue bar charts with three bars each for site types A, B, and C, all filtered to simulations where F exceeded the critical value of 3.35. In every panel at least one bar's error bars do not overlap with another's, giving the visual impression of a real difference even though all ten panels were generated with no true group difference."
 #| out-width: "100%"
 
@@ -416,7 +416,7 @@ for (i in 1:1000) {
   sample_df   <- data.frame(simulations, site_type, abundance)
   aov.out <- summary(aov(abundance ~ site_type, sample_df))
   the_f <- aov.out[[1]]$`F value`[1]
-  if (the_f > 3.35) {
+  if (the_f > crit_F) {
     all_df <- rbind(all_df, sample_df)
     counter <- counter + 1
   }
@@ -447,11 +447,11 @@ ggplot(plot_df, aes(x = site_type, y = means)) +
 
 Every panel of @fig-8sigdiffs now shows at least one group mean whose error bars don't overlap with another's: a visually convincing "real" difference. All ten are Type I errors. When this happens by chance, the data show a pattern, the $F$-value is large, and the $p$-value is small. A Type I error looks exactly like a real effect, and nothing in the output distinguishes them.
 
-## ANOVA on real data
+## The full ANOVA workflow
 
 We've covered the fundamentals of ANOVA: how to compute an $F$-statistic from the data, and how to interpret it along with its $p$-value. In practice, software handles these calculations for you, but you still need to know what the numbers mean to interpret them correctly. That is why we computed one ANOVA by hand.
 
-The following example applies the full ANOVA workflow, from descriptive summaries through the omnibus $F$ test to post-hoc comparisons, to a real ecological dataset. This is the same dataset used in Lab 11.
+The following example applies the full ANOVA workflow, from descriptive summaries through the omnibus $F$ test to post-hoc comparisons, to a simulated field study of salamanders. Lab 11 uses the same data.
 
 ### Salamander abundance across forest types
 
@@ -521,6 +521,12 @@ Before running the ANOVA, check whether its assumptions hold. (Recall from Chapt
 ANOVA has two: **homogeneity of variance** (the groups' spread around their own means should be roughly comparable) and approximately normal residuals (each plot's count minus its forest type's mean, the same deviations that make up $SS_\text{Within}$, should be roughly bell-shaped). Both matter because the $F$-test pools the within-group spread of every group into one error variance, $MS_\text{Within}$, and then compares $F$ to a null distribution that assumes normal residuals. Pooling only makes sense when the groups have similar spread.
 
 ```{r}
+#| echo: true
+#| eval: false
+car::leveneTest(abundance ~ forest_type, data = salamander_df)
+```
+
+```{r}
 library(car)
 aov_out <- aov(abundance ~ forest_type, data = salamander_df)
 levene_out <- leveneTest(abundance ~ forest_type, data = salamander_df)
@@ -533,11 +539,17 @@ knitr::kable(
 ```
 
 ```{r}
+#| echo: true
+#| eval: false
+shapiro.test(residuals(aov_out))
+```
+
+```{r}
 shapiro_out <- shapiro.test(residuals(aov_out))
 
 knitr::kable(
-  broom::tidy(shapiro_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)),
-  col.names = c("Statistic (W)", "p-value", "Method"),
+  broom::tidy(shapiro_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)) |> dplyr::select(statistic, p.value),
+  col.names = c("Statistic (W)", "p-value"),
   caption = "Shapiro-Wilk test on ANOVA residuals"
 )
 ```
@@ -547,6 +559,13 @@ Levene's test [@Levene1960; @BrownForsythe1974] gives $F(2,21) = 0.52$, $p = .60
 **A word of caution about formal assumption tests.** It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." Resist that. With a small sample (exactly when a violated assumption matters most), these tests have low power and will often say "no problem" even when there is one. With a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." A formal test is one piece of evidence, not the whole verdict, so look at the diagnostic plots too and use judgment. In practice, one-way ANOVA is moderately robust to mild departures from these assumptions, especially with balanced group sizes like we have here (8 plots per forest type). Worry most when small, unbalanced samples come with visibly skewed data or very different spreads. In that case, the nonparametric alternative below is the better choice.
 
 With the assumptions reasonable, we run the one-way ANOVA to test whether these differences are larger than expected by chance alone.
+
+```{r}
+#| echo: true
+#| eval: false
+aov_out <- aov(abundance ~ forest_type, data = salamander_df)
+summary(aov_out)
+```
 
 ```{r}
 #| label: tbl-8salamanderANOVA
@@ -605,6 +624,12 @@ $\eta^2$ is the same quantity as $R^2$ in regression (Chapter 9), computed the s
 ### Post-hoc comparisons with Tukey HSD
 
 The omnibus $F$ test tells us that at least one group mean differs, but not which pairs. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test [@Tukey1949]. Tukey HSD controls the familywise error rate across all pairwise comparisons, making it the appropriate choice after a significant ANOVA.
+
+```{r}
+#| echo: true
+#| eval: false
+TukeyHSD(aov_out)
+```
 
 ```{r}
 #| label: tbl-8tukey
@@ -667,11 +692,17 @@ Our assumption checks above came back clean, so the ANOVA result stands as-is. B
 **Its assumption.** Kruskal-Wallis does not require normality. Like the Mann-Whitney-Wilcoxon test, it is easiest to interpret as a test of differences in location (median) when the groups' distributions have similar shape. If the shapes differ a lot, a significant result tells you the groups differ, but not whether that difference is in location, spread, or shape.
 
 ```{r}
+#| echo: true
+#| eval: false
+kruskal.test(abundance ~ forest_type, data = salamander_df)
+```
+
+```{r}
 kw_out <- kruskal.test(abundance ~ forest_type, data = salamander_df)
 
 knitr::kable(
-  broom::tidy(kw_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)),
-  col.names = c("Statistic (χ²)", "p-value", "df", "Method"),
+  broom::tidy(kw_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)) |> dplyr::select(statistic, p.value, parameter),
+  col.names = c("Statistic (χ²)", "p-value", "df"),
   caption = "Kruskal-Wallis test on salamander abundance by forest type"
 )
 ```
@@ -679,6 +710,13 @@ knitr::kable(
 $\chi^2(2) = 13.09$, $p = .001$: significant, the same conclusion as the ANOVA ($F(2,21)=14.60$, $p<.001$). The two tests agree, as expected when the parametric assumptions hold, as ours did here.
 
 **Post-hoc comparisons.** Just as a significant ANOVA needs Tukey HSD to identify *which* groups differ, a significant Kruskal-Wallis result needs its own follow-up: pairwise rank-sum tests (Mann-Whitney-Wilcoxon, applied to each pair) with a correction for running multiple comparisons [@Holm1979].
+
+```{r}
+#| echo: true
+#| eval: false
+pairwise.wilcox.test(salamander_df$abundance, salamander_df$forest_type,
+                     p.adjust.method = "holm")
+```
 
 ```{r}
 pairwise_out <- pairwise.wilcox.test(salamander_df$abundance, salamander_df$forest_type,
@@ -761,9 +799,9 @@ Removing the stations shrank the error mean square from 19.33 to 2, and $F$ grew
 
 -   **Why not just run more $t$-tests.** Each comparison carries its own chance of a false positive, and they accumulate: with $m$ comparisons the familywise error rate is $1-(1-\alpha)^m$, which is already 14% for three groups.
 -   **Partition the variation.** Total variation splits into a piece explained by group membership ($SS_\text{Between}$) and unexplained residual variation ($SS_\text{Within}$).
--   $F$ is a ratio of the two. After adjusting each sum of squares for its degrees of freedom, $F = MS_\text{Between} / MS_\text{Within}$. A large $F$ means between-group differences are large relative to within-group noise.
+-   **$F$ is a ratio of the two.** After adjusting each sum of squares for its degrees of freedom, $F = MS_\text{Between} / MS_\text{Within}$. A large $F$ means between-group differences are large relative to within-group noise.
 -   **Two steps, always in order.** First the omnibus test: do *any* group means differ? Only if that is significant do you run post-hoc comparisons (Tukey HSD) to find out *which* pairs differ.
--   $\eta^2$ is the effect size. $SS_\text{Between}/SS_\text{Total}$ is the proportion of variation explained by the grouping variable. It is the same quantity as regression's $R^2$, and it does not depend on sample size the way $p$ does, so report it alongside $F$.
+-   **$\eta^2$ is the effect size.** $SS_\text{Between}/SS_\text{Total}$ is the proportion of variation explained by the grouping variable. It is the same quantity as regression's $R^2$, and it does not depend on sample size the way $p$ does, so report it alongside $F$.
 -   **Check the assumptions.** ANOVA needs approximately equal variances across groups (Levene's test) and roughly normal residuals. Treat formal tests as evidence rather than a gate, since they have least power exactly when small samples make violations matter most.
 -   **When assumptions fail.** The Kruskal-Wallis test is the rank-based alternative, with `pairwise.wilcox.test()` as its post-hoc counterpart.
 -   **Repeated measures.** When the same units are measured under every condition, repeated-measures ANOVA splits $SS_\text{Within}$ into $SS_\text{Subjects}$ and a smaller $SS_\text{Error}$. The smaller error term is why it has more power, the same reason the paired $t$-test does.
