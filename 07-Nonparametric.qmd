@@ -60,11 +60,11 @@ Chapter 6 covered three forms of the $t$-test (one-sample, paired, and independe
 
 So far, we've been looking at **parametric** tests, without calling them that. Every test needs a known null distribution for its test statistic, since that's the shape we compare our result against to get a $p$-value. A test is parametric when we can only know that shape by assuming something specific about the population the data came from.
 
-For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of your raw data. It's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the Central Limit Theorem for a large enough sample. Nonparametric tests also end up with a known distribution for their own test statistics. They do not need to assume anything about the population's shape to derive it.
+For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of your raw data. It's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the Central Limit Theorem for a large enough sample.
 
 When the distributional assumptions are met, parametric tests are generally the most powerful available. However, when distributional assumptions are not met, a parametric test's $p$-value can be too small or too large, and without simulation it is hard to tell which. The worse the departure from the assumed distribution, the larger the possible error.
 
-Nonparametric tests still make assumptions, and those assumptions are usually easier to meet than normality.
+Nonparametric tests also have a known null distribution for their test statistics, and they get it without assuming anything about the population's shape. They still make assumptions, and those assumptions are usually easier to meet than normality.
 
 Many nonparametric tests are run on the ranks of the data (first, second, third ... last), rather than on the raw data. The median is a familiar example. It is the middle value once the data are put in order.
 
@@ -139,7 +139,7 @@ The Shapiro-Wilk test agrees with the picture ($p=.039$). Three plots didn't cha
 
 -   $H_a$: there is a systematic shift; the median difference is not 0.
 
-**How it works, conceptually.** Instead of using the actual sizes of the differences, the test ranks the *absolute* differences from smallest to largest, then checks whether the positive-signed ranks and negative-signed ranks are roughly balanced. Balanced ranks are the null case, meaning a plot's rank (how extreme its change was) has nothing to do with whether that change was an increase or a decrease. If soil moisture really increased at most plots, the larger ranks should belong mostly to positive differences instead. Because it works with ranks rather than raw values, one wildly extreme plot can't dominate the result the way it could with a mean.
+**How it works, conceptually.** Instead of using the actual sizes of the differences, the test ranks the *absolute* differences from smallest to largest, then checks whether the positive-signed ranks and negative-signed ranks are roughly balanced. Balanced ranks are the null case, meaning a plot's rank (how extreme its change was) has nothing to do with whether that change was an increase or a decrease. If soil moisture really increased at most plots, the larger ranks should belong mostly to positive differences instead. Because the test uses ranks, the plot that rose by 8 points gets the top rank, 9, and it would get the same rank if it had risen by 30. One extreme plot can't dominate the result the way it could dominate a mean.
 
 **Its assumption.** The Wilcoxon signed-rank test does not require normality, but it assumes the differences come from a symmetric distribution around their median. That's a milder assumption than normality (symmetric-but-not-normal distributions are common), but our histogram above strains it: the positive side stretches to 8, the negative side barely reaches -1. We'll run the test anyway, since it's still the better-justified choice here, and note the problem when we interpret the result.
 
@@ -161,7 +161,7 @@ knitr::kable(
 )
 ```
 
-R falls back to a normal approximation twice over here: once for the tied differences (two plots at $+6$, three at $-1$), and once because three plots showed *no* change at all. Zero differences can't be ranked as positive or negative, so the Wilcoxon test drops them and runs on the remaining 9 plots instead of all 12. The rank test already ignores how large each change is. Dropping the zeros means it also works with less data than the $t$-test.
+The three plots with no change drop out of the test. A zero difference can't be ranked as positive or negative, so the Wilcoxon test runs on the remaining 9 plots instead of all 12. The rank test already ignores how large each change is, and dropping the zeros means it also works with less data than the $t$-test. The zeros and the tied differences (two plots at $+6$, three at $-1$) also keep R from using the exact null distribution, so it falls back to a normal approximation.
 
 **How $V$ is calculated.** Drop the zero differences, take the absolute value of what's left, rank those absolute values from smallest to largest (tied absolute values share the average of their ranks), then sum the ranks belonging to the *positive* differences. That sum is $V$.
 
@@ -188,7 +188,9 @@ Plugging in our $n=9$ nonzero plots:
 
 $$E[V] = \frac{9 \times 10}{4} = 22.5, \qquad \text{Var}(V) = \frac{9 \times 10 \times 19}{24} = 71.25$$
 
-That's an SD of about 8.4. Our observed $V=39$ is about 1.96 SDs above that expectation ($\frac{39-22.5}{8.4} \approx 1.96$). R's $p=.057$ comes from this normal approximation, with two small corrections. Because $V$ moves in steps rather than smoothly, R shrinks the gap between $V$ and 22.5 by 0.5, which raises $p$. It also adjusts the variance for the tied ranks, which lowers $p$ a little. The first correction is larger, so $p$ ends up slightly above the .05 a $z$ of 1.96 would give. For small, tie-free samples with no zeros, R can instead read the exact null distribution directly.
+That's an SD of about 8.4. Our observed $V=39$ is about 1.96 SDs above that expectation ($\frac{39-22.5}{8.4} \approx 1.96$).
+
+R's $p=.057$ comes from this normal approximation, with two small corrections. Because $V$ moves in steps rather than smoothly, R shrinks the gap between $V$ and 22.5 by 0.5, which raises $p$. It also adjusts the variance for the tied ranks, which lowers $p$ a little. The first correction is larger, so $p$ ends up slightly above the .05 a $z$ of 1.96 would give. For small, tie-free samples with no zeros, R can instead read the exact null distribution directly.
 
 To see the null distribution, we simulate 20,000 experiments. In each one, every one of the 9 nonzero ranks gets a random $+$ or $-$ sign, as $H_0$ says it should, and we add up the positive ranks. The critical values marked on the figure come from listing all 512 sign patterns. That list is the exact null distribution, and the simulation approximates it.
 
@@ -253,7 +255,7 @@ That's not an argument that nonparametric tests are worse. The $t$-test gave the
 
 ## Nonparametric alternative to the independent-samples $t$-test: the Mann-Whitney-Wilcoxon test
 
-Now let's run through the same kind of example for the independent-samples case. Researchers surveyed plant species richness, the number of distinct plant species found, at restored and unrestored wetland plots, to see whether restoration increased plant diversity. @fig-7mwwdesign gives the design.
+The same check applies to the independent-samples $t$-test. Researchers surveyed plant species richness, the number of distinct plant species found, at restored and unrestored wetland plots, to see whether restoration increased plant diversity. @fig-7mwwdesign gives the design.
 
 ```{r}
 #| label: fig-7mwwdesign
@@ -345,7 +347,9 @@ Both groups fail the Shapiro-Wilk test, the restored group badly ($p=.002$). The
 
 **How it works, conceptually.** Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups don't differ, their ranks should be well mixed. If one group tends to have higher values, its ranks should be higher too. The outlier plot gets the highest rank, 16, whether it has 23 species or 34. Its size enters the $t$-test through both the mean and the standard deviation, but the Mann-Whitney-Wilcoxon test uses only its rank.
 
-**Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the same shape. It does not require normality. Distributions with the same shape also have equal variances, but equal variances alone do not meet the assumption, because two distributions can share a variance and differ in shape. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as "the medians differ" becomes murkier, since it could be a difference in location, shape, or both. Our two groups don't quite share a shape: the restored group is strongly right-skewed, mostly because of the one 34-species plot, while the unrestored group is only mildly skewed. So read a result from this test as "richness tends to be higher in one group," not strictly as a difference in medians.
+**Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the same shape. It does not require normality. Distributions with the same shape also have equal variances, but equal variances alone do not meet the assumption, because two distributions can share a variance and differ in shape. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as "the medians differ" becomes murkier, since it could be a difference in location, shape, or both.
+
+Our two groups don't quite share a shape: the restored group is strongly right-skewed, mostly because of the one 34-species plot, while the unrestored group is only mildly skewed. So read a result from this test as "richness tends to be higher in one group," not strictly as a difference in medians.
 
 ```{r}
 #| echo: true
@@ -375,7 +379,9 @@ Plugging in our two groups of 8:
 
 $$E[U] = \frac{8 \times 8}{2} = 32, \qquad \text{Var}(U) = \frac{8 \times 8 \times 17}{12} \approx 90.7$$
 
-That's an SD of about 9.5. Our observed $U=50$ is about 1.9 SDs above that expectation ($\frac{50-32}{9.5} \approx 1.9$). R's $p=.063$ comes from this normal approximation, with the same two corrections as in the Wilcoxon case. The step correction raises $p$ more than the tie adjustment lowers it, so $p$ ends up slightly above what a $z$ of 1.9 alone would give. For small samples without ties, R can instead read the exact null distribution directly, no approximation needed.
+That's an SD of about 9.5. Our observed $U=50$ is about 1.9 SDs above that expectation ($\frac{50-32}{9.5} \approx 1.9$).
+
+R's $p=.063$ comes from this normal approximation, with the same two corrections as in the Wilcoxon case. The step correction raises $p$ more than the tie adjustment lowers it, so $p$ ends up slightly above what a $z$ of 1.9 alone would give. For small samples without ties, R can instead read the exact null distribution directly, no approximation needed.
 
 We simulate this null distribution the same way as before. We pool the richness values, then repeatedly shuffle which 8 ranks land in the restored group. The critical values marked on the figure come from listing all 12,870 splits, which is the exact null distribution the simulation approximates.
 
@@ -409,7 +415,9 @@ Our observed $U=50$ falls just short of the upper critical value of $50.5$, cons
 
 Every test so far (the $t$-tests in Chapter 6, and the Wilcoxon and Mann-Whitney-Wilcoxon tests above) needs a continuous outcome variable. But a lot of environmental data isn't continuous at all: a site either has an invasive species or it doesn't; a stream sample either exceeds a safety threshold or it doesn't; a plot falls into one land-cover category, not a number line. None of the tests above apply to categorical data. Counts in categories need a different test, the chi-square ($\chi^2$) test [@Pearson1900].
 
-Chapter 3 introduced the shape of the chi-square distribution: always non-negative, right-skewed, naturally one-tailed, with its exact shape depending on degrees of freedom. Only the upper tail counts against $H_0$, because $\chi^2$ adds up squared gaps between observed and expected counts. A mismatch in either direction makes it bigger, and a $\chi^2$ near 0 means the counts match the expectation closely. @fig-7chisq-crit shows what the rejection region looks like in practice, using the goodness-of-fit example we'll run below, which has $df = 3$. The critical value at $\alpha = .05$ is `r round(qchisq(.95, 3), 2)`, and any statistic beyond that point (the shaded region) occurs less than 5% of the time by chance.
+Chapter 3 introduced the shape of the chi-square distribution: always non-negative, right-skewed, naturally one-tailed, with its exact shape depending on degrees of freedom. Only the upper tail counts against $H_0$, because $\chi^2$ adds up squared gaps between observed and expected counts. A mismatch in either direction makes it bigger, and a $\chi^2$ near 0 means the counts match the expectation closely.
+
+@fig-7chisq-crit shows what the rejection region looks like in practice, using the goodness-of-fit example we'll run below, which has $df = 3$. The critical value at $\alpha = .05$ is `r round(qchisq(.95, 3), 2)`, and any statistic beyond that point (the shaded region) occurs less than 5% of the time by chance.
 
 ```{r}
 #| label: fig-7chisq-crit
@@ -488,7 +496,9 @@ knitr::kable(
 )
 ```
 
-**Assumption.** The goodness-of-fit test makes no assumption about the shape of your data, since categories aren't numbers. It does require expected counts of about 5 or more in each category [@Cochran1954; @Larntz1978]. The 5 is a conventional rule of thumb, not a value computed from these data or compared to a critical value. It checks whether the chi-square curve is a trustworthy approximation, and you check it before running the test. Here, expected count per zone is $200 \times 0.25 = 50$ (total fish times the 25%-per-zone expectation under $H_0$), comfortably above that minimum. This is the expected-value idea from Chapter 3 applied to counts: the expected count in a category is the total times the probability $H_0$ gives that category. When expected counts are too small, the chi-square approximation breaks down and a different method (like Fisher's exact test) is more appropriate.
+**Assumption.** The goodness-of-fit test makes no assumption about the shape of your data, since categories aren't numbers. It does require expected counts of about 5 or more in each category [@Cochran1954; @Larntz1978]. The 5 is a conventional rule of thumb, not a value computed from these data or compared to a critical value. It checks whether the chi-square curve is a trustworthy approximation, and you check it before running the test.
+
+Here, expected count per zone is $200 \times 0.25 = 50$ (total fish times the 25%-per-zone expectation under $H_0$), comfortably above that minimum. This is the expected-value idea from Chapter 3 applied to counts: the expected count in a category is the total times the probability $H_0$ gives that category. When expected counts are too small, the chi-square approximation breaks down and a different method (like Fisher's exact test) is more appropriate.
 
 **$\chi^2$ adds one term per category.** For each category, take the squared difference between observed and expected, scaled by expected: $\chi^2 = \sum \frac{(O-E)^2}{E}$.
 
