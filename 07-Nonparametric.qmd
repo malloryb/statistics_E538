@@ -143,6 +143,12 @@ The Shapiro-Wilk test agrees with the picture ($p=.039$). Three plots didn't cha
 **Its assumption.** The Wilcoxon signed-rank test does not require normality, but it assumes the differences come from a symmetric distribution around their median. That's a milder assumption than normality (symmetric-but-not-normal distributions are common), but our histogram above strains it: the positive side stretches to 8, the negative side barely reaches -1. We'll run the test anyway, since it's still the better-justified choice here, and note the problem when we interpret the result.
 
 ```{r}
+#| echo: true
+#| eval: false
+wilcox.test(differences, mu = 0)
+```
+
+```{r}
 wilcox_out <- wilcox.test(differences, mu = 0)
 wilcox_tidy <- broom::tidy(wilcox_out) |>
   mutate(statistic = round(statistic, 1), p.value = fmt_p(p.value))
@@ -183,13 +189,13 @@ Plugging in our $n=9$ nonzero plots:
 
 $$E[V] = \frac{9 \times 10}{4} = 22.5, \qquad \text{Var}(V) = \frac{9 \times 10 \times 19}{24} = 71.25$$
 
-That's an SD of about 8.4. Our observed $V=39$ sits about 1.96 SDs above that expectation ($\frac{39-22.5}{8.4} \approx 1.96$). R's $p=.057$ comes from this normal approximation, slightly larger than the .05 a $z$ of 1.96 would give, because R makes two small corrections: one for tied ranks, and one because $V$ moves in steps rather than smoothly. For small, tie-free samples with no zeros, R can instead read the exact null distribution directly.
+That's an SD of about 8.4. Our observed $V=39$ sits about 1.96 SDs above that expectation ($\frac{39-22.5}{8.4} \approx 1.96$). R's $p=.057$ comes from this normal approximation, with two small corrections. Because $V$ moves in steps rather than smoothly, R shrinks the gap between $V$ and 22.5 by 0.5, which raises $p$. It also adjusts the variance for the tied ranks, which lowers $p$ a little. The first correction is larger, so $p$ ends up slightly above the .05 a $z$ of 1.96 would give. For small, tie-free samples with no zeros, R can instead read the exact null distribution directly.
 
 To get the critical values, we build the null distribution ourselves by simulating 20,000 experiments. In each one, every one of the 9 nonzero ranks gets a random $+$ or $-$ sign, as $H_0$ says it should, and we add up the positive ranks.
 
 ```{r}
 #| label: fig-7wilcoxon-null
-#| fig-cap: "Simulated null distribution of the Wilcoxon signed-rank statistic V, built from 20,000 random sign-flips of the 9 nonzero ranked differences. Shaded regions mark the two-tailed 5% rejection region; our observed V = 39 lands just outside the upper boundary."
+#| fig-cap: "Simulated null distribution of the Wilcoxon signed-rank statistic V, built from 20,000 random sign-flips of the 9 nonzero ranked differences. Shaded regions mark the two-tailed 5% rejection region; our observed V = 39 falls just short of the upper critical value, 40, outside the rejection region."
 #| fig-alt: "Histogram of 20,000 simulated values of V, roughly bell-shaped and centered near 22. Bars at or below 5 and at or above 40 are shaded red, with red vertical lines labeled lower crit equals 5 and upper crit equals 40. A green dotted line marks the observed V of 39, just to the left of the upper critical line."
 
 set.seed(123)
@@ -204,13 +210,19 @@ obs_V <- as.numeric(wilcox_out$statistic)
 null_hist(sim_V, exact_V, obs_V, "V", "V (sum of positive ranks)")
 ```
 
-Our observed $V=39$ lands on the upper boundary but not inside the 5% region. $V$ can only take certain values, so the boundary can't fall exactly at 2.5%: a $V$ of 39 or more comes up just over 2.5% of the time under $H_0$, which puts the two-tailed $p$ just over .05. The result is not significant, though it is close to the cutoff.
+Our observed $V=39$ falls just short of the upper critical value, 40, so it is not in the 5% region. $V$ can only take certain values, so the boundary can't fall exactly at 2.5%: a $V$ of 39 or more comes up just over 2.5% of the time under $H_0$, which puts the two-tailed $p$ just over .05. The result is not significant, though it is close to the cutoff.
 
 **So far.** $t$-test $p=.026$ (significant), Wilcoxon $p=.057$ (not quite). The two tests reach different verdicts on the same 12 plots because the $t$-test's numerator and denominator both used the exact magnitudes the Wilcoxon test deliberately ignores.
 
 **The sign test.** There's an even simpler nonparametric option, the **sign test**, which looks only at whether each difference is positive or negative. It discards the magnitude entirely and asks whether pluses outnumber minuses more than chance would suggest. It has essentially no distributional assumption beyond the universal one (independence of observations, from a sound study design; see Chapter 6), not even symmetry.
 
 That's useful here: we already flagged the symmetry assumption as shaky for this data (the positive side stretching to 8, the negative side barely reaching -1), so the sign test sidesteps the one assumption the Wilcoxon test still needed. That robustness comes at a big cost in power, though, so it's usually a last resort.
+
+```{r}
+#| echo: true
+#| eval: false
+binom.test(6, 9)
+```
 
 ```{r}
 n_pos <- sum(differences > 0)
@@ -230,7 +242,7 @@ Six of the 9 nonzero plots increased. $p=.508$: nowhere close to significant.
 
 Each test uses less of the data than the one before it. The $t$-test uses the full magnitude of every difference, Wilcoxon keeps the ranks but drops the zeros, and the sign test keeps only direction.
 
-That's not an argument that nonparametric tests are worse. The $t$-test gave the smallest $p$-value here because it relied most on the normality assumption, which these data do not meet. Check your assumptions before you report a $p$-value, not after you've already seen one you like.
+That's not an argument that nonparametric tests are worse. The $t$-test gave the smallest $p$-value here because it used the full size of every change, including the increases of 3 to 8 points. That $p$-value is trustworthy only if the differences are roughly normal, and these are not. Check your assumptions before you report a $p$-value, not after you've already seen one you like.
 
 ## Nonparametric alternative to the independent-samples $t$-test: the Mann-Whitney-Wilcoxon test
 
@@ -299,7 +311,7 @@ ggplot(plot_df, aes(x = x_jit, y = Richness)) +
   labs(y = "Plant species richness", x = NULL)
 ```
 
-The circled plot has 34 species, nearly double any other plot in either group. We don't just throw away outliers; maybe that plot sits in an unusually favorable microhabitat. Either way, it violates the normality assumption:
+The circled plot has 34 species, 12 more than any other plot in either group. We don't just throw away outliers; maybe that plot sits in an unusually favorable microhabitat. Either way, it violates the normality assumption:
 
 ```{r}
 sh_restored   <- shapiro.test(restored)
@@ -316,7 +328,7 @@ knitr::kable(
 )
 ```
 
-Both groups fail the Shapiro-Wilk test, the restored group badly ($p=.002$), driven almost entirely by that one plot. The $t$-test's "significant" result depends on an assumption the data don't meet. The Mann-Whitney-Wilcoxon test is designed for this situation.
+Both groups fail the Shapiro-Wilk test, the restored group badly ($p=.002$). The $t$-test's "significant" result depends on an assumption the data don't meet. The Mann-Whitney-Wilcoxon test is designed for this situation.
 
 **The question.** Did restoration increase plant species richness, or is the difference we see consistent with random plot-to-plot variation?
 
@@ -324,9 +336,15 @@ Both groups fail the Shapiro-Wilk test, the restored group badly ($p=.002$), dri
 
 -   $H_a$: richness tends to rank systematically higher in one group than the other.
 
-**How it works, conceptually.** Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups truly don't differ, ranks should be well mixed between them; if one group tends to have higher values, its ranks should be systematically higher too. That outlier plot still gets *a* rank, but only one rank, the highest one, no matter how far above the other plots it is. Its magnitude, which is what distorted the $t$-test, can't distort the Mann-Whitney-Wilcoxon test the same way.
+**How it works, conceptually.** Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups truly don't differ, ranks should be well mixed between them; if one group tends to have higher values, its ranks should be systematically higher too. That outlier plot still gets *a* rank, but only one rank, the highest one, no matter how far above the other plots it is. How far above the others it sits enters the $t$-test through both the mean and the standard deviation, but it does not enter the Mann-Whitney-Wilcoxon test at all.
 
-**Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the same shape: it does *not* require normality, and the assumption is *not* "equal variance," even though same-shape distributions happen to have equal variance as a side effect. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as "the medians differ" becomes murkier, since it could be a difference in location, shape, or both. Our two groups don't quite share a shape: the restored group's skew comes almost entirely from the one 34-species plot, while the unrestored group is only mildly skewed. So read a result from this test as "richness tends to be higher in one group," not strictly as a difference in medians.
+**Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the same shape: it does *not* require normality, and the assumption is *not* "equal variance," even though same-shape distributions happen to have equal variance as a side effect. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as "the medians differ" becomes murkier, since it could be a difference in location, shape, or both. Our two groups don't quite share a shape: the restored group is strongly right-skewed, mostly because of the one 34-species plot, while the unrestored group is only mildly skewed. So read a result from this test as "richness tends to be higher in one group," not strictly as a difference in medians.
+
+```{r}
+#| echo: true
+#| eval: false
+wilcox.test(restored, unrestored)
+```
 
 ```{r}
 mww_out <- wilcox.test(restored, unrestored)
@@ -340,7 +358,7 @@ knitr::kable(
 )
 ```
 
-R labels this statistic $W$; for two groups it is the Mann-Whitney $U$. R falls back to the normal approximation again, because both groups share some tied richness values (two plots at 16, two at 11, and so on).
+R labels this statistic $W$; for two groups it is the Mann-Whitney $U$. R falls back to the normal approximation again, because the pooled richness values include ties (three plots each at 11, 16 and 17, and two at 18).
 
 **How the null distribution of $U$ is built.** The idea is the same as for the Wilcoxon signed-rank test, but the null distribution is built from group membership instead of signs. Under $H_0$, both groups are draws from the same population, so once you pool and rank all $N = n_A + n_B = 16$ values, which ranks end up in the restored group is just a matter of chance: any of the $\binom{16}{8}$ ways of splitting those 16 ranks into two groups of 8 is equally likely. That's the null distribution of $U$, and its mean and variance are known:
 
@@ -350,13 +368,13 @@ Plugging in our two groups of 8:
 
 $$E[U] = \frac{8 \times 8}{2} = 32, \qquad \text{Var}(U) = \frac{8 \times 8 \times 17}{12} \approx 90.7$$
 
-That's an SD of about 9.5. Our observed $U=50$ sits about 1.9 SDs above that expectation ($\frac{50-32}{9.5} \approx 1.9$). R's $p=.063$ comes from this normal approximation, slightly larger than a $z$ of 1.9 alone would give, because of the same two small corrections as in the Wilcoxon case: tied ranks, and $U$ moving in steps rather than smoothly. For small samples without ties, R can instead read the exact null distribution directly, no approximation needed.
+That's an SD of about 9.5. Our observed $U=50$ sits about 1.9 SDs above that expectation ($\frac{50-32}{9.5} \approx 1.9$). R's $p=.063$ comes from this normal approximation, with the same two corrections as in the Wilcoxon case. The step correction raises $p$ more than the tie adjustment lowers it, so $p$ ends up slightly above what a $z$ of 1.9 alone would give. For small samples without ties, R can instead read the exact null distribution directly, no approximation needed.
 
 The critical values come from the null distribution just described, the $\binom{16}{8}$ equally likely ways to split 16 pooled ranks into two groups of 8. Rather than enumerate every one of those splits by hand, we approximate that distribution the same way as before, by simulation: pool the richness values, then repeatedly shuffle which 8 ranks land in the restored group:
 
 ```{r}
 #| label: fig-7mww-null
-#| fig-cap: "Simulated null distribution of the Mann-Whitney U statistic, built from 20,000 random reshuffles of group membership among the pooled, ranked richness values. Shaded regions mark the two-tailed 5% rejection region; our observed U = 50 falls just inside the boundary."
+#| fig-cap: "Simulated null distribution of the Mann-Whitney U statistic, built from 20,000 random reshuffles of group membership among the pooled, ranked richness values. Shaded regions mark the two-tailed 5% rejection region; our observed U = 50 falls just short of the upper critical value, 50.5, outside the rejection region."
 #| fig-alt: "Histogram of 20,000 simulated values of U, roughly bell-shaped and centered near 32. Bars at or below 13.5 and at or above 50.5 are shaded red, with red vertical lines labeled lower crit and upper crit. A green dotted line marks the observed U of 50, just to the left of the upper critical line."
 
 set.seed(123)
@@ -376,9 +394,9 @@ obs_U <- as.numeric(wilcox.test(restored, unrestored)$statistic)
 null_hist(sim_U, exact_U, obs_U, "U", "U (Mann-Whitney statistic)")
 ```
 
-Our observed $U=50$ lands just inside the critical value of $50.5$, matching R's $p=.063$: close to significant, but not quite.
+Our observed $U=50$ falls just short of the upper critical value of $50.5$, consistent with R's $p=.063$: close to significant, but not quite.
 
-**The full picture.** The $t$-test said $p=.024$: significant, restoration works. The Mann-Whitney-Wilcoxon test on the exact same data says $p=.063$: not significant at $\alpha=.05$, right on the boundary. The two tests give different answers to the same question on the same 16 plots. One outlier plot was doing a lot of the work behind that "significant" $t$-test result, and that's exactly the kind of influence the normality assumption is supposed to rule out. That's not a reason to always prefer the nonparametric test; if the data really had been roughly normal, the $t$-test's extra power would have been the right tool. It's why you check assumptions *before* reporting a $p$-value, not after.
+**The full picture.** The $t$-test said $p=.024$: significant, restoration works. The Mann-Whitney-Wilcoxon test on the exact same data says $p=.063$: not significant at $\alpha=.05$, right on the boundary. The two tests give different answers to the same question on the same 16 plots. The $t$-test's $p$-value rests on a normality assumption that both groups fail, so it can't be taken at face value. A violated assumption can push a $p$-value too low or too high, and the $t$-test alone gives no way to tell which. That's not a reason to always prefer the nonparametric test; if the data really had been roughly normal, the $t$-test's extra power would have been the right tool. It's why you check assumptions *before* reporting a $p$-value, not after.
 
 ## Categorical data: the chi-square tests
 
@@ -446,6 +464,12 @@ knitr::kable(
 -   $H_a$: fish are not evenly distributed across zones; the pattern has changed.
 
 ```{r}
+#| echo: true
+#| eval: false
+chisq.test(observed_gof, p = rep(0.25, 4))
+```
+
+```{r}
 gof_test <- chisq.test(observed_gof, p = rep(0.25, 4))
 gof_tidy <- broom::tidy(gof_test) |>
   mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value))
@@ -457,7 +481,7 @@ knitr::kable(
 )
 ```
 
-**Assumption.** The goodness-of-fit test doesn't assume anything about the shape of your data (categories aren't numbers, so there's no shape to assume). It does have a practical requirement instead: expected counts should generally be 5 or more in each category. That "5" is a conventional rule of thumb [@Cochran1954; @Larntz1978], not something calculated from this data or compared to a critical value; it's a check on whether the chi-square curve is a trustworthy approximation, done *before* the test itself runs. Here, expected count per zone is $200 \times 0.25 = 50$ (total fish times the 25%-per-zone expectation under $H_0$), comfortably above that minimum. This is the same expected-value logic from Chapter 3, $E[X]=\sum x_i P(X=x_i)$, just applied to a count instead of a single random variable: multiply the total by the probability each category gets under $H_0$. When expected counts are too small, the chi-square approximation breaks down and a different method (like Fisher's exact test) is more appropriate.
+**Assumption.** The goodness-of-fit test doesn't assume anything about the shape of your data (categories aren't numbers, so there's no shape to assume). It does have a practical requirement instead: expected counts should generally be 5 or more in each category. That "5" is a conventional rule of thumb [@Cochran1954; @Larntz1978], not something calculated from this data or compared to a critical value; it's a check on whether the chi-square curve is a trustworthy approximation, done *before* the test itself runs. Here, expected count per zone is $200 \times 0.25 = 50$ (total fish times the 25%-per-zone expectation under $H_0$), comfortably above that minimum. This is the expected-value idea from Chapter 3 applied to counts: the expected count in a category is the total times the probability $H_0$ gives that category. When expected counts are too small, the chi-square approximation breaks down and a different method (like Fisher's exact test) is more appropriate.
 
 **Where $\chi^2$ actually comes from.** For each category, take the squared difference between observed and expected, scaled by expected: $\chi^2 = \sum \frac{(O-E)^2}{E}$.
 
@@ -483,7 +507,7 @@ Now suppose researchers classify 150 stream sites by land use and by whether eac
 ```{r}
 #| label: fig-7indepdesign
 #| fig-cap: "A test-of-independence design. Two categorical variables are crossed, but unlike a factorial experiment the cells hold counts of units that landed there, not conditions units were assigned to."
-#| fig-alt: "Study design schematic. Variables: land use with three levels crossed with whether the site exceeds the E. coli threshold. A three by two table of counts totalling 150 stream sites."
+#| fig-alt: "Study design schematic. Variables: land use with three levels crossed with whether the site exceeds the E. coli threshold. A three by two table of counts totaling 150 stream sites."
 #| fig-asp: 0.42
 #| out-width: "100%"
 
@@ -510,6 +534,12 @@ knitr::kable(tab, caption = "Stream sites by land use and E. coli exceedance")
 -   $H_0$: land use and exceedance are independent; knowing one tells you nothing about the other.
 
 -   $H_a$: land use and exceedance are related; they are not independent.
+
+```{r}
+#| echo: true
+#| eval: false
+chisq.test(tab)
+```
 
 ```{r}
 indep_test <- chisq.test(tab)
