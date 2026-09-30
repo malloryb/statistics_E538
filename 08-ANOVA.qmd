@@ -249,7 +249,7 @@ $df_\text{Total} = N-1$, and it splits the same way the sums of squares do: $df_
 
 We're building toward $F=\dfrac{\text{measure of effect}}{\text{measure of error}}$, and it's tempting to just divide $SS_\text{Between}$ by $SS_\text{Within}$ directly. The problem is that each sum of squares grows with the number of independent pieces that go into it. $SS_\text{Between}$ is built from 3 group means and $SS_\text{Within}$ from 9 individual deviations, so their raw ratio has no fixed scale to compare against the way $t$ or $z$ does.
 
-The fix is to convert each sum of squares into an average, or **mean square**, by dividing by its degrees of freedom (rather than its raw count, since these are estimated quantities):
+The fix is to convert each sum of squares into an average, or **mean square**, by dividing by its degrees of freedom. We divide by degrees of freedom rather than by $n$, because each group mean we estimate uses up a degree of freedom, as the previous section showed.
 
 $$MS_\text{Between} = \frac{SS_\text{Between}}{df_\text{Between}} = \frac{72}{2} = 36$$
 
@@ -283,7 +283,7 @@ toy_df <- data.frame(
 anova_kable(aov(scores ~ groups, data = toy_df))
 ```
 
-R labels the two rows `groups` (the between-groups row: what the means can explain) and `Residuals` (the within-groups row: what they can't). Other software uses slightly different labels for the same two rows. The table adds no new information beyond what we already computed. It organizes the numbers, and $MS_\text{Between}$ (36) divided by $MS_\text{Within}$ (38.33) gives the $F$-value.
+R labels the two rows `groups` (the between-groups row: what the means can explain) and `Residuals` (the within-groups row: what they can't). Other software uses slightly different labels for the same two rows. The table adds no new information beyond what we already computed. It organizes the numbers, and $MS_\text{Between}$ (36) divided by $MS_\text{Within}$ (38.33) gives the $F$-value. With $F = 0.94$, the group means vary no more than the noise within groups would make them vary, so these nine scores give no evidence that the groups differ.
 
 ## What does $F$ mean?
 
@@ -508,7 +508,7 @@ ggplot(descriptive_df, aes(x = forest_type, y = means)) +
   xlab("Forest type")
 ```
 
-The bar graph shows a gradient. Old-growth plots have the highest mean abundance, managed plantations the lowest, and secondary forest is in between. The individual plot counts (dots) show considerable within-group variability, a reminder that even where a real difference exists, individual plots can vary substantially.
+The bar graph shows a gradient. Old-growth plots have the highest mean abundance, managed plantations the lowest, and secondary forest is in between. The individual plot counts (dots) spread widely within each forest type. Old-growth plots range from 10 to 19 salamanders and secondary plots from 3 to 13, so even where a real difference exists, individual plots from different forest types overlap.
 
 ### Checking ANOVA's assumptions
 
@@ -552,7 +552,9 @@ knitr::kable(
 
 Levene's test [@Levene1960; @BrownForsythe1974] gives $F(2,21) = 0.52$, $p = .60$, so there is no evidence of unequal variance across forest types. The Shapiro-Wilk test [@Shapiro1965] on the model's residuals gives $W = 0.93$, $p = .078$, so there is no evidence against normality either. Both checks agree with the individual plots in @fig-8salamanderData, which show similar spread across groups and no outliers far from the rest.
 
-**Formal assumption tests are evidence, not a gate.** It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." With a small sample (exactly when a violated assumption matters most), these tests have low power and will often say "no problem" even when there is one. With a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." A formal test is one piece of evidence, not the whole verdict, so look at the diagnostic plots too and use judgment. In practice, one-way ANOVA is moderately robust to mild departures from these assumptions, especially with balanced group sizes like we have here (8 plots per forest type). Worry most when small, unbalanced samples come with visibly skewed data or very different spreads. In that case, the nonparametric alternative below is the better choice.
+**Formal assumption tests are evidence, not a gate.** It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." With a small sample (exactly when a violated assumption matters most), these tests have low power and will often say "no problem" even when there is one. With a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." Look at the diagnostic plots too and use judgment.
+
+In practice, one-way ANOVA is moderately robust to mild departures from these assumptions, especially with balanced group sizes like we have here (8 plots per forest type). Worry most when small, unbalanced samples come with visibly skewed data or very different spreads. In that case, the nonparametric alternative below is the better choice.
 
 With the assumptions reasonable, we run the one-way ANOVA to test whether these differences are larger than expected by chance alone.
 
@@ -683,7 +685,7 @@ Old-growth forest supports the highest salamander abundance, consistent with its
 
 Our assumption checks above came back clean, so the ANOVA result stands as-is. But suppose the checks had failed, with visibly unequal spread across groups or clearly skewed residuals in small or unbalanced samples. The **Kruskal-Wallis test** [@KruskalWallis1952] is the nonparametric alternative to one-way ANOVA, in exactly the same relationship that the Mann-Whitney-Wilcoxon test has to the independent-samples $t$-test (in fact, Kruskal-Wallis *is* the Mann-Whitney-Wilcoxon logic extended to more than two groups).
 
-**How it works, conceptually.** Rank every observation across all groups together, from smallest to largest, ignoring group membership. Then check whether the average rank differs more across groups than chance alone would produce. If forest type truly matters, one group's observations should occupy systematically higher or lower ranks than the others.
+**How it works, conceptually.** Rank every observation across all groups together, from smallest to largest, ignoring group membership. Then check whether the average rank differs more across groups than chance alone would produce. If forest type truly matters, one group's observations should occupy systematically higher or lower ranks than the others. In the salamander data, the old-growth plots have a mean rank of 19.7 out of 24, against 10.1 for secondary and 7.8 for managed. If forest type had no effect, all three mean ranks would be close to 12.5, the middle of 1 to 24.
 
 **Its assumption.** Kruskal-Wallis does not require normality. Like the Mann-Whitney-Wilcoxon test, it is easiest to interpret as a test of differences in location (median) when the groups' distributions have similar shape. If the shapes differ a lot, a significant result tells you the groups differ, but not whether that difference is in location, spread, or shape.
 
@@ -802,7 +804,7 @@ $F$ uses the same numerator as before, $MS_\text{Between} = 56/2 = 28$. Only the
 
 $$\text{One-way: } F = \frac{28}{174/9} = \frac{28}{19.33} = 1.45 \qquad \text{Repeated measures: } F = \frac{28}{12/6} = \frac{28}{2} = 14.00$$
 
-Removing the stations shrank the error mean square from 19.33 to 2, and $F$ grew by the same factor. A repeated-measures design has more power than a between-subjects design with the same number of measurements whenever the units differ from one another, as monitoring stations usually do, because the unit-to-unit differences are no longer counted as noise. The repeated-measures test finds a significant seasonal effect, $F(2, 6) = 14.00$, $p = .005$. The one-way ANOVA would give $F(2, 9) = 1.45$, $p = .28$, and miss it.
+The repeated-measures test finds a significant seasonal effect, $F(2, 6) = 14.00$, $p = .005$. The one-way ANOVA would give $F(2, 9) = 1.45$, $p = .28$, and miss it. Removing the stations shrank the error mean square from 19.33 to 2, and $F$ grew by the same factor. A repeated-measures design has more power than a between-subjects design with the same number of measurements whenever the units differ from one another, as monitoring stations usually do, because the unit-to-unit differences are no longer counted as noise.
 
 ## Chapter Summary
 
