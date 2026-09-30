@@ -87,7 +87,7 @@ $$\text{slope} = b_1 = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2} =
 
 With $b_0$ and $b_1$ in hand, we can compute a residual for any observed point: the difference between what we observed and what the line predicts, $e = y - \hat y$, where $\hat y = b_0 + b_1x$. For the first row above ($x=1, y=2$): $\hat y = -.221 + 1.19(1) = .969$, so $e = 2 - .969 = 1.031$. That point sits above the line. Repeating this for every point, then squaring and summing the residuals, gives the quantity that $b_0$ and $b_1$ were chosen to minimize. The residual $e$ is the sample's version of the error $\varepsilon$. The error $\varepsilon$ belongs to the population line, which we never see, and the residual $e$ belongs to the line we fit.
 
-**Parameters and sample statistics**
+### Parameters and sample statistics
 
 The beta coefficients in the model are population parameters. Like other population parameters, they belong to a population distribution that we infer but never know for certain.
 
@@ -119,6 +119,7 @@ Up to now every design put units into groups and asked whether the groups differ
 ```{r}
 #| label: fig-9regscatter
 #| fig-cap: "Stream temperature and dissolved oxygen at 30 sample sites, with the fitted regression line."
+#| fig-alt: "Scatter plot of dissolved oxygen against stream temperature for 30 sites, with a fitted line sloping down from about 11.7 mg/L at 10 degrees C to about 7 mg/L at 23 degrees C. Points scatter around the line by up to about 4 mg/L."
 
 set.seed(538)
 n <- 30
@@ -138,7 +139,7 @@ The scatterplot in @fig-9regscatter shows a clear downward trend. Just from the 
 
 -   Pearson's $r$ should be negative, since DO falls as temperature rises
 
--   It should sit fairly close to $-1$ since the points hug the line with only modest scatter.
+-   It should be clearly negative but well short of $-1$, since the points scatter noticeably around the line.
 
 Before now, we could compute $r$ but had no way to test whether an $r$ that size is more than chance would produce. Regression adds that test by writing the observed relationship as a model.
 
@@ -184,6 +185,12 @@ ggplot(stream_df, aes(x = stream_temp, y = DO)) +
 
 Here's the table of model coefficients R gives us.
 
+```{r}
+#| echo: true
+#| eval: false
+summary(fit)
+```
+
 ```{r fitKable}
 kable(
   fit_tidy %>%
@@ -203,7 +210,7 @@ The hat over $DO$ marks it as a *predicted* value, what the model outputs for a 
 
 In the coefficient table, the `Estimate` values for the intercept and slope are $b_0$ and $b_1$, not $\beta_0$ and $\beta_1$. Recall this line is our model's estimate from this one sample, not the true population line, which we never actually observe.
 
-The intercept ($b_0 = `r sprintf("%.2f", coef(fit)[1])`$) is the model's predicted DO at 0°C. That temperature is outside the range we sampled (10 to 24°C), so we won't interpret the intercept.
+The intercept ($b_0 = `r sprintf("%.2f", coef(fit)[1])`$) is the model's predicted DO at 0°C. That temperature is outside the range we sampled (`r sprintf("%.1f", min(stream_df$stream_temp))` to `r sprintf("%.1f", max(stream_df$stream_temp))`°C), so we won't interpret the intercept.
 
 The slope ($b_1 = `r sprintf("%.2f", coef(fit)[2])`$) is the part we care about most: for every 1°C increase in stream temperature, predicted dissolved oxygen drops by about `r sprintf("%.2f", abs(coef(fit)[2]))` mg/L.
 
@@ -325,6 +332,12 @@ It runs from 0 to 1, and it is the same quantity as $\eta^2$ from Chapter 8. For
 **The regression ANOVA table.** Dividing each sum of squares by its degrees of freedom gives mean squares, and their ratio is $F$, exactly as in Chapter 8. The regression row uses 1 degree of freedom, one slope; the residual row uses $n-2$, since the line estimated two things, an intercept and a slope.
 
 ```{r}
+#| echo: true
+#| eval: false
+anova(fit)
+```
+
+```{r}
 #| label: tbl-9anova
 #| tbl-cap: "Regression ANOVA table for DO ~ stream temperature."
 
@@ -417,6 +430,7 @@ A straight line is not guaranteed to be the right shape for your data. A residua
 ```{r}
 #| label: fig-9regresid
 #| fig-cap: "Residuals versus fitted values for the stream temperature model. A random scatter around zero, with no funnel shape or curve, supports linearity and constant variance."
+#| fig-alt: "Residuals plotted against fitted DO values for the stream model, scattered above and below a dashed line at zero with no curve and no widening from left to right."
 
 stream_df$fitted <- fitted(fit)
 stream_df$resid <- resid(fit)
@@ -440,7 +454,7 @@ Let's try checking residuals for a different set of data, this time on avian inf
 
 ```{r}
 #| label: fig-9outbreakdesign
-#| fig-cap: "The outbreak data as a design. Structurally identical to the stream example."
+#| fig-cap: "The outbreak data as a design. It has the same structure as the stream example."
 #| fig-alt: "Study design schematic. IV: day of outbreak, continuous, an arrow running from day 1 to day 14. DV: new cases detected per day."
 #| fig-asp: 0.34
 #| out-width: "100%"
@@ -528,6 +542,12 @@ ggplot(stream_df, aes(sample = resid)) +
 @fig-9regqq looks close to straight, consistent with normal residuals. Shapiro-Wilk asks the same question formally: $H_0$ is that the residuals come from a normal distribution, so a small $p$-value is the evidence against normality.
 
 ```{r}
+#| echo: true
+#| eval: false
+shapiro.test(resid(fit))
+```
+
+```{r}
 sh_out <- shapiro.test(resid(fit))
 kable(
   data.frame(Statistic = round(unname(sh_out$statistic), 2),
@@ -542,8 +562,8 @@ Now apply the same two normality checks to the avian influenza model, the one we
 
 ```{r}
 #| label: fig-9outbreakqq
-#| fig-cap: "Normal Q-Q plot of the outbreak model's residuals. They fall close to the diagonal, so this diagnostic alone would not have flagged the problem."
-#| fig-alt: "A normal quantile-quantile plot of the residuals. The points fall close to the diagonal reference line, showing no strong departure from normality."
+#| fig-cap: "Normal Q-Q plot of the outbreak model's residuals. The lowest residuals bend away from the diagonal, but not by enough for Shapiro-Wilk to reject normality."
+#| fig-alt: "A normal quantile-quantile plot of the 14 residuals. The middle and upper points fall near the diagonal reference line, but the lowest five level off near minus 40, well above where the line would put them."
 
 ggplot(outbreak_df, aes(sample = resid)) +
   stat_qq(color = "black", size = 1.8) +
@@ -556,7 +576,7 @@ ggplot(outbreak_df, aes(sample = resid)) +
 sh_outbreak <- shapiro.test(resid(fit_outbreak))
 ```
 
-The Q-Q plot looks close to straight, and Shapiro-Wilk agrees ($p = `r fmt_p(sh_outbreak$p.value)`$, not significant). Both checks pass on a model we already know is the wrong shape. That is because they check *normality of the residuals*, which is a different assumption than linearity, and a model can badly violate linearity while its residuals still look roughly normal.
+The Q-Q plot bends away from the diagonal at the low end, but Shapiro-Wilk does not reject normality ($p = `r fmt_p(sh_outbreak$p.value)`$). On a model we already know is the wrong shape, the normality checks give at most a borderline signal. They check *normality of the residuals*, which is a different assumption from linearity, and a model can badly violate linearity while its residuals look only mildly non-normal.
 
 ## Using the model: prediction
 
@@ -565,6 +585,12 @@ Once we've confirmed a real linear relationship, the fitted equation lets us pre
 $$\widehat{DO} = b_0 + b_1(20) = `r sprintf("%.2f", coef(fit)[1])` + (`r sprintf("%.2f", coef(fit)[2])`)(20) = `r sprintf("%.2f", coef(fit)[1] + coef(fit)[2]*20)`$$
 
 R gives the same number, along with a confidence interval:
+
+```{r}
+#| echo: true
+#| eval: false
+predict(fit, newdata = data.frame(stream_temp = 20), interval = "confidence")
+```
 
 ```{r}
 newd <- data.frame(stream_temp = 20)
@@ -577,21 +603,22 @@ kable(
 )
 ```
 
-At 20°C, the model predicts DO of `r sprintf("%.2f", pred_out[1])` mg/L, 95% CI [`r sprintf("%.2f", pred_out[2])`, `r sprintf("%.2f", pred_out[3])`]. Because 20°C falls inside our sampled range of 10 to 24°C, this prediction is interpolation, which is what regression is good for. Predicting DO at, say, 35°C would be extrapolation: nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. @fig-9regextrap shows both zones on the same line.
+At 20°C, the model predicts DO of `r sprintf("%.2f", pred_out[1])` mg/L, 95% CI [`r sprintf("%.2f", pred_out[2])`, `r sprintf("%.2f", pred_out[3])`]. Because 20°C falls inside the observed range of `r sprintf("%.1f", min(stream_df$stream_temp))` to `r sprintf("%.1f", max(stream_df$stream_temp))`°C, this prediction is interpolation, which is what regression is good for. Predicting DO at, say, 35°C would be extrapolation: nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. @fig-9regextrap shows both zones on the same line.
 
 ```{r}
 #| label: fig-9regextrap
-#| fig-cap: "The fitted line within the observed temperature range (solid blue, interpolation) and extended beyond it in both directions (dashed red, extrapolation). Dotted grey lines mark the edges of the observed data, 10 to 24°C."
-#| fig-alt: "Scatter plot of dissolved oxygen against stream temperature. A solid blue line covers the observed range from 10 to 24 degrees C, and a dashed red line extends the same fitted trend below and above that range."
+#| fig-cap: "The fitted line within the observed temperature range (solid blue, interpolation) and extended beyond it in both directions (dashed red, extrapolation). Dotted grey lines mark the lowest and highest observed temperatures, 10.0 and 23.3°C."
+#| fig-alt: "Scatter plot of dissolved oxygen against stream temperature. A solid blue line covers the observed range from 10 to about 23 degrees C, and a dashed red line extends the same fitted trend below and above that range."
 
-obs_range <- data.frame(stream_temp = seq(10, 24, length.out = 50))
+obs_lim <- range(stream_df$stream_temp)
+obs_range <- data.frame(stream_temp = seq(obs_lim[1], obs_lim[2], length.out = 50))
 obs_range$DO <- predict(fit, obs_range)
 obs_range$part <- "Observed range (interpolation)"
 
 extrap_range <- data.frame(stream_temp = seq(0, 35, length.out = 100))
 extrap_range$DO <- predict(fit, extrap_range)
 extrap_range$part <- "Beyond observed range (extrapolation)"
-extrap_range <- extrap_range[extrap_range$stream_temp < 10 | extrap_range$stream_temp > 24, ]
+extrap_range <- extrap_range[extrap_range$stream_temp < obs_lim[1] | extrap_range$stream_temp > obs_lim[2], ]
 
 extrap_range$part <- factor(extrap_range$part, levels = c("Observed range (interpolation)", "Beyond observed range (extrapolation)"))
 obs_range$part <- factor(obs_range$part, levels = levels(extrap_range$part))
@@ -600,7 +627,7 @@ ggplot() +
   geom_line(data = extrap_range, aes(stream_temp, DO, color = part, linetype = part), linewidth = 1.5) +
   geom_line(data = obs_range, aes(stream_temp, DO, color = part, linetype = part), linewidth = 1) +
   geom_point(data = stream_df, aes(stream_temp, DO), size = 1.5) +
-  geom_vline(xintercept = c(10, 24), linetype = "dotted", color = "grey60", linewidth=1.2) +
+  geom_vline(xintercept = obs_lim, linetype = "dotted", color = "grey60", linewidth=1.2) +
   scale_color_manual(values = c("Observed range (interpolation)" = "#008cff", "Beyond observed range (extrapolation)" = "#b22222")) +
   scale_linetype_manual(values = c("Observed range (interpolation)" = "solid", "Beyond observed range (extrapolation)" = "dashed")) +
   labs(x = expression("Stream temperature ("*degree*"C)"), y = "Dissolved oxygen (mg/L)", color = NULL, linetype = NULL) +
@@ -671,7 +698,7 @@ ggplot() +
   geom_point(data = outbreak_df, aes(days, cases)) +
   geom_vline(xintercept = 14, linetype = "dashed", color = "grey60") +
   annotate("text", x = 14.3, y = 26500, label = "last observed day", hjust = 0, size = 5, color = "grey40") +
-  annotate("text", x = 20, y = 10000, label = "true trajectory", color = "grey40", size = 5) +
+  annotate("text", x = 26, y = 14000, label = "true trajectory", hjust = 1, color = "grey40", size = 5) +
   scale_color_manual(values = c("Observed range (interpolation)" = "#008cff", "Beyond observed range (extrapolation)" = "#b22222")) +
   scale_linetype_manual(values = c("Observed range (interpolation)" = "solid", "Beyond observed range (extrapolation)" = "dashed")) +
   labs(x = "Day of outbreak", y = "New cases detected", color = NULL, linetype = NULL) +
@@ -701,4 +728,4 @@ This problem calls for a different model. More data or a better-fitting straight
 -   **Regression partitions variation the way ANOVA does.** $SS_\text{Total}$ splits into $SS_\text{Regression}$ (Chapter 8's between) and $SS_\text{Residual}$ (Chapter 8's within), and $F = MS_\text{Regression}/MS_\text{Residual}$, which equals $t^2$ with one predictor. $R^2$, the proportion of variation explained by the line, is the effect size. A relationship can be real ($p$ small) and still explain very little, which is why you report both.
 -   **Look at your data, then look at your residuals.** The assumptions that must be met are linearity, independence, constant variance, and roughly normal residuals. A residuals-versus-fitted plot catches violations a formal test can miss entirely, as the outbreak example showed.
 -   **Predict inside your data; extrapolate beyond with caution.** Interpolating within the observed range of $x$ is what regression is for. Extrapolating beyond it is sometimes justified, but only when you have good reason to believe the relationship stays the same shape past the range you observed.
--   **A good $R^2$ can still be the wrong model.** The outbreak example fit a straight line to exponential growth and got $R^2=`r sprintf("%.2f", outbreak_tidy$r.squared)`$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast tens of thousands of cases short of reality. The residual plot catches this; a Q-Q plot, which checks a different assumption, does not.
+-   **A good $R^2$ can still be the wrong model.** The outbreak example fit a straight line to exponential growth and got $R^2=`r sprintf("%.2f", outbreak_tidy$r.squared)`$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast about 26,000 cases short of reality. The residual plot catches this. A normality check on the same residuals gives only a borderline signal, because it tests a different assumption.
