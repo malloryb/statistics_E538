@@ -127,7 +127,7 @@ ggplot(fig2_df, aes(x = Age, y = CFR_band_pct, fill = Country)) +
   theme(legend.position = "top")
 ```
 
-The reversal happens because Italy's population skews older while China's skews younger. Italy therefore had a greater proportion of older people getting sick, which pulls Italy's overall average up. Similarly, China's average is pulled down because a greater proportion of younger people are getting sick. Aggregating without adjusting for age hid the within-group pattern entirely.
+The reversal happens because Italy's cases skew older while China's skew younger. Italy therefore had a greater proportion of older people getting sick, which pulls Italy's overall average up. Similarly, China's average is pulled down because a greater proportion of younger people are getting sick. Aggregating without adjusting for age hid the within-group pattern entirely.
 
 ```{r}
 #| label: fig-age-distributions
@@ -153,7 +153,7 @@ That reversal is not a trick or a data error. It happens because the groups diff
 
 ANCOVA handles this situation when the third variable is continuous, instead of grouped into categories like the age bands above. It compares groups while holding a covariate fixed, so a difference between the groups on that covariate does not distort the comparison.
 
-## Terminology
+## Covariates and fixed factors
 
 **Covariate:** a continuous variable that changes alongside the response and helps explain part of its variation. In environmental studies, common covariates include temperature, rainfall, soil moisture, or pollution concentration: factors that may influence the outcome but aren't the main treatment of interest. Including one lets us adjust for its influence, giving a clearer test of the categorical effect once that continuous background variation is accounted for.
 
@@ -189,7 +189,7 @@ In R, `lm(y ~ x + Group)` creates these indicators for you automatically.
 
 **Indicator variables in action.** When an indicator variable is turned on (set to 1), it activates the terms multiplied by that variable. Depending on where the indicator appears in the model, that can change the intercept, the slope, or both.
 
-Consider two predictors: a continuous variable $x$ and an indicator $G$ (0 or 1). The numbers below are arbitrary, chosen to make the arithmetic clean; the worked example later in this chapter plugs in real coefficients for air pollution and area type. Use this model:
+Consider two predictors: a continuous variable $x$ and an indicator $G$ (0 or 1). The numbers below are arbitrary, chosen to make the arithmetic clean; the worked example later in this chapter plugs in fitted coefficients for air pollution and area type. Use this model:
 
 $$y = 2x + 1(x G) - 7G + 3$$
 
@@ -215,7 +215,7 @@ $$y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x}
 
 If we only include $\beta_2$ and leave out $\beta_3$, we get a restricted version: the intercept can shift but the slope cannot, so the two lines are forced to be parallel. That is the **parallel-lines model**, and it is the one we fall back to when the slope difference turns out not to be significant.
 
-::: {.callout-note title="Note: Why this matters"}
+::: {.callout-note title="Note: How R names the four coefficients"}
 These are the four coefficients R reports for this model, and each one can be checked against a graph of the two group lines. For `lm(y ~ x * Group)`, where `Group` has levels A (the reference) and B, R names the rows `(Intercept)` for $\beta_0$, `x` for $\beta_1$, `GroupB` for $\beta_2$, and `x:GroupB` for $\beta_3$. The worked example below follows the same pattern: `(Intercept)`, `AirPollution`, `AreaTypeUrban`, and `AirPollution:AreaTypeUrban`.
 :::
 
@@ -272,7 +272,7 @@ ggplot(lines_df, aes(x, y, color = g)) +
 
 ANCOVA works right to left across that figure: first it asks whether the rightmost panel is what we have (do the slopes differ?), and only if the answer is no does it ask whether we have the middle panel or the leftmost (do the intercepts differ?).
 
-**Step 0: Does the model explain anything?** Before looking at any single term, check the whole-model $F$-test, which asks whether the covariate, the group, and their interaction together explain more of $y$ than chance would: $H_0:\beta_1=\beta_2=\beta_3=0$. R reports it on the last line of `summary(lm(...))`. If it is not significant, stop. The data are one group with one mean and one variance, and no single term is worth interpreting.
+**Step 0: Does the model explain anything?** Before looking at any single term, check the whole-model $F$-test, which asks whether the covariate, the group, and their interaction together explain more of $y$ than chance would: $H_0:\beta_1=\beta_2=\beta_3=0$. R reports it on the last line of `summary(lm(...))`. If it is not significant, stop. The data give no evidence that the covariate, the group, or their interaction explains $y$, so no single term is worth interpreting.
 
 **Step 1: Are slopes equal across groups?** This tests whether the covariate effect is the same in each group.
 
@@ -305,11 +305,11 @@ With parallel lines, $\beta_2$ is the vertical gap between the two lines, and it
 
 As always, statistical significance doesn't guarantee ecological or practical importance. Interpret a rejected null in light of the study's design, measurement precision, and the actual size of the effect, not just its $p$-value.
 
-**Common pitfalls.**
-
+::: {.callout-caution title="Warning: Three ways to misread an ANCOVA"}
 -   Interpreting main effects when the interaction is significant.
 -   Comparing raw intercepts when $x$ is not centered.
 -   Treating adjusted means as meaningful when slopes are not parallel.
+:::
 
 ### Checking ANCOVA's assumptions
 
@@ -327,7 +327,7 @@ Most of these are ones ANOVA already needed; two are new because a covariate has
 
 ## Full ANCOVA example
 
-### Question
+### Birds, air pollution and area type
 
 Imagine we're environmental scientists studying the impact of air pollution on bird species density, and we want to know whether that relationship differs between urban and rural areas. @fig-11design lays out the design.
 
@@ -349,7 +349,7 @@ This design has the same structure as the factorial design in Chapter 10: both c
 
 We might expect pollution to have a stronger negative effect in urban areas. Urban habitat is already fragmented and offers birds fewer clean patches to retreat to, while rural areas have more intact habitat nearby.
 
-### Model
+### The model
 
 We'll fit an ANCOVA model to test whether air pollution's relationship with bird density differs between urban and rural sites. Area type enters as an indicator variable, and air pollution enters as the covariate.
 
@@ -375,7 +375,7 @@ First, we state the hypotheses for each step:
 
     $H_{a,\text{group}}: \beta_2 \neq 0$
 
-### Analysis
+### Simulating the data
 
 ```{r}
 # Set seed for reproducibility
@@ -407,7 +407,6 @@ Let's start with the response variable, bird density, in @fig-11birddensity. Thi
 #| label: fig-11birddensity
 #| fig-cap: "Bird density by area type. Rural sites sit higher than urban ones."
 #| fig-alt: "Boxplot of bird density for rural and urban area types. The rural box is centered higher than the urban box, with overlapping ranges."
-#| echo: true
 
 ggplot(data, aes(AreaType, BirdDensity)) +
   geom_boxplot(aes(fill = AreaType), show.legend = FALSE) +
@@ -422,7 +421,6 @@ Next, check the covariate, air pollution. If the covariate differs sharply betwe
 #| label: fig-11airpollution
 #| fig-cap: "Air pollution by area type. The two groups look broadly similar, so there is no large covariate imbalance for the model to adjust away."
 #| fig-alt: "Boxplot of air pollution for rural and urban area types. The two boxes overlap substantially with similar centers."
-#| echo: true
 
 ggplot(data, aes(AreaType, AirPollution)) +
   geom_boxplot(aes(fill = AreaType), show.legend = FALSE) +
@@ -446,7 +444,7 @@ ancova_tidy <- broom::tidy(ancova)
 knitr::kable(
 ancova_tidy[, c("term", "df", "sumsq", "meansq", "statistic", "p.value")],
 digits = c(0, 0, 2, 2, 2, 4),
-caption = "ANCOVA Table"
+caption = "ANCOVA table for bird density"
 )
 ```
 
@@ -477,7 +475,7 @@ lm_tidy <- broom::tidy(ancova_lm)
 knitr::kable(
 lm_tidy[, c("term", "estimate", "std.error", "statistic", "p.value")],
 digits = c(0, 3, 3, 2, 4),
-caption = "Linear Model Coefficients"
+caption = "Linear model coefficients"
 )
 ```
 
@@ -507,9 +505,16 @@ ggplot(data, aes(AirPollution, BirdDensity, color = AreaType)) +
   labs(x = "Air pollution", y = "Bird density", color = "Area type")
 ```
 
-Here, the slopes differ by area type, illustrating the significant interaction we detected statistically. Both lines slope downward, so pollution is associated with fewer birds in both settings, but the urban line drops roughly twice as fast. The two lines start close together at low pollution and move apart as pollution rises.
+Here, the slopes differ by area type, illustrating the significant interaction we detected statistically. Both lines slope downward, so pollution is associated with fewer birds in both settings, but the urban line drops roughly twice as fast. The lines are about 7.5 birds apart at the lowest pollution levels and about 15.5 apart at the highest.
 
 **Testing each group's slope.** The interaction told us the two slopes differ from each other. It did not tell us whether each one differs from zero, so we fit a separate simple regression within each group.
+
+```{r}
+#| echo: true
+#| eval: false
+lm(BirdDensity ~ AirPollution, data = subset(data, AreaType == "Rural"))
+lm(BirdDensity ~ AirPollution, data = subset(data, AreaType == "Urban"))
+```
 
 ```{r}
 #| label: tbl-11slopes
@@ -550,7 +555,7 @@ tidy_centered <- broom::tidy(fit_centered)[, c("term", "estimate", "p.value")]
 knitr::kable(
   tidy_centered,
   digits = c(0, 3, 4),
-  caption = "Centered ANCOVA Model Coefficients"
+  caption = "Coefficients with the covariate centered"
 )
 ```
 
@@ -588,7 +593,7 @@ If the interaction had *not* been significant, we would instead drop the interac
 
 The bird example used ANCOVA the way this chapter leads with it: the covariate relationship was the question, and the interaction was the finding. The other way you'll see ANCOVA reverses those roles. The group comparison is the question, and the covariate is something to adjust for so that the comparison is fair. This is also the continuous version of the Simpson's paradox problem the chapter opened with.
 
-### Question
+### Retrofits and electricity use
 
 A city facilities office wants to know whether energy retrofits (new insulation, lighting, and controls) reduced electricity use. It compares 30 retrofitted buildings with 30 standard ones. Electricity use depends heavily on how many people are in a building, and the retrofitted buildings happen to be the busier ones. The covariate is occupancy, and the question is about the group term.
 
@@ -657,6 +662,12 @@ adj_retr <- adj_std + b2
 **Step 1: the interaction.** The `Occupancy:Type` row gives $F(1, `r e_f[3]`) = `r sprintf("%.2f", e_int$statistic)`$, $p = `r fmt_p(e_int$p.value)`$. We fail to reject $H_{0,\text{int}}$: the slopes are parallel, so each additional occupant adds about the same amount of electricity in either kind of building. We drop the interaction and refit.
 
 **Step 2: the adjusted difference.** @tbl-11energypar shows the parallel-lines model.
+
+```{r}
+#| echo: true
+#| eval: false
+lm(Energy ~ Occupancy + Type, data = energy)
+```
 
 ```{r}
 #| label: tbl-11energypar
