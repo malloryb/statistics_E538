@@ -295,7 +295,7 @@ design_contingency <- function(vars_label, rows, cols, counts, counted, question
   xs <- x0 + (seq_len(nc)-1)*cw + cw/2
   ys <- Y_KIND + 0.22 - (seq_len(nr)-1)*ch
   ggplot(data.frame(x=1)) +
-    annotate("text", x = xs, y = max(ys)+0.26, label = cols,
+    annotate("text", x = xs, y = max(ys)+0.20, label = cols,
              size = 3.0, fontface="bold", colour="grey35") +
     annotate("text", x = x0-0.12, y = ys, hjust = 1, label = rows,
              size = 3.0, fontface="bold", colour="grey35") +
