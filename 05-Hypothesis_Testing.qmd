@@ -274,7 +274,7 @@ Effect size comes in two kinds of units. You can express it in original units, w
 
 These statements are easy to interpret, but they are hard to compare across contexts or measures.
 
-**Standardized (unitless).** When units are unfamiliar or scales differ, standardize by typical variability. The most common standardized effect size metric is **Cohen's *d*** [@Cohen1988]. It divides the raw difference, $\Delta$, by the population standard deviation:
+**Standardized (unitless).** When units are unfamiliar or scales differ, standardize by typical variability. The most common standardized effect size metric is **Cohen's $d$** [@Cohen1988]. It divides the raw difference, $\Delta$, by the population standard deviation:
 
 $$d = \frac{\Delta}{\sigma}$$
 
@@ -297,7 +297,7 @@ A large test statistic therefore does not mean a large effect, and the two numbe
     -   If the SD across sites is 1.0, then $d = 1.0$: a large shift.
     -   If the SD is 10, then $d = 0.10$: a small shift.
 
-**Planning uses $\Delta$.** To plan a study, $\Delta$ is enough: it is the size of the effect you expect to see, in the units of the study, and there is no need to standardize it. Cohen's $d$ standardizes it so that effect sizes can be compared across studies.
+**Planning starts from $\Delta$.** To plan a study, state $\Delta$, the size of the effect you expect to see, in the units of the study. A power calculation also needs an estimate of $\sigma$. Cohen's $d$ standardizes $\Delta$ so that effect sizes can be compared across studies.
 
 
 **Notes for practice**
@@ -314,7 +314,7 @@ Suppose we're measuring final exam performance (percent correct). The class mean
 ```{r}
 #| label: fig-5.5effectdistsB
 #| fig-cap: 'Same idea with concrete scores (mean $65$, $sd=5$): treatment shifts correspond to $d=0,\,0.5,\,1,\,2$.'
-#| fig-alt: "Four panels, each showing two overlaid bell-shaped density curves for groups A and B. In the first panel the curves sit exactly on top of each other (no shift). In the next three panels group B's curve shifts progressively further right of group A's, first by a small amount, then a larger amount, and finally a shift so large the two curves barely overlap at all."
+#| fig-alt: "Four panels, each showing two overlaid bell-shaped density curves for groups A and B. In the first panel the curves sit exactly on top of each other (no shift). In the next three panels group B's curve shifts progressively further right of group A's, first by a small amount, then a larger amount, and finally a 2-SD shift, where the curves overlap only in their tails."
 #| out-width: "100%"
 
 
@@ -452,7 +452,7 @@ ggplot(plot_df, aes(x=effect_size, y=power))+
   labs(x = "Effect size (Cohen's d)", y = "Power")
 ```
 
-With 10 per group, this design detects a medium effect ($d=0.5$) only about `r round(power_n10_exact * 100)`% of the time, a larger effect ($d=0.8$) about 40% of the time, and a very large effect ($d=2$) almost every time (about 99%). With $n = 10$ per group, only large effects are detected reliably.
+With 10 per group, this design detects a medium effect ($d=0.5$) only about `r round(power_n10_exact * 100)`% of the time, a larger effect ($d=0.8$) about 40% of the time, and a very large effect ($d=2$) almost every time (about 99%). With $n = 10$ per group, only very large effects are detected reliably.
 
 The simulation above estimated power at $d = 0.5$ as about `r round(power_n10 * 100)`%. The two numbers differ because 1,000 simulated experiments give an estimate, while the curve is computed exactly.
 
@@ -461,7 +461,7 @@ The second curve holds the effect size fixed and varies the sample size. Suppose
 ```{r}
 #| label: fig-5.5powercurveN
 #| fig-cap: 'Power vs. sample size for detecting $d=0.2$ with a two-sample $t$-test at $\alpha=0.05$; dashed line marks $0.80$ power.'
-#| fig-alt: "Line graph of power against sample size per group, from 10 to 800. Power starts near zero at small sample sizes and rises in a curve that flattens as it approaches 1.0. A horizontal reference line at 0.80 power crosses the curve around a sample size of roughly 394 per group."
+#| fig-alt: "Line graph of power against sample size per group, from 10 to 800. Power starts at about 0.07 at 10 per group and rises in a curve that flattens as it approaches 1.0. A horizontal reference line at 0.80 power crosses the curve around a sample size of roughly 394 per group."
 #| out-width: "100%"
 
 n_seq <- seq(10, 800, 10)
@@ -478,7 +478,7 @@ ggplot(plot_df, aes(x=n_seq, y=power))+
   labs(x = "n per group", y = "Power")
 ```
 
-At 10 per group, power to detect $d=0.2$ is near zero. Reaching 80% power takes about `r ceiling(n_for_80)` per group. At that sample size, 20% of studies would still fail to reject $H_0$ for a real effect of $d = 0.2$.
+At 10 per group, power to detect $d=0.2$ is about 7%, barely above $\alpha$. Reaching 80% power takes about `r ceiling(n_for_80)` per group. At that sample size, 20% of studies would still fail to reject $H_0$ for a real effect of $d = 0.2$.
 
 Power analysis is a planning tool. A power target such as 0.8 is calculated for a specific effect size and standard deviation, so report both with it.
 
@@ -502,7 +502,7 @@ With 10 per group, only effects of about $d = 1.3$ or larger reach 80% power, an
 
 ### Two cautions
 
--   **A significant result from a low-power study is less trustworthy.** Underpowered studies rarely replicate. A design with only 30% power to detect an expected effect might produce a significant result by luck, but most replications will not. When a small study does reach significance by chance, its estimated effect size tends to be large, which makes the false positive look convincing.
+-   **A significant result from a low-power study is less trustworthy.** Underpowered studies rarely replicate. A design with only 30% power to detect an expected effect might produce a significant result by luck, but most replications will not. When a small study does reach significance, its estimated effect size tends to be too large. When the null is true, that large estimate makes a false positive look convincing.
 
 -   **Huge $n$ finds tiny effects.** With very large samples, trivial differences can register as statistically significant. For example, a satellite image can contain millions of pixels, so a difference of a fraction of a percent in greenness between two land-cover types can come out statistically significant, even though a difference that small would not change how either land cover is managed. Report an effect size and a confidence interval alongside each $p$-value so a reader can judge whether a difference matters.
 
@@ -547,26 +547,26 @@ A results statement is one sentence that states the finding in plain language an
 
 **What to include (in order):**
 
-1.  Test name (e.g., one-sample *z*, two-sample *t*, χ², regression).
-2.  Test statistic and its degrees of freedom (or sample size for *z*).
+1.  Test name (e.g., one-sample $z$, two-sample $t$, $\chi^2$, regression).
+2.  Test statistic and its degrees of freedom (or sample size for $z$).
 3.  Exact $p$ (report $p<0.001$ when very small).
 4.  An effect size and/or a 95% CI when available.
 
 **Examples**
 
--   **One-sample *z*.** The average mercury level within 10 km of the smelter was higher than the legal limit (*z* = 2.85, *n* = 32, *p* = 0.004).
+-   **One-sample $z$.** The average mercury level within 10 km of the smelter was higher than the legal limit ($z = 2.85$, $n = 32$, $p = 0.004$).
 
--   **One-sample *t* with CI.** Mean nitrate exceeded the target by 0.41 mg/L (*t*(31) = 2.60, *p* = 0.014, 95% CI \[0.09, 0.73\] mg/L).
+-   **One-sample $t$ with CI.** Mean nitrate exceeded the target by 0.41 mg/L ($t(31) = 2.60$, $p = 0.014$, 95% CI \[0.09, 0.73\] mg/L).
 
--   **Two-sample *t* with effect size.** Downstream sites had higher turbidity than upstream sites (*t*(58) = 3.10, *p* = 0.003, Cohen's *d* = 0.80).
+-   **Two-sample $t$ with effect size.** Downstream sites had higher turbidity than upstream sites ($t(58) = 3.10$, $p = 0.003$, Cohen's $d = 0.80$).
 
--   **Not significant (be explicit).** Mean canopy temperature did not differ from the baseline (*t*(47) = 1.20, *p* = 0.236); we fail to reject $H_0$.
+-   **Not significant (be explicit).** Mean canopy temperature did not differ from the baseline ($t(47) = 1.20$, $p = 0.236$); we fail to reject $H_0$.
 
 **Rounding & style**
 
 -   Round statistics to 2 decimals; $p$ to 3 decimals (use $p<0.001$ when needed).
 -   Use "fail to reject $H_0$" (not "accept").
--   Match tail to hypothesis in prose (e.g., "higher than," "lower than," or "different from").
+-   State the direction the data went ("higher than," "lower than") when the test rejects, and "did not differ from" when it fails to reject.
 
 **Do / Don't**
 

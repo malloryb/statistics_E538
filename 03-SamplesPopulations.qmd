@@ -427,7 +427,7 @@ Random samples are the ideal, and in many areas of environmental science they ar
 
 ### How much does it matter if you don't have a random sample?
 
-Stratified sampling, while biased by design, is often useful and correctable with statistical adjustments. Opportunistic samples can be acceptable if the bias is unlikely to affect the phenomenon being studied. For example, if you want to study tree growth rates, sampling only trees on one side of a valley may or may not be problematic, depending on whether the valley side influences growth.
+Stratified sampling that deliberately oversamples small strata over-represents those groups, but weighting each stratum in the analysis corrects for it. Opportunistic samples can be acceptable if the bias is unlikely to affect the phenomenon being studied. For example, if you want to study tree growth rates, sampling only trees on one side of a valley may or may not be problematic, depending on whether the valley side influences growth.
 
 Ask whether the way you sampled could plausibly distort the conclusions. When designing your own studies, aim for sampling methods that are as appropriate as possible for the population of interest. And when critiquing others, be specific about how a sampling choice might bias results, rather than simply noting that it is not random.
 
@@ -1063,17 +1063,17 @@ A statistic describes your data; an estimate is your best guess about the corres
 
 Estimating the population mean was straightforward: the sample mean $\bar x$ is an **unbiased estimator** of $\mu$, meaning that across many samples it lands on the true mean on average. Standard deviation is trickier.
 
-Here we encounter **bias**. An estimator is biased if its expected value systematically differs from the true population parameter. The sample standard deviation $sd$ is such a case: it tends to underestimate $\sigma$, especially when $n$ is small.
+Here we encounter **bias**. An estimator is biased if its expected value systematically differs from the true population parameter. The sample standard deviation computed by dividing by $n$ is such a case: it tends to underestimate $\sigma$, especially when $n$ is small.
 
 Chapter 2 built the standard deviation dividing by $N$ and noted in passing that R divides by $n-1$ instead. The rest of this section explains that difference.
 
 ### Simulating bias
 
-We can see this by creating a sampling distribution of the standard deviation. Suppose the true population IQ distribution has mean 100 and standard deviation 15. If we repeatedly draw small samples (say, $n=2$) and compute $s$ each time, the histogram of those $s$ values looks like @fig-sampdistsd.
+We can see this by creating a sampling distribution of the standard deviation. Suppose the true population IQ distribution has mean 100 and standard deviation 15. If we repeatedly draw small samples (say, $n=2$) and compute the SD each time, dividing by $n$ as in Chapter 2, the histogram of those values looks like @fig-sampdistsd.
 
 ```{r}
 #| label: fig-sampdistsd
-#| fig-cap: "Sampling distribution of the sample standard deviation for n = 2. The true population SD is 15 (dashed line), but most experiments produce smaller values. The average sample SD is only 8.5, showing that $s$ underestimates $\\sigma$."
+#| fig-cap: "Sampling distribution of the uncorrected sample standard deviation (divide by n) for n = 2. The true population SD is 15 (dashed line), but most experiments produce smaller values. The average is only 8.5, showing that the uncorrected SD underestimates $\\sigma$."
 #| fig-alt: "Histogram of 20,000 simulated sample standard deviations, each computed from a sample of size 2 drawn from a population with true standard deviation 15. A dashed vertical line marks that true value of 15, labeled Population SD. The bulk of the histogram sits well to the left of that line, with a long right tail, showing that most samples of size 2 underestimate the true standard deviation."
 
 sd_biased <- function(x) sqrt(mean((x - mean(x))^2))
@@ -1133,7 +1133,7 @@ ggplot(df_bias, aes(x = n, y = avg_sd)) +
   scale_x_continuous(breaks = 1:10) +
   ylim(0, 16) +
   xlab("Sample size") +
-  ylab("Average sample standard deviation")
+  ylab("Average uncorrected SD (divide by n)")
 ```
 
 ### Why variance needs a small correction
@@ -1276,7 +1276,7 @@ plot_scenario(c(80,102,114), "C. Sample mean near, points wide (SD too big)")
 
 In Example C, the sample mean lands close to $\mu$ again, but this time the three points happen to be spread wide. $\sigma$ is about 12.1, uncorrected $s$ is 14.1, corrected $s$ is 17.2. Here $s$ *overshoots* $\sigma$ instead.
 
-So sometimes $s$ undershoots and sometimes it overshoots. The sample SD is still called "biased small" because outcomes like A and B (tight, unrepresentative samples) happen more often than outcomes like C. Average over enough samples, and the sample SD comes in low more often than it comes in high. Let's check that by simulating 8,000 samples, shown in @fig-sdbias-simulation. The simulation draws from a normal population with the same $\mu = 100$ and $\sigma = 12.11$ as the number line above, rather than from the 21 even numbers themselves, so the histograms come out smooth enough to read. The bias is a general property of the sample SD, not a quirk of one particular population.
+So sometimes $s$ undershoots and sometimes it overshoots. The sample SD is still called "biased small" because outcomes like A and B (tight, unrepresentative samples) happen more often than outcomes like C. Average the sample SD over enough samples, and the average comes out below $\sigma$. Let's check that by simulating 8,000 samples, shown in @fig-sdbias-simulation. The simulation draws from a normal population with the same $\mu = 100$ and $\sigma = 12.11$ as the number line above, rather than from the 21 even numbers themselves, so the histograms come out smooth enough to read. The bias is a general property of the sample SD, not a quirk of one particular population.
 
 ```{r, echo=F}
 #| label: fig-sdbias-simulation
@@ -1323,7 +1323,7 @@ avg_lines <- plot_data |>
 corner_labels <- avg_lines |>
   mutate(
     sigma_label = paste0("sigma==", round(sigma, 2)),
-    s_label     = paste0("plain('mean s')~'='~", round(avg, 2))
+    s_label     = paste0("plain('mean SD')~'='~", round(avg, 2))
   )
 
 ggplot(plot_data, aes(x = value)) +
