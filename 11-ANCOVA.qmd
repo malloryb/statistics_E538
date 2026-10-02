@@ -83,15 +83,8 @@ dat <- tibble::tribble(
   "China",  "80+",       300,  54.00,    18.00
 ) %>%
   mutate(
-    Age = factor(Age, levels = age_levels),
-    CFR_band_calc = 100 * Deaths / Cases  # sanity check, should match CFR_band_pct
+    Age = factor(Age, levels = age_levels)
   )
-
-# Quick checks
-dat %>% group_by(Country) %>% summarise(Total_cases = sum(Cases), Total_deaths = sum(Deaths),
-                                        CFR_crude_pct = 100*Total_deaths/Total_cases) %>%
-  invisible()
-# Italy ~ 3.31%, China ~ 0.59%
 
 fig1_df <- dat %>%
   group_by(Country) %>%
@@ -99,8 +92,7 @@ fig1_df <- dat %>%
     Cases = sum(Cases),
     Deaths = sum(Deaths),
     CFR_crude_pct = 100 * Deaths / Cases
-  ) %>%
-  invisible()
+  )
 
 ggplot(fig1_df, aes(x = Country, y = CFR_crude_pct, fill = Country)) +
   geom_col(width = 0.6) +
@@ -127,7 +119,16 @@ ggplot(fig2_df, aes(x = Age, y = CFR_band_pct, fill = Country)) +
   theme(legend.position = "top")
 ```
 
-The reversal happens because Italy's cases skew older while China's skew younger. Italy therefore had a greater proportion of older people getting sick, which pulls Italy's overall average up. Similarly, China's average is pulled down because a greater proportion of younger people are getting sick. Aggregating without adjusting for age hid the within-group pattern entirely.
+```{r}
+#| label: tbl-11simpsonrates
+#| tbl-cap: "Fatality rate (%) by age band, from the same made-up numbers. China's rate is higher in every band, including the youngest, where the bars are too small to see."
+
+rate_tbl <- tidyr::pivot_wider(dat[, c("Age", "Country", "CFR_band_pct")],
+                               names_from = Country, values_from = CFR_band_pct)
+knitr::kable(rate_tbl[, c("Age", "Italy", "China")], col.names = c("Age band", "Italy", "China"))
+```
+
+@tbl-11simpsonrates lists the rates themselves. The reversal happens because Italy's cases skew older while China's skew younger. Italy therefore had a greater proportion of older people getting sick, which pulls Italy's overall average up. Similarly, China's average is pulled down because a greater proportion of younger people are getting sick. Aggregating without adjusting for age hid the within-group pattern entirely.
 
 ```{r}
 #| label: fig-age-distributions
@@ -290,11 +291,7 @@ $$y=\beta_0+\beta_1 x+\beta_2 G+\varepsilon$$
 
 With parallel lines, $\beta_2$ is the vertical gap between the two lines, and it is the same at every value of $x$. That gap is the **adjusted difference**: how much the groups differ when they are compared at the same covariate value. Evaluating each group's line at the overall mean of $x$ gives the **adjusted means**, the group means you would expect if both groups had the same average covariate. The second example at the end of this chapter works through one.
 
-**What the parameters mean.**
-
--   $\beta_1$: slope of $y$ on $x$ for the reference group; in the parallel-lines model, the common slope.
--   $\beta_2$: difference in intercepts; in the parallel-lines model, the adjusted difference between groups.
--   $\beta_3$: difference in slopes between groups.
+In the parallel-lines model, $\beta_1$ is the common slope and $\beta_2$ is the adjusted difference between groups.
 
 **Intercepts and centering.** Intercepts are evaluated at $x=0$. In the model with an interaction, the lines are not parallel, so $\beta_2$ compares the groups at $x=0$ only, which may be far outside the data. Centering the covariate, $\tilde x=x-\bar x$, moves that comparison to the average covariate value. In the parallel-lines model the gap is the same everywhere, so centering changes the intercept but not $\beta_2$.
 
@@ -313,17 +310,19 @@ As always, statistical significance doesn't guarantee ecological or practical im
 
 ### Checking ANCOVA's assumptions
 
-Most of these are ones ANOVA already needed; two are new because a covariate has entered the model.
+Most of these are ones ANOVA already needed. Three are new because a covariate has entered the model (@tbl-11assumptions).
 
--   Independent observations *(same as ANOVA)*
+| Assumption | New with ANCOVA? | How to check |
+|:-----------|:-----------------|:-------------|
+| Independent observations | No | The study design |
+| Normal residuals and similar variances across groups | No | Q-Q plot, residuals-versus-fitted plot, Levene's test |
+| Linearity within each group | Yes | A scatter plot with a fitted line for each group |
+| Homogeneity of slopes | Yes | The interaction test (Step 1), not a check run beforehand |
+| The covariate is measured with little error and is not affected by the treatment | Yes | The study design |
 
--   Approximately normal residuals and similar variances across groups *(same as ANOVA)*
+: Assumptions of ANCOVA and how to check them. {#tbl-11assumptions}
 
--   Linearity within each group: the covariate-response relationship is a straight line *(new, about the covariate)*
-
--   Homogeneity of slopes: the groups share that same line, unless the interaction test says otherwise *(new, and this is the one the interaction test above directly checks, rather than a condition you verify beforehand)*
-
--   The covariate is measured with minimal error and isn't itself affected by the treatment *(new, and more consequential here than in an ordinary regression. If the covariate is measured with error, ANCOVA only partly adjusts for group differences in the covariate, and the leftover difference can look like a treatment effect.)*
+If the covariate is measured with error, ANCOVA only partly adjusts for group differences in the covariate, and the leftover difference can look like a treatment effect.
 
 ## Full ANCOVA example
 
@@ -348,8 +347,6 @@ design_mixed("Air pollution (continuous) × Area type (categorical)",
 This design has the same structure as the factorial design in Chapter 10: both cross two predictors and ask whether one changes the effect of the other. The only difference is that factorial's second predictor has levels, while ANCOVA's is a continuous range. Note also that both groups span the full pollution range. Rural sites are not simply the clean ones, which is exactly what makes an adjusted comparison possible.
 
 We might expect pollution to have a stronger negative effect in urban areas. Urban habitat is already fragmented and offers birds fewer clean patches to retreat to, while rural areas have more intact habitat nearby.
-
-### The model
 
 We'll fit an ANCOVA model to test whether air pollution's relationship with bird density differs between urban and rural sites. Area type enters as an indicator variable, and air pollution enters as the covariate.
 
@@ -444,6 +441,7 @@ ancova_tidy <- broom::tidy(ancova)
 knitr::kable(
 ancova_tidy[, c("term", "df", "sumsq", "meansq", "statistic", "p.value")],
 digits = c(0, 0, 2, 2, 2, 4),
+col.names = c("Term", "df", "SS", "MS", "F", "p"),
 caption = "ANCOVA table for bird density"
 )
 ```
@@ -475,6 +473,7 @@ lm_tidy <- broom::tidy(ancova_lm)
 knitr::kable(
 lm_tidy[, c("term", "estimate", "std.error", "statistic", "p.value")],
 digits = c(0, 3, 3, 2, 4),
+col.names = c("Term", "Estimate", "SE", "t", "p"),
 caption = "Linear model coefficients"
 )
 ```
@@ -532,13 +531,7 @@ knitr::kable(slopes_tbl)
 
 Both slopes are significant: bird density falls with pollution at rural sites and falls about twice as steeply at urban sites. The slope estimates match the ANCOVA's, $-0.069$ for rural and $-0.069 + (-0.064) \approx -0.133$ for urban, because a model with an interaction fits each group its own line. Only the tests are new, and their standard errors differ slightly because each regression estimates its own error variance.
 
-You'll also notice real scatter around each line, which makes sense: our overall $R^2$ is 0.65.
-
-Remember, $R^2$ represents the proportion of variance in bird density explained by the model.
-
-So about 65% of the variation in bird density is explained by air pollution, area type, and their interaction.
-
-The remaining 35% reflects other factors, measurement noise, or natural ecological variability not captured by this simple model. That is a strong fit by the standards of field data, and it is strong here partly because this is a synthetic dataset built to illustrate the method. Real environmental data are usually messier.
+The points scatter around each line. The model's $R^2$ is `r sprintf("%.2f", summary(ancova_lm)$r.squared)`, so air pollution, area type, and their interaction explain about `r round(100*summary(ancova_lm)$r.squared)`% of the variation in bird density. The remaining `r 100 - round(100*summary(ancova_lm)$r.squared)`% reflects other factors, measurement noise, or natural ecological variability not captured by this simple model. That is a strong fit by the standards of field data, and it is strong here partly because this is a synthetic dataset built to illustrate the method. Field data from actual sites are usually messier.
 
 **Centering the covariate.**
 
@@ -555,17 +548,14 @@ tidy_centered <- broom::tidy(fit_centered)[, c("term", "estimate", "p.value")]
 knitr::kable(
   tidy_centered,
   digits = c(0, 3, 4),
+  col.names = c("Term", "Estimate", "p"),
   caption = "Coefficients with the covariate centered"
 )
 ```
 
 Centering doesn't change the slopes, the interaction, or their $p$-values. It moves the intercept and the group term, and the group term's test now compares the groups at average pollution instead of at zero, so its $p$-value changes too.
 
-**Interpreting the centered model.**
-
-The coefficients for `AirPollution_c` ($-0.069$) and `AirPollution_c:AreaTypeUrban` ($-0.064$) are identical to the slopes we estimated before centering.
-
-Only the intercept and the `AreaTypeUrban` (group difference) term have changed. They are now interpreted at the *mean pollution level* (about 86 units) instead of pollution = 0.
+**Interpreting the centered model.** The intercept and the `AreaTypeUrban` term are now interpreted at the *mean pollution level*, about 86 units, instead of pollution = 0.
 
 -   **Intercept (35.8).** Predicted bird density for rural sites at average air pollution.
 
