@@ -52,7 +52,7 @@ A linear equation, fit to real data, is a statistical **model**. We never observ
 
 ### Computing the best-fit line by hand
 
-In practice, we let software identify the line with the smallest total squared error, but working through one example by hand shows where that line actually comes from. Here are the "easy" formulas for the slope and intercept, calculated straight from the data:
+In practice, we let software identify the line with the smallest total squared error, but working through one example by hand shows where that line actually comes from. Here are the formulas for the slope and intercept, calculated straight from the data:
 
 $$\text{intercept} = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2}$$
 
@@ -77,7 +77,7 @@ $$\text{intercept} = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\
 
 $$\text{slope} = b_1 = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2} = \frac{7 \times 231-34 \times 39}{7 \times 200-34^2} = 1.19$$
 
-With $b_0$ and $b_1$ in hand, we can compute a residual for any observed point: the difference between what we observed and what the line predicts, $e = y - \hat y$, where $\hat y = b_0 + b_1x$. For the first row above ($x=1, y=2$): $\hat y = -.221 + 1.19(1) = .969$, so $e = 2 - .969 = 1.031$. That point sits above the line. Repeating this for every point, then squaring and summing the residuals, gives the quantity that $b_0$ and $b_1$ were chosen to minimize. The residual $e$ is the sample's version of the error $\varepsilon$. The error $\varepsilon$ belongs to the population line, which we never see, and the residual $e$ belongs to the line we fit.
+With $b_0$ and $b_1$ in hand, we can compute a residual for any observed point. A residual is the difference between what we observed and what the line predicts, $e = y - \hat y$, where $\hat y = b_0 + b_1x$. For the first row above ($x=1, y=2$): $\hat y = -.221 + 1.19(1) = .969$, so $e = 2 - .969 = 1.031$. That point is above the line. Repeating this for every point, then squaring and summing the residuals, gives the quantity that $b_0$ and $b_1$ were chosen to minimize. The residual $e$ is the sample's version of the error $\varepsilon$. The error $\varepsilon$ belongs to the population line, which we never see, and the residual $e$ belongs to the line we fit.
 
 ### Parameters and sample statistics
 
@@ -90,7 +90,7 @@ The beta coefficients in the model are population parameters. Like other populat
 
 ## Worked regression example: stream temperature and dissolved oxygen
 
-Let's work through an example. Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO) to decline as stream temperature rises. This matters for stream health: low DO can stress or kill fish and invertebrates. @fig-9streamdesign lays out the design.
+Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO) to decline as stream temperature rises. This matters for stream health, because low DO can stress or kill fish and invertebrates. @fig-9streamdesign lays out the design.
 
 ```{r}
 #| label: fig-9streamdesign
@@ -104,7 +104,7 @@ design_continuous("Stream temperature (continuous)", "10 \u00b0C", "24 \u00b0C",
                   "Does DO change as temperature rises?")
 ```
 
-Up to now every design put units into groups and asked whether the groups differed. Now, with a continuous predictor, every temperature value is treated as its own group: each of the 30 sites sits somewhere along the range, and the line describes how mean DO changes from one temperature to the next. The question becomes how much DO changes per degree rather than whether two groups differ.
+Up to now every design put units into groups and asked whether the groups differed. Now, with a continuous predictor, every temperature value is treated as its own group. Each of the 30 sites falls somewhere along the range, and the line describes how mean DO changes from one temperature to the next. The question becomes how much DO changes per degree rather than whether two groups differ.
 
 ```{r}
 #| label: fig-9regscatter
@@ -141,7 +141,7 @@ $$DO = \beta_0 + \beta_1(\text{Temperature}) + \varepsilon$$
 
 $\beta_0$ is the population intercept, $\beta_1$ is the population slope, and $\varepsilon$ is the error, the part of DO that temperature alone doesn't explain.
 
-We don't know $\beta_0$ and $\beta_1$; we estimate them from the sample as $b_0$ and $b_1$, using the same least-squares logic from Chapter 2 (the line that minimizes the sum of squared residuals).
+We don't know $\beta_0$ and $\beta_1$. We estimate them from the sample as $b_0$ and $b_1$, using the same least-squares logic from Chapter 2 (the line that minimizes the sum of squared residuals).
 
 In R, this is a single line of code:
 
@@ -202,7 +202,7 @@ In the coefficient table, the `Estimate` values for the intercept and slope are 
 
 The intercept ($b_0 = `r sprintf("%.2f", coef(fit)[1])`$) is the model's predicted DO at 0°C. That temperature is outside the range we sampled (`r sprintf("%.1f", min(stream_df$stream_temp))` to `r sprintf("%.1f", max(stream_df$stream_temp))`°C), so we won't interpret the intercept.
 
-The slope ($b_1 = `r sprintf("%.2f", coef(fit)[2])`$) is the part we care about most: for every 1°C increase in stream temperature, predicted dissolved oxygen drops by about `r sprintf("%.2f", abs(coef(fit)[2]))` mg/L.
+The slope ($b_1 = `r sprintf("%.2f", coef(fit)[2])`$) is the part we care about most. For every 1°C increase in stream temperature, predicted dissolved oxygen drops by about `r sprintf("%.2f", abs(coef(fit)[2]))` mg/L.
 
 ## Testing the slope
 
@@ -224,7 +224,7 @@ $$t = \frac{b_1}{SE(b_1)} = \frac{`r sprintf("%.3f", coef(fit)[2])`}{`r sprintf(
 
 with $df = n - 2 = `r nrow(stream_df) - 2`$ (one degree of freedom spent estimating the intercept, one for the slope).
 
-**Where the $p$-value comes from.** If temperature and DO were truly unrelated in the population, repeating this study many times would still produce a nonzero $b_1$ just by chance, and a $t$-statistic that follows a $t$-distribution with $df = `r nrow(stream_df) - 2`$. @fig-9regslopenull shows that distribution, with the critical values marking the boundary of the most extreme 5% under $H_0$, and our observed $t$ marked against it.
+**The $p$-value comes from a $t$-distribution.** If temperature and DO were truly unrelated in the population, repeating this study many times would still produce a nonzero $b_1$ just by chance, and a $t$-statistic that follows a $t$-distribution with $df = `r nrow(stream_df) - 2`$. @fig-9regslopenull shows that distribution, with the critical values marking the boundary of the most extreme 5% under $H_0$, and our observed $t$ marked against it.
 
 ```{r}
 #| label: fig-9regslopenull
@@ -254,9 +254,9 @@ ggplot(t_null, aes(x, y)) +
   labs(x = "t", y = "Density")
 ```
 
-Our observed $t = `r sprintf("%.2f", fit_tidy$statistic[2])`$ sits far past the critical values of about $\pm`r sprintf("%.2f", qt(.975, nrow(stream_df)-2))`$, well outside where 95% of $t$-values would fall if temperature and DO were unrelated. The $p$-value is the probability of a $t$ that far out (or farther) in either tail under $H_0$: here, $p`r fmt_p(fit_tidy$p.value[2])`$. This crosses the conventional $\alpha = .05$ threshold.
+Our observed $t = `r sprintf("%.2f", fit_tidy$statistic[2])`$ is far past the critical values of about $\pm`r sprintf("%.2f", qt(.975, nrow(stream_df)-2))`$, well outside where 95% of $t$-values would fall if temperature and DO were unrelated. The $p$-value is the probability of a $t$ that far out (or farther) in either tail under $H_0$. Here $p`r fmt_p(fit_tidy$p.value[2])`$, which crosses the conventional $\alpha = .05$ threshold.
 
-We reject $H_0$: stream temperature is linearly related to dissolved oxygen.
+We reject $H_0$ and conclude that stream temperature is linearly related to dissolved oxygen.
 
 The 95% confidence interval for the slope, also in the coefficient table above, is 95% CI [`r sprintf("%.3f", fit_tidy$conf.low[2])`, `r sprintf("%.3f", fit_tidy$conf.high[2])`] mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will.
 
@@ -319,7 +319,7 @@ $$R^2 = \frac{SS_\text{Regression}}{SS_\text{Total}} = \frac{`r sprintf("%.2f", 
 
 It runs from 0 to 1, and it is the same quantity as $\eta^2$ from Chapter 8. For simple regression with one predictor, $R^2$ is also Pearson's $r$ from Chapter 2, squared: $(`r sprintf("%.3f", cor(stream_df$stream_temp, stream_df$DO))`)^2 = `r sprintf("%.3f", cor(stream_df$stream_temp, stream_df$DO)^2)`$.
 
-**The regression ANOVA table.** Dividing each sum of squares by its degrees of freedom gives mean squares, and their ratio is $F$, exactly as in Chapter 8. The regression row uses 1 degree of freedom, one slope; the residual row uses $n-2$, since the line estimated two things, an intercept and a slope.
+**The regression ANOVA table.** Dividing each sum of squares by its degrees of freedom gives mean squares, and their ratio is $F$, exactly as in Chapter 8. The regression row uses 1 degree of freedom, one for the slope. The residual row uses $n-2$, since the line estimated two things, an intercept and a slope.
 
 ```{r}
 #| echo: true
@@ -338,7 +338,7 @@ $$F = \frac{MS_\text{Regression}}{MS_\text{Residual}} = \frac{`r sprintf("%.2f",
 
 With one predictor, $F$ and the slope's $t$ test the same thing: $F = t^2 = (`r sprintf("%.2f", fit_tidy$statistic[2])`)^2 = `r sprintf("%.2f", fit_tidy$statistic[2]^2)`$, with the same $p$. $F$ is the form that generalizes to models with more than one predictor, which is why software reports both.
 
-Here $R^2 = `r sprintf("%.2f", fit_glance$r.squared)`$: stream temperature explains about `r round(fit_glance$r.squared*100)`% of the variation we observed in dissolved oxygen across sites. The remaining variation comes from everything else the model doesn't capture (discharge, shading, groundwater input, and so on), and it shows up as the residuals.
+Here $R^2 = `r sprintf("%.2f", fit_glance$r.squared)`$, so stream temperature explains about `r round(fit_glance$r.squared*100)`% of the variation we observed in dissolved oxygen across sites. The remaining variation comes from everything else the model doesn't capture (discharge, shading, groundwater input, and so on), and it shows up as the residuals.
 
 ::: {.callout-important title="Results reporting: regression"}
 We report a regression result the same way as any other test: the slope with its confidence interval, the test statistic, degrees of freedom, and $p$, plus $R^2$ as the effect size.
@@ -408,7 +408,7 @@ Simple linear regression makes four assumptions. @tbl-9assumptions lists each wi
 > You can do linear regression without thinking about whether the phenomenon you're modeling is actually close to linear. But you shouldn't.\
 > Jordan Ellenberg, *How Not to Be Wrong*
 
-A straight line is not guaranteed to be the right shape for your data. A residuals-versus-fitted plot checks two of the assumptions above at once: a curve means linearity is violated, and a funnel shape means constant variance is violated.
+A straight line is not guaranteed to be the right shape for your data. A residuals-versus-fitted plot checks two of the assumptions above at once. A curve means linearity is violated, and a funnel shape means constant variance is violated.
 
 ```{r}
 #| label: fig-9regresid
@@ -431,9 +431,9 @@ ggplot(stream_df, aes(x = fitted, y = resid)) +
   ylab("Residuals")
 ```
 
-@fig-9regresid, for our stream temperature data, shows what we want to see: residuals scattered evenly above and below zero, with no curve (which would suggest the true relationship isn't linear) and no funnel shape (which would suggest variance changes systematically across the range of $X$).
+@fig-9regresid, for our stream temperature data, shows residuals scattered evenly above and below zero, with no curve (which would suggest the true relationship isn't linear) and no funnel shape (which would suggest variance changes systematically across the range of $X$).
 
-Let's try checking residuals for a different set of data, this time on avian influenza cases over time. The design is the same shape as the stream example, with time as the continuous predictor.
+Next, check the residuals for a second data set, daily avian influenza cases over time. The design is the same shape as the stream example, with time as the continuous predictor.
 
 ```{r}
 #| label: fig-9outbreakdesign
@@ -494,7 +494,7 @@ ggplot(outbreak_df, aes(fitted, resid)) +
   ylab("Residuals")
 ```
 
-The U-shape is clear: the line underpredicts early and late in the outbreak and overpredicts in the middle, which is the pattern a straight line fit to a curve produces.
+The residuals form a U. The line underpredicts early and late in the outbreak and overpredicts in the middle, which is the pattern a straight line fit to a curve produces.
 
 If a residual plot curves instead of scattering randomly, a straight line is the wrong model for the data.
 
@@ -508,7 +508,7 @@ Fixes typically include:
 
 For normality, we check the residuals two ways: visually, with a **Q-Q plot**, and formally, with the Shapiro-Wilk test.
 
-A Q-Q plot sorts the residuals and compares them to where a perfectly normal distribution would place values at the same percentiles. If the residuals are normal, the points fall close to the diagonal line; a systematic curve or S-shape means they don't.
+A Q-Q plot sorts the residuals and compares them to where a perfectly normal distribution would place values at the same percentiles. If the residuals are normal, the points fall close to the diagonal line. A systematic curve or S-shape means they don't.
 
 ```{r}
 #| label: fig-9regqq
@@ -522,7 +522,7 @@ ggplot(stream_df, aes(sample = resid)) +
   ylab("Sample quantiles")
 ```
 
-@fig-9regqq looks close to straight, consistent with normal residuals. Shapiro-Wilk asks the same question formally: $H_0$ is that the residuals come from a normal distribution, so a small $p$-value is the evidence against normality.
+@fig-9regqq looks close to straight, consistent with normal residuals. Shapiro-Wilk asks the same question formally. Its $H_0$ is that the residuals come from a normal distribution, so a small $p$-value is evidence against normality.
 
 ```{r}
 #| echo: true
@@ -586,7 +586,7 @@ kable(
 )
 ```
 
-At 20°C, the model predicts DO of `r sprintf("%.2f", pred_out[1])` mg/L, 95% CI [`r sprintf("%.2f", pred_out[2])`, `r sprintf("%.2f", pred_out[3])`]. Because 20°C falls inside the observed range of `r sprintf("%.1f", min(stream_df$stream_temp))` to `r sprintf("%.1f", max(stream_df$stream_temp))`°C, this prediction is interpolation, which is what regression is good for. Predicting DO at, say, 35°C would be extrapolation: nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. @fig-9regextrap shows both zones on the same line.
+At 20°C, the model predicts DO of `r sprintf("%.2f", pred_out[1])` mg/L, 95% CI [`r sprintf("%.2f", pred_out[2])`, `r sprintf("%.2f", pred_out[3])`]. Because 20°C falls inside the observed range of `r sprintf("%.1f", min(stream_df$stream_temp))` to `r sprintf("%.1f", max(stream_df$stream_temp))`°C, this prediction is interpolation, which is what regression is good for. Predicting DO at, say, 35°C would be extrapolation. Nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. @fig-9regextrap shows both zones on the same line.
 
 ```{r}
 #| label: fig-9regextrap
@@ -617,7 +617,7 @@ ggplot() +
   theme(legend.position = "top")
 ```
 
-Regression is used for extrapolation all the time, and often reasonably: a well-understood physical process can justify projecting a line beyond the data you happened to collect. Extrapolating a straight line is only safe if the true relationship actually stays straight past the range you observed.
+Regression is used for extrapolation all the time, and often reasonably. A well-understood physical process can justify projecting a line beyond the data you happened to collect. Extrapolating a straight line is only safe if the true relationship actually stays straight past the range you observed.
 
 The problem is that a narrow window of data can't tell you which kind of curve you're actually on. @fig-9curveshapes shows four very different relationships, exponential growth, a sigmoid, a hump-shaped curve, and a truly straight line, each with the same short observed window highlighted in blue. In each panel a straight line (dashed red) is fit to that window and extended. Once you see the full curve (grey), you can see how badly linear extrapolation beyond the range of observed data would perform in each case.
 
@@ -703,12 +703,12 @@ This problem calls for a different model. More data or a better-fitting straight
 
 ## Chapter Summary
 
-**Why it matters.** Chapter 2 drew a best-fit line through a scatterplot; this chapter turns that line into something you can test, quantify, and make predictions from.
+**Why it matters.** Chapter 2 drew a best-fit line through a scatterplot. This chapter turns that line into something you can test, quantify, and make predictions from.
 
 **Core ideas**
 
 -   **The slope can be tested.** Chapter 2's $r$ described a relationship but came with no test of whether it was more than chance. Fitting a line turns that relationship into a model whose slope we can test: $H_0: \beta_1 = 0$ says there is no linear relationship. Testing it uses a $t$-test on the slope divided by its standard error, with $df = n-2$.
 -   **Regression partitions variation the way ANOVA does.** $SS_\text{Total}$ splits into $SS_\text{Regression}$ (Chapter 8's between) and $SS_\text{Residual}$ (Chapter 8's within), and $F = MS_\text{Regression}/MS_\text{Residual}$, which equals $t^2$ with one predictor. $R^2$, the proportion of variation explained by the line, is the effect size. A relationship can be real ($p$ small) and still explain very little, which is why you report both.
 -   **Look at your data, then look at your residuals.** The assumptions that must be met are linearity, independence, constant variance, and roughly normal residuals. A residuals-versus-fitted plot catches violations a formal test can miss entirely, as the outbreak example showed.
--   **Predict inside your data; extrapolate beyond with caution.** Interpolating within the observed range of $x$ is what regression is for. Extrapolating beyond it is sometimes justified, but only when you have good reason to believe the relationship stays the same shape past the range you observed.
+-   **Predict inside the observed range, and extrapolate beyond it only with good reason.** Interpolating within the observed range of $x$ is what regression is for. Extrapolating beyond it is sometimes justified, but only when you have good reason to believe the relationship stays the same shape past the range you observed.
 -   **A good $R^2$ can still be the wrong model.** The outbreak example fit a straight line to exponential growth and got $R^2=`r sprintf("%.2f", outbreak_tidy$r.squared)`$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast about 26,000 cases short of reality. The residual plot catches this. A normality check on the same residuals gives only a borderline signal, because it tests a different assumption.
