@@ -17,7 +17,7 @@ library(ggplot2)
 library(dplyr)
 library(broom)
 
-fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = "f"))
+fmt_p <- function(p) ifelse(p < .001, "< 0.001", formatC(p, digits = 3, format = "f"))
 
 # ANOVA table in the book's style: R's row labels, blank F and p on the Residuals row
 anova_kable <- function(fit, caption = NULL) {
@@ -47,25 +47,25 @@ Sir Ronald Fisher invented the ANOVA [@salsburg2001lady] and wanted to publish i
 
 Suppose we're comparing three restoration treatments for vegetation cover: compost, mulch, and a bare-soil control. With three groups, there are three possible pairwise comparisons: compost vs. mulch, compost vs. control, and mulch vs. control.
 
-We could run a separate $t$-test for each. The problem is that every test carries its own 5% chance of a false positive, and those chances accumulate across tests. This follows from the independence multiplication rule in Chapter 3: if we run $m$ independent tests at $\alpha=.05$, the probability of at least one false positive across all of them is
+We could run a separate $t$-test for each. The problem is that every test carries its own 5% chance of a false positive, and those chances accumulate across tests. This follows from the independence multiplication rule in Chapter 3: if we run $m$ independent tests at $\alpha=0.05$, the probability of at least one false positive across all of them is
 
 $$P(\text{at least one false positive}) = 1-(1-\alpha)^m.$$
 
 With three groups, that's three tests and a familywise error rate of 14%, not 5%:
 
-$$1-(1-.05)^3 = .14.$$
+$$1-(1-0.05)^3 = 0.14.$$
 
 | Number of groups ($k$) | Pairwise tests ($m$) | Familywise error rate |
 |------------------------|----------------------|-----------------------|
-| 3                      | 3                    | $1-.95^3=.14$         |
-| 4                      | 6                    | $1-.95^6=.26$         |
-| 5                      | 10                   | $1-.95^{10}=.40$      |
+| 3                      | 3                    | $1-0.95^3=0.14$         |
+| 4                      | 6                    | $1-0.95^6=0.26$         |
+| 5                      | 10                   | $1-0.95^{10}=0.40$      |
 
 Even with only five groups, there's a 40% chance of turning up at least one "significant" difference somewhere purely by chance, even if every population mean is identical. @fig-8multiplet shows how the chance of at least one false positive grows as the number of independent $t$-tests grows.
 
 ```{r}
 #| label: fig-8multiplet
-#| fig-cap: "Familywise Type I error rate as the number of independent t-tests increases, at alpha = .05 per test."
+#| fig-cap: "Familywise Type I error rate as the number of independent t-tests increases, at alpha = 0.05 per test."
 #| fig-alt: "Line graph with points showing familywise error rate rising as the number of independent t-tests increases from 1 to 12. The rate starts at 5 percent with a single test and climbs steadily, crossing 25 percent around 6 tests and reaching over 45 percent by 12 tests."
 #| out-width: "80%"
 
@@ -337,14 +337,14 @@ Most simulated $F$-values here fall near or below 1, because under the null the 
 
 We can use this null distribution of $F$ to decide when a real experiment's result is too large to be explained by chance:
 
-1.  Set $\alpha = .05$.
+1.  Set $\alpha = 0.05$.
 2.  Find the critical value of $F$ for our design's numerator and denominator $df$s.
 
 @fig-8criticalF marks that critical value on the histogram:
 
 ```{r}
 #| label: fig-8criticalF
-#| fig-cap: "The critical value of $F$ at $\\alpha = .05$ for df = 2 and 27. Five percent of the simulated $F$-values lie beyond it."
+#| fig-cap: "The critical value of $F$ at $\\alpha = 0.05$ for df = 2 and 27. Five percent of the simulated $F$-values lie beyond it."
 #| fig-alt: "The same histogram of 10,000 simulated F values with the blue dot-dash F curve over it, now with a red vertical line labeled crit equals 3.35. The bars beyond that line are shaded red and labeled '5% of F-values'; they form only the thin tail at the far right of the histogram."
 #| out-width: "100%"
 #| fig-asp: 0.5
@@ -374,7 +374,7 @@ Only 5% of $F$-values from this null distribution are 3.35 or larger. That gives
 
 ### F and the means
 
-An $F$-value and its $p$-value say whether the group means differ, but not what the means were. If a study reports $F(2,27)=6.0$, $p=.007$, we know only that an $F$ this large would happen by chance less than 1% of the time. We still don't know which means differed, or by how much, without looking at the group means directly (the ANOVA table itself doesn't report them).
+An $F$-value and its $p$-value say whether the group means differ, but not what the means were. If a study reports $F(2,27)=6.0$, $p=0.007$, we know only that an $F$ this large would happen by chance less than 1% of the time. We still don't know which means differed, or by how much, without looking at the group means directly (the ANOVA table itself doesn't report them).
 
 ### ANOVA is an omnibus test
 
@@ -550,7 +550,7 @@ knitr::kable(
 )
 ```
 
-Levene's test [@Levene1960; @BrownForsythe1974] gives $F(2,21) = 0.52$, $p = .60$, so there is no evidence of unequal variance across forest types. The Shapiro-Wilk test [@Shapiro1965] on the model's residuals gives $W = 0.93$, $p = .078$, so there is no evidence against normality either. Both checks agree with the individual plots in @fig-8salamanderData, which show similar spread across groups and no outliers far from the rest.
+Levene's test [@Levene1960; @BrownForsythe1974] gives $F(2,21) = 0.52$, $p = 0.60$, so there is no evidence of unequal variance across forest types. The Shapiro-Wilk test [@Shapiro1965] on the model's residuals gives $W = 0.93$, $p = 0.078$, so there is no evidence against normality either. Both checks agree with the individual plots in @fig-8salamanderData, which show similar spread across groups and no outliers far from the rest.
 
 **Formal assumption tests are evidence, not a gate.** It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." With a small sample (exactly when a violated assumption matters most), these tests have low power and will often say "no problem" even when there is one. With a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." Look at the diagnostic plots too and use judgment.
 
@@ -611,12 +611,12 @@ $\eta^2$ is the same quantity as $R^2$ in regression (Chapter 9), computed the s
 
 **Interpreting the number.** Cohen's conventional benchmarks are $\eta^2 = 0.01$ (small), $0.06$ (medium), and $0.14$ (large), so 0.58 is a substantial effect. Treat those cutoffs as rough orientation. What counts as a large effect depends on the system you are studying. An $\eta^2$ of 0.10 would be unremarkable in a controlled greenhouse experiment and notable in a field survey where dozens of uncontrolled factors also drive the response.
 
-**$p$ depends on sample size, and $\eta^2$ does not.** Survey enough plots and a difference of half a salamander per plot will clear $p < .05$ while explaining almost none of the variation. Reporting both keeps a statistically detectable result from being mistaken for an ecologically meaningful one.
+**$p$ depends on sample size, and $\eta^2$ does not.** Survey enough plots and a difference of half a salamander per plot will clear $p < 0.05$ while explaining almost none of the variation. Reporting both keeps a statistically detectable result from being mistaken for an ecologically meaningful one.
 
 ::: {.callout-important title="Results reporting: one-way ANOVA"}
 Report the direction in plain language, the test statistic with both degrees of freedom, the error term, $p$, and the effect size.
 
-> There was a significant effect of forest type on salamander abundance, $F(2, 21) = 14.60$, $MSE = 10.70$, $p < .001$, $\eta^2 = 0.58$.
+> There was a significant effect of forest type on salamander abundance, $F(2, 21) = 14.60$, $MSE = 10.70$, $p < 0.001$, $\eta^2 = 0.58$.
 :::
 
 ### Post-hoc comparisons with Tukey HSD
@@ -645,13 +645,13 @@ knitr::kable(round(tukey_out$forest_type, 4))
 
 **Watch the sign.** The row `Secondary-Old-growth` has a diff of $-6.875$, and that negative sign does *not* mean secondary forest has more salamanders. It means secondary *minus* old-growth is negative, so old-growth is the higher of the two, by 6.88 individuals per plot. Always translate the sign back into a sentence naming which group is larger before you write anything down.
 
-**The confidence interval and the $p$-value say the same thing.** A pair differs significantly at $\alpha = .05$ exactly when its 95% interval excludes zero. Check both columns against each other as a habit: `Secondary-Old-growth` runs from $-11.00$ to $-2.75$, entirely below zero, and its $p$ is .0011. `Managed-Secondary` runs from $-5.50$ to $2.75$, straddling zero, and its $p$ is .68. The two columns can never disagree, so if they seem to, you have misread a row.
+**The confidence interval and the $p$-value say the same thing.** A pair differs significantly at $\alpha = 0.05$ exactly when its 95% interval excludes zero. Check both columns against each other as a habit: `Secondary-Old-growth` runs from $-11.00$ to $-2.75$, entirely below zero, and its $p$ is 0.0011. `Managed-Secondary` runs from $-5.50$ to $2.75$, straddling zero, and its $p$ is 0.68. The two columns can never disagree, so if they seem to, you have misread a row.
 
 So the three comparisons give:
 
--   **Old-growth vs. Secondary.** Old-growth is higher by 6.88 individuals/plot, $p = .001$, a significant difference.
--   **Old-growth vs. Managed.** Old-growth is higher by 8.25 individuals/plot, $p < .001$, a significant difference.
--   **Secondary vs. Managed.** They differ by 1.38 individuals/plot, $p = .68$, not a significant difference.
+-   **Old-growth vs. Secondary.** Old-growth is higher by 6.88 individuals/plot, $p = 0.001$, a significant difference.
+-   **Old-growth vs. Managed.** Old-growth is higher by 8.25 individuals/plot, $p < 0.001$, a significant difference.
+-   **Secondary vs. Managed.** They differ by 1.38 individuals/plot, $p = 0.68$, not a significant difference.
 
 **A non-significant difference is one the test could not detect.** Secondary and managed plantation differ by 1.38 salamanders per plot in this sample. That difference is real in the data. The test says that with eight plots per group, we cannot distinguish it from sampling noise. A larger study might well separate them. Report it as "we did not detect a difference," never as "there is no difference."
 
@@ -705,7 +705,7 @@ knitr::kable(
 )
 ```
 
-$\chi^2(2) = 13.09$, $p = .001$, a significant result and the same conclusion as the ANOVA ($F(2,21)=14.60$, $p<.001$). The two tests agree, as expected when the parametric assumptions hold, as ours did here.
+$\chi^2(2) = 13.09$, $p = 0.001$, a significant result and the same conclusion as the ANOVA ($F(2,21)=14.60$, $p<0.001$). The two tests agree, as expected when the parametric assumptions hold, as ours did here.
 
 **Post-hoc comparisons.** Just as a significant ANOVA needs Tukey HSD to identify *which* groups differ, a significant Kruskal-Wallis result needs its own follow-up, pairwise rank-sum tests (Mann-Whitney-Wilcoxon, applied to each pair) with a correction for running multiple comparisons [@Holm1979].
 
@@ -727,7 +727,7 @@ knitr::kable(
 )
 ```
 
-The pattern matches Tukey HSD exactly. Old-growth differs significantly from both Secondary ($p=.011$) and Managed ($p=.004$), while Secondary and Managed do not differ from each other ($p=.49$). The two approaches use different assumptions and different calculations, and they agree here because the parametric assumptions held.
+The pattern matches Tukey HSD exactly. Old-growth differs significantly from both Secondary ($p=0.011$) and Managed ($p=0.004$), while Secondary and Managed do not differ from each other ($p=0.49$). The two approaches use different assumptions and different calculations, and they agree here because the parametric assumptions held.
 
 ## Repeated-measures ANOVA
 
@@ -804,7 +804,7 @@ $F$ uses the same numerator as before, $MS_\text{Between} = 56/2 = 28$. Only the
 
 $$\text{One-way: } F = \frac{28}{174/9} = \frac{28}{19.33} = 1.45 \qquad \text{Repeated measures: } F = \frac{28}{12/6} = \frac{28}{2} = 14.00$$
 
-The repeated-measures test finds a significant seasonal effect, $F(2, 6) = 14.00$, $p = .005$. The one-way ANOVA would give $F(2, 9) = 1.45$, $p = .28$, and miss it. Removing the stations shrank the error mean square from 19.33 to 2, and $F$ grew by the same factor. A repeated-measures design has more power than a between-subjects design with the same number of measurements whenever the units differ from one another, as monitoring stations usually do, because the unit-to-unit differences are no longer counted as noise.
+The repeated-measures test finds a significant seasonal effect, $F(2, 6) = 14.00$, $p = 0.005$. The one-way ANOVA would give $F(2, 9) = 1.45$, $p = 0.28$, and miss it. Removing the stations shrank the error mean square from 19.33 to 2, and $F$ grew by the same factor. A repeated-measures design has more power than a between-subjects design with the same number of measurements whenever the units differ from one another, as monitoring stations usually do, because the unit-to-unit differences are no longer counted as noise.
 
 ## Chapter Summary
 

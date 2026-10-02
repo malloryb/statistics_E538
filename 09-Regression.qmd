@@ -6,7 +6,7 @@ aliases: [redirects/simple-linear-regression.html]
 
 ```{r, include = FALSE}
 source("global_stuff.R")
-fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = "f"))
+fmt_p <- function(p) ifelse(p < .001, "< 0.001", formatC(p, digits = 3, format = "f"))
 
 # ANOVA table in the book's style (as in Chapters 8 and 10)
 anova_kable <- function(fit, caption = NULL) {
@@ -73,11 +73,11 @@ knitr::kable(tab, col.names = c("Pair", "x", "y", "x²", "xy"),
 
 The table has 7 pairs of $x$ and $y$ scores, plus columns for $x^2$ and $xy$ (each $x$ score times its matching $y$ score), with column sums at the bottom. These sums are everything the formulas need:
 
-$$\text{intercept} = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2} = \frac{39 \times 200 - 34 \times 231}{7 \times 200-34^2} = -.221$$
+$$\text{intercept} = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2} = \frac{39 \times 200 - 34 \times 231}{7 \times 200-34^2} = -0.221$$
 
 $$\text{slope} = b_1 = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2} = \frac{7 \times 231-34 \times 39}{7 \times 200-34^2} = 1.19$$
 
-With $b_0$ and $b_1$ in hand, we can compute a residual for any observed point. A residual is the difference between what we observed and what the line predicts, $e = y - \hat y$, where $\hat y = b_0 + b_1x$. For the first row above ($x=1, y=2$): $\hat y = -.221 + 1.19(1) = .969$, so $e = 2 - .969 = 1.031$. That point is above the line. Repeating this for every point, then squaring and summing the residuals, gives the quantity that $b_0$ and $b_1$ were chosen to minimize.
+With $b_0$ and $b_1$ in hand, we can compute a residual for any observed point. A residual is the difference between what we observed and what the line predicts, $e = y - \hat y$, where $\hat y = b_0 + b_1x$. For the first row above ($x=1, y=2$): $\hat y = -0.221 + 1.19(1) = 0.969$, so $e = 2 - 0.969 = 1.031$. That point is above the line. Repeating this for every point, then squaring and summing the residuals, gives the quantity that $b_0$ and $b_1$ were chosen to minimize.
 
 The residual $e$ is the sample's version of the error $\varepsilon$. The error $\varepsilon$ belongs to the population line, which we never see, and the residual $e$ belongs to the line we fit.
 
@@ -230,7 +230,7 @@ with $df = n - 2 = `r nrow(stream_df) - 2`$ (one degree of freedom spent estimat
 
 ```{r}
 #| label: fig-9regslopenull
-#| fig-cap: "The null distribution of t for the slope test at df = 28 (blue). The shaded tails beyond the red critical values are the rejection region at alpha = .05; the green dotted line marks our observed t, far into the left tail."
+#| fig-cap: "The null distribution of t for the slope test at df = 28 (blue). The shaded tails beyond the red critical values are the rejection region at alpha = 0.05; the green dotted line marks our observed t, far into the left tail."
 #| fig-alt: "A blue t-distribution curve centered at zero with 28 degrees of freedom. Red vertical lines labeled minus crit and plus crit mark the critical values near plus and minus 2.05, and the tails beyond them are shaded red. A green dotted vertical line marks the observed t of about negative 5.3, well to the left of the lower critical value."
 
 df_slope <- nrow(stream_df) - 2
@@ -256,7 +256,7 @@ ggplot(t_null, aes(x, y)) +
   labs(x = "t", y = "Density")
 ```
 
-Our observed $t = `r sprintf("%.2f", fit_tidy$statistic[2])`$ is far past the critical values of about $\pm`r sprintf("%.2f", qt(.975, nrow(stream_df)-2))`$, well outside where 95% of $t$-values would fall if temperature and DO were unrelated. The $p$-value is the probability of a $t$ that far out (or farther) in either tail under $H_0$. Here $p`r fmt_p(fit_tidy$p.value[2])`$, which crosses the conventional $\alpha = .05$ threshold.
+Our observed $t = `r sprintf("%.2f", fit_tidy$statistic[2])`$ is far past the critical values of about $\pm`r sprintf("%.2f", qt(.975, nrow(stream_df)-2))`$, well outside where 95% of $t$-values would fall if temperature and DO were unrelated. The $p$-value is the probability of a $t$ that far out (or farther) in either tail under $H_0$. Here $p`r fmt_p(fit_tidy$p.value[2])`$, which crosses the conventional $\alpha = 0.05$ threshold.
 
 We reject $H_0$ and conclude that stream temperature is linearly related to dissolved oxygen.
 
@@ -345,16 +345,16 @@ Here $R^2 = `r sprintf("%.2f", fit_glance$r.squared)`$, so stream temperature ex
 ::: {.callout-important title="Results reporting: regression"}
 We report a regression result the same way as any other test: the slope with its confidence interval, the test statistic, degrees of freedom, and $p$, plus $R^2$ as the effect size.
 
-> Dissolved oxygen declined significantly with stream temperature, $b_1 = `r sprintf("%.2f", coef(fit)[2])`$ mg/L per °C, 95% CI [`r sprintf("%.2f", fit_tidy$conf.low[2])`, `r sprintf("%.2f", fit_tidy$conf.high[2])`], $t(`r nrow(stream_df)-2`) = `r sprintf("%.2f", fit_tidy$statistic[2])`$, $p < .001$, $R^2 = `r sprintf("%.2f", fit_glance$r.squared)`$.
+> Dissolved oxygen declined significantly with stream temperature, $b_1 = `r sprintf("%.2f", coef(fit)[2])`$ mg/L per °C, 95% CI [`r sprintf("%.2f", fit_tidy$conf.low[2])`, `r sprintf("%.2f", fit_tidy$conf.high[2])`], $t(`r nrow(stream_df)-2`) = `r sprintf("%.2f", fit_tidy$statistic[2])`$, $p < 0.001$, $R^2 = `r sprintf("%.2f", fit_glance$r.squared)`$.
 :::
 
 ## Consider both significance and effect size
 
 As with every test in this book, the significance test is not the whole picture. Testing the slope asks whether $\beta_1$ differs from 0. $R^2$, regression's effect size, says how much of the variation the line explains. The two can disagree in either direction.
 
-A very large sample, the kind common in remote sensing and other big-data environmental work, can make a trivial effect significant, because more observations shrink the standard error until almost any nonzero slope clears $p<.05$. A small sample can fail the other way and miss a real, sizeable effect because its standard error is too large. Because $p$ and $R^2$ answer different questions, we report both.
+A very large sample, the kind common in remote sensing and other big-data environmental work, can make a trivial effect significant, because more observations shrink the standard error until almost any nonzero slope clears $p<0.05$. A small sample can fail the other way and miss a real, sizeable effect because its standard error is too large. Because $p$ and $R^2$ answer different questions, we report both.
 
-@fig-9regeffectpanels shows three of these combinations: a strong relationship with a non-significant slope (underpowered), a weak relationship with a significant slope (a large sample), and a relationship that is both strong and significant. In the left panel, six points give $R^2 = 0.63$ but $p = .058$. In the middle panel, 5,000 points give $p = .004$ for a line that explains 0.2% of the variation.
+@fig-9regeffectpanels shows three of these combinations: a strong relationship with a non-significant slope (underpowered), a weak relationship with a significant slope (a large sample), and a relationship that is both strong and significant. In the left panel, six points give $R^2 = 0.63$ but $p = 0.058$. In the middle panel, 5,000 points give $p = 0.004$ for a line that explains 0.2% of the variation.
 
 ```{r}
 #| label: fig-9regeffectpanels

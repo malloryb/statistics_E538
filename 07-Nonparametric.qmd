@@ -13,7 +13,7 @@ library(ggplot2)
 library(tidyverse)
 library(broom)
 
-fmt_p <- function(p) ifelse(p < .001, "< .001", formatC(p, digits = 3, format = "f"))
+fmt_p <- function(p) ifelse(p < .001, "< 0.001", formatC(p, digits = 3, format = "f"))
 
 # Critical values of a discrete statistic: the most extreme values whose tail
 # share is at most .025. Taken from the exact null (every sign pattern or every
@@ -107,7 +107,7 @@ knitr::kable(
 )
 ```
 
-$t(11) = 2.57$, $p = .026$, a significant result. Restoration looks like it increased soil moisture.
+$t(11) = 2.57$, $p = 0.026$, a significant result. Restoration looks like it increased soil moisture.
 
 **Step 2: check the assumptions.** Let's look at the differences before trusting that $p$-value.
 
@@ -131,7 +131,7 @@ knitr::kable(
 )
 ```
 
-The Shapiro-Wilk test agrees with the picture ($p=.039$). Three plots didn't change at all, three dropped slightly, and the rest rose by 3 to 8 points. That is not symmetric, let alone normal. The $t$-test's "significant" result depends on an assumption the data don't meet, so we turn to the Wilcoxon signed-rank test.
+The Shapiro-Wilk test agrees with the picture ($p=0.039$). Three plots didn't change at all, three dropped slightly, and the rest rose by 3 to 8 points. That is not symmetric, let alone normal. The $t$-test's "significant" result depends on an assumption the data don't meet, so we turn to the Wilcoxon signed-rank test.
 
 **The question.** Did soil moisture systematically change after restoration, or is any change we see just plot-to-plot noise?
 
@@ -190,7 +190,7 @@ $$E[V] = \frac{9 \times 10}{4} = 22.5, \qquad \text{Var}(V) = \frac{9 \times 10 
 
 That's an SD of about 8.4. Our observed $V=39$ is about 1.96 SDs above that expectation ($\frac{39-22.5}{8.4} \approx 1.96$).
 
-R's $p=.057$ comes from this normal approximation, with two small corrections. Because $V$ moves in steps rather than smoothly, R shrinks the gap between $V$ and 22.5 by 0.5, which raises $p$. It also adjusts the variance for the tied ranks, which lowers $p$ a little. The first correction is larger, so $p$ ends up slightly above the .05 a $z$ of 1.96 would give. For small, tie-free samples with no zeros, R can instead read the exact null distribution directly.
+R's $p=0.057$ comes from this normal approximation, with two small corrections. Because $V$ moves in steps rather than smoothly, R shrinks the gap between $V$ and 22.5 by 0.5, which raises $p$. It also adjusts the variance for the tied ranks, which lowers $p$ a little. The first correction is larger, so $p$ ends up slightly above the 0.05 a $z$ of 1.96 would give. For small, tie-free samples with no zeros, R can instead read the exact null distribution directly.
 
 To see the null distribution, we simulate 20,000 experiments. In each one, every one of the 9 nonzero ranks gets a random $+$ or $-$ sign, as $H_0$ says it should, and we add up the positive ranks. The critical values marked on the figure come from listing all 512 sign patterns. That list is the exact null distribution, and the simulation approximates it.
 
@@ -211,9 +211,9 @@ obs_V <- as.numeric(wilcox_out$statistic)
 null_hist(sim_V, exact_V, obs_V, "V", "V (sum of positive ranks)")
 ```
 
-Our observed $V=39$ falls just short of the upper critical value, 40, so it is not in the 5% region. $V$ can only take certain values, so the boundary can't fall exactly at 2.5%. A $V$ of 39 or more comes up just over 2.5% of the time under $H_0$, which puts the two-tailed $p$ just over .05. The result is not significant, though it is close to the cutoff.
+Our observed $V=39$ falls just short of the upper critical value, 40, so it is not in the 5% region. $V$ can only take certain values, so the boundary can't fall exactly at 2.5%. A $V$ of 39 or more comes up just over 2.5% of the time under $H_0$, which puts the two-tailed $p$ just over 0.05. The result is not significant, though it is close to the cutoff.
 
-**So far.** $t$-test $p=.026$ (significant), Wilcoxon $p=.057$ (not quite). The two tests reach different verdicts on the same 12 plots because the $t$-test's numerator and denominator both used the exact magnitudes the Wilcoxon test deliberately ignores.
+**So far.** $t$-test $p=0.026$ (significant), Wilcoxon $p=0.057$ (not quite). The two tests reach different verdicts on the same 12 plots because the $t$-test's numerator and denominator both used the exact magnitudes the Wilcoxon test deliberately ignores.
 
 **The sign test.** There's an even simpler nonparametric option, the **sign test**, which looks only at whether each difference is positive or negative. It discards the magnitude entirely and asks whether pluses outnumber minuses more than chance would suggest. The sign test makes no assumption about the distribution of the differences, not even symmetry. Its only assumption is the one every test in this book shares, independent observations from a sound study design (see Chapter 6).
 
@@ -237,7 +237,7 @@ knitr::kable(
 )
 ```
 
-Six of the 9 nonzero plots increased, and $p = .508$ is far from significant.
+Six of the 9 nonzero plots increased, and $p = 0.508$ is far from significant.
 
 **The full picture.** The three tests reach different verdicts on the same 12 plots, and each uses less of the data than the one before it (@tbl-7threetests).
 
@@ -247,7 +247,7 @@ Six of the 9 nonzero plots increased, and $p = .508$ is far from significant.
 | Plots used             | 12                             | 9                                        | 9                 |
 | Assumption about shape | Differences roughly normal     | Differences symmetric around their median | None             |
 | Result                 | $t(11) = 2.57$                 | $V = 39$                                 | 6 of 9 increased  |
-| $p$                    | .026                           | .057                                     | .508              |
+| $p$                    | 0.026                           | 0.057                                     | 0.508              |
 
 : Three tests on the same 12 restoration plots {#tbl-7threetests}
 
@@ -293,7 +293,7 @@ knitr::kable(
 )
 ```
 
-$t(14) = 2.54$, $p = .024$, a significant result. Restoration looks like it increased richness.
+$t(14) = 2.54$, $p = 0.024$, a significant result. Restoration looks like it increased richness.
 
 **Step 2: check the assumptions.** Chapter 6 said to check them before trusting a $p$-value, so we look at the data now.
 
@@ -337,7 +337,7 @@ knitr::kable(
 )
 ```
 
-Both groups fail the Shapiro-Wilk test, the restored group badly ($p=.002$). The $t$-test's "significant" result depends on an assumption the data don't meet. The Mann-Whitney-Wilcoxon test is designed for this situation.
+Both groups fail the Shapiro-Wilk test, the restored group badly ($p=0.002$). The $t$-test's "significant" result depends on an assumption the data don't meet. The Mann-Whitney-Wilcoxon test is designed for this situation.
 
 **The question.** Did restoration increase plant species richness, or is the difference we see consistent with random plot-to-plot variation?
 
@@ -381,7 +381,7 @@ $$E[U] = \frac{8 \times 8}{2} = 32, \qquad \text{Var}(U) = \frac{8 \times 8 \tim
 
 That's an SD of about 9.5. Our observed $U=50$ is about 1.9 SDs above that expectation ($\frac{50-32}{9.5} \approx 1.9$).
 
-R's $p=.063$ comes from this normal approximation, with the same two corrections as in the Wilcoxon case. The step correction raises $p$ more than the tie adjustment lowers it, so $p$ ends up slightly above what a $z$ of 1.9 alone would give. For small samples without ties, R can instead read the exact null distribution directly, no approximation needed.
+R's $p=0.063$ comes from this normal approximation, with the same two corrections as in the Wilcoxon case. The step correction raises $p$ more than the tie adjustment lowers it, so $p$ ends up slightly above what a $z$ of 1.9 alone would give. For small samples without ties, R can instead read the exact null distribution directly, no approximation needed.
 
 We simulate this null distribution the same way as before. We pool the richness values, then repeatedly shuffle which 8 ranks land in the restored group. The critical values marked on the figure come from listing all 12,870 splits, which is the exact null distribution the simulation approximates.
 
@@ -407,9 +407,9 @@ obs_U <- as.numeric(wilcox.test(restored, unrestored)$statistic)
 null_hist(sim_U, exact_U, obs_U, "U", "U (Mann-Whitney statistic)")
 ```
 
-Our observed $U=50$ falls just short of the upper critical value of $50.5$, consistent with R's $p=.063$: close to significant, but not quite.
+Our observed $U=50$ falls just short of the upper critical value of $50.5$, consistent with R's $p=0.063$: close to significant, but not quite.
 
-**The full picture.** The $t$-test gave $p = .024$, a significant result. The Mann-Whitney-Wilcoxon test on the same 16 plots gave $p = .063$, not significant at $\alpha = .05$. The $t$-test's $p$-value depends on a normality assumption that both groups fail, so it can't be taken at face value. A violated assumption can push a $p$-value too low or too high, and the $t$-test alone gives no way to tell which. If the data had been roughly normal, the $t$-test would have been the better choice, because it has more power.
+**The full picture.** The $t$-test gave $p = 0.024$, a significant result. The Mann-Whitney-Wilcoxon test on the same 16 plots gave $p = 0.063$, not significant at $\alpha = 0.05$. The $t$-test's $p$-value depends on a normality assumption that both groups fail, so it can't be taken at face value. A violated assumption can push a $p$-value too low or too high, and the $t$-test alone gives no way to tell which. If the data had been roughly normal, the $t$-test would have been the better choice, because it has more power.
 
 ## Categorical data: the chi-square tests
 
@@ -417,11 +417,11 @@ Every test so far (the $t$-tests in Chapter 6, and the Wilcoxon and Mann-Whitney
 
 Chapter 3 introduced the shape of the chi-square distribution: always non-negative, right-skewed, naturally one-tailed, with its exact shape depending on degrees of freedom. Only the upper tail counts against $H_0$, because $\chi^2$ adds up squared gaps between observed and expected counts. A mismatch in either direction makes it bigger, and a $\chi^2$ near 0 means the counts match the expectation closely.
 
-@fig-7chisq-crit shows what the rejection region looks like in practice, using the goodness-of-fit example we'll run below, which has $df = 3$. The critical value at $\alpha = .05$ is `r round(qchisq(.95, 3), 2)`, and any statistic beyond that point (the shaded region) occurs less than 5% of the time by chance.
+@fig-7chisq-crit shows what the rejection region looks like in practice, using the goodness-of-fit example we'll run below, which has $df = 3$. The critical value at $\alpha = 0.05$ is `r round(qchisq(.95, 3), 2)`, and any statistic beyond that point (the shaded region) occurs less than 5% of the time by chance.
 
 ```{r}
 #| label: fig-7chisq-crit
-#| fig-cap: "The chi-square distribution with df = 3. The shaded region marks the rejection region at alpha = .05 (critical value 7.81)."
+#| fig-cap: "The chi-square distribution with df = 3. The shaded region marks the rejection region at alpha = 0.05 (critical value 7.81)."
 #| fig-alt: "A blue dot-dash chi-square curve with 3 degrees of freedom, rising steeply from zero to a peak near 1 and then trailing off to the right. A red vertical line labeled crit equals 7.81 marks the critical value, and the thin tail to its right is shaded red."
 
 crit <- qchisq(.95, 3)
@@ -513,9 +513,9 @@ knitr::kable(
 )
 ```
 
-Summing the last column: $2.88+2.42+0.08+0.02 = 5.4$, matching R's statistic above. For goodness-of-fit, $df = k-1$, where $k$ is the number of categories: $4-1=3$. With $df=3$, the critical value at $\alpha=.05$ is 7.81 (the same one marked on the distribution figure earlier in this chapter); our $5.4$ falls well short of it.
+Summing the last column: $2.88+2.42+0.08+0.02 = 5.4$, matching R's statistic above. For goodness-of-fit, $df = k-1$, where $k$ is the number of categories: $4-1=3$. With $df=3$, the critical value at $\alpha=0.05$ is 7.81 (the same one marked on the distribution figure earlier in this chapter); our $5.4$ falls well short of it.
 
-**Interpretation.** $\chi^2(3) = 5.4$, $p = .145$, so the result is not significant. This year's zone counts are consistent with the historical 25%-each pattern. The unevenness we see is within the range chance alone would produce.
+**Interpretation.** $\chi^2(3) = 5.4$, $p = 0.145$, so the result is not significant. This year's zone counts are consistent with the historical 25%-each pattern. The unevenness we see is within the range chance alone would produce.
 
 ### Chi-square test of independence: are two categorical variables related?
 
@@ -586,9 +586,9 @@ contrib_tab <- (tab - indep_test$expected)^2 / indep_test$expected
 knitr::kable(round(contrib_tab, 2), caption = "Chi-square contribution by cell")
 ```
 
-Summing all six cells: $5.83+8.05+0.55+0.76+2.79+3.86 = 21.84$, matching R's statistic above. For a test of independence, $df=(r-1)(c-1)$ for $r$ rows and $c$ columns: $(3-1)(2-1)=2$. The number of sites never enters. With $df=2$, the critical value at $\alpha=.05$ is `r round(qchisq(.95, 2), 2)`; our $21.84$ is more than three times that, which is where $p<.001$ comes from.
+Summing all six cells: $5.83+8.05+0.55+0.76+2.79+3.86 = 21.84$, matching R's statistic above. For a test of independence, $df=(r-1)(c-1)$ for $r$ rows and $c$ columns: $(3-1)(2-1)=2$. The number of sites never enters. With $df=2$, the critical value at $\alpha=0.05$ is `r round(qchisq(.95, 2), 2)`; our $21.84$ is more than three times that, which is where $p<0.001$ comes from.
 
-**Interpretation.** $\chi^2(2) = 21.84$, $p < .001$, so the result is significant. *E. coli* exceedance is not independent of land use. To see how the two variables are related, look at the table. Divide within each row to get the exceedance rate for each land use:
+**Interpretation.** $\chi^2(2) = 21.84$, $p < 0.001$, so the result is significant. *E. coli* exceedance is not independent of land use. To see how the two variables are related, look at the table. Divide within each row to get the exceedance rate for each land use:
 
 | Land use     | Exceeds / total | Share |
 |:-------------|----------------:|------:|
@@ -615,15 +615,15 @@ These tests report differently from a $t$-test. There is no mean difference to q
 
 Wilcoxon signed-rank, on the restoration differences:
 
-> Soil moisture did not change significantly after restoration, Wilcoxon signed-rank $V = 39$, $p = .057$ (median change +1.5 percentage points across all 12 plots; 9 non-zero differences).
+> Soil moisture did not change significantly after restoration, Wilcoxon signed-rank $V = 39$, $p = 0.057$ (median change +1.5 percentage points across all 12 plots; 9 non-zero differences).
 
 Mann-Whitney-Wilcoxon, on the richness comparison:
 
-> Restored plots did not differ significantly from unrestored plots in species richness, $U = 50$, $p = .063$ (medians 17 vs. 11.5).
+> Restored plots did not differ significantly from unrestored plots in species richness, $U = 50$, $p = 0.063$ (medians 17 vs. 11.5).
 
 Chi-square, where the counts themselves are the result:
 
-> *E. coli* exceedance was not independent of land use, $\chi^2(2) = 21.84$, $p < .001$. Forested sites exceeded the threshold in 8 of 50 cases, compared with 25 of 50 agricultural and 30 of 50 urban sites.
+> *E. coli* exceedance was not independent of land use, $\chi^2(2) = 21.84$, $p < 0.001$. Forested sites exceeded the threshold in 8 of 50 cases, compared with 25 of 50 agricultural and 30 of 50 urban sites.
 
 Report the number of non-zero differences for a signed-rank test, since dropped zeros change the effective sample size. For chi-square, give the counts as well as the statistic, because the counts are what a reader can interpret.
 :::
@@ -635,7 +635,7 @@ Report the number of non-zero differences for a signed-rank test, since dropped 
 **Core ideas**
 
 -   **Rank-based tests trade power for weaker assumptions.** The Wilcoxon signed-rank and Mann-Whitney-Wilcoxon tests ask the same questions as the paired and independent-samples $t$-tests, but work from ranks instead of raw magnitudes. That buys a milder distributional assumption at the cost of some sensitivity.
--   **The sign test uses even less of the data.** It looks only at the direction of each difference. On the same restoration data, the $t$-test, Wilcoxon, and sign test gave $p$-values of .026, .057 and .508, because each one uses less of the data than the last.
+-   **The sign test uses even less of the data.** It looks only at the direction of each difference. On the same restoration data, the $t$-test, Wilcoxon, and sign test gave $p$-values of 0.026, 0.057 and 0.508, because each one uses less of the data than the last.
 -   **Nonparametric tests have their own assumptions.** Wilcoxon assumes the differences are symmetric about their median. Mann-Whitney-Wilcoxon assumes the two distributions have the same *shape*, which is not the same as equal variance. State the assumption you are actually making.
 -   **Check assumptions before you trust a $p$-value, not after.** Both worked examples in this chapter ran the parametric test first, then went back and found the violation. The chapter used that order to show what goes wrong when you test first and check assumptions afterward.
 -   **Categorical data needs a different tool entirely.** The chi-square tests handle counts: goodness-of-fit asks whether one variable's counts match an expected pattern, and the test of independence asks whether two categorical variables are related.
