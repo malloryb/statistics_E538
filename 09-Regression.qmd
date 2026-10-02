@@ -44,11 +44,9 @@ Now that we've learned hypothesis testing, sampling distributions, and the logic
 
 The equation for a linear regression will be familiar, and it's one of the most heavily used equations in applied science:
 
-$y = \beta_0 + \beta_1 x + \varepsilon$
+$$y = \beta_0 + \beta_1 x + \varepsilon$$
 
-*Slope term*: $\beta_1$
-
-*Intercept term*: $\beta_0$.
+Here $\beta_1$ is the slope and $\beta_0$ is the intercept.
 
 A linear equation, fit to real data, is a statistical **model**. We never observe $\beta_0$ or $\beta_1$ directly. Real data also do not fall exactly on a line, so the model needs one more term, the **error** $\varepsilon$: the variability in the DV that the population line doesn't explain.
 
@@ -63,23 +61,17 @@ $$\text{slope} = b_1 = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2}$$
 Here $x$ and $y$ are the individual scores. This is the same line from @fig-2corwithLine in Chapter 2. To find its slope and intercept, we start with this table:
 
 ```{r}
-scores<-c(1,2,3,4,5,6,7)
-x<-c(1,4,3,6,5,7,8)
-y<-c(2,5,1,8,6,8,9)
-x_squared<-x^2
-y_squared<-y^2
-xy<-x*y
+x  <- c(1, 4, 3, 6, 5, 7, 8)
+y  <- c(2, 5, 1, 8, 6, 8, 9)
+tab <- data.frame(Pair = as.character(1:7), x = x, y = y, x2 = x^2, xy = x * y)
+tab <- rbind(tab, data.frame(Pair = "Sums", x = sum(x), y = sum(y), x2 = sum(x^2), xy = sum(x * y)))
 
-all_df<-data.frame(scores,x,y,x_squared,y_squared,xy)
-
-all_df <- all_df %>%
-  rbind(c("Sums",colSums(all_df[1:7,2:6])))
-
-knitr::kable(all_df)
+knitr::kable(tab, col.names = c("Pair", "x", "y", "x²", "xy"),
+             caption = "Sums for the slope and intercept formulas")
 
 ```
 
-The table has 7 pairs of $x$ and $y$ scores, plus columns for $x^2$, $y^2$, and $xy$ (each $x$ score times its matching $y$ score), with column sums at the bottom. These sums are everything the formulas need:
+The table has 7 pairs of $x$ and $y$ scores, plus columns for $x^2$ and $xy$ (each $x$ score times its matching $y$ score), with column sums at the bottom. These sums are everything the formulas need:
 
 $$\text{intercept} = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2} = \frac{39 \times 200 - 34 \times 231}{7 \times 200-34^2} = -.221$$
 
@@ -96,11 +88,9 @@ The beta coefficients in the model are population parameters. Like other populat
 | $\beta_0, \beta_1$ | True population intercept and slope | Almost never known for sure                     |
 | $b_0, b_1$         | Sample intercept and slope          | Yes, calculated by fitting the line to our data |
 
-Drawing the best-fit line through our data gives a **sample slope**, usually written $b_1$.
-
 ## Worked regression example: stream temperature and dissolved oxygen
 
-Let's work through an example. Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO) to decline as stream temperature rises. This matters for stream health: low DO can stress or kill fish and invertebrates. @fig-9streamdesign lays out the design. Unlike the designs in earlier chapters, the predictor here is continuous.
+Let's work through an example. Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO) to decline as stream temperature rises. This matters for stream health: low DO can stress or kill fish and invertebrates. @fig-9streamdesign lays out the design.
 
 ```{r}
 #| label: fig-9streamdesign
@@ -137,11 +127,11 @@ ggplot(stream_df, aes(x = stream_temp, y = DO)) +
 
 The scatterplot in @fig-9regscatter shows a clear downward trend. Just from the graph, we can guess a couple of things:
 
--   Pearson's $r$ should be negative, since DO falls as temperature rises
+-   Pearson's $r$ should be negative, since DO falls as temperature rises.
 
--   It should be clearly negative but well short of $-1$, since the points scatter noticeably around the line.
+-   It should be well short of $-1$, since the points scatter noticeably around the line.
 
-Before now, we could compute $r$ but had no way to test whether an $r$ that size is more than chance would produce. Regression adds that test by writing the observed relationship as a model.
+Regression tests whether a relationship like this one is more than chance by writing it as a model.
 
 ### The regression model
 
@@ -208,7 +198,7 @@ $\widehat{DO} = `r sprintf("%.2f", coef(fit)[1])` `r ifelse(coef(fit)[2] >= 0, "
 
 The hat over $DO$ marks it as a *predicted* value, what the model outputs for a given temperature, as distinct from an actually observed $DO$ measurement.
 
-In the coefficient table, the `Estimate` values for the intercept and slope are $b_0$ and $b_1$, not $\beta_0$ and $\beta_1$. Recall this line is our model's estimate from this one sample, not the true population line, which we never actually observe.
+In the coefficient table, the `Estimate` values for the intercept and slope are $b_0$ and $b_1$, not $\beta_0$ and $\beta_1$.
 
 The intercept ($b_0 = `r sprintf("%.2f", coef(fit)[1])`$) is the model's predicted DO at 0°C. That temperature is outside the range we sampled (`r sprintf("%.1f", min(stream_df$stream_temp))` to `r sprintf("%.1f", max(stream_df$stream_temp))`°C), so we won't interpret the intercept.
 
@@ -226,7 +216,7 @@ Like any other statistic, $b_1$ varies from sample to sample. If we drew a new s
 
 $$\text{statistic}=\frac{\text{effect}}{\text{error}}.$$
 
-This $t$-test for the regression slope, unlike the tests in earlier chapters, doesn't need a separate function call: `lm()` computes it automatically the moment you fit the model. You get the whole coefficient table, `Std. Error`, $t$, and $p$, all at once.
+R reports the $t$-test for the slope in the coefficient table from `summary(fit)`, so there is no separate test to run. You get the `Std. Error`, $t$, and $p$ for each coefficient at once.
 
 The test statistic divides the estimated slope by its standard error, the `Std. Error` column in the coefficient table above. The standard error measures how much $b_1$ would vary from sample to sample if we repeated this study many times:
 
@@ -358,17 +348,9 @@ We report a regression result the same way as any other test: the slope with its
 
 ## Consider both significance and effect size
 
-As with all our tests, our significance test isn't the whole picture. In addition to testing our slope (is $\beta_1$ significantly different from 0?), we also consider $R^2$, which is regression's effect size.
+As with every test in this book, the significance test is not the whole picture. Testing the slope asks whether $\beta_1$ differs from 0. $R^2$, regression's effect size, says how much of the variation the line explains. The two can disagree in either direction.
 
-A significant slope does not guarantee a large $R^2$, and a large $R^2$ does not guarantee a significant slope.
-
-A very large sample, the kind common in remote sensing and other big-data environmental work, can make a trivial effect statistically significant: more observations shrink the standard error until almost any nonzero slope clears $p<.05$, no matter how little variance it explains.
-
-A small sample tends to fail the opposite way, missing a real, sizeable effect because the standard error is too large for it to reach significance.
-
-$R^2$ tells you how much of the variation the line explains.
-
-Because $p$ and $R^2$ answer different questions, we report both.
+A very large sample, the kind common in remote sensing and other big-data environmental work, can make a trivial effect significant, because more observations shrink the standard error until almost any nonzero slope clears $p<.05$. A small sample can fail the other way and miss a real, sizeable effect because its standard error is too large. Because $p$ and $R^2$ answer different questions, we report both.
 
 @fig-9regeffectpanels shows three of these combinations: a strong relationship with a non-significant slope (underpowered), a weak relationship with a significant slope (a large sample), and a relationship that is both strong and significant.
 
@@ -386,7 +368,7 @@ mk_panel <- function(seed, n, slope, noise, label) {
   g <- glance(f)
   p_txt <- fmt_p(g$p.value)
   p_txt <- ifelse(startsWith(p_txt, "<"), p_txt, paste("=", p_txt))
-  d$panel <- sprintf("%s\nR^2 = %.3f, p %s", label, g$r.squared, p_txt)
+  d$panel <- sprintf("%s\nR² = %.3f, p %s", label, g$r.squared, p_txt)
   d
 }
 
@@ -410,22 +392,23 @@ It depends on the field. In studies of human behavior, where many unmeasured fac
 
 ## Checking assumptions
 
-Simple linear regression assumes:
+Simple linear regression makes four assumptions. @tbl-9assumptions lists each with the check this chapter uses.
 
--   **Linearity.** The true relationship between $X$ and $Y$ is a straight line.
+| Assumption | What it means | How to check | What a violation looks like |
+|:-----------|:--------------|:-------------|:----------------------------|
+| Linearity | The true relationship between $X$ and $Y$ is a straight line. | Residuals-versus-fitted plot | A curve, such as a U-shape |
+| Independence | Each observation's error is unrelated to the others'. This is the universal assumption from Chapter 6. | The study design | Sites along the same stream, or repeated measurements over time |
+| Constant variance (homoscedasticity) | The spread of residuals is about the same across the whole range of $X$. | Residuals-versus-fitted plot | A funnel that widens or narrows |
+| Normal residuals | The residuals are approximately normally distributed. | Q-Q plot and Shapiro-Wilk | Points bending away from the Q-Q diagonal |
 
--   **Independence.** Each observation's error is unrelated to the others'. This is the universal assumption from Chapter 6. Check it against the design: sites along the same stream, or repeated measurements over time, can violate it.
-
--   **Constant variance (homoscedasticity).** The spread of residuals is roughly the same across the whole range of $X$.
-
--   **Normality of residuals.** The residuals are approximately normally distributed.
+: Assumptions of simple linear regression and how to check them. {#tbl-9assumptions}
 
 ### Sometimes the truth isn't a line at all
 
 > You can do linear regression without thinking about whether the phenomenon you're modeling is actually close to linear. But you shouldn't.\
 > Jordan Ellenberg, *How Not to Be Wrong*
 
-A straight line is not guaranteed to be the right shape for your data. A residuals-versus-fitted plot checks two of the assumptions above at once: a curve means linearity is violated, and a funnel shape means constant variance is violated. The most useful diagnostic for catching either is a residuals-versus-fitted plot:
+A straight line is not guaranteed to be the right shape for your data. A residuals-versus-fitted plot checks two of the assumptions above at once: a curve means linearity is violated, and a funnel shape means constant variance is violated.
 
 ```{r}
 #| label: fig-9regresid
@@ -486,7 +469,7 @@ ggplot(outbreak_df, aes(days, cases)) +
   ylab("New cases detected")
 ```
 
-A straight line fit to these 14 days gives $R^2 = `r sprintf("%.2f", outbreak_tidy$r.squared)`$ and $p`r fmt_p(outbreak_tidy$p.value)`$, which by the benchmark in the "How big is a good $R^2$?" warning above looks like a solid, significant fit for a field system. Nothing about those numbers alone raises a flag.
+A straight line fit to these 14 days gives $R^2 = `r sprintf("%.2f", outbreak_tidy$r.squared)`$ and $p`r fmt_p(outbreak_tidy$p.value)`$, which by the benchmark in the "How big is a good $R^2$?" warning above looks like a solid, significant fit for a field system. Nothing about those numbers alone raises a flag. The plot does raise one, though. The fitted line starts at about -40 cases on day 1, and a count of cases can't be negative.
 
 **Check the residuals.** The residuals-versus-fitted plot shows a problem that the $R^2$ and slope test did not.
 
