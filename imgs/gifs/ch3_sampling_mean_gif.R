@@ -1,51 +1,51 @@
 # Builds imgs/gifs/sampleDistNormal-1.gif (fig-3samplingmean) and its final-frame still.
-# Four panels, n = 10, 50, 100, 1000, from a standard normal population (orange curve).
-# Each frame draws one new sample: grey bars are the sample, the lime-green dotted line
-# is its mean (x-bar, as in Chapters 4 and 5), the green histogram is 1000 sample means
-# of that size, and the dark green line is the mean of those sample means.
+# Four sample sizes (n = 2, 8, 32, 128; each step multiplies n by 4, which halves the SE) from a normal
+# population with mu = 0, sigma = 1. Each frame draws one new sample per panel.
+# Top row: that sample's values (grey points), its s, and its mean (lime-green dotted line).
+# Bottom row: every sample mean so far as a dot pile, newest in lime green, with SE = sigma/sqrt(n).
+# Three things to see: the values' spread stays near sigma, the means' spread shrinks (SE),
+# and one sample's mean settles near mu (law of large numbers).
+# The first frames are held longer so the reader can follow one sample before it speeds up.
 # Run from the project root: Rscript imgs/gifs/ch3_sampling_mean_gif.R
-suppressMessages({library(ggplot2); library(gganimate); library(magick)})
+suppressMessages({library(ggplot2); library(gganimate); library(gifski)})
 theme_set(theme_classic(base_size = 14))
 set.seed(538)
-
-ns <- c(10, 50, 100, 1000)
-# One set of 0.2-wide bins for every panel, so a narrow sampling distribution piles into a
-# few tall bars instead of disappearing into slivers.
-breaks <- seq(-3, 3, by = 0.2)
-bin_heights <- function(x, top) {
-  h <- hist(pmin(pmax(x, -3), 3), breaks = breaks, plot = FALSE)
-  keep <- h$counts > 0
-  data.frame(xmin = head(breaks, -1), xmax = tail(breaks, -1), h = h$density / max(h$density) * top)[keep, ]
-}
-
-samples <- means <- marks <- list()
-for (sim in 1:10) for (n in ns) {
-  one   <- rnorm(n)
-  xbars <- replicate(1000, mean(rnorm(n)))
-  samples[[length(samples) + 1]] <- cbind(bin_heights(one, 0.6), sims = sim, sample_size = n)
-  means[[length(means) + 1]]     <- cbind(bin_heights(xbars, 1), sims = sim, sample_size = n)
-  marks[[length(marks) + 1]]     <- data.frame(sims = sim, sample_size = n,
-                                               xbar = mean(one), center = mean(xbars))
-}
-samples <- do.call(rbind, samples); means <- do.call(rbind, means); marks <- do.call(rbind, marks)
-pop <- data.frame(x = seq(-3, 3, by = 0.02)); pop$d <- dnorm(pop$x)
-
+ns <- c(2, 8, 32, 128); K <- 40; bw <- 0.1
+rows <- c("One sample: its values", "Sample means so far")
+lab_n <- function(n) paste("n =", n)
+samp <- list(); xb <- list()
+for (n in ns) { m <- s <- numeric(K)
+  for (k in 1:K) { x <- rnorm(n); m[k] <- mean(x); s[k] <- if (n > 1) sd(x) else NA
+    samp[[length(samp)+1]] <- data.frame(n = n, f = k, x = x, y = runif(n, 0.03, 0.13)) }
+  xb[[length(xb)+1]] <- data.frame(n = n, k = 1:K, m = m, s = s) }
+samp <- do.call(rbind, samp); xb <- do.call(rbind, xb)
+pile <- do.call(rbind, lapply(1:K, function(f) do.call(rbind, lapply(ns, function(n) {
+  d <- xb[xb$n == n & xb$k <= f, ]; d$bin <- round(d$m / bw) * bw
+  d$h <- ave(d$k, d$bin, FUN = seq_along); d$f <- f; d$now <- d$k == f; d }))))
+top <- function(d) { d$part <- factor(rows[1], rows); d }; bot <- function(d) { d$part <- factor(rows[2], rows); d }
+pile <- bot(pile); samp <- top(samp)
+cur <- xb; cur$f <- cur$k
+pop <- top(expand.grid(x = seq(-3, 3, by = .02), n = ns)); pop$d <- dnorm(pop$x)
+s_lab  <- top(transform(cur, lab = sprintf("s = %.2f", s)))
+se_lab <- bot(data.frame(n = ns, lab = sprintf("SE = %.2f", 1 / sqrt(ns))))
 p <- ggplot() +
-  geom_rect(data = samples, aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = h),
-            fill = "grey65", colour = "white") +
-  geom_rect(data = means, aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = h),
-            fill = "darkgreen", colour = "white", alpha = 0.5) +
   geom_line(data = pop, aes(x, d), colour = "orange", linewidth = 0.9) +
-  geom_vline(data = marks, aes(xintercept = center), colour = "darkgreen", linewidth = 0.9) +
-  geom_vline(data = marks, aes(xintercept = xbar), colour = "limegreen",
-             linetype = "dotted", linewidth = 1.6) +
-  facet_wrap(~sample_size) +
-  coord_cartesian(xlim = c(-3, 3), ylim = c(0, 1.05)) +
-  labs(x = "value", y = "Rough likelihoods") +
-  transition_states(sims, transition_length = 2, state_length = 1) +
-  enter_fade() + exit_shrink() + ease_aes("sine-in-out")
-
-gif <- animate(p, nframes = 80, fps = 10, width = 750, height = 582, renderer = gifski_renderer())
-anim_save("imgs/gifs/sampleDistNormal-1.gif", gif)
-frames <- image_read("imgs/gifs/sampleDistNormal-1.gif")
-image_write(frames[length(frames)], "imgs/gifs/stills/sampleDistNormal-1.png")
+  geom_point(data = samp, aes(x, y), colour = "grey35", alpha = 0.6, size = 1.6) +
+  geom_segment(data = top(cur), aes(x = m, xend = m, y = 0, yend = 0.42), colour = "limegreen", linetype = "dotted", linewidth = 1.6) +
+  geom_label(data = s_lab, aes(x = -2.45, y = 0.4, label = lab), hjust = 0, size = 4.2, colour = "grey25", fill = "white", label.size = 0) +
+  geom_point(data = pile, aes(bin, h, colour = now), size = 1.9) +
+  geom_text(data = se_lab, aes(x = -2.45, y = 22, label = lab), hjust = 0, size = 4.2, colour = "darkgreen") +
+  scale_colour_manual(values = c(`FALSE` = "darkgreen", `TRUE` = "limegreen"), guide = "none") +
+  geom_vline(xintercept = 0, colour = "grey60", linewidth = 0.4) +
+  facet_grid(part ~ n, scales = "free_y", labeller = labeller(n = lab_n, part = label_wrap_gen(14))) +
+  coord_cartesian(xlim = c(-2.5, 2.5)) +
+  labs(x = "value (population: \u03bc = 0, \u03c3 = 1)", y = NULL) +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), strip.text.y = element_text(size = 11)) +
+  transition_manual(f)
+dir <- file.path(tempdir(), "ch3_sampling_mean_frames"); unlink(dir, recursive = TRUE); dir.create(dir)
+animate(p, nframes = K, fps = 4, width = 860, height = 580, renderer = file_renderer(dir, prefix = "f", overwrite = TRUE))
+files <- sort(list.files(dir, full.names = TRUE))
+# slow start: frames 1-3 held 2.5 s, 4-8 held 1 s, then 0.25 s each; final frame held 4 s
+reps <- c(rep(10, 3), rep(4, 5), rep(1, K - 9), 16)
+gifski(rep(files, reps), "imgs/gifs/sampleDistNormal-1.gif", width = 860, height = 580, delay = 0.25)
+invisible(file.copy(files[K], "imgs/gifs/stills/sampleDistNormal-1.png", overwrite = TRUE))
