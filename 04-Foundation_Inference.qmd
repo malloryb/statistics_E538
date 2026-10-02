@@ -73,56 +73,6 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
   return(p)
 }
 
-plot_distributions_no_error <- function(
-  null_mean, null_sd,
-  sample_mean, sample_sd,     # sample_sd here is the SE used for the sampling dist + CI
-  inferred_mean, inferred_sd,
-  show_ci = TRUE
-){
-  x_vals <- seq(-6, 6, by = 0.01)
-
-  h0              <- dnorm(x_vals, mean = null_mean,    sd = null_sd)
-  sampling_mean   <- dnorm(x_vals, mean = sample_mean,  sd = sample_sd)
-  inferred_parent <- dnorm(x_vals, mean = inferred_mean, sd = inferred_sd)
-
-  # 95% CI for the sample mean (normal approx)
-  CI_left  <- qnorm(0.025, mean = sample_mean, sd = sample_sd)
-  CI_right <- qnorm(0.975, mean = sample_mean, sd = sample_sd)
-
-  # height at mu0 for the magenta reference drop line
-  y_intersect <- dnorm(null_mean, mean = null_mean, sd = null_sd)
-
-  p <- ggplot() +
-    geom_line(aes(x = x_vals, y = h0,             color = "Null Population Distribution"), size = 1.5) +
-    geom_line(aes(x = x_vals, y = sampling_mean,  color = "Sampling Distribution of the Sample Mean"),
-              linetype = "dotdash", size = 1) +
-    geom_line(aes(x = x_vals, y = inferred_parent, color = "Estimated Population Distribution"),
-              linetype = "dashed", size = 1.5) +
-    # mu0 (magenta dashed)
-    geom_segment(aes(x = null_mean, xend = null_mean, y = y_intersect, yend = 0),
-                 linetype = "dashed", color = "magenta", size = 1) +
-    # CI bar (thick dark green): keep this!
-    { if (show_ci) geom_segment(aes(x = CI_left, xend = CI_right, y = 0, yend = 0),
-                                color = "darkgreen", size = 1.8) } +
-    coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 1.4)) +  # shared axes across the four-color figures
-    theme_classic() +
-    theme(
-      legend.position = "bottom",
-      axis.text = element_blank(),
-      axis.title = element_blank(),
-      axis.ticks = element_blank(),
-      legend.text = element_text(size = 12)
-    ) +
-    guides(color = guide_legend(title = NULL, nrow = 2)) +
-    scale_color_manual(values = c(
-      "Null Population Distribution" = "blue",
-      "Sampling Distribution of the Sample Mean" = "darkgreen",
-      "Estimated Population Distribution" = "green3"
-    ))
-
-  p
-}
-
 ```
 
 ## What chance alone can produce
@@ -424,7 +374,7 @@ h0 <- dnorm(x_vals, mean=0, sd=1)
 p_null <- ggplot() +
   geom_line(aes(x_vals, h0, color="Null Population Distribution"), linetype="solid", size=1) +
   annotate("text", x = -2.5, y = 0.35, label = expression("H"[0] ~ ": " ~ mu == mu[0]), size = 5) +
-  geom_vline(aes(xintercept=0), linetype="dashed", color="magenta", size=0.5) +
+  geom_vline(aes(xintercept=0), linetype="dashed", color="magenta", linewidth=1) +
   scale_color_manual(values=c("Null Population Distribution"="blue")) +
   theme_classic() +
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
@@ -454,7 +404,7 @@ p3 <- ggplot() +
   geom_line(aes(x_vals, h0, color="True Population Distribution"), linetype="solid", size=4, alpha=1) +
   geom_line(aes(x_vals, h0, color="Null Population Distribution"), linetype="solid", size=1) +
   annotate("text", x = -2.5, y = 0.35, label = expression("H"[0] ~ ": " ~ mu == mu[0]), size = 5) +
-  geom_vline(aes(xintercept=0), linetype="dashed", color="magenta", size=0.5) +
+  geom_vline(aes(xintercept=0), linetype="dashed", color="magenta", linewidth=1) +
 scale_color_manual(values=c("Null Population Distribution"="blue", "True Population Distribution"="orange"))+
   theme_classic() + 
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
@@ -651,8 +601,8 @@ rr <- tibble::tibble(x = seq(-4, 4, length.out = 2000), y = dnorm(x))
 y_peak <- dnorm(0)
 
 ggplot(rr, aes(x, y)) +
-  geom_area(data = dplyr::filter(rr, x <= -crit), fill = "red", alpha = 0.15) +
-  geom_area(data = dplyr::filter(rr, x >=  crit), fill = "red", alpha = 0.15) +
+  geom_area(data = dplyr::filter(rr, x <= -crit), fill = "red", alpha = 0.18) +
+  geom_area(data = dplyr::filter(rr, x >=  crit), fill = "red", alpha = 0.18) +
   geom_line(color = "blue", linewidth = 1.2, linetype = "dotdash") +
   annotate("segment", x = 0, xend = 0, y = 0, yend = y_peak, colour = "magenta", linetype = "dashed", linewidth = 1) +
   geom_vline(xintercept = c(-crit, crit), color = "red", linewidth = 0.9) +
@@ -705,9 +655,6 @@ with_ci <- function(p) {
     annotate("text", x = xbar, y = -0.1, label = "95% CI", colour = "darkgreen", size = 4)
 }
 
-p_est <- ci_panel() +
-  geom_line(aes(xs, dnorm(xs, xbar, pop_sd)), color = "green3", linetype = "dashed", linewidth = 1.2) +
-  annotate("text", x = -4.4, y = 0.6, label = "Estimated population", color = "green3", size = 3.8, hjust = 0)
 p_samp <- with_ci(ci_panel()) +
   annotate("text", x = -4.4, y = 0.6, label = "Sampling distribution\nof the sample mean", color = "darkgreen", size = 3.8, hjust = 0)
 
@@ -733,7 +680,7 @@ mu0_panel <- function(mu0) {
     annotate("segment", x = mu0, xend = mu0, y = 0, yend = 1.2, colour = "magenta", linetype = "dashed", linewidth = 1) +
     annotate("text", x = mu0 - 0.1, y = 1.28, label = "mu[0]", parse = TRUE, hjust = 1, colour = "magenta", size = 5) +
     annotate("label", x = 3.1, y = 1.0, label = ifelse(inside, "Fail to reject", "Reject"),
-             size = 3.8, fill = "white", label.size = 0.2)
+             colour = ifelse(inside, "black", "red3"), size = 3.8, fill = "white", label.size = 0.2)
 }
 
 grid.arrange(mu0_panel(0), mu0_panel(-0.9), ncol = 2)
@@ -749,8 +696,8 @@ The $p$-value is an area under the curve, so it comes from `pnorm()`, which Chap
 
 ```{r}
 #| label: fig-pvalue-lens
-#| fig-cap: '$p$-value lens: the two-tailed $p$-value is the shaded area beyond the observed statistic (vertical line), in both tails, under the null.'
-#| fig-alt: "A blue dot-dash standard normal curve centered at zero, marked with a dashed vertical line at the center for the null value and a solid black vertical line further right labeled 'observed z' at about 1.85. The areas beyond plus and minus 1.85 in both tails are shaded red. Text on the left reports a two-tailed p-value of 0.064, labeled fail to reject."
+#| fig-cap: '$p$-value lens: the two-tailed $p$-value is the shaded area beyond the observed statistic (dotted line), in both tails, under the null.'
+#| fig-alt: "A blue dot-dash standard normal curve centered at zero, marked with a magenta dashed vertical line at the center for the null value and a lime-green dotted vertical line further right labeled 'observed z' at about 1.85. The areas beyond plus and minus 1.85 in both tails are shaded red. Text on the left reports a two-tailed p-value of 0.064, labeled fail to reject."
 #| out-width: "100%"
 
 library(tidyverse)
@@ -766,24 +713,25 @@ x <- tibble(
 
 ggplot(x, aes(x, y)) +
   # shaded tails: the two-tailed p-value is this area
-  geom_area(data = filter(x, x >=  abs(z_obs)), fill = "red", alpha = 0.2) +
-  geom_area(data = filter(x, x <= -abs(z_obs)), fill = "red", alpha = 0.2) +
+  geom_area(data = filter(x, x >=  abs(z_obs)), fill = "red", alpha = 0.18) +
+  geom_area(data = filter(x, x <= -abs(z_obs)), fill = "red", alpha = 0.18) +
   geom_line(color = "blue", linewidth = 1.2, linetype = "dotdash") +
-  # observed statistic (black)
-  geom_vline(xintercept = z_obs, color = "black", linewidth = 0.9) +
   # mu0 reference (magenta dashed at 0)
   annotate("segment", x = 0, xend = 0, y = 0, yend = dnorm(0),
            linetype = "dashed", colour = "magenta", linewidth = 1) +
+  # observed statistic (lime-green dotted, like x-bar in Chapters 4 and 5)
+  annotate("segment", x = z_obs, xend = z_obs, y = 0, yend = dnorm(0)*0.9,
+           colour = "limegreen", linetype = "dotted", linewidth = 1.6) +
   annotate("text", x = z_obs, y = dnorm(0)*0.95,
            label = expression(paste("observed ", z)),
-           hjust = ifelse(z_obs > 0, -0.05, 1.05), size = 3.6) +
+           hjust = ifelse(z_obs > 0, -0.05, 1.05), size = 4, colour = "#1E9E1E", fontface = "bold") +
   annotate("text", x = -2.2, y = dnorm(0)*0.75,
            label = paste0("two-tailed p = ", sprintf("%.3f", p_two),
                           ifelse(p_two < alpha, "\n(reject)", "\n(fail to reject)")),
            size = 4.2) +
   labs(x = "z", y = "Density") +
   coord_cartesian(ylim = c(0, dnorm(0)*1.05)) +
-  theme_classic(base_size = 12)
+  theme_classic()
 ```
 
 **A $p$-value is a conditional probability.** Chapter 3 introduced conditional probability: the probability of one thing given that something else is true, written $P(A \mid B)$ and read "the probability of $A$ given $B$." A $p$-value has exactly that form:
@@ -870,8 +818,8 @@ $H_a$ is a claim about where the true population could sit. A two-tailed alterna
 
 ```{r}
 #| label: fig-4tails-claims
-#| fig-cap: 'What $H_a$ claims. The null population distribution (blue) sits at $\mu_0$. The orange dashed curves are possible true population distributions under $H_a$: on either side for a two-tailed alternative (left), on one side only for a one-tailed alternative (middle and right).'
-#| fig-alt: "Three panels. Left, titled H sub a colon mu not equal to mu sub 0: a blue bell curve in the center with an orange dashed bell curve of the same shape shifted to each side. Middle, titled H sub a colon mu less than mu sub 0: the blue curve with one orange dashed curve to its left. Right, titled H sub a colon mu greater than mu sub 0: the blue curve with one orange dashed curve to its right."
+#| fig-cap: 'What $H_a$ claims. The null population distribution (blue) sits at $\mu_0$. The orange curves are possible true population distributions under $H_a$: on either side for a two-tailed alternative (left), on one side only for a one-tailed alternative (middle and right).'
+#| fig-alt: "Three panels. Left, titled H sub a colon mu not equal to mu sub 0: a blue bell curve in the center with an orange bell curve of the same shape shifted to each side. Middle, titled H sub a colon mu less than mu sub 0: the blue curve with one orange curve to its left. Right, titled H sub a colon mu greater than mu sub 0: the blue curve with one orange curve to its right."
 #| fig-width: 9
 #| fig-height: 2.4
 #| out-width: "100%"
@@ -880,7 +828,7 @@ xc <- seq(-6, 6, by = 0.01)
 claims_panel <- function(shifts, ttl) {
   p <- ggplot() + geom_line(aes(xc, dnorm(xc)), color = "blue", linewidth = 1.1)
   alt <- do.call(rbind, lapply(shifts, function(m) data.frame(x = xc, y = dnorm(xc, m), g = m)))
-  p <- p + geom_line(data = alt, aes(x, y, group = g), color = "orange", linetype = "dashed", linewidth = 1.1)
+  p <- p + geom_line(data = alt, aes(x, y, group = g), color = "orange", linewidth = 1.1, alpha = 0.7)
   p + annotate("segment", x = 0, xend = 0, y = 0, yend = dnorm(0), colour = "magenta", linetype = "dashed", linewidth = 0.8) +
     labs(x = NULL, y = NULL, title = ttl) +
     coord_cartesian(xlim = c(-6, 6), ylim = c(0, 0.45)) +
@@ -912,7 +860,7 @@ tail_panel <- function(cuts, ttl, arrow_dir) {
   p <- ggplot(tail_df, aes(x, y))
   for (cv in cuts) {
     shade <- if (cv > 0) dplyr::filter(tail_df, x >= cv) else dplyr::filter(tail_df, x <= cv)
-    p <- p + geom_area(data = shade, fill = "red", alpha = 0.2)
+    p <- p + geom_area(data = shade, fill = "red", alpha = 0.18)
   }
   p <- p +
     geom_line(color = "blue", linewidth = 1.1, linetype = "dotdash") +

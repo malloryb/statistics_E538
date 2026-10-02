@@ -68,15 +68,15 @@ options(
 # which ggplot only builds when colour/fill is mapped inside aes(). A plain
 # geom_point()/geom_line() with no mapped colour never creates that scale, so
 # it falls back to ggplot2's built-in black. update_geom_defaults() changes
-# that built-in default instead, so ungrouped layers pick up the palette
-# without every call needing an explicit colour=. Point and line are offset
-# to different palette entries so a point+line combo (e.g. scatter + trend
-# line) doesn't render as one indistinguishable colour; geom_smooth() already
-# used "#b22222" for trend lines in several chapters, so line reuses that
-# same slot. geom_hline()/geom_vline()/geom_abline()/geom_smooth() have their
-# own separate default-aes entries and are unaffected by these two calls.
-ggplot2::update_geom_defaults("point", list(colour = e538_plot_palette[3]))
-ggplot2::update_geom_defaults("line",  list(colour = e538_plot_palette[2]))
+# that built-in default instead.
+# Points are black and lines sky blue (changed 2026-09-23): the book's
+# regression convention is black data points under a sky-blue fitted line, so
+# a bare scatter-plus-line now matches it by default. The old defaults drew
+# cobalt points (the same colour as fitted lines) and brick-red lines (the
+# rejection-region colour). geom_hline()/geom_vline()/geom_abline()/
+# geom_smooth() have their own default-aes entries and are unaffected.
+ggplot2::update_geom_defaults("point", list(colour = "black"))
+ggplot2::update_geom_defaults("line",  list(colour = e538_palette[1]))
 
 # geom_histogram() is built on GeomBar, so this covers both. Default fill is
 # "grey35" with no border, which is what produced the grey blobby look;
@@ -295,7 +295,7 @@ design_contingency <- function(vars_label, rows, cols, counts, counted, question
   xs <- x0 + (seq_len(nc)-1)*cw + cw/2
   ys <- Y_KIND + 0.22 - (seq_len(nr)-1)*ch
   ggplot(data.frame(x=1)) +
-    annotate("text", x = xs, y = max(ys)+0.26, label = cols,
+    annotate("text", x = xs, y = max(ys)+0.20, label = cols,
              size = 3.0, fontface="bold", colour="grey35") +
     annotate("text", x = x0-0.12, y = ys, hjust = 1, label = rows,
              size = 3.0, fontface="bold", colour="grey35") +
