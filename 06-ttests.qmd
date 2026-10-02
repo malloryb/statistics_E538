@@ -41,7 +41,7 @@ In the early 1900s, William Sealy Gosset worked as a brewer at Guinness, where q
 
 Gosset set out to measure how much extra uncertainty small samples add, and derived a new sampling distribution for it, now known as the **Student's $t$ distribution**. Guinness restricted outside publication, so he published the 1908 paper under the pseudonym "Student" [@Student1908], which is why we still say Student's $t$-test. This chapter uses Gosset's approach. We measure a signal, divide it by its standard error, and compare the resulting $t$ to the $t$ distribution for $n-1$ degrees of freedom.
 
-**Why this matters.** We often compare a sample mean to a reference (drinking-water standard, historical average) or compare two conditions (before/after, site A vs site B). A $t$-test asks whether the observed difference is larger than you would expect from sampling variation alone, given your $n$ and variability.
+**Why this matters.** We often compare a sample mean to a reference (drinking-water standard, historical average) or compare two conditions (before/after, site A vs site B). A $t$-test asks whether the observed difference is larger than you would expect from sampling variation alone, given your $n$ and variability. Chapter 5 added two questions to every test: how large the effect is, and whether the design had the power to detect it. Both carry over to the $t$-tests here.
 
 **Three common $t$-tests you will use.**
 
@@ -244,6 +244,8 @@ We can confirm this with a single R command, `t.test(scores, mu = 50)`:
 
 **Results:** $t(9)=`r round(tt$statistic,2)`$, $p=`r signif(tt$p.value,3)`$; mean $=`r round(tt$estimate,2)`$ (95% CI \[`r ci_lo`, `r ci_hi`\]).
 
+**Confidence interval.** The 95% CI in that output is $\bar{x} \pm t_{crit} \cdot SE$, with $t_{crit}$ taken from the $t$ distribution with $n-1$ degrees of freedom. Here that is $`r round(x,2)` \pm `r round(qt(.975, n-1),3)`(`r round(SE,2)`)$, or \[`r ci_lo`, `r ci_hi`\]. The interval contains 50, so the test does not reject $H_0$. For a two-tailed test at $\alpha$, the $100(1-\alpha)\%$ CI and the critical value always reach the same decision, the same equivalence Chapter 4 showed for $z$.
+
 **Interpretation.** The mean (`r round(x,0)`%) is above chance (50%), but the difference is not statistically significant at $\alpha=.05$.
 
 **Assumptions check.** The 10 scores spread evenly around 60 with no outliers, so approximate normality is reasonable. @sec-6assumptions covers how to check this.
@@ -312,7 +314,7 @@ For example:
 
 Each range captures the same 10% of the distribution, even though the ranges themselves are different widths.
 
-Our quiz $t$ of 1.94 is beyond 1.38, so it falls in the top 10% of this distribution. The next section shows how to get its exact $p$-value.
+Our quiz $t$ of 1.94 is beyond 1.38, so it falls in the top 10% of this distribution. Its exact $p$-value comes from software, and the one-tailed section below uses it.
 
 ### Getting the p-values for $t$-values
 
@@ -415,7 +417,7 @@ The dashed boxes mark what makes this design paired. In every design so far the 
 -   $d_i>0$: plot had more soil moisture after restoration (increase)
 -   $d_i<0$: plot had less soil moisture after restoration (decrease)
 
-This subtraction cancels between-plot variability (some plots are naturally wetter than others) and focuses on within-plot change.
+This subtraction cancels between-plot variability (some plots are naturally wetter than others) and focuses on within-plot change. Because it removes those plot-to-plot differences, the paired test's standard error is smaller, so it has more power than an independent-samples test on the same data.
 
 **Test on differences (paired $t$).** Compute one difference per plot, then run a one-sample $t$ against 0:
 
@@ -569,6 +571,8 @@ t.test(a,b, paired=FALSE, var.equal = TRUE)
 ```
 
 Our hand-computed $t$ is $-2.02$, and the `t = -2.018` line in R's output matches it. R also reports $df = 8$, $p = .078$, and the 95% confidence interval for the difference.
+
+Cohen's $d$ for two independent groups divides the mean difference by the pooled standard deviation, $d = (\bar{x}_A - \bar{x}_B)/s_p$. Here $s_p = 2.04$, so $d = -2.6/2.04 = -1.28$.
 
 @tbl-6three-tests sets the three forms side by side. Each one divides an effect by its standard error. The design decides what counts as the effect and how its standard error is estimated.
 
