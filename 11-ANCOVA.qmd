@@ -28,13 +28,13 @@ $$\text{Regression} + \text{ANOVA} = \text{ANCOVA}$$
 
 The last chapter compared macroinvertebrate species count across two discrete Pollution categories, present or absent, and two Flow categories, low or high. But suppose you measured each channel's pollution concentration instead of labeling it present or absent.
 
--   Does Flow's effect on species count still depend on pollution once pollution is treated as the continuous measurement it really is, rather than binned into two groups? *(covariate: pollution concentration; factor: flow rate)*
+-   Does Flow's effect on species count still depend on pollution once pollution is treated as a continuous measurement instead of two groups? *(covariate: pollution concentration; factor: flow rate)*
 
 -   Does exposure to PFAS correlate with lifetime cancer incidence uniformly across low- and high-income American populations? *(covariate: PFAS exposure; factor: income level)*
 
 Each question pairs a continuous relationship, a continuous variable's effect on the outcome, with a categorical grouping. That pairing, one continuous variable and one categorical factor, is what makes a design an ANCOVA rather than a plain regression or a plain ANOVA.
 
-The first question points to a limitation of the last chapter. "Pollution: present or absent" simplifies a continuous measurement, a concentration in parts per billion. Sorting continuous measurements into "high" and "low" buckets throws away exactly the information a covariate needs: how much more polluted, not just whether. Whenever you have the real numbers, ANCOVA (or, if there's no categorical factor left at all, plain regression) is almost always the better tool than forcing them into groups first.
+The first question points to a limitation of the last chapter. "Pollution: present or absent" simplifies a continuous measurement, a concentration in parts per billion. Sorting continuous measurements into "high" and "low" buckets throws away the information a covariate needs, which is how much more polluted a channel is, not just whether it is polluted. Whenever you have the measured values, ANCOVA (or, if there's no categorical factor left at all, plain regression) is almost always the better tool than forcing them into groups first.
 
 ANCOVA is a linear model built directly on regression's own equation. A simple linear model is
 
@@ -42,7 +42,7 @@ $$y = \beta_0 + \beta_1 x + \varepsilon$$
 
 Here $\beta_0$ is the intercept, $\beta_1$ is the slope, and $\varepsilon$ is the error. The model describes a single line.
 
-ANCOVA adds a categorical factor to that equation, and the whole chapter comes down to one question: does every group follow that same line, or does each group need its own slope and intercept?
+ANCOVA adds a categorical factor to that equation, and the chapter asks whether every group follows that same line or each group needs its own slope and intercept.
 
 We answer it in order: first check that the model explains anything at all, then test whether the groups have different slopes, and only if the slopes are parallel, test whether the groups differ in adjusted means.
 
@@ -50,7 +50,7 @@ We answer it in order: first check that the model explains anything at all, then
 
 The cleanest illustration is a result called **Simpson's paradox**, where a pattern in combined data reverses once you split the data into meaningful groups.
 
-Here's a recent example. During the COVID-19 pandemic, early data showed that Italy's overall case fatality rate was higher than China's. But once researchers *disaggregated by age group,* the trend flipped: within every age group, the fatality rate was higher in China. The apparent contradiction was explained by differences in the age distribution of cases [@vonkugelgen2021].
+During the COVID-19 pandemic, early data showed that Italy's overall case fatality rate was higher than China's. But once researchers *disaggregated by age group,* the trend flipped. Within every age group, the fatality rate was higher in China. The apparent contradiction was explained by differences in the age distribution of cases [@vonkugelgen2021].
 
 Using case fatality rate (CFR), here are some illustrative numbers (made up for teaching).
 
@@ -150,22 +150,22 @@ ggplot(fig3_df, aes(x = Age, y = Prop, fill = Country, group=Country)) +
   theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-That reversal is not a trick or a data error. It happens because the groups differ in the *composition* of a third variable, and the combined number averages over that difference. Once you condition on the third variable, the within-group pattern shows up again.
+This kind of reversal comes from a difference between the groups in the *composition* of a third variable, and the combined number averages over that difference. Once you condition on the third variable, the within-group pattern shows up again.
 
 ANCOVA handles this situation when the third variable is continuous, instead of grouped into categories like the age bands above. It compares groups while holding a covariate fixed, so a difference between the groups on that covariate does not distort the comparison.
 
 ## Covariates and fixed factors
 
-**Covariate:** a continuous variable that changes alongside the response and helps explain part of its variation. In environmental studies, common covariates include temperature, rainfall, soil moisture, or pollution concentration: factors that may influence the outcome but aren't the main treatment of interest. Including one lets us adjust for its influence, giving a clearer test of the categorical effect once that continuous background variation is accounted for.
+**Covariate:** a continuous variable that changes alongside the response and helps explain part of its variation. In environmental studies, common covariates include temperature, rainfall, soil moisture, or pollution concentration, which may influence the outcome but aren't the main treatment of interest. Including one lets us adjust for its influence, giving a clearer test of the categorical effect once that continuous background variation is accounted for.
 
-The categorical predictor itself, in every example this chapter uses, is what's called a **fixed factor**: specific, intentional levels chosen by the researcher (urban vs. rural, shaded vs. open canopy), not a random sample of possible groups. That distinction matters more once you're building mixed-effects models, which is beyond where this course goes. A random factor, by contrast, would be something like the counties your streams are in. You aren't interested in those ten counties for their own sake. They represent a larger population of counties, and you want your conclusions to apply beyond the ones you sampled.
+The categorical predictor itself, in every example this chapter uses, is a **fixed factor**, with specific levels the researcher chose (urban vs. rural, shaded vs. open canopy) rather than a random sample of possible groups. That distinction matters more once you're building mixed-effects models, which is beyond where this course goes. A random factor, by contrast, would be something like the counties your streams are in. You aren't interested in those ten counties for their own sake. They represent a larger population of counties, and you want your conclusions to apply beyond the ones you sampled.
 
 ## What ANCOVA is
 
-ANCOVA helps us answer: does a *relationship* hold up across groups? That framing fits environmental work particularly well, because you usually can't experimentally strip out a covariate like temperature, rainfall, or season anyway. Often you wouldn't want to. It may be the reason you designed the study in the first place. In this chapter's main example, the covariate is what we care about and the interaction is the result we're testing for.
+ANCOVA asks whether a *relationship* holds up across groups. That framing fits environmental work particularly well, because you usually can't experimentally strip out a covariate like temperature, rainfall, or season anyway. Often you wouldn't want to. It may be the reason you designed the study in the first place. In this chapter's main example, the covariate is what we care about and the interaction is the result we're testing for.
 
 ::: {.callout-caution title="Warning: The other way you'll see ANCOVA"}
-Elsewhere the covariate is a **nuisance** instead: something you control for so a group comparison is fair. In that version, you test the interaction hoping it is not significant.
+Elsewhere the covariate is a **nuisance** instead, something you control for so a group comparison is fair. In that version, you test the interaction hoping it is not significant.
 
 A classic version from psychology compares anxiety scores across two therapy groups after treatment, controlling for pre-treatment scores.
 
@@ -180,9 +180,9 @@ For ANCOVA, you need:
 
 ### Indicator variables and how they work
 
-Before we can read real coefficients off an ANCOVA table, it helps to see exactly how one equation can represent two different groups at once.
+Before reading coefficients off an ANCOVA table, it helps to see how one equation can represent two groups at once.
 
-Categorical predictors get into a linear model by being coded as **indicator variables** (you'll also see them called dummy variables). For a factor with $k$ groups you include $k-1$ indicators; the omitted group becomes the **reference**, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:
+Categorical predictors get into a linear model by being coded as **indicator variables** (you'll also see them called dummy variables). For a factor with $k$ groups you include $k-1$ indicators. The omitted group becomes the **reference**, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:
 
 $$G = \begin{cases} 0 & \text{group 1 (the reference group)} \\ 1 & \text{group 2} \end{cases}$$
 
@@ -190,7 +190,7 @@ In R, `lm(y ~ x + Group)` creates these indicators for you automatically.
 
 **Indicator variables in action.** When an indicator variable is turned on (set to 1), it activates the terms multiplied by that variable. Depending on where the indicator appears in the model, that can change the intercept, the slope, or both.
 
-Consider two predictors: a continuous variable $x$ and an indicator $G$ (0 or 1). The numbers below are arbitrary, chosen to make the arithmetic clean; the worked example later in this chapter plugs in fitted coefficients for air pollution and area type. Use this model:
+Consider two predictors: a continuous variable $x$ and an indicator $G$ (0 or 1). The numbers below are arbitrary, chosen to make the arithmetic clean. The worked example later in this chapter plugs in fitted coefficients for air pollution and area type. Use this model:
 
 $$y = 2x + 1(x G) - 7G + 3$$
 
@@ -204,7 +204,7 @@ $$y = (2x + 3) + (1x - 7) = 3x - 4 \qquad \text{slope} = 3, \ \text{intercept} =
 
 Turning on the indicator adds +1 to the slope and −7 to the intercept. The one equation gives two different lines, and the value of the indicator decides which one applies.
 
-This is how linear models represent different groups: the indicator ($G$) and its interaction with $x$ let a single equation shift the intercept and the slope for each group. ANCOVA uses exactly this logic to test, in order, whether the slopes differ between groups (the $x G$ term) and, if they don't, whether the adjusted means differ (the $G$ term).
+Linear models represent different groups this way. The indicator ($G$) and its interaction with $x$ let a single equation shift the intercept and the slope for each group. ANCOVA uses exactly this logic to test, in order, whether the slopes differ between groups (the $x G$ term) and, if they don't, whether the adjusted means differ (the $G$ term).
 
 **Naming the pieces.** Written in the general form, the same equation gives each coefficient a name and a meaning:
 
@@ -214,7 +214,7 @@ $$y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x}
 -   $\beta_2$ is how much the intercept moves for the other group.
 -   $\beta_3$ is how much the slope changes for the other group. This is the interaction term.
 
-If we only include $\beta_2$ and leave out $\beta_3$, we get a restricted version: the intercept can shift but the slope cannot, so the two lines are forced to be parallel. That is the **parallel-lines model**, and it is the one we fall back to when the slope difference turns out not to be significant.
+If we only include $\beta_2$ and leave out $\beta_3$, we get a restricted version in which the intercept can shift but the slope cannot, so the two lines are forced to be parallel. That is the **parallel-lines model**, and it is the one we fall back to when the slope difference turns out not to be significant.
 
 ::: {.callout-note title="Note: How R names the four coefficients"}
 These are the four coefficients R reports for this model, and each one can be checked against a graph of the two group lines. For `lm(y ~ x * Group)`, where `Group` has levels A (the reference) and B, R names the rows `(Intercept)` for $\beta_0$, `x` for $\beta_1$, `GroupB` for $\beta_2$, and `x:GroupB` for $\beta_3$. The worked example below follows the same pattern: `(Intercept)`, `AirPollution`, `AreaTypeUrban`, and `AirPollution:AreaTypeUrban`.
@@ -271,7 +271,7 @@ ggplot(lines_df, aes(x, y, color = g)) +
         panel.spacing = unit(1.5, "lines"))
 ```
 
-ANCOVA works right to left across that figure: first it asks whether the rightmost panel is what we have (do the slopes differ?), and only if the answer is no does it ask whether we have the middle panel or the leftmost (do the intercepts differ?).
+ANCOVA works right to left across that figure. It first asks whether the rightmost panel is what we have (do the slopes differ?), and only if the answer is no does it ask whether we have the middle panel or the leftmost (do the intercepts differ?).
 
 **Step 0: Does the model explain anything?** Before looking at any single term, check the whole-model $F$-test, which asks whether the covariate, the group, and their interaction together explain more of $y$ than chance would: $H_0:\beta_1=\beta_2=\beta_3=0$. R reports it on the last line of `summary(lm(...))`. If it is not significant, stop. The data give no evidence that the covariate, the group, or their interaction explains $y$, so no single term is worth interpreting.
 
@@ -280,7 +280,7 @@ ANCOVA works right to left across that figure: first it asks whether the rightmo
 -   Null: $H_{0,\text{int}}:\beta_3=0$ (parallel lines, same slope)
 -   Alternative: $H_{a,\text{int}}:\beta_3\neq 0$ (non-parallel lines, different slopes)
 
-**If Step 1 rejects.** The slopes differ, so stop testing the group term. There is no single group difference to test, because the gap between the lines changes along the covariate. Describe each group's line instead. The model gives both slopes (the reference group's is $\beta_1$, the other group's is $\beta_1+\beta_3$), but it does not test whether each one differs from zero: a significant $\beta_3$ says the slopes differ from each other, not that both are real. To test each slope, fit a separate simple regression within each group.
+**If Step 1 rejects.** The slopes differ, so stop testing the group term. There is no single group difference to test, because the gap between the lines changes along the covariate. Describe each group's line instead. The model gives both slopes (the reference group's is $\beta_1$, the other group's is $\beta_1+\beta_3$), but it does not test whether each one differs from zero. A significant $\beta_3$ says the slopes differ from each other, not that each one differs from zero. To test each slope, fit a separate simple regression within each group.
 
 **Step 2: Are adjusted means equal?** *(only if Step 1 retained parallel slopes)* Drop the interaction and refit the parallel-lines model,
 
@@ -289,7 +289,7 @@ $$y=\beta_0+\beta_1 x+\beta_2 G+\varepsilon$$
 -   Null: $H_{0,\text{group}}:\beta_2=0$
 -   Alternative: $H_{a,\text{group}}:\beta_2\neq 0$
 
-With parallel lines, $\beta_2$ is the vertical gap between the two lines, and it is the same at every value of $x$. That gap is the **adjusted difference**: how much the groups differ when they are compared at the same covariate value. Evaluating each group's line at the overall mean of $x$ gives the **adjusted means**, the group means you would expect if both groups had the same average covariate. The second example at the end of this chapter works through one.
+With parallel lines, $\beta_2$ is the vertical gap between the two lines, and it is the same at every value of $x$. That gap is the **adjusted difference**, how much the groups differ when they are compared at the same covariate value. Evaluating each group's line at the overall mean of $x$ gives the **adjusted means**, the group means you would expect if both groups had the same average covariate. The second example at the end of this chapter works through one.
 
 In the parallel-lines model, $\beta_1$ is the common slope and $\beta_2$ is the adjusted difference between groups.
 
@@ -328,7 +328,7 @@ If the covariate is measured with error, ANCOVA only partly adjusts for group di
 
 ### Birds, air pollution and area type
 
-Imagine we're environmental scientists studying the impact of air pollution on bird species density, and we want to know whether that relationship differs between urban and rural areas. @fig-11design lays out the design.
+Suppose we are studying the effect of air pollution on bird species density, and we want to know whether that relationship differs between urban and rural areas. @fig-11design lays out the design.
 
 ```{r}
 #| label: fig-11design
@@ -344,7 +344,7 @@ design_mixed("Air pollution (continuous) × Area type (categorical)",
              note = "full pollution range measured in BOTH groups")
 ```
 
-This design has the same structure as the factorial design in Chapter 10: both cross two predictors and ask whether one changes the effect of the other. The only difference is that factorial's second predictor has levels, while ANCOVA's is a continuous range. Note also that both groups span the full pollution range. Rural sites are not simply the clean ones, which is exactly what makes an adjusted comparison possible.
+This design has the same structure as the factorial design in Chapter 10. Both cross two predictors and ask whether one changes the effect of the other. The only difference is that factorial's second predictor has levels, while ANCOVA's is a continuous range. Note also that both groups span the full pollution range. Rural sites are not simply the clean ones, which is exactly what makes an adjusted comparison possible.
 
 We might expect pollution to have a stronger negative effect in urban areas. Urban habitat is already fragmented and offers birds fewer clean patches to retreat to, while rural areas have more intact habitat nearby.
 
@@ -396,9 +396,7 @@ bird_density <- round(pmax(bird_density, 0), 0)
 data <- data.frame(AreaType = area_type, AirPollution = air_pollution, BirdDensity = bird_density)
 ```
 
-Before we look at the model results, it's always good practice to look at the data first.
-
-Let's start with the response variable, bird density, in @fig-11birddensity. This gives us a quick visual sense of whether urban and rural areas differ in their average values.
+Before fitting the model, look at the data. @fig-11birddensity shows the response variable, bird density, by area type, which gives a quick sense of whether urban and rural areas differ on average.
 
 ```{r}
 #| label: fig-11birddensity
@@ -412,7 +410,7 @@ ggplot(data, aes(AreaType, BirdDensity)) +
 
 At first glance, bird density appears higher in rural areas than in urban ones, consistent with what we might expect ecologically.
 
-Next, check the covariate, air pollution. If the covariate differs sharply between groups, ANCOVA will "adjust" for that difference. If it doesn't, group comparisons will look more like a simple ANOVA.
+Next, check the covariate, air pollution. If the covariate differs sharply between groups, ANCOVA adjusts for that difference. If it doesn't, group comparisons will look more like a simple ANOVA.
 
 ```{r}
 #| label: fig-11airpollution
@@ -424,13 +422,11 @@ ggplot(data, aes(AreaType, AirPollution)) +
   labs(x = "Area Type", y = "Air Pollution")
 ```
 
-Air pollution looks fairly similar between urban and rural sites, with no obvious systematic difference. This plot doesn't test anything, but it tells us what to expect: because pollution is similar in the two groups, a group difference in bird density is unlikely to come from a difference in pollution.
+Air pollution looks fairly similar between urban and rural sites, with no obvious systematic difference. This plot doesn't test anything, but it tells us what to expect. Because pollution is similar in the two groups, a group difference in bird density is unlikely to come from a difference in pollution.
 
 ### Results of the ANCOVA model
 
-Now that we've explored the data visually, we can test our hypotheses formally using ANCOVA.
-
-**Fit the model.** This is the same `aov()` call we used for one-way and factorial ANOVA. R doesn't need a special "ANCOVA function": once `AirPollution` is numeric instead of a factor, `aov()` handles the continuous covariate automatically.
+**Fit the model.** This is the same `aov()` call we used for one-way and factorial ANOVA. Because `AirPollution` is numeric instead of a factor, `aov()` treats it as a continuous covariate, so R needs no separate ANCOVA function.
 
 `ancova <- aov(BirdDensity ~ AirPollution * AreaType, data = data)`
 
@@ -455,15 +451,13 @@ int_row <- broom::tidy(ancova) |> filter(term == "AirPollution:AreaType")
 
 **Step 0: the whole model.** `summary(lm())` reports $F(`r fstat[2]`, `r fstat[3]`) = `r sprintf("%.2f", fstat[1])`$, $p `r fmt_p(whole_p)`$, with $R^2 = `r sprintf("%.2f", summary(ancova_lm)$r.squared)`$. The model explains bird density, so we continue.
 
-**Step 1: the interaction.** The `AirPollution:AreaType` row tests $H_{0,\text{int}}$: $F(1, `r fstat[3]`) = `r sprintf("%.2f", int_row$statistic)`$, $p = `r fmt_p(int_row$p.value)`$. Reject $H_{0,\text{int}}$: the slopes are not parallel. Air pollution's relationship with bird density depends on area type, so we stop here and do not test adjusted means.
+**Step 1: the interaction.** The `AirPollution:AreaType` row tests $H_{0,\text{int}}$: $F(1, `r fstat[3]`) = `r sprintf("%.2f", int_row$statistic)`$, $p = `r fmt_p(int_row$p.value)`$. We reject $H_{0,\text{int}}$, so the slopes are not parallel. Air pollution's relationship with bird density depends on area type, so we stop here and do not test adjusted means.
 
-**What the other two rows are.** The table still has rows for `AirPollution` and `AreaType`, both with tiny $p$-values, so it is tempting to read them. Don't. R builds these rows in sequence: `AirPollution` tests one average slope for all 200 sites, ignoring area type, and `AreaType` tests a group difference after that single slope is fitted. Once the interaction says the slopes differ, neither row describes the data: there is no single slope, and the group difference depends on where along the pollution gradient you look. Because the rows are built in sequence and the groups are unequal in size (`r sum(data$AreaType == "Rural")` rural, `r sum(data$AreaType == "Urban")` urban), listing the terms in a different order would also change their sums of squares.
+**What the other two rows are.** The table still has rows for `AirPollution` and `AreaType`, both with tiny $p$-values, so it is tempting to read them, but they don't answer this chapter's question. R builds these rows in sequence. `AirPollution` tests one average slope for all 200 sites, ignoring area type, and `AreaType` tests a group difference after that single slope is fitted. Once the interaction says the slopes differ, neither row describes the data. There is no single slope, and the group difference depends on where along the pollution gradient you look. Because the rows are built in sequence and the groups are unequal in size (`r sum(data$AreaType == "Rural")` rural, `r sum(data$AreaType == "Urban")` urban), listing the terms in a different order would also change their sums of squares.
 
 **Reading the coefficients.**
 
-We can also fit the same model using `lm()` to view the regression coefficients directly.
-
-This shows how each term contributes to predicting bird density and corresponds to the hypothesis tests we just discussed.
+Fitting the same model with `lm()` shows the regression coefficients directly, so we can see how each term contributes to predicting bird density.
 
 `ancova_lm <- lm(BirdDensity ~ AirPollution * AreaType, data = data)`
 
@@ -488,8 +482,6 @@ These coefficients give the *direction* and *magnitude* of each effect:
 -   **`AirPollution:AreaTypeUrban`.** Difference in slope between urban and rural areas (the interaction).
 
 **Visualize the interaction.**
-
-As always, plotting helps confirm what the model tells us.
 
 A scatter plot with fitted regression lines (@fig-11ancovalines) lets us see how air pollution relates to bird density for each area type.
 
@@ -529,7 +521,7 @@ slopes_tbl <- data |>
 knitr::kable(slopes_tbl)
 ```
 
-Both slopes are significant: bird density falls with pollution at rural sites and falls about twice as steeply at urban sites. The slope estimates match the ANCOVA's, $-0.069$ for rural and $-0.069 + (-0.064) \approx -0.133$ for urban, because a model with an interaction fits each group its own line. Only the tests are new, and their standard errors differ slightly because each regression estimates its own error variance.
+Both slopes are significant. Bird density falls with pollution at rural sites and falls about twice as steeply at urban sites. The slope estimates match the ANCOVA's, $-0.069$ for rural and $-0.069 + (-0.064) \approx -0.133$ for urban, because a model with an interaction fits each group its own line. Only the tests are new, and their standard errors differ slightly because each regression estimates its own error variance.
 
 The points scatter around each line. The model's $R^2$ is `r sprintf("%.2f", summary(ancova_lm)$r.squared)`, so air pollution, area type, and their interaction explain about `r round(100*summary(ancova_lm)$r.squared)`% of the variation in bird density. The remaining `r 100 - round(100*summary(ancova_lm)$r.squared)`% reflects other factors, measurement noise, or natural ecological variability not captured by this simple model. That is a strong fit by the standards of field data, and it is strong here partly because this is a synthetic dataset built to illustrate the method. Field data from actual sites are usually messier.
 
@@ -565,11 +557,11 @@ Centering doesn't change the slopes, the interaction, or their $p$-values. It mo
 
 -   **Interaction ($-0.064$).** Difference in slopes between groups. The urban slope = $-0.069 + (-0.064) \approx -0.13$, roughly twice as steep a decline as in rural sites.
 
-Note how much the group difference changed when we centered: $-5.9$ before, $-11.4$ after. That is not a contradiction. Uncentered, the term compares groups at pollution = 0, a value outside the observed data. Centered, it compares them at average pollution, a value inside the observed range. When slopes differ, "the group difference" is not one number; it depends on where along the covariate you look.
+The group difference changed when we centered, from $-5.9$ to $-11.4$. Uncentered, the term compares groups at pollution = 0, a value outside the observed data. Centered, it compares them at average pollution, a value inside the observed range. When slopes differ, "the group difference" is not one number. It depends on where along the covariate you look.
 
 **Summarize and interpret.**
 
-The significant interaction shows that air pollution's effect on bird density depends on area type: bird density declines with pollution in both settings, but the decline is about twice as steep in urban sites.
+The significant interaction shows that air pollution's effect on bird density depends on area type. Bird density declines with pollution in both settings, but the decline is about twice as steep in urban sites.
 
 Because the interaction is significant, we focus on these different slopes, not on adjusted mean differences.
 
@@ -581,7 +573,7 @@ If the interaction had *not* been significant, we would instead drop the interac
 
 ## Second example: when the covariate is a nuisance
 
-The bird example used ANCOVA the way this chapter leads with it: the covariate relationship was the question, and the interaction was the finding. The other way you'll see ANCOVA reverses those roles. The group comparison is the question, and the covariate is something to adjust for so that the comparison is fair. This is also the continuous version of the Simpson's paradox problem the chapter opened with.
+The bird example used ANCOVA the way this chapter leads with it. The covariate relationship was the question, and the interaction was the finding. The other way you'll see ANCOVA reverses those roles. The group comparison is the question, and the covariate is something to adjust for so that the comparison is fair. This is also the continuous version of the Simpson's paradox problem the chapter opened with.
 
 ### Retrofits and electricity use
 
@@ -649,7 +641,7 @@ adj_retr <- adj_std + b2
 
 **Step 0: the whole model.** $F(`r e_f[2]`, `r e_f[3]`) = `r sprintf("%.2f", e_f[1])`$, $p `r fmt_p(e_fp)`$. The model explains electricity use, so we continue.
 
-**Step 1: the interaction.** The `Occupancy:Type` row gives $F(1, `r e_f[3]`) = `r sprintf("%.2f", e_int$statistic)`$, $p = `r fmt_p(e_int$p.value)`$. We fail to reject $H_{0,\text{int}}$: the slopes are parallel, so each additional occupant adds about the same amount of electricity in either kind of building. We drop the interaction and refit.
+**Step 1: the interaction.** The `Occupancy:Type` row gives $F(1, `r e_f[3]`) = `r sprintf("%.2f", e_int$statistic)`$, $p = `r fmt_p(e_int$p.value)`$. We fail to reject $H_{0,\text{int}}$, so we treat the slopes as parallel. Each additional occupant adds about the same amount of electricity in either kind of building. We drop the interaction and refit.
 
 **Step 2: the adjusted difference.** @tbl-11energypar shows the parallel-lines model.
 
@@ -671,9 +663,9 @@ knitr::kable(
 )
 ```
 
-The `Occupancy` coefficient is the common slope: about `r sprintf("%.2f", b1)` kWh per day for each additional occupant. The `TypeRetrofitted` coefficient is $b_2$, the estimate of $\beta_2$, the adjusted difference: at the same occupancy, retrofitted buildings use `r sprintf("%.1f", abs(b2))` kWh per day less than standard ones, $t(57) = `r sprintf("%.2f", b2r$statistic)`$, $p `r fmt_p(b2r$p.value)`$. We reject $H_{0,\text{group}}$.
+The `Occupancy` coefficient is the common slope, about `r sprintf("%.2f", b1)` kWh per day for each additional occupant. The `TypeRetrofitted` coefficient is $b_2$, the estimate of $\beta_2$, the adjusted difference. At the same occupancy, retrofitted buildings use `r sprintf("%.1f", abs(b2))` kWh per day less than standard ones, $t(57) = `r sprintf("%.2f", b2r$statistic)`$, $p `r fmt_p(b2r$p.value)`$. We reject $H_{0,\text{group}}$.
 
-@fig-11energyadj shows what that coefficient measures. The adjusted means turn it into two numbers: evaluating each line at the overall mean occupancy, `r round(occ_bar, 1)` people, gives `r sprintf("%.1f", adj_std)` kWh per day for standard buildings and `r sprintf("%.1f", adj_retr)` for retrofitted ones. Their difference is $b_2$.
+@fig-11energyadj shows what that coefficient measures. The adjusted means turn it into two numbers. Evaluating each line at the overall mean occupancy, `r round(occ_bar, 1)` people, gives `r sprintf("%.1f", adj_std)` kWh per day for standard buildings and `r sprintf("%.1f", adj_retr)` for retrofitted ones. Their difference is $b_2$.
 
 ```{r}
 #| label: fig-11energyadj
@@ -702,14 +694,14 @@ ggplot(energy, aes(Occupancy, Energy, colour = Type)) +
   theme(legend.position = "top")
 ```
 
-The raw comparison and the adjusted one point in opposite directions, for the same reason as in the COVID example. The groups differed in a third variable: the retrofitted buildings were busier, and busier buildings use more electricity. Compared at the same occupancy, retrofitted buildings use less electricity.
+The raw comparison and the adjusted one point in opposite directions, for the same reason as in the COVID example. The groups differed in a third variable. The retrofitted buildings were busier, and busier buildings use more electricity. Compared at the same occupancy, retrofitted buildings use less electricity.
 
 ```{r}
 mse_raw   <- anova(lm(Energy ~ Type, data = energy))["Residuals", "Mean Sq"]
 mse_ancova <- anova(energy_par)["Residuals", "Mean Sq"]
 ```
 
-Adjusting for occupancy also shrank the error term. In the raw comparison the error mean square is `r round(mse_raw)`; in the parallel-lines model it is `r round(mse_ancova)`. Much of the building-to-building variation in electricity use comes from occupancy, and once the model accounts for it, that variation no longer counts as error. This is the same way repeated-measures ANOVA gains power in Chapter 8. There the known source of variation was the units themselves (the monitoring stations); here it is a measured covariate. Either way, removing it from $MS_\text{Within}$ makes the denominator of the test smaller, so a real group difference is easier to detect.
+Adjusting for occupancy also shrank the error term. In the raw comparison the error mean square is `r round(mse_raw)`, and in the parallel-lines model it is `r round(mse_ancova)`. Much of the building-to-building variation in electricity use comes from occupancy, and once the model accounts for it, that variation no longer counts as error. Repeated-measures ANOVA gains power the same way in Chapter 8. There the known source of variation was the units themselves (the monitoring stations), and here it is a measured covariate. Either way, removing it from $MS_\text{Within}$ makes the denominator of the test smaller, so a real group difference is easier to detect.
 
 ::: {.callout-important title="Results reporting: ANCOVA with parallel slopes"}
 > After adjusting for occupancy, retrofitted buildings used less electricity than standard buildings, `r sprintf("%.1f", b2)` kWh per day, 95% CI [`r sprintf("%.1f", b2r$conf.low)`, `r sprintf("%.1f", b2r$conf.high)`], $t(57) = `r sprintf("%.2f", b2r$statistic)`$, $p `r fmt_p(b2r$p.value)`$. Adjusted means at the average occupancy of `r round(occ_bar, 1)` people were `r sprintf("%.1f", adj_retr)` kWh per day for retrofitted buildings and `r sprintf("%.1f", adj_std)` for standard ones. The occupancy × building type interaction was not significant, $F(1, `r e_f[3]`) = `r sprintf("%.2f", e_int$statistic)`$, $p = `r fmt_p(e_int$p.value)`$, so a common slope was used (`r sprintf("%.2f", b1)` kWh per day per occupant).
@@ -717,7 +709,7 @@ Adjusting for occupancy also shrank the error term. In the raw comparison the er
 
 ## Chapter Summary
 
-**Why it matters.** Environmental relationships rarely play out identically everywhere. ANCOVA is the tool for a specific, recurring question: does a continuous relationship, like pollution's effect on some outcome, hold the same way across different groups, or change from one group to the next?
+**Why it matters.** Environmental relationships rarely play out identically everywhere. ANCOVA answers a specific, recurring question, whether a continuous relationship, like pollution's effect on some outcome, holds the same way across groups or changes from one group to the next.
 
 **Core ideas**
 
