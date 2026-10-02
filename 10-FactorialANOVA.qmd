@@ -70,38 +70,21 @@ This chapter covers both halves of that. First, how to compute a factorial ANOVA
 
 ## Factorial basics
 
-Imagine investigating the growth rate of a plant species, with independent variables like soil pH or water variability. Each added IV multiplies the number of conditions you can observe, and with it, the questions you can ask about how those factors work together. Consider the following example:
+Imagine investigating the growth rate of a plant species, with independent variables like soil pH or water variability. Each added IV multiplies the number of conditions you can observe, and with it, the questions you can ask about how those factors work together. @tbl-10designs shows three designs built around the same plant-growth question.
 
-1.  **1 IV (with two levels)**
+| Design | Example question | Test |
+|:-------|:-----------------|:-----|
+| 1 IV, 2 levels (soil pH: acidic, neutral) | How does soil pH affect plant growth? | $t$-test |
+| 1 IV, 3 levels (water: low, medium, high) | How does water availability affect plant growth? | One-way ANOVA |
+| 2 IVs, 2 levels each (soil pH × water: low, high) | How do soil pH and water availability together affect plant growth? | Factorial ANOVA |
 
-*How does soil pH affect plant growth?*
-
--   Independent Variable: Soil pH (Acidic vs. Neutral)
-
-We have one IV (soil pH), with two levels (Acidic vs. Neutral). A $t$-test is appropriate here, since we are dealing with just two levels of our independent variable.
-
-2.  **1 IV (three levels):**
-
-*How does varying water availability impact plant growth?*
-
--   Independent Variable: Water Availability (Low, Medium, High)
-
-Our single IV (water availability) has three levels (Low, Medium, High). You can't run a $t$-test anymore. An ANOVA is appropriate here, given the variable has more than two levels.
-
-3.  **2 IVs: IV1 (two levels), IV2 (two levels)**
-
-*How do soil pH and water availability together affect plant growth?*
-
--   IV1 (Soil pH: Acidic vs. Neutral);
--   IV2 (Water Availability: Low vs. High)
+: Each added IV or level changes the test. {#tbl-10designs}
 
 Now we have two IVs, soil pH and water availability, each with two levels. This is called a **factorial** design.
 
-### 2x2 designs
+### Factorial notation
 
 Each combination of soil type and water availability creates a unique environment for the plants, giving four distinct scenarios to measure growth rates: 2 IVs, each with 2 levels, for 2x2 = 4 conditions total. The notation directly tells you the number of conditions.
-
-### Factorial notation
 
 Anytime all of the levels of each IV in a design are fully crossed, so that they all occur for each level of every other IV, we can say the design is a **fully factorial** design.
 
@@ -310,10 +293,12 @@ df_total <- truncate_rows(df_total)
 df_total <- rbind(df_total, c("Sums", "", sum(species), rsum(diff), rsum(diff_sq)))
 df_total <- rbind(df_total, c("Means", "", round(mean(species), 2), "", ""))
 
-knitr::kable(df_total, row.names = FALSE)
+knitr::kable(df_total, row.names = FALSE,
+             col.names = c("Pollution", "Flow", "Species", "Deviation from grand mean", "Squared deviation"),
+             caption = "Deviations from the grand mean")
 ```
 
-The mean of all 20 scores is the grand mean, `r round(gm,2)`. The `Diff` column holds every channel's distance from it; `Diff Squared` squares those distances so they don't cancel (the same reason we squared deviations for the one-way ANOVA). Summing the squared column gives $SS_\text{Total} = `r round(sum(diff_sq),2)`$.
+The mean of all 20 scores is the grand mean, `r round(gm,2)`. The deviation column holds every channel's distance from it, and the last column squares those distances so they don't cancel (the same reason we squared deviations for the one-way ANOVA). Summing the squared column gives $SS_\text{Total} = `r round(sum(diff_sq),2)`$.
 
 ### SS Pollution
 
@@ -331,7 +316,9 @@ df_poll <- data.frame(Pollution = pollution, Flow = flow, Species = species,
 df_poll <- truncate_rows(df_poll)
 df_poll <- rbind(df_poll, c("Sums", "", sum(species), "", rsum(diff), rsum(diff_sq)))
 
-knitr::kable(df_poll, row.names = FALSE)
+knitr::kable(df_poll, row.names = FALSE,
+             col.names = c("Pollution", "Flow", "Species", "Pollution marginal mean", "Marginal mean minus grand mean", "Squared"),
+             caption = "Pollution marginal means replace the scores")
 ```
 
 Every no-pollution channel is replaced by the no-pollution marginal mean, `r round(nopoll_mean,2)`; every pollution channel by the pollution marginal mean, `r round(poll_mean,2)`. Squaring and summing those means' distances from the grand mean gives $SS_\text{Pollution} = `r round(sum(diff_sq),2)`$: the variation explained by pollution condition alone.
@@ -352,7 +339,9 @@ df_flow <- data.frame(Pollution = pollution, Flow = flow, Species = species,
 df_flow <- truncate_rows(df_flow)
 df_flow <- rbind(df_flow, c("Sums", "", sum(species), "", rsum(diff), rsum(diff_sq)))
 
-knitr::kable(df_flow, row.names = FALSE)
+knitr::kable(df_flow, row.names = FALSE,
+             col.names = c("Pollution", "Flow", "Species", "Flow marginal mean", "Marginal mean minus grand mean", "Squared"),
+             caption = "Flow marginal means replace the scores")
 ```
 
 Every low-flow channel is replaced by the low-flow marginal mean, `r round(low_mean,2)`; every high-flow channel by the high-flow marginal mean, `r round(high_mean,2)`. This gives $SS_\text{Flow} = `r round(sum(diff_sq),2)`$.
@@ -378,7 +367,9 @@ df_int <- data.frame(Pollution = pollution, Flow = flow, Species = species,
 df_int <- truncate_rows(df_int)
 df_int <- rbind(df_int, c("Sums", "", sum(species), "", rsum(diff), rsum(diff_sq)))
 
-knitr::kable(df_int, row.names = FALSE)
+knitr::kable(df_int, row.names = FALSE,
+             col.names = c("Pollution", "Flow", "Species", "Cell mean", "Interaction leftover", "Squared"),
+             caption = "What is left of each cell mean after both main effects")
 ```
 
 Squaring and summing gives $SS_\text{Interaction} = `r round(sum(diff_sq),2)`$.
@@ -504,17 +495,7 @@ In any 2x2 ANOVA, there are eight general outcome patterns, different combinatio
 
 We'll create bar and line graphs to illustrate these patterns. Bar graphs are great for seeing differences in means directly, while line graphs help us spot interactions. @fig-10bar22 shows the possible patterns in bar graph form. These are abstract illustrations of every combination that can occur, so a few of them describe patterns you would not expect ecologically. Use them to learn to recognize the shapes.
 
-Every figure in this chapter puts flow rate on the x-axis and draws one line (or bar) per pollution condition: blue for no pollution, red for pollution. Here's what to look for:
-
--   **Parallel lines** → no interaction.
--   **Non-parallel or crossing lines** → interaction likely.
--   **Vertical separation between marginal means** → main effect.
-
-For example:
-
--   If the no-pollution line sits above the pollution line on average, there's a main effect of pollution.
--   If the lines converge, diverge, or cross, the pollution effect changes across flow rates, showing an interaction.
--   If the lines rise or fall on average from low to high flow (say, high flow supports more species in both pollution conditions), that's a main effect of flow.
+Every figure in this chapter puts flow rate on the x-axis and draws one line (or bar) per pollution condition, blue for no pollution and red for pollution.
 
 The eight panels below are numbered to match the table above, so panel "Pattern 3" in the figure is row 3 in the table, and so on.
 
@@ -573,8 +554,8 @@ ggplot(all_22s, aes(x = Flow, y = means, fill = Pollution)) +
 
 ```{r}
 #| label: fig-10lines22
-#| fig-cap: "Line graphs showing eight possible outcomes for a pollution × flow design."
-#| fig-alt: "The same eight patterns as the previous bar-chart figure, redrawn as line graphs with a solid line for No Pollution and a dashed line for Pollution, running from Low Flow to High Flow. Patterns 1, 2, 4, and 6 show two straight, parallel lines, meaning no interaction. Patterns 3, 5, 7, and 8 show lines that are not parallel, either converging, diverging, or crossing outright, meaning an interaction is present in each of those four panels."
+#| fig-cap: "Line graphs showing eight possible outcomes for a pollution × flow design. In Patterns 1 and 6 the two lines lie on top of each other."
+#| fig-alt: "The same eight patterns as the previous bar-chart figure, redrawn as line graphs with a solid line for No Pollution and a dashed line for Pollution, running from Low Flow to High Flow. Patterns 2 and 4 show two parallel lines, and in Patterns 1 and 6 the two lines lie on top of each other, meaning no interaction. Patterns 3, 5, 7, and 8 show lines that are not parallel, either converging, diverging, or crossing outright, meaning an interaction is present in each of those four panels."
 #| out-width: "100%"
 
 ggplot(all_22s, aes(x = Flow, y = means, colour = Pollution, group = Pollution)) +
@@ -684,6 +665,7 @@ ggplot(p_consistent, aes(x = Flow, y = mean_count, color = Pollution, group = Po
   scale_linetype_manual(values = poll_lty) +
   labs(colour = NULL, linetype = NULL, x = "Flow rate") +
   ylab("Mean species count") +
+  coord_cartesian(ylim = c(0, 15)) +
   theme(legend.position = "top")
 ```
 
@@ -713,6 +695,7 @@ ggplot(p_inconsistent, aes(x = Flow, y = mean_count, color = Pollution, group = 
   scale_linetype_manual(values = poll_lty) +
   labs(colour = NULL, linetype = NULL, x = "Flow rate") +
   ylab("Mean species count") +
+  coord_cartesian(ylim = c(0, 15)) +
   theme(legend.position = "top")
 ```
 
@@ -744,6 +727,7 @@ ggplot(p_masked, aes(x = Flow, y = mean_count, color = Pollution, group = Pollut
   scale_linetype_manual(values = poll_lty) +
   labs(colour = NULL, linetype = NULL, x = "Flow rate") +
   ylab("Mean species count") +
+  coord_cartesian(ylim = c(0, 15)) +
   theme(legend.position = "top")
 ```
 
@@ -752,6 +736,17 @@ ggplot(p_masked, aes(x = Flow, y = mean_count, color = Pollution, group = Pollut
 Average across flow rates to get a main effect, and they cancel: unpolluted channels give $(8+8)/2=8$, polluted channels give $(4+12)/2=8$, a main-effect difference of exactly $0$. An ANOVA on this data would report no main effect of pollution at all, not because pollution doesn't matter, but because its two real, opposite effects average each other out.
 
 This is the case the "read the interaction first" rule exists for. A non-significant main effect here would be true and misleading: pollution has no effect *on average*, and a large effect *in each condition*. Reporting only the main effect would suggest pollution is irrelevant, when it has a large effect at both flow rates, in opposite directions.
+
+@tbl-10cases puts the three cases and the stream experiment side by side.
+
+| Case | Simple effect of pollution (low flow, high flow) | Main effect of pollution | What to report |
+|:-----|:-------------------------------------------------|:-------------------------|:---------------|
+| Consistent main effect and an interaction (@fig-10mainint) | 7, 3 | 5 | Simple effects, plus the main effect with its qualification |
+| Averaged main effect (@fig-10mainintInc) | 5, 0 | 2.5, which matches neither condition | Simple effects only |
+| Masked main effect (@fig-10mainintMasked) | 4, −4 | 0, which hides two real effects | Simple effects only |
+| Stream experiment (@fig-10workedint) | 6.0, 2.6 | 4.3 | Simple effects, plus the main effect with its qualification |
+
+: The same rule applied to four sets of cell means. {#tbl-10cases}
 
 ### Reporting the stream result
 
@@ -839,6 +834,7 @@ ggplot(df, aes(x = flow_rate, y = species_count, colour = pollution, group = pol
   ylab("Mean species count") +
   xlab("Flow rate") +
   labs(colour = NULL, linetype = NULL) +
+  coord_cartesian(ylim = c(0, 15)) +
   theme(legend.position = "top")
 
 ```
@@ -875,6 +871,7 @@ ggplot(df, aes(x = flow_rate, y = species_count, colour = pollution, group = pol
   ylab("Mean species count") +
   xlab("Flow rate") +
   labs(colour = NULL, linetype = NULL) +
+  coord_cartesian(ylim = c(0, 15)) +
   theme(legend.position = "top")
 ```
 
@@ -902,6 +899,7 @@ ggplot(df, aes(x = flow_rate, y = species_count, colour = pollution, group = pol
   ylab("Mean species count") +
   xlab("Flow rate") +
   labs(colour = NULL, linetype = NULL) +
+  coord_cartesian(ylim = c(0, 15)) +
   theme(legend.position = "top")
 ```
 
