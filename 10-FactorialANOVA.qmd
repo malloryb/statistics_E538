@@ -430,9 +430,17 @@ R's `aov()` builds the same table directly. The `*` in the formula tells R to in
 ```{r}
 #| echo: true
 #| eval: false
+all_df <- data.frame(
+  Number_species = c(10, 8, 11, 9, 10,  5, 4, 3, 4, 2,
+                     12, 13, 14, 11, 13,  9, 8, 10, 11, 12),
+  Pollution = rep(c("No Pollution", "Pollution", "No Pollution", "Pollution"), each = 5),
+  Flow      = rep(c("Low Flow", "Low Flow", "High Flow", "High Flow"), each = 5)
+)
 aov_fit <- aov(Number_species ~ Pollution * Flow, data = all_df)
 summary(aov_fit)
 ```
+
+Run these lines in R to reproduce the table below.
 
 ```{r}
 all_df  <- data.frame(Pollution = factor(pollution), Flow = factor(flow), Number_species = species)
@@ -716,7 +724,7 @@ ggplot(p_inconsistent, aes(x = Flow, y = mean_count, color = Pollution, group = 
 
 @fig-10mainintInc shows a starker pattern, with a large difference between polluted and unpolluted channels under low flow and no difference at all under high flow.
 
-Yet an ANOVA run on this data can still report a significant main effect of pollution. Averaged across flow rates, unpolluted channels give $(10+5)/2=7.5$ species and polluted channels give $5$, a main-effect difference of 2.5. That number is real, but it doesn't describe what pollution actually does. Pollution removes 5 species under low flow and none under high flow, not 2.5 everywhere. The "main effect" here is an artifact of averaging over a strong interaction.
+Yet an ANOVA on data with these cell means can still report a significant main effect of pollution when the error variance is small. Averaged across flow rates, unpolluted channels give $(10+5)/2=7.5$ species and polluted channels give $5$, a main-effect difference of 2.5. That number is real, but it doesn't describe what pollution actually does. Pollution removes 5 species under low flow and none under high flow, not 2.5 everywhere. The "main effect" here is an artifact of averaging over a strong interaction.
 
 The ANOVA shows a significant main effect of pollution, but it should not be reported as a general effect, because the pollution effect was large under low flow and zero under high flow. In a case like this, it's fair to doubt whether pollution has a *general* effect on species count at all. It may only do damage under specific conditions, in combination with other factors, rather than on its own.
 
@@ -748,7 +756,7 @@ ggplot(p_masked, aes(x = Flow, y = mean_count, color = Pollution, group = Pollut
 
 @fig-10mainintMasked shows the most misleading pattern of the three. Under low flow, pollution *reduces* species count (8 vs. 4). Under high flow, pollution *increases* it (8 vs. 12). Both are real, sizable effects, just pointed in opposite directions.
 
-Average across flow rates to get a main effect, and they cancel: unpolluted channels give $(8+8)/2=8$, polluted channels give $(4+12)/2=8$, a main-effect difference of exactly $0$. An ANOVA on this data would report no main effect of pollution at all, not because pollution doesn't matter, but because its two real, opposite effects average each other out.
+Average across flow rates to get a main effect, and they cancel: unpolluted channels give $(8+8)/2=8$, polluted channels give $(4+12)/2=8$, a main-effect difference of exactly $0$. An ANOVA on data with these cell means would report no main effect of pollution at all, because its two opposite effects average each other out.
 
 This is the case the "read the interaction first" rule exists for. A non-significant main effect here would be true and misleading. Pollution has no effect *on average* and a large effect *in each condition*. Reporting only the main effect would suggest pollution is irrelevant, when it has a large effect at both flow rates, in opposite directions.
 
