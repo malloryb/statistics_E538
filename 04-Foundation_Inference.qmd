@@ -624,25 +624,25 @@ p_pm  <- 2 * pnorm(-abs(z_pm))          # two-tailed p-value
 
 Critical values come from the sampling distribution of the sample mean under $H_0$, built in @fig-4key.null_to_sampling.
 
-@fig-rejection-region draws it for a two-tailed test at $\alpha = 0.05$, marked off in standard errors from $\mu_0$. The red lines are the critical values, 1.96 standard errors on either side of $\mu_0$. They cut off the most extreme 5% of the curve, 2.5% in each tail, and those shaded tails are the rejection regions. Here the observed $\bar{x}$ is 2.4 standard errors above $\mu_0$, inside the right-hand rejection region. Counting that distance in standard errors is exactly the test statistic from earlier, $z = (\bar{x} - \mu_0)/SE = 2.4$.
+@fig-rejection-region draws it for the PM2.5 example, a two-tailed test at $\alpha = 0.05$, marked off in standard errors from $\mu_0$. The red lines are the critical values, 1.96 standard errors on either side of $\mu_0$. They cut off the most extreme 5% of the curve, 2.5% in each tail, and those shaded tails are the rejection regions. The county's $\bar{x} = 14.1$ is `r sprintf("%.2f", z_pm)` standard errors above $\mu_0 = 12$, inside the right-hand rejection region. Counting that distance in standard errors is exactly the test statistic from @tbl-4routes, $z = (\bar{x} - \mu_0)/SE = `r sprintf("%.2f", z_pm)`$.
 
 Decision rule:
 
 - If the observed test statistic falls inside the central region, we fail to reject $H_0$ because the result is consistent with chance variation.
 - If it falls in either rejection region, we reject $H_0$ because the result is too extreme to attribute to chance alone at the 5% level.
 
-$\alpha$ is the red area in @fig-rejection-region. The $p$-value (Route 3) is the area beyond the observed statistic, in both tails. Because $\bar{x}$ is inside a red tail, the area beyond it is smaller than the red area. Here $p = `r sprintf("%.3f", 2 * pnorm(-2.4))`$, below $\alpha = 0.05$.
+$\alpha$ is the red area in @fig-rejection-region. The $p$-value (Route 3) is the area beyond the observed statistic, in both tails. Because $\bar{x}$ is inside a red tail, the area beyond it is smaller than the red area. Here $p = `r sprintf("%.3f", p_pm)`$, below $\alpha = 0.05$.
 
 ```{r}
 #| label: fig-rejection-region
-#| fig-cap: 'Two-tailed test at $\alpha = 0.05$: the sampling distribution of the sample mean under $H_0$ (blue dot-dash), centered at $\mu_0$ (magenta) and marked off in standard errors. Red lines are the critical values at $\pm 1.96$ SE. The shaded tails are the rejection regions. The observed $\bar{x}$ (dotted) falls 2.4 SE above $\mu_0$, in the rejection region.'
-#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0. The x-axis is marked mu sub 0 minus 2 SE, minus 1 SE, mu sub 0, plus 1 SE, plus 2 SE. Red vertical lines at plus and minus 1.96 SE, each labeled critical value, with the small tail areas beyond them shaded red and labeled rejection region. A lime-green dotted line labeled x-bar is at 2.4 SE, inside the right-hand shaded region."
+#| fig-cap: 'Two-tailed test at $\alpha = 0.05$: the sampling distribution of the sample mean under $H_0$ (blue dot-dash), centered at $\mu_0$ (magenta) and marked off in standard errors. Red lines are the critical values at $\pm 1.96$ SE. The shaded tails are the rejection regions. The PM2.5 example''s $\bar{x}$ (dotted) falls 2.10 SE above $\mu_0$, in the rejection region.'
+#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0. The x-axis is marked mu sub 0 minus 2 SE, minus 1 SE, mu sub 0, plus 1 SE, plus 2 SE. Red vertical lines at plus and minus 1.96 SE, each labeled critical value, with the small tail areas beyond them shaded red and labeled rejection region. A lime-green dotted line labeled x-bar is at 2.1 SE, just inside the right-hand shaded region."
 #| fig-width: 7
 #| fig-height: 4.5
 
 alpha <- 0.05
 crit  <- qnorm(1 - alpha/2)
-xbar_se <- 2.4    # observed x-bar, in standard errors above mu0
+xbar_se <- z_pm   # the PM2.5 example's x-bar, in standard errors above mu0
 rr <- tibble::tibble(x = seq(-4, 4, length.out = 2000), y = dnorm(x))
 y_peak <- dnorm(0)
 
@@ -671,7 +671,7 @@ ggplot(rr, aes(x, y)) +
 
 The confidence-interval route makes the same decision from the sample's side. It never uses the null population distribution, only the single value $\mu_0$.
 
-Start from the sampling distribution of the sample mean built in @fig-4key.sample_to_sampling: centered at $\bar{x}$, with the standard error as its spread. A sample mean falls within 1.96 standard errors of the true mean $\mu$ about 95% of the time, so the middle 95% of this curve, $\bar{x} \pm 1.96\,SE$, is the 95% confidence interval. It contains the values of $\mu$ that are consistent with our sample (@fig-ci-lens-build). Then ask where $\mu_0$ falls (@fig-ci-lens-decision).
+Start from the sampling distribution of the sample mean built in @fig-4key.sample_to_sampling: centered at $\bar{x}$, with the standard error as its spread. A sample mean falls within 1.96 standard errors of the true mean $\mu$ about 95% of the time, so the middle 95% of this curve, $\bar{x} \pm 1.96\,SE$, is the 95% confidence interval. It contains the values of $\mu$ that are consistent with our sample (@fig-ci-lens-build). For the PM2.5 example the interval is 95% CI [`r sprintf("%.2f", ci_pm[1])`, `r sprintf("%.2f", ci_pm[2])`] µg/m³. Then ask where $\mu_0$ falls (@fig-ci-lens-decision).
 
 ```{r}
 #| label: fig-ci-lens-build
@@ -714,7 +714,7 @@ Decision rule:
 
 ```{r}
 #| label: fig-ci-lens-decision
-#| fig-cap: 'The decision, same sample in both panels. Left: $\mu_0$ (magenta) falls inside the 95% confidence interval, so we fail to reject $H_0$. Right: a different $\mu_0$ falls outside it, so we reject $H_0$.'
+#| fig-cap: 'The decision for the PM2.5 sample, the same in both panels. Left: a target of $\mu_0 = 13$ (magenta) would fall inside the 95% confidence interval, so we would fail to reject $H_0$. Right: the county''s target, $\mu_0 = 12$, falls outside it, so we reject $H_0$.'
 #| fig-alt: "Two panels, each showing the same narrow dark-green dot-dash curve centered on a lime-green dotted line labeled x-bar, with a thick dark-green confidence interval bar underneath. Left: a magenta dashed line labeled mu sub 0 is just left of x-bar, inside the bar, with a box reading Fail to reject. Right: the magenta line is farther left, outside the bar, with a box reading Reject."
 #| fig-width: 9
 #| fig-height: 3.6
@@ -729,27 +729,28 @@ mu0_panel <- function(mu0) {
              colour = ifelse(inside, "black", "red3"), size = 3.8, fill = "white", label.size = 0.2)
 }
 
-grid.arrange(mu0_panel(0), mu0_panel(-0.9), ncol = 2)
+# PM2.5 example, drawn in standard-error units: a target of 13 is (14.1 - 13)/SE below x-bar, the target of 12 is z_pm SEs below
+grid.arrange(mu0_panel(xbar - (xbar_pm - 13) / se_pm * SE), mu0_panel(xbar - z_pm * SE), ncol = 2)
 ```
 
-In the right panel, $\mu_0$ is only `r round(abs(-0.9 - xbar) / pop_sd, 1)` population standard deviations from $\bar{x}$, so a single reading at that value would be unremarkable. It is not a plausible value for the *mean*, because sample means vary much less than individual readings do.
+In the right panel, the target of 12 µg/m³ is only `r sprintf("%.1f", xbar_pm - mu0_pm)` µg/m³ from $\bar{x}$, about `r sprintf("%.2f", (xbar_pm - mu0_pm) / sigma_pm)` population standard deviations, so a single day at 12 µg/m³ would be unremarkable. It is not a plausible value for the *mean*, because sample means vary much less than individual readings do.
 
 For common models, a two-tailed level-$\alpha$ test of $H_0:\ \mu=\mu_0$ is equivalent to checking whether $\mu_0$ lies inside the $100(1-\alpha)\%$ confidence interval. The CI shows both the decision (reject or not) *and* the range of parameter values still consistent with the data.
 
 ### Route 3: $p$-value
 
-The $p$-value is an area under the curve, so it comes from `pnorm()`, which Chapter 3 introduced as the area to the left of a value. For the observed $z = 1.85$ in @fig-pvalue-lens, `pnorm(-1.85)` gives the area below $-1.85$, about 0.032, which by symmetry equals the area above $+1.85$. A two-tailed test counts both tails, so $p$ = `2 * pnorm(-1.85)` $\approx 0.064$. Reject if $p<\alpha$. Here $0.064 > 0.05$, so we fail to reject.
+The $p$-value is an area under the curve, so it comes from `pnorm()`, which Chapter 3 introduced as the area to the left of a value. For the PM2.5 example's $z = `r sprintf("%.2f", z_pm)`$ in @fig-pvalue-lens, `pnorm(-2.10)` gives the area below $-2.10$, about `r sprintf("%.3f", pnorm(-z_pm))`, which by symmetry equals the area above $+2.10$. A two-tailed test counts both tails, so $p$ = `2 * pnorm(-2.10)` $\approx `r sprintf("%.3f", p_pm)`$. Reject if $p<\alpha$. Here $`r sprintf("%.3f", p_pm)` < 0.05$, so we reject.
 
 ```{r}
 #| label: fig-pvalue-lens
 #| fig-cap: '$p$-value lens: the two-tailed $p$-value is the grey area beyond the observed statistic (dotted line), in both tails, under the null. Red lines mark the critical values.'
-#| fig-alt: "A blue dot-dash standard normal curve centered at zero, marked with a magenta dashed vertical line at the center for the null value and a lime-green dotted vertical line further right labeled 'observed z' at about 1.85. The areas beyond plus and minus 1.85 in both tails are shaded grey. Short thin red vertical lines at plus and minus 1.96 mark the critical values, a little farther out than the start of the grey shading. Text on the left reports a two-tailed p-value of 0.064, labeled fail to reject."
+#| fig-alt: "A blue dot-dash standard normal curve centered at zero, marked with a magenta dashed vertical line at the center for the null value and a lime-green dotted vertical line further right labeled 'observed z' at about 2.1. The areas beyond plus and minus 2.1 in both tails are shaded grey. Short thin red vertical lines at plus and minus 1.96 mark the critical values, a little closer to the center than the start of the grey shading. Text on the left reports a two-tailed p-value of 0.036, labeled reject."
 #| out-width: "100%"
 
 library(tidyverse)
 
 alpha <- 0.05
-z_obs <- 1.85     # observed z (edit this)
+z_obs <- z_pm     # the PM2.5 example's z
 p_two <- 2*pnorm(-abs(z_obs))   # two-tailed p under N(0,1)
 
 x <- tibble(
@@ -789,14 +790,14 @@ $$p = P(\text{a statistic at least this extreme} \mid H_0 \text{ is true})$$
 
 To the right of the bar is what you have assumed, that $H_0$ is true. To the left are the data. The $p$-value is the probability of data like yours if $H_0$ is true.
 
-**Flipping the bar gives a different probability.** In Chapter 3's stream example, flipping the two sides of the bar turned $P(\text{exceed} \mid \text{heavy rain}) = 0.60$ into $P(\text{heavy rain} \mid \text{exceed}) = 0.30$. Here, it is tempting to read $p = 0.064$ as "a 6.4% chance the null is true." That is a different conditional probability, and a test cannot give it to you:
+**Flipping the bar gives a different probability.** In Chapter 3's stream example, flipping the two sides of the bar turned $P(\text{exceed} \mid \text{heavy rain}) = 0.60$ into $P(\text{heavy rain} \mid \text{exceed}) = 0.30$. Here, it is tempting to read $p = `r sprintf("%.3f", p_pm)`$ as "a `r sprintf("%.1f", 100 * p_pm)`% chance the null is true." That is a different conditional probability, and a test cannot give it to you:
 
 | Probability | What it means | Does a test give it? |
 |---|---|---|
 | $P(\text{data this extreme} \mid H_0 \text{ true})$ | How often chance alone produces data like yours, if $H_0$ holds | Yes, this is the $p$-value |
 | $P(H_0 \text{ true} \mid \text{data})$ | How likely the null is, given what you observed | No |
 
-A $p$-value works like the stream example. The test assumes $H_0$ and asks how unusual the data would be under it. It never computes how likely $H_0$ is. Under the approach in this book, $H_0$ is either true or false, so there is no probability for the test to report. In the $z = 1.85$ example, $p \approx 0.064$ means that if $H_0$ were true, a statistic at least 1.85 standard errors from $\mu_0$ in either direction would turn up about 6.4% of the time. It does not mean there is a 6.4% chance that $H_0$ is true.
+A $p$-value works like the stream example. The test assumes $H_0$ and asks how unusual the data would be under it. It never computes how likely $H_0$ is. Under the approach in this book, $H_0$ is either true or false, so there is no probability for the test to report. In the PM2.5 example, $p \approx `r sprintf("%.3f", p_pm)`$ means that if $H_0$ were true, a statistic at least `r sprintf("%.2f", z_pm)` standard errors from $\mu_0$ in either direction would turn up about `r sprintf("%.1f", 100 * p_pm)`% of the time. It does not mean there is a `r sprintf("%.1f", 100 * p_pm)`% chance that $H_0$ is true.
 
 ### Reject or fail to reject
 
