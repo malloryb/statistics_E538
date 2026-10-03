@@ -12,9 +12,9 @@ source("imgs/gifs/ch2_cor_true_r.R")  # true_r, the true correlation in fig-2rea
 
 # Correlation {#Correlation}
 
-> *Correlation does not equal causation.*
+> *Correlation doesn't imply causation, but it does waggle its eyebrows suggestively and gesture furtively while mouthing 'look over there'.*
 >
-> Every Statistics Instructor Ever
+> Randall Munroe, xkcd #552, "Correlation" (2009)
 
 Chapter 1 worked with one variable at a time. It covered the center in full (mean, median, mode) and gave a first, rough measure of spread, the range. Many interesting questions are about whether two variables move together. Does ozone rise on hotter days? Do wetter winters produce taller trees?
 
@@ -37,7 +37,10 @@ For convenience, both the scales will go from 0 to 100. For the chocolate scale,
 
 The numbers in this example are invented. We built them so that each extra unit of chocolate adds 0.6 units of happiness on average, plus other influences. Here are the first 10 subjects.
 
-```{r 3chocHappy}
+```{r}
+#| label: tbl-2chocFirst10
+#| tbl-cap: "Chocolate supply and happiness for the first 10 of the 100 invented subjects."
+
 subject <- 1:100
 # Own seed, restored afterwards, so the chapter's other random draws are unchanged
 withr::with_seed(13, {
@@ -67,7 +70,9 @@ When you have two measurements for each subject, you can plot each subject as a 
 library(ggplot2)
 
 ggplot(the_df_CC,aes(x=chocolate,y=happiness))+
-  geom_point()
+  geom_point()+
+  xlab("Chocolate supply")+
+  ylab("Happiness")
 
 
 ```
@@ -105,10 +110,9 @@ all_data<-cbind(all_data,correlation=factor(rep(c("positive","negative","none"),
 
 ggplot(all_data,aes(x=chocolate_x,y=happiness_x))+
   geom_point()+
-  theme(panel.border=element_rect(colour = "black", fill=NA))+
   facet_wrap(~correlation)+
-  xlab("chocolate supply")+
-  ylab("happiness")
+  xlab("Chocolate supply")+
+  ylab("Happiness")
 
 
 ```
@@ -131,7 +135,7 @@ We have used the words variability, variation, and variance a lot, and all three
 
 To calculate it, subtract the mean from each score to get its **deviation score** (its deviation from the mean), square those deviations, then average them. Squaring stops positive and negative deviations from canceling. In short:
 
-$variance = \frac{\text{Sum of squared deviation scores}}{\text{Number of Scores}}$
+$\text{variance} = \frac{\text{Sum of squared deviation scores}}{\text{Number of Scores}}$
 
 Chapter 3 explains when to divide by $N$ (when you have the entire population) and when to divide by $n-1$ (when you only have a sample, which is almost always the case). For now, just use $N$.
 
@@ -139,7 +143,10 @@ Chapter 3 explains when to divide by $N$ (when you have the entire population) a
 
 Find the mean, then subtract it from every score. The result tells us both how well the mean represents the data and how much spread there is around it.
 
-```{r 2deviations,echo=F, message=F,warning=F}
+```{r}
+#| label: tbl-2deviations
+#| tbl-cap: "Deviations from the mean for the six scores 1, 6, 4, 2, 6 and 8, with the column sums and means in the last two rows."
+
 library(dplyr)
 scores<-1:6
 values<-c(1,6,4,2,6,8)
@@ -164,10 +171,10 @@ The mean is the balancing point of the data. The values below it are, in total, 
 
 The deviations always sum to zero because of how the mean is built. Adding up the deviations gives the sum of the scores minus $n$ copies of the mean, and $n$ copies of the mean add up to the sum of the scores: $\sum(x_i - \bar{x}) = \sum x_i - n\bar{x} = 0$. For the table above, $27 - 6 \times 4.5 = 0$.
 
-@fig-number-line plots the same five values, $X = (1,2,6,7,9)$, on a number line.
+@fig-2number-line plots the same five values, $X = (1,2,6,7,9)$, on a number line.
 
 ```{r}
-#| label: fig-number-line
+#| label: fig-2number-line
 #| fig-cap: "Values on a number line."
 #| fig-width: 7
 #| fig-height: 1.3
@@ -208,10 +215,10 @@ tibble(values = values) %>%
   )
 ```
 
-Now imagine the number line as a teeter-totter. In @fig-mean-balance-panels, the board balances only when the fulcrum is at 5, the mean.
+Now imagine the number line as a teeter-totter. In @fig-2mean-balance-panels, the board balances only when the fulcrum is at 5, the mean.
 
 ```{r}
-#| label: fig-mean-balance-panels
+#| label: fig-2mean-balance-panels
 #| fig-cap: "Mean as the unique balancing point. Only at the mean do signed deviations cancel."
 #| fig-alt: "Three panels with a horizontal number line and a triangular fulcrum; the board tilts left/right when the fulcrum is not at the mean, and is level at the mean."
 
@@ -291,7 +298,10 @@ Because the deviations always cancel, their sum cannot summarize variation, so w
 
 The standard trick is to square the deviations. Since $2^2 = 4$ and $(-2)^2 = 4$, squaring turns every negative into a positive, so the deviations can no longer cancel. We call these **squared deviations**. Here is the same table with a column for them:
 
-```{r 2deviationssquared,echo=F}
+```{r}
+#| label: tbl-2squaredDeviations
+#| tbl-cap: "The same six scores with a column of squared deviations added."
+
 scores<-1:6
 values<-c(1,6,4,2,6,8)
 mean_scores<-mean(values)
@@ -316,7 +326,7 @@ You will meet this quantity again in Chapters 8 and 9, and it is always this sum
 
 The goal was a single number summarizing spread, but deviations give us as many numbers as we have data points, so we want their *average*. Sum the squared deviations, divide by how many there are, and that is **the variance**:
 
-$$variance = \frac{SS}{N}$$
+$$\text{variance} = \frac{SS}{N}$$
 
 For our data it comes to $35.5 / 6 = 5.917$. On its own that number is hard to interpret, because squaring the deviations put it on a *squared* scale, so it is no longer in the same units as the data. The fix is to take the square root, $\sqrt{5.917} \approx 2.43$.
 
@@ -324,7 +334,7 @@ For our data it comes to $35.5 / 6 = 5.917$. On its own that number is hard to i
 
 That square root is the **standard deviation (SD)**:
 
-$$\text{standard deviation} = \sqrt{Variance} = \sqrt{\frac{SS}{N}} = \sqrt{\frac{\sum_{i=1}^{N}(x_{i}-\bar{x})^2}{N}}$$
+$$\text{standard deviation} = \sqrt{\text{variance}} = \sqrt{\frac{SS}{N}} = \sqrt{\frac{\sum_{i=1}^{N}(x_{i}-\bar{x})^2}{N}}$$
 
 Our standard deviation, $\sqrt{5.917} \approx 2.43$, is easier to read than the variance. The deviations in the table range in size from 0.5 to 3.5. A variance of 5.917 is larger than every one of them because it is on the squared scale, while an SD of 2.43 falls within that range and lines up with the actual deviations.
 
@@ -336,7 +346,10 @@ So far we've handled the "differences cancel out" problem by squaring deviations
 
 The table adds a column of absolute deviations for the same six scores.
 
-```{r 2absolute,echo=F}
+```{r}
+#| label: tbl-2absDeviations
+#| tbl-cap: "The same six scores with a column of absolute deviations added."
+
 scores<-1:6
 values<-c(1,6,4,2,6,8)
 mean_scores<-mean(values)
@@ -392,7 +405,10 @@ Picture two people walking side by side. If they step forward and back in step, 
 
 To turn "chocolate and happiness vary together" into a number, we start from the chocolate and happiness scores of the first 10 subjects.
 
-```{r 3chochappyCOV,echo=F}
+```{r}
+#| label: tbl-2chocProducts
+#| tbl-cap: "Chocolate, happiness, and their product for the first 10 subjects, with the column sums and means in the last two rows."
+
 the_df_temp <- data.frame(subject,chocolate,happiness,Chocolate_X_Happiness=chocolate*happiness)
 
 the_df_short <- the_df_temp[1:10,]
@@ -424,7 +440,7 @@ df_xy <- data.frame(
   XY = (1:10) * (1:10)
 )
 df_xy <- rbind(df_xy, Sums = colSums(df_xy))
-knitr::kable(df_xy, caption="Aligned: sum = 385",   table.attr = 'style="margin-right:14px"') %>%
+knitr::kable(df_xy, caption="Aligned: sum = 385.",   table.attr = 'style="margin-right:14px"') %>%
     kable_styling(full_width = FALSE, position = "left", bootstrap_options = "bordered")
   
 ```
@@ -438,7 +454,7 @@ df_ab <- data.frame(
   AB = (1:10) * (10:1)
 )
 df_ab <- rbind(df_ab, Sums = colSums(df_ab))
-knitr::kable(df_ab,caption = "Reversed: sum = 220", table.attr = 'style="margin-left:14px"') %>%
+knitr::kable(df_ab,caption = "Reversed: sum = 220.", table.attr = 'style="margin-left:14px"') %>%
   kable_styling(full_width = FALSE, position = "left", bootstrap_options = "bordered")
 ```
 :::
@@ -462,13 +478,16 @@ Products of paired values show whether two variables move in the same direction 
 
 Instead of multiplying raw values of $X$ and $Y$, we multiply their *deviations from the mean*. The raw sum of products only made sense next to the 220 and 385 for those particular numbers. Once we subtract each mean, a pair that is above both means or below both means gives a positive product, and a mixed pair gives a negative one. For unrelated variables, the positive and negative products roughly cancel, so their average is near 0, whatever the scales.
 
-$cov(X,Y) = \frac{\sum_{i=1}^{N}(x_{i}-\bar{x})(y_{i}-\bar{y})}{N}$
+$\text{cov}(X,Y) = \frac{\sum_{i=1}^{N}(x_{i}-\bar{x})(y_{i}-\bar{y})}{N}$
 
 To compute it, subtract the mean of $X$ from each $x_i$, subtract the mean of $Y$ from each $y_i$, multiply the deviations, and then average those products. A positive covariance means the two variables tend to move together (above or below their means at the same time). A negative covariance means they move in opposite directions. A covariance near zero suggests no consistent relationship.
 
 The following table shows this process for our chocolate and happiness data. `Cd` and `Hd` are each person's deviation from the chocolate mean and the happiness mean, and `Cd_x_Hd` is their product:
 
-```{r 3cov,echo=F}
+```{r}
+#| label: tbl-2covariance
+#| tbl-cap: "Deviations from the chocolate mean (Cd) and the happiness mean (Hd) for the first 10 subjects, and their product. The mean of the last column is the covariance."
+
 the_df<-the_df_CC
 
 the_df_short<-the_df[1:10,]
@@ -525,7 +544,7 @@ ggplot(quad_df, aes(x = chocolate, y = happiness)) +
   scale_fill_manual(values = c("positive product" = "#008cff", "negative product" = "#b22222"),
                     name = NULL) +
   coord_cartesian(xlim = c(0, 100), ylim = c(-10, 116)) +
-  xlab("chocolate") + ylab("happiness") +
+  xlab("Chocolate") + ylab("Happiness") +
   theme(legend.position = "bottom")
 ```
 
@@ -545,7 +564,7 @@ Values closer to $\pm1$ indicate a stronger linear association. Values near $0$ 
 
 One formula for Pearson's $r$ is
 
-$$r = \frac{cov(X,Y)}{\sigma_X \sigma_Y}$$
+$$r = \frac{\text{cov}(X,Y)}{\sigma_X \sigma_Y}$$
 
 $r$ is the covariance of $X$ and $Y$ divided by the product of their standard deviations. Here $\sigma_X$ and $\sigma_Y$ are the standard deviations computed by dividing by $N$, the same way the covariance was computed. The covariance is in chocolate units times happiness units, and $\sigma_X \sigma_Y$ is in the same units, so dividing cancels them. Dividing by the standard deviations also keeps $r$ between $-1$ and $1$, which makes correlation values comparable across variables measured in different units or on different scales.
 
@@ -555,7 +574,7 @@ For the ten people in the covariance table, the covariance is `r sprintf('%.1f',
 You'll see several algebraically equivalent formulas for Pearson's $r$, some easier for hand calculation, others more compact. They all produce the same result. In practice, you'll compute $r$ with software, so this chapter focuses on what $r$ means and how to interpret it. Working through one example by hand shows where $r$ comes from, which is why lecture walks through a full hand calculation before you run it in R during lab.
 :::
 
-## Regression: a mini intro
+## A first look at regression
 
 **Linear regression** fits the straight line that best predicts one variable from another. It is closely tied to correlation, since the fitted line slopes up when $r$ is positive and down when $r$ is negative, and this section gives a first look at it.
 
@@ -563,33 +582,34 @@ You'll see several algebraically equivalent formulas for Pearson's $r$, some eas
 
 ```{r}
 #| label: fig-2regression
-#| fig-cap: "The same three scatter plots with the best fit line added. In the no-correlation panel the true correlation is 0, so the line is nearly flat."
+#| fig-cap: "The same three scatter plots with the best-fit line added. In the no-correlation panel the true correlation is 0, so the line is nearly flat."
 #| fig-alt: "The three negative, positive and no-correlation scatter plots, each with a blue fitted line sloping down, up, and nearly flat."
 
 ggplot(all_data,aes(x=chocolate_x,y=happiness_x))+
   geom_point() +
   geom_smooth(method="lm",se=F, color="#008cff", linewidth=1.2)+
   facet_wrap(~correlation)+
-  xlab("chocolate supply")+
-  ylab("happiness")
+  xlab("Chocolate supply")+
+  ylab("Happiness")
 
 ```
 
-### The best fit line
+### The best-fit line
 
-Each panel now has a blue line, called a **best fit line**. It is the single straight line that best summarizes the overall pattern of dots. The line slopes down in the negative panel, up in the positive panel, and is nearly flat in the no-correlation panel.
+Each panel now has a blue line, called a **best-fit line**. It is the single straight line that best summarizes the overall pattern of dots. The line slopes down in the negative panel, up in the positive panel, and is nearly flat in the no-correlation panel.
 
 With one variable, we use the mean to describe central tendency in one dimension. With two variables plotted together, we need a two-dimensional equivalent. A line does that job. For each value of $x$, the line gives the average $y$ the pattern predicts, so it describes the average relationship across the cloud of points.
 
-We could draw many lines through a scatter of points, but most would miss the pattern. The best fit line is the one with the least error, defined precisely below.
+We could draw many lines through a scatter of points, but most would miss the pattern. The best-fit line is the one with the least error, defined precisely below.
 
 Most dots do not fall exactly on the line, so some error is inevitable. @fig-2regressionResiduals shows what that error looks like. A blue line runs through the black dots, and a short red vertical line drops from each dot to the line. The white circles on the line are the line's predicted values. The red lines are **residuals**, the vertical differences between the observed data and the fitted line, showing how far off the line's prediction is for each point.
 
 ```{r}
 #| label: fig-2regressionResiduals
-#| fig-cap: "Black dots are the data, white dots are the values the regression line predicts, and the red lines are the errors between them. R code for residual visualization adapted from Simon Jackson: <https://drsimonj.svbtle.com/visualising-residuals>"
+#| fig-cap: "Black dots are the data, white dots are the values the regression line predicts, and the red lines are the residuals between them."
 #| fig-alt: "Scatter of black points around a downward blue regression line, with red vertical segments from each point to a hollow predicted point on the line."
 
+# Residual plot adapted from Simon Jackson, https://drsimonj.svbtle.com/visualising-residuals
 d <- mtcars
 fit <- lm(mpg ~ hp, data = d)
 d$predicted <- predict(fit)   # Save the predicted values
@@ -601,7 +621,7 @@ ggplot(d, aes(x = hp, y = mpg)) +
   geom_point(color = "black") +
   geom_point(aes(y = predicted), shape = 21, fill = "white", color = "black", size = 2.2) +
   theme(legend.position="none")+
-  xlab("X")+ylab("Y")
+  xlab("Horsepower")+ylab("Miles per gallon")
 
 # Quick look at the actual, predicted, and residual values
 #library(dplyr)
@@ -611,13 +631,13 @@ ggplot(d, aes(x = hp, y = mpg)) +
 
 We choose the regression line to make the residuals as small as possible in total, measured by the sum of squared residuals. Square each residual, then add them together, the same way we built the sum of squares for one variable earlier in this chapter. The blue line produces the smallest possible sum of squared residuals.
 
-@fig-2regressionGIF animates this directly, comparing the best fit line (blue) to other possible lines (black) as the black line moves up and down. The red lines show the error between the black line and the data points at each position, and the grey band is narrowest exactly when the black line reaches the best fit line, then widens again as it moves away.
+@fig-2regressionGIF animates this directly, comparing the best-fit line (blue) to other possible lines (black) as the black line moves up and down. The red lines show the error between the black line and the data points at each position, and the gray band is narrowest exactly when the black line reaches the best-fit line, then widens again as it moves away.
 
 ::: {.content-visible when-format="html"}
 ```{r}
 #| label: fig-2regressionGIF
-#| fig-cap: "The black line moves through alternative positions while the blue best-fit line stays put. Red lines show each point's error. The grey band's width is the typical size of those errors, and the band is narrowest when the black line lies on the best-fit line."
-#| fig-alt: "Animation of a scatter plot with a fixed blue best-fit line and a black line that moves through other positions. Red vertical segments connect each point to the black line, and a grey band whose width shows the typical size of those errors is narrowest when the black line lies on the blue one."
+#| fig-cap: "The black line moves through alternative positions while the blue best-fit line stays put. Red lines show each point's error. The gray band's width is the typical size of those errors, and the band is narrowest when the black line lies on the best-fit line."
+#| fig-alt: "Animation of a scatter plot with a fixed blue best-fit line and a black line that moves through other positions. Red vertical segments connect each point to the black line, and a gray band whose width shows the typical size of those errors is narrowest when the black line lies on the blue one."
 #| out-width: "75%"
 
 knitr::include_graphics(path="imgs/gifs/regression-1.gif")
@@ -625,14 +645,14 @@ knitr::include_graphics(path="imgs/gifs/regression-1.gif")
 :::
 
 ::: {.content-visible when-format="pdf"}
-![The black line moves through alternative positions while the blue best-fit line stays put. Red lines show each point's error. The grey band's width is the typical size of those errors, and the band is narrowest when the black line lies on the best-fit line. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/regression-1.png){#fig-2regressionGIF width="75%"}
+![The black line moves through alternative positions while the blue best-fit line stays put. Red lines show each point's error. The gray band's width is the typical size of those errors, and the band is narrowest when the black line lies on the best-fit line. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/regression-1.png){#fig-2regressionGIF width="75%"}
 :::
 
-In @fig-2minimizeSS, each dot is one position of the black line. The x-axis is the shift in the line's y-intercept, from $-6$ to $+6$, and 0 is the best fit line. For each position we square the length of every red line from the animation above and add them up, giving the total sum of squared residuals. The dots start high on the left, fall to a minimum in the middle, and rise again on the right. The minimum is at 0, the best fit regression line.
+In @fig-2minimizeSS, each dot is one position of the black line. The x-axis is the shift in the line's y-intercept, from $-6$ to $+6$, and 0 is the best-fit line. For each position we square the length of every red line from the animation above and add them up, giving the total sum of squared residuals. The dots start high on the left, fall to a minimum in the middle, and rise again on the right. The minimum is at 0, the best-fit regression line.
 
 ```{r}
 #| label: fig-2minimizeSS
-#| fig-cap: "A plot of the sum of squared residuals for lines moved up and down through the best fit line. The best fit line is at the position with the smallest sum of squared residuals."
+#| fig-cap: "A plot of the sum of squared residuals for lines moved up and down through the best-fit line. The best-fit line is at the position with the smallest sum of squared residuals."
 #| fig-alt: "U-shaped set of dots for the sum of squared residuals against change to the y-intercept from -6 to 6, lowest at 0."
 #| out-width: "75%"
 
@@ -658,12 +678,12 @@ for(i in move_line){
 df<-data.frame(move_line,total_error)
 ggplot(df,aes(x=move_line,y=total_error))+
   geom_point() +
-  ylab("sum of squared residuals")+
-  xlab("change to y-intercept")
+  ylab("Sum of squared residuals")+
+  xlab("Change to y-intercept")
 
 ```
 
-### Computing the best fit line
+### Computing the best-fit line
 
 In principle, you could find the line that minimizes the sum of squared residuals by trying many lines and comparing their errors, but that is slow. @fig-2minimizeSS tried 25 positions and only moved the line up and down, and a full search would also have to change its slope. In practice, we let software identify the line with the smallest total error, the same `lm()` fit behind every regression line drawn in this chapter's figures.
 
@@ -699,7 +719,9 @@ Imagine two independent participants, one at the North Pole and one at the South
 
 Here is what the numbers on each ball could look like for each participant:
 
-```{r 3northsouth}
+```{r}
+#| label: tbl-2lottery
+#| tbl-cap: "One run of the lottery game, with 10 draws at each pole."
 
 Ball<-1:10
 North_pole<-sample(1:10,10,replace=TRUE)
@@ -714,7 +736,7 @@ knitr::kable(the_df_balls)
 
 ```
 
-For these ten pairs of draws, Pearson's $r =$ `r round(cor(North_pole,South_pole), 2)`. That value says nothing about a relationship between the draws at the two poles, because we set up the game so that no relationship exists.
+For these ten pairs of draws, Pearson's $r = `r sprintf("%.2f", cor(North_pole, South_pole))`$. That value says nothing about a relationship between the draws at the two poles, because we set up the game so that no relationship exists.
 
 @fig-2randcor10gif runs the game 10 more times. Each frame is one run, with the North Pole's 10 numbers on the x-axis, the South Pole's 10 numbers on the y-axis, and the fitted line. We built the game with no relationship, so we might expect a flat line every time. The line instead tilts up in some runs and down in others.
 
@@ -723,7 +745,7 @@ For these ten pairs of draws, Pearson's $r =$ `r round(cor(North_pole,South_pole
 #| label: fig-2randcor10gif
 #| fig-cap: "Ten runs of the lottery game, with 10 draws at each pole. The fitted line tilts up in some runs and down in others, although the game has no relationship built in."
 #| fig-alt: "Animation of 10 random points with a blue fitted line that swings to a different slope with each new sample, sometimes steeply up or down, even though the two variables are unrelated."
-#| out.width: "75%"
+#| out-width: "75%"
 
 knitr::include_graphics(path="imgs/gifs/corUnifn10-1.gif")
 ```
@@ -833,7 +855,7 @@ knitr::kable(data.frame(format(size_summary$sample_size, big.mark = ","),
 
 Each histogram contains 1,000 values of $r$, one per run of the game at that sample size, and @tbl-2corrandN summarizes each one. With $n = 10$, the correlations spread across nearly the whole range from $-1$ to $1$, and `r pct(size_row(10)$share_half)` of the runs gave $r$ above 0.5 or below $-0.5$. With $n = 50$ or $n = 100$, the spread narrows, but `r pct(size_row(50)$share_02)` and `r pct(size_row(100)$share_02)` of the runs still gave $r$ at or beyond $\pm 0.2$. With $n = 1{,}000$, the largest $\lvert r \rvert$ in 1,000 runs was `r sprintf("%.2f", size_row(1000)$max_r)`. Larger samples shrink the range of correlations that chance alone produces, so a large $r$ from a large sample is much harder to attribute to chance.
 
-::: {.callout-tip title="Tip: Sample size"}
+::: {.callout-tip title="Tip: Plan a larger n for a modest r"}
 Bigger $n$ narrows the chance window. If you expect a modest linear effect (e.g., \|$r$\| ≈ 0.2--0.3), plan for larger samples so random swings are less likely to mimic or mask the effect.
 :::
 
@@ -846,7 +868,7 @@ In @fig-2realcorFour, we built a true correlation of `r true_r` into the populat
 #| label: fig-2realcorFour
 #| fig-cap: !expr paste0("How the fitted line behaves at four sample sizes when X and Y have a true correlation of ", true_r, ". Each frame is a new sample at each size.")
 #| fig-alt: "Animation of four scatter plots with sample sizes of 10, 50, 100 and 1000, drawn from variables with a real positive relationship, each with a blue fitted line. The slope varies a lot at 10 points and settles on a steady upward slope at 1000 points."
-#| out.width: "75%"
+#| out-width: "75%"
 
 knitr::include_graphics(path="imgs/gifs/corRealgif-1.gif")
 ```
@@ -901,7 +923,7 @@ ggplot(snake_df, aes(x=water,y=growth))+
   annotate("label", x = 500, y = -0.6, label = sprintf("all plants: r = %.3f", r_all),
            color = "#10377f", size = 4) +
   xlab("Water (teaspoons)")+
-  ggtitle("Invented snake plant growth \n as a function of water")
+  ylab("Growth")
 
 ```
 
@@ -917,14 +939,14 @@ Plot the data before computing $r$. If the scatter shows an upside-down U, corre
 If the scatter shows a U-shape or other curve, a single straight-line correlation will mislead. Fit a curved model (e.g., add a quadratic term) or transform variables instead of reporting $r$ alone.
 :::
 
-### Anscombe's quartet: same statistics, different data
+### Anscombe's quartet
 
 Everything so far has compressed a relationship into a number: a covariance, an $r$, a slope. A single number leaves out the shape of the data. Francis Anscombe (@Anscombe1973) built four datasets, now called *Anscombe's Quartet*, that share almost every statistic you would think to compute, to show how much that can hide.
 
-Each panel in @fig-anscombe shows one dataset's pairs of $x$ and $y$ values as a scatterplot.
+Each panel in @fig-2anscombe shows one dataset's pairs of $x$ and $y$ values as a scatterplot.
 
 ```{r}
-#| label: fig-anscombe
+#| label: fig-2anscombe
 #| fig-cap: "Anscombe's Quartet."
 #| fig-alt: "Four scatter plots with the same fitted line, y = 3 + 0.5x. Panel 1 is a linear cloud, panel 2 a smooth curve, panel 3 a tight line with one high outlier, and panel 4 ten points stacked at x = 8 with one point far to the right at x = 19. The four sets have nearly identical means, variances and correlations."
 
@@ -953,6 +975,9 @@ ggplot(ac_long, aes(x=x, y=y))+
 The four panels look nothing alike, yet their summary statistics match:
 
 ```{r}
+#| label: tbl-2anscombe
+#| tbl-cap: "Summary statistics and fitted lines for the four sets of Anscombe's quartet."
+
 library(dplyr)
 
 ac_long_summary <- ac_long %>%
@@ -1016,7 +1041,7 @@ ggplot() +
 
 ## Chapter Summary
 
-**Why it matters.** Correlation is how we quantify whether two variables move together. We use it to describe patterns (e.g., chocolate and happiness, water and plant growth) and to decide whether a relationship is worth modeling or acting on.
+**Why it matters.** Correlation is how we quantify whether two variables move together. We use it to describe patterns (e.g., chocolate and happiness, water and plant growth) and to decide whether a relationship is worth modeling or acting on. Chapter 9 returns to the best-fit line and tests its slope.
 
 **Core ideas**
 
