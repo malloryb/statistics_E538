@@ -13,6 +13,8 @@ source("global_stuff.R")
 >
 > Sir Ronald Fisher
 
+This chapter covers where data come from and how to describe them. It starts with why statistics matters for environmental questions and how a concept becomes a measurement, then covers scales of measurement and study designs, and ends with the plots and summaries that describe one variable.
+
 ## The role of statistics in environmental science
 
 Environmental questions are usually questions about change. Is this stream warming? Did the restoration work? They are hard to answer because the systems change on their own even when nothing is done to them. Streams warm and cool over a single day, and vegetation may look the same for years and then suddenly recover. Something is always changing, so finding a real effect means separating it from the change that would have happened anyway.
@@ -418,7 +420,7 @@ Two alternative vocabularies are often clearer. In experiments, IVs are **manipu
 | "to do the explaining" ($X$) | independent variable (IV) | manipulation   | predictor     |
 
 ::: {.callout-note title="Note: Which terms this course uses"}
-You should recognize all three pairs, since all three appear in the literature. This book mostly uses IV and DV, and in regression and ANCOVA it also calls a measured $X$ a predictor. Both names refer to the same role.
+You should recognize all three pairs, since all three appear in the literature. This book mostly uses IV and DV, and in regression and ANCOVA it also calls any variable on the right side of the model a predictor, whether measured or categorical. Both names refer to the same role.
 :::
 
 ## Experimental and non-experimental research
@@ -560,7 +562,7 @@ binned_df <- do.call(rbind, lapply(bin_widths, function(b) {
 ggplot(binned_df, aes(x = mid, y = count, width = width)) +
   geom_col() +
   facet_wrap(~bins, scales = "free") +
-  labs(x = NULL, y = NULL)
+  labs(x = expression("Maximum temperature ("*degree*"F)"), y = "Number of days")
 ```
 
 All four show the same general shape, but the 5-bin and 50-bin versions are hard to read. Five bins is so coarse that the peak becomes two wide blocks. Fifty spreads `r nrow(airquality)` days so thinly that the bars jump around at random. The middle two are the ones you would use.
@@ -611,7 +613,7 @@ The **mean**, also called the average, is the sum of a set of numbers divided by
 
 $$\text{Mean} = \bar{x} = \frac{\sum_{i=1}^{n} x_{i}}{n}$$
 
-The $\sum$ symbol is a capital Greek **sigma**, and it means "sum these up." (The lowercase $\sigma$ you will meet in Chapter 2, a standard deviation, means something different.) The $x_{i}$ are the individual numbers, $i$ runs from the first to the last, $n$ is how many there are, and $\bar{x}$ is the mean. In plainer terms, it is the sum of your numbers divided by the count of your numbers.
+The $\sum$ symbol is a capital Greek **sigma**, and it means "sum these up." (The lowercase $\sigma$, which you will meet later as a standard deviation, means something different.) The $x_{i}$ are the individual numbers, $i$ runs from the first to the last, $n$ is how many there are, and $\bar{x}$ is the mean. In plainer terms, it is the sum of your numbers divided by the count of your numbers.
 
 For the five numbers 3, 7, 9, 2, and 6, that gives
 
@@ -631,8 +633,8 @@ The mean is the only single value that can replace every observation and still l
 
 ```{r}
 #| label: fig-1mean-equal-share
-#| fig-cap: "The five values 3, 7, 9, 2, and 6 with their mean of 5.4 as a dashed line. The shaded parts above the line exactly fill the outlined gaps below it."
-#| fig-alt: "Bar chart of five observations with values 3, 7, 9, 2, and 6 and a dashed horizontal line at 5.4. The parts of bars 2, 3, and 5 above the line are shaded blue and labeled 1.6, 3.6, and 0.6, totaling 5.8. Dashed outlines above bars 1 and 4 mark the gaps up to the line, labeled 2.4 and 3.4, also totaling 5.8."
+#| fig-cap: "The five values 3, 7, 9, 2, and 6 with their mean of 5.4 as a dotted line. The shaded parts above the line exactly fill the outlined gaps below it."
+#| fig-alt: "Bar chart of five observations with values 3, 7, 9, 2, and 6 and a dotted lime-green horizontal line at 5.4. The parts of bars 2, 3, and 5 above the line are shaded blue and labeled 1.6, 3.6, and 0.6, totaling 5.8. Dashed outlines above bars 1 and 4 mark the gaps up to the line, labeled 2.4 and 3.4, also totaling 5.8."
 #| out-width: "80%"
 #| fig-asp: 0.55
 
@@ -652,17 +654,16 @@ ggplot(d) +
   geom_rect(data = below, aes(xmin = obs - 0.35, xmax = obs + 0.35, ymin = v, ymax = mu),
             fill = "#008cff", alpha = 0.15, color = "#008cff", linetype = "dashed") +
   annotate("segment", x = 0.5, xend = 5.4, y = mu, yend = mu,
-           color = "#b22222", linetype = "dashed", linewidth = 0.9) +
+           color = "limegreen", linetype = "dotted", linewidth = 1.6) +
   geom_text(data = above, aes(x = obs, y = v + 0.35, label = sprintf("%.1f", v - mu)),
             size = 3.6, color = "#10377f", fontface = "bold") +
   geom_text(data = below, aes(x = obs, y = (v + mu) / 2, label = sprintf("%.1f", mu - v)),
             size = 3.6, color = "#10377f", fontface = "bold") +
   annotate("text", x = 5.45, y = mu, label = paste0("mean = ", mu),
-           hjust = 0, size = 3.6, color = "#b22222") +
+           hjust = 0, size = 3.6, color = "#1E9E1E") +
   scale_x_continuous(breaks = 1:5, limits = c(0.5, 6.1)) +
   scale_y_continuous(breaks = seq(0, 10, 2), expand = expansion(mult = c(0, 0.05))) +
-  labs(x = "Observation", y = "Value") +
-  theme_classic()
+  labs(x = "Observation", y = "Value")
 ```
 
 ### The weighted mean
@@ -705,7 +706,7 @@ Temperature's mean (`r round(mean(airquality$Temp),1)`°F) and median (`r median
 ```{r}
 #| label: fig-1meanmedian
 #| fig-cap: "Daily ozone concentration with all three measures of central tendency marked. They fall in the order mode, median, mean, which is the usual order for a right-skewed distribution."
-#| fig-alt: "Histogram of daily ozone concentration. Most days fall below 50 parts per billion, with a long thin tail extending past 150. Three thick vertical lines mark the mode at 23 ppb in gold, the median at 31.5 ppb in dark blue, and the mean at 42.1 ppb in red, in that left-to-right order."
+#| fig-alt: "Histogram of daily ozone concentration. Most days fall below 50 parts per billion, with a long thin tail extending past 150. Three thick vertical lines mark the mode at 23 ppb in solid gold, the median at 31.5 ppb in solid dark blue, and the mean at 42.1 ppb in dotted lime green, in that left-to-right order."
 #| out-width: "92%"
 #| fig-asp: 0.5
 
@@ -721,7 +722,7 @@ ggplot(data.frame(oz = oz), aes(x = oz)) +
   geom_histogram(bins = 22, fill = "grey85", color = "white") +
   geom_vline(xintercept = oz_mode, color = "#f5d547", linewidth = 1.6) +
   geom_vline(xintercept = oz_med,  color = "#10377f", linewidth = 1.6) +
-  geom_vline(xintercept = oz_mean, color = "#b22222", linewidth = 1.6) +
+  geom_vline(xintercept = oz_mean, color = "limegreen", linetype = "dotted", linewidth = 1.6) +
   annotate("text", x = oz_mode - 2.5, y = 25.5, label = paste0("mode\n", oz_mode),
            color = "#9a7b00", hjust = 1, size = 3.8, lineheight = 0.95, fontface = "bold") +
   # white box so the mean line passes behind the median label instead of through it
@@ -729,14 +730,13 @@ ggplot(data.frame(oz = oz), aes(x = oz)) +
            color = "#10377f", fill = "white", label.size = 0, hjust = 0, size = 3.8,
            lineheight = 0.95, fontface = "bold") +
   annotate("text", x = oz_mean + 3, y = 16, label = paste0("mean\n", round(oz_mean, 1)),
-           color = "#b22222", hjust = 0, size = 3.8, lineheight = 0.95, fontface = "bold") +
+           color = "#1E9E1E", hjust = 0, size = 3.8, lineheight = 0.95, fontface = "bold") +
   annotate("segment", x = 60, xend = 150, y = 8, yend = 8,
            arrow = arrow(length = grid::unit(0.15, "cm")), color = "grey45") +
   annotate("text", x = 105, y = 10.2, label = "a few very high days pull the mean right",
            size = 3.3, color = "grey35") +
   scale_y_continuous(expand = expansion(mult = c(0, 0.10))) +
-  labs(x = "Ozone (ppb)", y = "Number of days") +
-  theme_classic()
+  labs(x = "Ozone (ppb)", y = "Number of days")
 ```
 
 For a right-skewed distribution you will usually find mode \< median \< mean, which is exactly what @fig-1meanmedian shows: the mode at `r as.numeric(names(sort(table(airquality$Ozone), decreasing = TRUE))[1])` ppb, the median at `r median(airquality$Ozone, na.rm = TRUE)` ppb, and the mean at `r round(mean(airquality$Ozone, na.rm = TRUE), 1)` ppb.
@@ -808,26 +808,13 @@ When the numbers and the graph disagree, believe the graph. A summary can only r
 
 **Core ideas**
 
-*On measurement and study design:*
-
 -   **Why statistics matters.** It provides a disciplined way to separate a real effect from ordinary variation and from our own expectations.
-
 -   **Operationalization and measurement.** Turning a broad concept like *soil health* into something recordable is a decision you have to make and justify, not something the data hand you.
-
 -   **Scales of measurement.** Nominal, ordinal, interval, and ratio, plus the continuous-versus-discrete distinction. These determine which statistical tools are available to you. Chapter 7 uses the ordinal scale to choose a rank-based test over a $t$-test.
-
 -   **Predictors and outcomes.** The roles variables play in an analysis, and the several vocabularies used to describe them.
-
 -   **Experimental and non-experimental research.** Environmental science rarely permits full experimental control, so the field relies on quasi-experiments, long-term time series, and case studies.
-
-*On describing data:*
-
 -   **Plot first.** A plot of every value shows patterns such as a seasonal arc, a histogram shows the shape of the distribution, and bin width is a choice that changes what you see.
-
 -   **Central tendency.** The mode, median, and mean each summarize the "middle" differently, and they diverge when data are skewed.
-
 -   **The weighted mean.** When you average across groups of unequal size, weight each value by its own $n$. A plain average of group means treats a small group as being as informative as a large one.
-
 -   **Variation.** The range gives a first, blunt sense of spread. The measures built from every observation, the variance and the standard deviation, come in the next chapter alongside correlation, since all three are built from deviations from the mean.
-
 -   **Always look at the graph.** A summary reports only what it was built to measure, so pair every one with a plot.
