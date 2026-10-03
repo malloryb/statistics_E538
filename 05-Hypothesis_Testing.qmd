@@ -87,7 +87,7 @@ The table crosses the two possible decisions with the two possible truths, givin
 | **Reject $H_0$**         | Type I error (prob = $\alpha$) | Correct (prob = 1 - $\beta$)    |
 | **Fail to reject $H_0$** | Correct (prob = 1 - $\alpha$)  | Type II error (prob = $\beta$)  |
 
-For a fixed sample size and effect size, lowering $\alpha$ raises $\beta$, because a stricter standard for rejecting $H_0$ makes it easier to miss a real difference.
+For a fixed sample size and effect size, lowering $\alpha$ raises $\beta$, because a stricter standard for rejecting $H_0$ makes it easier to miss a real difference. Rows 2 and 3 of @tbl-5power-sims later show this in numbers for one design.
 
 @fig-5recap-gif recaps the test from Chapter 4. The distance between the two sampling distributions, in standard errors, decides whether we reject $H_0$.
 
@@ -111,7 +111,7 @@ knitr::include_graphics("imgs/gifs/ch5_recap.gif")
 error_panel(xbar = t1_xbar_se * err_se, mu = 0, verdict = "Reject")
 ```
 
--   In @fig-5key.type2_error, the true population mean (orange) is far from $\mu_0$, but the particular sample looks close to $\mu_0$. The CI includes $\mu_0$, so the test fails to reject a false $H_0$, which is a Type II error.
+-   In @fig-5key.type2_error, the true population mean (orange) is `r t2_mu_se` standard errors from $\mu_0$. By chance, however, the sample mean is only `r t2_xbar_se` standard errors from $\mu_0$, inside the critical value, and the CI includes $\mu_0$. The test fails to reject $H_0$ even though it is false, which is a Type II error.
 
 ```{r}
 #| label: fig-5key.type2_error
@@ -122,9 +122,11 @@ error_panel(xbar = t1_xbar_se * err_se, mu = 0, verdict = "Reject")
 error_panel(xbar = t2_xbar_se * err_se, mu = t2_mu_se * err_se, verdict = "Fail to reject")
 ```
 
-Those two figures show what a wrong conclusion looks like for one unlucky sample. They do not show how *often* it happens. The green curve in them is built from that one sample, centered on its $\bar{x}$. To see how often an error happens, center the sampling distribution on a possible truth instead. That shows how far from $\mu_0$ the sample mean would be across all the samples we could have drawn.
+Those two figures show what a wrong conclusion looks like for one unlucky sample. They do not show how *often* it happens. The green curve in them is built from that one sample, centered on its $\bar{x}$. To see how often an error happens, center the sampling distribution on a possible truth instead. A sampling distribution centered on a possible truth shows how far from $\mu_0$ the sample mean would be across all the samples we could have drawn.
 
-@fig-5alpha-beta does that. The blue curve is the sampling distribution of the sample mean under $H_0$, the one that sets the critical values. The orange curve is the sampling distribution of the sample mean if $\mu = \mu_a$. It is narrower than the orange population curve in the last two figures because it shows sample means, so it has the same width as the blue curve. Chapter 4 drew the possible true populations under $H_a$ as a family of curves on either side of $\mu_0$, and $\mu_a$ is the center of one of them. Because we never know the true $\mu$, we choose a value for $\mu_a$ and ask how the test would perform if that value were true. The farther $\mu_a$ is from $\mu_0$, the less likely the test is to miss the difference.
+@fig-5alpha-beta does that. The blue curve is the sampling distribution of the sample mean under $H_0$, the one that sets the critical values. The orange curve is the sampling distribution of the sample mean if $\mu = \mu_a$. Because it shows sample means, it has the same width as the blue curve, and it is half as wide as the orange population curve in the last two figures.
+
+Chapter 4 drew the possible true populations under $H_a$ as a family of curves on either side of $\mu_0$, and $\mu_a$ is the center of one of them. Because we never know the true $\mu$, we choose a value for $\mu_a$ and ask how the test would perform if that value were true. The farther $\mu_a$ is from $\mu_0$, the less likely the test is to miss the difference.
 
 -   $\alpha$ is the red area in the tails of the blue curve, past the critical values. If $H_0$ is true, that is how often the sample mean falls in the rejection region anyway.
 -   $\beta$ is the gray area under the orange curve *between* the critical values. If $\mu = \mu_a$, that is how often the sample mean fails to reach the rejection region and a real difference goes undetected.
@@ -203,13 +205,15 @@ ab_bot <- shell_ab(ggplot() + bshade_ab + pshade_ab + ashade_ab + null_ab + alt_
 patchwork::wrap_plots(ab_top, ab_bot, ncol = 1)
 ```
 
-In @fig-5alpha-beta, $\mu_a$ is `r mua_ab / se_ab` standard errors above $\mu_0$, which leaves $\beta = `r round(beta_ab, 2)`$ and power $= `r round(power_ab, 2)`$. This design misses a real difference of that size in almost three tries out of ten. Slide the orange curve further right, meaning a larger real difference, and the gray area shrinks. Move the red lines outward, meaning a smaller $\alpha$, and the gray area grows.
+In @fig-5alpha-beta, $\mu_a$ is `r mua_ab / se_ab` standard errors above $\mu_0$, which leaves $\beta = `r round(beta_ab, 2)`$ and power $= `r round(power_ab, 2)`$. This design misses a real difference of that size in almost three tries out of ten. Slide the orange curve farther right, meaning a larger real difference, and the gray area shrinks. Move the red lines outward, meaning a smaller $\alpha$, and the gray area grows.
 
 ### Effect of sample size on errors
 
-**Sample size mainly affects Type II error.** With a fixed $\alpha$ and correct assumptions, the long-run Type I error rate is $\alpha$ for any $n$. With small $n$, the sampling distribution is wide, true effects are harder to detect, and $\beta$ increases (power decreases). As $n$ grows, the sampling distribution tightens, $\beta$ falls, and power rises. At small $n$, the actual Type I rate can drift from $\alpha$ when an assumption fails, for example when the population is strongly skewed. Testing the data again each time new observations arrive also raises the Type I rate, at any $n$.
+**Sample size mainly affects Type II error.** With small $n$, the sampling distribution is wide, true effects are harder to detect, and $\beta$ increases (power decreases). As $n$ grows, the sampling distribution narrows, $\beta$ falls, and power rises. With a fixed $\alpha$ and correct assumptions, the long-run Type I error rate stays at $\alpha$ for any $n$.
 
-@fig-5type2-samplesize shows this with the same $\mu_0$, the same true $\mu$, and the same unlucky sample, in which $\bar{x}$ is 2.5 standard errors below $\mu$. With the smaller sample, the confidence interval still catches $\mu_0$ and we fail to reject. With four times the sample, the standard error halves, the interval clears $\mu_0$, and we reject $H_0$.
+The actual Type I rate can differ from $\alpha$ in two cases. At small $n$, it can drift from $\alpha$ when an assumption fails, for example when the population is strongly skewed. Testing the data again each time new observations arrive also raises the Type I rate, at any $n$.
+
+@fig-5type2-samplesize shows the effect of $n$ on Type II error with the same $\mu_0$, the same true $\mu$, and the same unlucky sample, in which $\bar{x}$ is 2.5 standard errors below $\mu$. With the smaller sample, the confidence interval still catches $\mu_0$ and we fail to reject. With four times the sample, the standard error halves, the interval clears $\mu_0$, and we reject $H_0$.
 
 ```{r}
 #| label: fig-5type2-samplesize
@@ -248,7 +252,7 @@ A $p$-value is the probability, assuming $H_0$ is true, of obtaining a test stat
 
 ## Beyond the 0.05 cutoff
 
-People who act on a result, such as scientists, managers, and policymakers, need to know how large an effect is and how likely the study was to detect it. A decision at $\alpha = 0.05$ answers neither question. Effect size and power answer them.
+Effect size and power answer two questions that a decision at $\alpha = 0.05$ leaves open. People who act on a result, such as scientists, managers, and policymakers, need to know how large an effect is and how likely the study was to detect it.
 
 **Working definitions**
 
@@ -262,7 +266,7 @@ People who act on a result, such as scientists, managers, and policymakers, need
 
 -   **Power ($1-\beta$):** the probability your design will detect a real effect of a specified size at your chosen $\alpha$.
 
-**Plan effect size and power before you sample.** Decide what effect is *meaningful* for your context (e.g., a 0.3 mg/L nitrate reduction) and size your study to have adequate power to detect that effect.
+**Plan effect size and power before you sample.** Decide what effect is *meaningful* for your context (e.g., a 0.3 mg/L nitrate reduction) and size your study to have adequate power, commonly 80%, to detect that effect.
 
 ### One tail or two
 
@@ -271,7 +275,7 @@ Chapter 4 gave two versions of the rule for a one-tailed test. In the action ver
 -   the direction is set *before* seeing the data, and
 -   a result in the other direction would lead to the same action as no result.
 
-A city testing whether a no-idling rule changed $\mathrm{PM}_{2.5}$ near schools would act on a rise just as much as on a drop, so that test stays two-tailed. A plant checking whether its discharge exceeds a permit limit of 10 mg/L is in a different position. A mean below the limit leads to the same action as a mean at the limit, which is to keep operating. That test can be one-tailed, with $H_a: \mu > 10$, as long as the direction was written down before sampling.
+A city testing whether a no-idling rule changed $\mathrm{PM}_{2.5}$ near schools would act on a rise just as much as on a drop, so that test stays two-tailed. For a plant checking whether its discharge exceeds a permit limit of 10 mg/L, a mean below the limit leads to the same action as a mean at the limit, which is to keep operating. That test can be one-tailed, with $H_a: \mu > 10$, as long as the plant wrote the direction down before sampling.
 
 ```{r}
 #| include: false
@@ -280,7 +284,7 @@ beta1_ab  <- pnorm(crit1_ab, mua_ab, se_ab)
 power1_ab <- 1 - beta1_ab
 ```
 
-Putting all of $\alpha$ in one tail moves the critical value in, from 1.96 to 1.645, so a real effect in that direction is easier to catch. For the design in @fig-5alpha-beta, $\beta$ drops from `r sprintf("%.2f", beta_ab)` to `r sprintf("%.2f", beta1_ab)` and power rises from `r sprintf("%.2f", power_ab)` to `r sprintf("%.2f", power1_ab)`. @fig-5one-two-tail draws both tests on that design.
+A one-tailed test puts all of $\alpha$ in one tail, which moves the critical value in, from 1.96 to 1.645, so a real effect in that direction is easier to catch. For the design in @fig-5alpha-beta, $\beta$ drops from `r sprintf("%.2f", beta_ab)` to `r sprintf("%.2f", beta1_ab)` and power rises from `r sprintf("%.2f", power_ab)` to `r sprintf("%.2f", power1_ab)`. @fig-5one-two-tail draws both tests on that design.
 
 ```{r}
 #| label: fig-5one-two-tail
@@ -332,7 +336,9 @@ tail1_ab <- shell1_ab(ggplot() + other1_ab + bshade1_ab + pshade1_ab + ashade1_a
 patchwork::wrap_plots(tail2_ab, tail1_ab, ncol = 1)
 ```
 
-The cost is that a one-tailed test cannot detect an effect in the other direction at all, however large it is. Choosing the tail after looking at which way the data went amounts to a two-tailed test at $\alpha = 0.10$. The actual Type I error rate is then 0.10, double the 0.05 you report.
+The cost is that a one-tailed test cannot detect an effect in the other direction at all, however large it is. In the bottom panel of @fig-5one-two-tail, the faint curve on the left is an effect of the same size in the other direction, and no rejection region lies under it.
+
+Choosing the tail after looking at which way the data went amounts to a two-tailed test at $\alpha = 0.10$. The actual Type I error rate is then 0.10, double the 0.05 you report.
 
 ## Effect size
 
@@ -343,7 +349,7 @@ Effect size comes in two kinds of units. You can express it in original units, w
 -   Exams: "Treatment improved scores by 5 percentage points" (half a letter grade).
 -   Time-on-task: "New training reduces practice time by 1,000 hours out of 10,000" (a 10% reduction).
 
-These statements are easy to interpret, but they are hard to compare across contexts or measures.
+These statements are easy to interpret, but they are hard to compare across contexts or measures. To say whether a 5-point exam gain is a larger effect than a 1,000-hour cut in practice time, you need each one measured against the variability of its own scale.
 
 **Standardized (unitless).** When units are unfamiliar or scales differ, standardize by typical variability. The most common standardized effect size metric is **Cohen's $d$** [@Cohen1988]. It divides the raw difference, $\Delta$, by the population standard deviation:
 
@@ -355,7 +361,7 @@ $\Delta$ is $\mu_1 - \mu_2$ when comparing two groups, or $\mu - \mu_0$ when tes
 
 $$z = \frac{\bar{x}-\mu_0}{\sigma/\sqrt{n}} \qquad \text{versus} \qquad d = \frac{\mu-\mu_0}{\sigma}$$
 
-In $z$ the numerator is the observed effect, $\bar{x}-\mu_0$. In $d$ it is the true effect, $\mu-\mu_0$, which $\bar{x}-\mu_0$ estimates. The test statistic divides by the standard error, which shrinks as $n$ grows, so $z$ gets larger with more data even when the effect stays exactly the same. Cohen's $d$ divides by the standard deviation, which does not shrink with $n$, so $d$ reports the size of the effect itself. @tbl-5z-vs-d lines the two up.
+In $z$ the numerator is the observed effect, $\bar{x}-\mu_0$. In $d$ it is the true effect, $\mu-\mu_0$, which $\bar{x}-\mu_0$ estimates. The test statistic divides by the standard error, which shrinks as $n$ grows, so $z$ gets larger with more data even when the effect stays exactly the same. Quadrupling $n$ halves the standard error, so the same $\bar{x}-\mu_0$ gives twice the $z$. Cohen's $d$ divides by the standard deviation, which does not shrink with $n$, so $d$ reports the size of the effect itself. @tbl-5z-vs-d lines the two up.
 
 |  | $z$ | Cohen's $d$ |
 |---|---|---|
@@ -366,7 +372,7 @@ In $z$ the numerator is the observed effect, $\bar{x}-\mu_0$. In $d$ it is the t
 
 : The test statistic $z$ and the effect size $d$ compared. {#tbl-5z-vs-d}
 
-A large test statistic therefore does not mean a large effect, and the two numbers answer different questions. With enough data, a trivial difference can produce a $z$ as large as you like, while $d$ stays small. The $t$ in Chapter 6 is the same ratio with an estimated $s$ in place of a known $\sigma$, so the same holds for $t$.
+A large test statistic therefore does not mean a large effect, and the two numbers answer different questions. With enough data, a trivial difference can produce a $z$ as large as you like, while $d$ stays small. In a one-sample test, $z = d\sqrt{n}$, so an effect of $d = 0.05$ gives $z = 0.5$ at $n = 100$ and $z = 5$ at $n = 10{,}000$. The $t$ in Chapter 6 is the same ratio with an estimated $s$ in place of a known $\sigma$, so the same holds for $t$.
 
 **Environmental example (biodiversity index).** Suppose an index increases from 3 to 4 after reforestation.
 
@@ -377,7 +383,9 @@ A large test statistic therefore does not mean a large effect, and the two numbe
     -   If the SD across sites is 1.0, then $d = 1.0$, a large shift.
     -   If the SD is 10, then $d = 0.10$, a small shift.
 
-**Planning starts from $\Delta$.** To plan a study, choose the value of $\Delta$ to plan for, in the units of the study. It might be the effect you expect to see, or the smallest difference that would change what you do. A power calculation also needs an estimate of $\sigma$. Cohen's $d$ standardizes $\Delta$ so that effect sizes can be compared across studies.
+The same 1-point increase is a large effect where the index varies little across sites and a small one where it varies a lot.
+
+**Planning starts from $\Delta$.** To plan a study, choose the value of $\Delta$ to plan for, in the units of the study. It might be the effect you expect to see, or the smallest difference that would change what you do. A power calculation also needs an estimate of $\sigma$, and with $\Delta$ and $\sigma$ you have Cohen's $d = \Delta/\sigma$. The same $d$ also lets you compare effect sizes across studies.
 
 
 ::: {.callout-tip title="Tip: Estimating and reporting $d$ in practice"}
@@ -389,7 +397,7 @@ A large test statistic therefore does not mean a large effect, and the two numbe
 
 Suppose we're measuring final exam performance (percent correct). The class mean is 65% with a standard deviation of 5 percentage points. Group A is a control, while Group B receives some instructional treatment.
 
-@fig-5.5effectdistsB shows four possible scenarios:
+@fig-5.5effectdistsB shows four possible scenarios, with Group B's mean shifted by $d = 0$, 0.5, 1 and 2.
 
 ```{r}
 #| label: fig-5.5effectdistsB
@@ -425,11 +433,13 @@ ggplot(df, aes(
 
 ```
 
-In @fig-5.5effectdistsB, a half-SD shift ($d = 0.5$, 2.5 points) leaves the two curves mostly overlapping, and a two-SD shift ($d = 2$, 10 points) separates them. In practice, we rarely know beforehand how big a shift to expect.
+In @fig-5.5effectdistsB, a half-SD shift ($d = 0.5$, 2.5 points) leaves the two curves mostly overlapping, and a two-SD shift ($d = 2$, 10 points) separates them.
+
+In practice, we rarely know beforehand how big a shift to expect, so the power curves later in this chapter show power across a range of effect sizes.
 
 ## Power
 
-Effects vary in size, and study designs vary in how reliably they detect an effect of a given size. That reliability is the design's statistical power. A design with low power will usually fail to reject $H_0$ even when a real effect exists.
+A design's statistical power is how reliably it detects an effect of a given size. Effects vary in size, and designs vary in power. A design with low power will usually fail to reject $H_0$ even when a real effect exists.
 
 Power rises when:
 
@@ -438,7 +448,7 @@ Power rises when:
 3.  The test is less conservative (larger $\alpha$).
 4.  Measurement noise is lower (smaller $\sigma$).
 
-For planning, the practical question is how large $n$ must be to reach 80% power, with $\alpha$ fixed at 0.05, for the smallest effect that matters. @fig-5.5powercurveN answers that question for one effect size.
+When you plan a study, you need to know how large $n$ must be to reach 80% power, with $\alpha$ fixed at 0.05, for the smallest effect that matters. @fig-5.5powercurveN answers that question for one effect size.
 
 ### Estimating power by simulation
 
@@ -465,11 +475,11 @@ power_n10_exact <- power.t.test(n = 10, delta = 0.5, sd = 1, sig.level = 0.05, s
 d80_n10 <- power.t.test(n = 10, sd = 1, sig.level = 0.05, power = 0.80, strict = TRUE)$delta
 ```
 
-The test detected the 2.5-point difference in about `r round(power_n10 * 100)`% of the 1,000 experiments. With $n = 10$ per group, it misses this medium-sized effect in most experiments. The proportion of simulated experiments that reject $H_0$ estimates the design's power, the probability that the test detects a real difference of this size.
+The test detected the 2.5-point difference in about `r round(power_n10 * 100)`% of the 1,000 experiments. The proportion of simulated experiments that reject $H_0$ estimates the design's power, the probability that the test detects a real difference of this size. With $n = 10$ per group, the test misses this medium-sized effect in about `r 100 - round(power_n10 * 100)`% of experiments.
 
 ### How power changes
 
-1.  **Larger $n$.** Doubling to $n=20$ per group reduces sampling error.
+1.  **Larger $n$.** Doubling to $n=20$ per group divides the standard error of each group mean by $\sqrt{2}$, about 1.41.
 
 ```{r}
 p <- numeric(1000)
@@ -483,7 +493,7 @@ power_n20 <- mean(p < 0.05)
 
 That increases power to about `r round(power_n20 * 100)`%, up from about `r round(power_n10 * 100)`% at $n = 10$ (rows 1 and 2 of @tbl-5power-sims).
 
-2.  **Smaller $\alpha$.** Making the test more conservative (e.g., $\alpha=0.01$) lowers power, because fewer outcomes count as "significant." We reuse the same $n=20$ simulations and change only the cutoff.
+2.  **Smaller $\alpha$.** Making the test more conservative (e.g., $\alpha=0.01$) lowers power, because only experiments with $p < 0.01$ now count as significant. We reuse the same $n=20$ simulations and change only the cutoff.
 
 ```{r}
 power_n20_strict <- mean(p < 0.01)
@@ -491,7 +501,7 @@ power_n20_strict <- mean(p < 0.01)
 
 Power falls to about `r round(power_n20_strict * 100)`% (row 3).
 
-3.  **Larger effect.** If the treatment produces a 2-SD shift, so that Group B's mean is 75, the same design at the same $\alpha=0.01$ has near-perfect power.
+3.  **Larger effect.** If the treatment produces a 2-SD shift, so that Group B's mean is 75, we rerun the simulation with the same design at the same $\alpha=0.01$.
 
 ```{r}
 p <- numeric(1000)
@@ -581,7 +591,7 @@ ggplot(plot_df, aes(x=n_seq, y=power))+
 
 At 10 per group, power to detect $d=0.2$ is about 7%, barely above $\alpha$. Reaching 80% power takes about `r ceiling(n_for_80)` per group. At that sample size, 20% of studies would still fail to reject $H_0$ for a real effect of $d = 0.2$.
 
-Power analysis is a planning tool. The $n$ that reaches a power target such as 0.80 depends on the effect size and standard deviation you assumed, so report those two numbers alongside the $n$.
+Power analysis is a planning tool. The $n$ that reaches a power target such as 0.80 depends on the effect size and standard deviation you assumed. The `r ceiling(n_for_80)` per group above assumes $d = 0.2$, and assuming $d = 0.3$ instead gives `r ceiling(power.t.test(delta = 0.3, sd = 1, power = 0.80)$n)` per group. Report the assumed effect size and standard deviation alongside the $n$.
 
 ### Planning your design
 
@@ -688,7 +698,7 @@ A results statement is one sentence that states the finding in plain language an
 
 -   **Two ways to be wrong.** A Type I error rejects a true $H_0$, at a rate you set with $\alpha$. A Type II error fails to reject a false one. For a fixed design, lowering $\alpha$ trades fewer Type I errors for more Type II errors. $\alpha = 0.05$ is a widely used convention for where to make that trade.
 -   **What a $p$-value measures.** It is the probability of data at least as extreme as ours if $H_0$ were true. It is not the probability that $H_0$ is true, and it says nothing about how large an effect is.
--   **Significance and effect size answer different questions.** A significant result says the data would be unlikely if $H_0$ were true. With a large enough $n$, even a trivially small difference is likely to be significant. The standard error shrinks as $n$ grows, so the same small difference produces a larger and larger test statistic. Report an effect size and a confidence interval next to every $p$-value so a reader can judge whether the result matters.
+-   **Significance and effect size answer different questions.** A significant result says the data would be unlikely if $H_0$ were true. The standard error shrinks as $n$ grows, so the same small difference produces a larger and larger test statistic. With a large enough $n$, even a trivially small difference is likely to be significant. Report an effect size and a confidence interval next to every $p$-value so a reader can judge whether the result matters.
 -   **One tail only when the other direction would not change the action.** Choose a one-tailed test before seeing the data, and only when a result in the other direction would lead to the same action as no result. Choosing the tail afterward doubles the actual Type I error rate.
 -   **Effect size in two kinds of units.** The same difference can be written in original units, $\Delta$, which carry practical meaning for the people who act on your result, or in standard deviations, Cohen's $d = \Delta/\sigma$, which makes results comparable across studies and scales. Report both when you can, and plan in $\Delta$, because the smallest difference worth detecting is a judgment made in the units of the measurement.
 -   **Power is a design decision.** Power depends on $n$, effect size, $\alpha$, and variability together. An underpowered study usually misses real effects, and when it does reach significance, the effect it reports tends to be too large. Run a power analysis before collecting data, while $n$ can still be chosen.
