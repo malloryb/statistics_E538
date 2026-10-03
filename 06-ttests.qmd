@@ -153,33 +153,20 @@ Degrees of freedom counts how many values are still free to vary once something 
 
 In a $t$-test, the mean is the thing estimated, and the $df$ tells you how much information is left for estimating the spread, $s$. With few degrees of freedom, $s$ can be well above or below $\sigma$, so large $t$ values turn up more often and the $t$ curve has heavier tails. As $df$ grows, $s$ settles close to $\sigma$ and the $t$ curve approaches the normal. That is why each $df$ gets its own curve.
 
-**Simulating how degrees of freedom affect the $t$ distribution.**
-
-We can see the effect of degrees of freedom directly by simulating the $t$ distribution at two different sample sizes. @fig-6dft compares $df=9$ (a sample of 10) to $df=100$ (a much larger sample).
-
 ```{r}
-#| label: fig-6dft
-#| fig-cap: "The width of the t distribution shrinks as sample size and degrees of freedom (from 9 to 100) increase."
-#| fig-alt: "Two side-by-side histograms of 10,000 simulated t values each, one for 9 degrees of freedom and one for 100 degrees of freedom. The 9-degrees-of-freedom histogram is visibly shorter and wider, with more values spread into the tails, while the 100-degrees-of-freedom histogram is taller and narrower, concentrated closer to zero."
-#| fig-asp: 0.5
-#| out-width: "100%"
-
-ts <- c(rt(10000, 9), rt(10000, 100))
-dfs <- as.factor(rep(c(9, 100), each = 10000))
-
-t_df <- data.frame(dfs, ts)
-t_df <- t_df[abs(t_df$ts) < 5, ]
-
-ggplot(t_df, aes(x = ts)) +
-  geom_histogram(fill = "#008cff", color = "white") +
-  facet_wrap( ~ dfs) +
-  xlab("t value") +
-  ylab("Count")
-
-
+# How often |t| > 2 when H0 is true, for samples of 10 and of 101
+set.seed(538)
+sim_t <- function(n, reps = 10000) {
+  replicate(reps, {
+    x <- rnorm(n, mean = 50, sd = 10)   # population mean really is mu0 = 50
+    (mean(x) - 50) / (sd(x) / sqrt(n))
+  })
+}
+pct_beyond2_n10  <- 100 * mean(abs(sim_t(10)) > 2)
+pct_beyond2_n101 <- 100 * mean(abs(sim_t(101)) > 2)
 ```
 
-As degrees of freedom increase, the $t$ distribution gets taller in the middle and thinner in the tails. With more data the sample SD is a more reliable estimate of $\sigma$, so $t$ behaves more like $z$.
+In a simulation with $H_0$ true, `r sprintf("%.1f", pct_beyond2_n10)`% of $t$ values from samples of 10 fall beyond $\pm 2$, against `r sprintf("%.1f", pct_beyond2_n101)`% from samples of 101, close to the 5% a normal curve gives. Small samples produce more large $t$ values because $s$ is sometimes well below $\sigma$, which shrinks the denominator. That is why a test with few degrees of freedom needs a larger cutoff (2.26 at $df = 9$) to keep false alarms at 5%.
 
 ### What t represents
 
@@ -192,24 +179,42 @@ $t$ can be positive or negative depending on direction. Under $H_0$, $t \sim t_{
 Remember that $s/\sqrt{n}$ is the standard error (SE), the standard deviation of the sampling distribution of the sample mean.
 :::
 
-To see how $t$ behaves when $H_0$ is true, we can simulate it.
+To see how $t$ behaves when $H_0$ is true, we can simulate it. We set up a population whose mean really is $\mu_0 = 0$, draw a sample of 10, and compute one $t$. Then we repeat that 1,000 times.
+
+**Before you look.** Each bar in @fig-6t-sim counts $t$ values from these samples. Decide roughly what share of them will fall beyond $\pm 2.26$, the critical values for $df = 9$.
 
 ```{r}
 #| label: fig-6t-sim
-#| fig-cap: 'Histogram of 1,000 simulated $t$ values ($n=10$) from a population whose mean equals $\mu_0 = 0$. Most $t$s cluster near 0; large positive or negative values are rare.'
-#| fig-alt: "Histogram of 1000 simulated t values, tallest near zero and tapering off symmetrically toward both larger positive and larger negative values, with very few beyond about plus or minus 3."
+#| fig-cap: "Histogram of 1,000 simulated $t$ values from samples of 10 drawn from a population whose mean equals $\\mu_0 = 0$. Bars beyond the critical values, ±2.26, are shaded red. The blue dot-dash curve is the $t$ distribution with 9 degrees of freedom."
+#| fig-alt: "Histogram of 1000 simulated t values on a density scale, tallest near zero and tapering symmetrically. A blue dot-dash t curve with 9 degrees of freedom follows the bars. Red vertical lines labeled lower crit equals -2.26 and upper crit equals 2.26 mark the critical values, and the few bars beyond them are shaded light red."
+set.seed(538)
 t_vals <- replicate(1000, {
   s <- rnorm(10, 0, 1)
   (mean(s) - 0) / (sd(s) / sqrt(length(s)))
 })
-ggplot(data.frame(t_vals), aes(x = t_vals)) +
-  geom_histogram(bins = 30, color = "white", linewidth = 0.2) +
-  labs(x = "t values", y = "Count")
+crit_9 <- qt(0.975, df = 9)
+bw <- 2 * crit_9 / 18   # bin edges fall exactly on both critical values
+pct_beyond_crit <- 100 * mean(abs(t_vals) >= crit_9)
+grid <- seq(-5, 5, length.out = 400)
+top <- dt(0, 9)
+
+ggplot(data.frame(t = t_vals, region = abs(t_vals) >= crit_9), aes(x = t)) +
+  geom_histogram(aes(y = after_stat(count) / (length(t_vals) * bw), fill = region, alpha = region),
+                 binwidth = bw, boundary = crit_9, colour = "white") +
+  scale_fill_manual(values = c(`FALSE` = "#008cff", `TRUE` = "red"), guide = "none") +
+  scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = .35), guide = "none") +
+  geom_line(data = data.frame(t = grid, d = dt(grid, 9)), aes(y = d),
+            colour = "#10377f", linetype = "dotdash", linewidth = 0.9) +
+  annotate("segment", x = c(-crit_9, crit_9), xend = c(-crit_9, crit_9), y = 0, yend = top * 1.08,
+           colour = "red", linewidth = 0.8) +
+  annotate("text", x = c(-crit_9, crit_9), y = top * 1.14,
+           label = c("lower crit = -2.26", "upper crit = 2.26"), colour = "red", size = 3.8) +
+  coord_cartesian(xlim = c(-5, 5)) +
+  labs(x = "t value", y = "Density")
 ```
 
-@fig-6t-sim shows 1,000 $t$ values from samples of 10 drawn with $H_0$ true. Most fall between $-2$ and $2$, and very few are beyond $\pm 3$.
+Most of the 1,000 values fall between $-2$ and $2$. About `r round(pct_beyond_crit)`% fall beyond $\pm 2.26$, close to the 5% the cutoff is built to allow. The blue curve is the $t$ distribution with 9 degrees of freedom, and the histogram follows it. Software uses that curve in place of a simulation to find how often chance alone produces a $t$ as large as ours.
 
-Because $t$ follows a known distribution under $H_0$, we can check how often chance alone would produce a $t$ as large as ours.
 
 ### Calculating t from data
 
