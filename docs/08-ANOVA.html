@@ -877,6 +877,7 @@ Table&nbsp;8.1: The one-way ANOVA table in formulas.
 <p>Since <span class="math inline">\(F\)</span> is a sample statistic, we can find out how it behaves the same way we found out how <span class="math inline">\(t\)</span> behaves, by simulating it many times under the null and looking at the resulting distribution.</p>
 <p>To build intuition for the <span class="math inline">\(F\)</span> distribution, consider a simulated monitoring study with three site types (A, B, C). Each site type has 10 sampling plots, for 30 total. We measure species abundance at each plot. All 30 plots are drawn from the same null population distribution (mean = 100, <span class="math inline">\(\sigma\)</span> = 10), so site type has no real effect on abundance. Any differences between group means arise from sampling error alone.</p>
 <p>We run this simulation 10,000 times. Each time we compute <span class="math inline">\(F\)</span> from the sample data. The histogram of those 10,000 <span class="math inline">\(F\)</span>-values, shown in <a href="#fig-8fnull" class="quarto-xref">Figure&nbsp;<span>8.3</span></a>, is the null distribution of <span class="math inline">\(F\)</span> for this design.</p>
+<p><strong>Before you look.</strong> Each bar in <a href="#fig-8fnull" class="quarto-xref">Figure&nbsp;<span>8.3</span></a> counts <span class="math inline">\(F\)</span>-values from these null experiments. Decide whether most of them will fall near 0, near 1, or well above 1.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-8fnull" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Histogram of 10,000 simulated F values from a null population distribution, with the theoretical F distribution for 2 and 27 degrees of freedom drawn over it as a blue dot-dash curve that follows the bars closely. The histogram is tallest at zero and falls off steadily into a long right-hand tail, with very few values reaching as high as 5.">
@@ -937,7 +938,7 @@ Figure&nbsp;8.4: The critical value of <span class="math inline">\(F\)</span> at
 </section>
 <section id="what-group-means-look-like-when-f-exceeds-the-critical-value" class="level3" data-number="8.3.4">
 <h3 data-number="8.3.4" class="anchored" data-anchor-id="what-group-means-look-like-when-f-exceeds-the-critical-value"><span class="header-section-number">8.3.4</span> What group means look like when <span class="math inline">\(F\)</span> exceeds the critical value</h3>
-<p>The 10,000 simulated experiments never showed the group means behind each <span class="math inline">\(F\)</span>-value. Earlier we found a critical value of 3.35: only 5% of <span class="math inline">\(F\)</span>-values from this null distribution exceed it. <a href="#fig-8sigdiffs" class="quarto-xref">Figure&nbsp;<span>8.5</span></a> shows the group means for 10 simulations with <span class="math inline">\(F&gt;3.35\)</span>. Every one of them was still drawn from the same null population distribution, with no real group differences. Rejecting the null whenever <span class="math inline">\(F\)</span> clears 3.35 is the right long-run decision rule, but every one of these particular simulations would be a Type I error if we did.</p>
+<p>Earlier we found a critical value of 3.35: only 5% of <span class="math inline">\(F\)</span>-values from this null distribution exceed it. The 10,000 simulated experiments kept only each <span class="math inline">\(F\)</span>-value, not the group means behind it. To see those means, we reran the same null simulation and kept the first 10 experiments with <span class="math inline">\(F &gt; 3.35\)</span>, shown in <a href="#fig-8sigdiffs" class="quarto-xref">Figure&nbsp;<span>8.5</span></a>. Every one of them was still drawn from the same null population distribution, with no real group differences. Rejecting the null whenever <span class="math inline">\(F\)</span> clears 3.35 is the right long-run decision rule, but every one of these particular simulations would be a Type I error if we did.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-8sigdiffs" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Ten small panels, each showing the mean abundance for site types A, B and C as a point with plus-or-minus 1 SE error bars, all from simulations where F exceeded the critical value of 3.35. In every panel at least one mean's error bars do not overlap with another's, although all ten were generated with no true group difference.">
@@ -1024,8 +1025,10 @@ Figure&nbsp;8.7: Mean salamander abundance (individuals per plot) across three f
 </table>
 </div>
 </div>
+<p>The residuals come from the fitted model, so we fit the ANOVA first and set its table aside until the checks are done.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">shapiro.test</span>(<span class="fu">residuals</span>(aov_out))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>aov_out <span class="ot">&lt;-</span> <span class="fu">aov</span>(abundance <span class="sc">~</span> forest_type, <span class="at">data =</span> salamander_df)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">shapiro.test</span>(<span class="fu">residuals</span>(aov_out))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
 <div class="cell-output-display">
@@ -1051,8 +1054,7 @@ Figure&nbsp;8.7: Mean salamander abundance (individuals per plot) across three f
 <p>In practice, one-way ANOVA is moderately robust to mild departures from these assumptions, especially with balanced group sizes like we have here (8 plots per forest type). Worry most when small, unbalanced samples come with visibly skewed data or very different spreads. In that case, the nonparametric alternative below is the better choice.</p>
 <p>With the assumptions reasonable, we run the one-way ANOVA to test whether these differences are larger than expected by chance alone.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>aov_out <span class="ot">&lt;-</span> <span class="fu">aov</span>(abundance <span class="sc">~</span> forest_type, <span class="at">data =</span> salamander_df)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(aov_out)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(aov_out)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
 <div id="tbl-8salamanderANOVA" class="cell quarto-float quarto-figure quarto-figure-center anchored">
@@ -1097,7 +1099,7 @@ Table&nbsp;8.2: One-way ANOVA table for salamander abundance by forest type.
 </figure>
 </div>
 </div>
-<p>The <span class="math inline">\(F\)</span>-value of 14.60 falls far into the tail of the null distribution of <span class="math inline">\(F\)</span> for df(2, 21). Values this large arise by chance less than 0.1% of the time, so we reject the null hypothesis that all three group means are equal.</p>
+<p>With 24 plots the design has df(2, 21), and the critical value at <span class="math inline">\(\alpha = 0.05\)</span> is 3.47, a little higher than the 3.35 for 30 plots because the error term has fewer degrees of freedom. Our <span class="math inline">\(F\)</span> of 14.60 is more than four times that cutoff. Values this large arise by chance less than 0.1% of the time, so we reject the null hypothesis that all three group means are equal.</p>
 </section>
 <section id="effect-size-eta-squared" class="level3" data-number="8.4.3">
 <h3 data-number="8.4.3" class="anchored" data-anchor-id="effect-size-eta-squared"><span class="header-section-number">8.4.3</span> Effect size: eta-squared</h3>

@@ -295,6 +295,8 @@ To build intuition for the $F$ distribution, consider a simulated monitoring stu
 
 We run this simulation 10,000 times. Each time we compute $F$ from the sample data. The histogram of those 10,000 $F$-values, shown in @fig-8fnull, is the null distribution of $F$ for this design.
 
+**Before you look.** Each bar in @fig-8fnull counts $F$-values from these null experiments. Decide whether most of them will fall near 0, near 1, or well above 1.
+
 ```{r}
 #| label: fig-8fnull
 #| fig-cap: "A simulation of 10,000 experiments from a null population distribution with no group differences. The histogram shows 10,000 $F$-values, one for each simulation. These are values that F can take in this situation. All of these $F$-values were produced by random sampling error."
@@ -395,7 +397,7 @@ A small $F$ with a large $p$-value means we don't reject the hypothesis of no di
 
 ### What group means look like when $F$ exceeds the critical value
 
-The 10,000 simulated experiments never showed the group means behind each $F$-value. Earlier we found a critical value of 3.35: only 5% of $F$-values from this null distribution exceed it. @fig-8sigdiffs shows the group means for 10 simulations with $F>3.35$. Every one of them was still drawn from the same null population distribution, with no real group differences. Rejecting the null whenever $F$ clears 3.35 is the right long-run decision rule, but every one of these particular simulations would be a Type I error if we did.
+Earlier we found a critical value of 3.35: only 5% of $F$-values from this null distribution exceed it. The 10,000 simulated experiments kept only each $F$-value, not the group means behind it. To see those means, we reran the same null simulation and kept the first 10 experiments with $F > 3.35$, shown in @fig-8sigdiffs. Every one of them was still drawn from the same null population distribution, with no real group differences. Rejecting the null whenever $F$ clears 3.35 is the right long-run decision rule, but every one of these particular simulations would be a Type I error if we did.
 
 ```{r}
 #| label: fig-8sigdiffs
@@ -534,9 +536,12 @@ knitr::kable(
 )
 ```
 
+The residuals come from the fitted model, so we fit the ANOVA first and set its table aside until the checks are done.
+
 ```{r}
 #| echo: true
 #| eval: false
+aov_out <- aov(abundance ~ forest_type, data = salamander_df)
 shapiro.test(residuals(aov_out))
 ```
 
@@ -561,7 +566,6 @@ With the assumptions reasonable, we run the one-way ANOVA to test whether these 
 ```{r}
 #| echo: true
 #| eval: false
-aov_out <- aov(abundance ~ forest_type, data = salamander_df)
 summary(aov_out)
 ```
 
@@ -572,7 +576,7 @@ summary(aov_out)
 anova_kable(aov_out)
 ```
 
-The $F$-value of 14.60 falls far into the tail of the null distribution of $F$ for df(2, 21). Values this large arise by chance less than 0.1% of the time, so we reject the null hypothesis that all three group means are equal.
+With 24 plots the design has df(2, 21), and the critical value at $\alpha = 0.05$ is `r sprintf("%.2f", qf(0.95, 2, 21))`, a little higher than the 3.35 for 30 plots because the error term has fewer degrees of freedom. Our $F$ of 14.60 is more than four times that cutoff. Values this large arise by chance less than 0.1% of the time, so we reject the null hypothesis that all three group means are equal.
 
 ### Effect size: eta-squared
 
