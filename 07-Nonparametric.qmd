@@ -192,7 +192,7 @@ That's an SD of about 8.4. Our observed $V=39$ is about 1.96 SDs above that expe
 
 R's $p=0.057$ comes from this normal approximation, with two small corrections. Because $V$ moves in steps rather than smoothly, R shrinks the gap between $V$ and 22.5 by 0.5, which raises $p$. It also adjusts the variance for the tied ranks, which lowers $p$ a little. The first correction is larger, so $p$ ends up slightly above the 0.05 a $z$ of 1.96 would give. For small, tie-free samples with no zeros, R can instead read the exact null distribution directly.
 
-To see the null distribution, we simulate 20,000 experiments. In each one, every one of the 9 nonzero ranks gets a random $+$ or $-$ sign, as $H_0$ says it should, and we add up the positive ranks. The critical values marked on the figure come from listing all 512 sign patterns. That list is the exact null distribution, and the simulation approximates it.
+To see the null distribution, we keep our 9 ranks and reassign their signs at random 20,000 times. No new plots are measured. Each repetition gives one $V$, the value our data would have produced if each plot's change had been equally likely to go up or down. The critical values marked on the figure come from listing all 512 sign patterns. That list is the exact null distribution, and the simulation approximates it.
 
 ```{r}
 #| label: fig-7wilcoxon-null
@@ -213,16 +213,20 @@ null_hist(sim_V, exact_V, obs_V, "V", "V (sum of positive ranks)")
 
 Our observed $V=39$ falls just short of the upper critical value, 40, so it is not in the 5% region. $V$ can only take certain values, so the boundary can't fall exactly at 2.5%. A $V$ of 39 or more comes up just over 2.5% of the time under $H_0$, which puts the two-tailed $p$ just over 0.05. The result is not significant, though it is close to the cutoff.
 
+The test does not need normality because nothing in this simulation assumed a shape for soil moisture. The only inputs were our 9 ranks and the 50/50 sign rule from $H_0$.
+
 **So far.** $t$-test $p=0.026$ (significant), Wilcoxon $p=0.057$ (not quite). The two tests reach different verdicts on the same 12 plots because the $t$-test's numerator and denominator both used the exact magnitudes the Wilcoxon test deliberately ignores.
 
 **The sign test.** There's an even simpler nonparametric option, the **sign test**, which looks only at whether each difference is positive or negative. It discards the magnitude entirely and asks whether pluses outnumber minuses more than chance would suggest. The sign test makes no assumption about the distribution of the differences, not even symmetry. Its only assumption is the one every test in this book shares, independent observations from a sound study design (see Chapter 6).
 
 We already flagged the symmetry assumption as shaky for these data, so the sign test avoids the one assumption the Wilcoxon test still needed. That robustness comes at a big cost in power, though, so it's usually a last resort.
 
+The sign test uses the binomial distribution from Chapter 3. `binom.test(6, 9, p = 0.5)` asks how often chance alone would give 6 or more increases out of 9, or 3 or fewer, if each plot were equally likely to go up or go down ($p = 0.5$).
+
 ```{r}
 #| echo: true
 #| eval: false
-binom.test(6, 9)
+binom.test(6, 9, p = 0.5)
 ```
 
 ```{r}
@@ -383,7 +387,7 @@ That's an SD of about 9.5. Our observed $U=50$ is about 1.9 SDs above that expec
 
 R's $p=0.063$ comes from this normal approximation, with the same two corrections as in the Wilcoxon case. The step correction raises $p$ more than the tie adjustment lowers it, so $p$ ends up slightly above what a $z$ of 1.9 alone would give. For small samples without ties, R can instead read the exact null distribution directly, no approximation needed.
 
-We simulate this null distribution the same way as before. We pool the richness values, then repeatedly shuffle which 8 ranks land in the restored group. The critical values marked on the figure come from listing all 12,870 splits, which is the exact null distribution the simulation approximates.
+We simulate this null distribution the same way as before. We pool the 16 ranks, then 20,000 times pick 8 of them at random to call restored and compute $U$. Each shuffle gives one $U$, the value we would see if group labels had nothing to do with richness. The critical values marked on the figure come from listing all 12,870 splits, which is the exact null distribution the simulation approximates.
 
 ```{r}
 #| label: fig-7mww-null
