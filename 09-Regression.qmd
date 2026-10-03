@@ -108,6 +108,8 @@ design_continuous("Stream temperature (continuous)", "10 \u00b0C", "24 \u00b0C",
 
 Up to now every design put units into groups and asked whether the groups differed. Now, with a continuous predictor, every temperature value is treated as its own group. Each of the 30 sites falls somewhere along the range, and the line describes how mean DO changes from one temperature to the next. The question becomes how much DO changes per degree rather than whether two groups differ.
 
+The 30 sites in this example are invented. We built them from a population line with $\beta_0 = 13.5$ mg/L and $\beta_1 = -0.28$ mg/L per °C, plus random scatter, so here, unlike in a real study, we know the true slope that $b_1$ estimates.
+
 ```{r}
 #| label: fig-9regscatter
 #| fig-cap: "Stream temperature and dissolved oxygen at 30 sample sites, with the fitted regression line."
@@ -260,7 +262,7 @@ Our observed $t = `r sprintf("%.2f", fit_tidy$statistic[2])`$ is far past the cr
 
 We reject $H_0$ and conclude that stream temperature is linearly related to dissolved oxygen.
 
-The 95% confidence interval for the slope, also in the coefficient table above, is 95% CI [`r sprintf("%.3f", fit_tidy$conf.low[2])`, `r sprintf("%.3f", fit_tidy$conf.high[2])`] mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will.
+The 95% confidence interval for the slope, also in the coefficient table above, is 95% CI [`r sprintf("%.3f", fit_tidy$conf.low[2])`, `r sprintf("%.3f", fit_tidy$conf.high[2])`] mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will. The interval also contains $\beta_1 = -0.28$, the true slope we built into the data. A 95% interval catches the true value in about 95% of samples, and this sample is one of them.
 
 ## Partitioning variation: regression as ANOVA
 
@@ -435,7 +437,7 @@ ggplot(stream_df, aes(x = fitted, y = resid)) +
 
 @fig-9regresid, for our stream temperature data, shows residuals scattered evenly above and below zero, with no curve (which would suggest the true relationship isn't linear) and no funnel shape (which would suggest variance changes systematically across the range of $X$).
 
-Next, check the residuals for a second data set, daily avian influenza cases over time. The design is the same shape as the stream example, with time as the continuous predictor.
+Next, check the residuals for a second data set, 14 days of invented avian influenza case counts. We built the counts from an exponential curve, $6e^{0.28 \times \text{day}}$, plus random scatter, so we know the true shape that a straight line will miss. The design is the same shape as the stream example, with time as the continuous predictor.
 
 ```{r}
 #| label: fig-9outbreakdesign
@@ -699,7 +701,7 @@ true_val30 <- 6 * exp(true_rate * 30)
 
 In @fig-9outbreakextrap, the dashed line keeps rising slowly past day 14, while the true exponential curve rises far above it.
 
-The linear model predicts about `r round(lin_pred30)` cases on day 30. If the outbreak is exponential, the actual count is closer to `r formatC(round(true_val30), big.mark=",", format="d")`, roughly `r round(true_val30/lin_pred30)` times higher.
+The linear model predicts about `r round(lin_pred30)` cases on day 30. On the exponential curve the data were built from, the count is closer to `r formatC(round(true_val30), big.mark=",", format="d")`, roughly `r round(true_val30/lin_pred30)` times higher.
 
 Planning surveillance and containment staffing off the linear forecast would leave the response badly under-resourced for the outbreak that actually arrives. A straight line can look fine over a short early window and still be very wrong about where that window leads.
 
@@ -715,4 +717,4 @@ This problem calls for a different model. More data or a better-fitting straight
 -   **Regression partitions variation the way ANOVA does.** $SS_\text{Total}$ splits into $SS_\text{Regression}$ (Chapter 8's between) and $SS_\text{Residual}$ (Chapter 8's within), and $F = MS_\text{Regression}/MS_\text{Residual}$, which equals $t^2$ with one predictor. $R^2$, the proportion of variation explained by the line, is the effect size. A relationship can be real ($p$ small) and still explain very little, which is why you report both.
 -   **Look at your data, then look at your residuals.** The assumptions that must be met are linearity, independence, constant variance, and roughly normal residuals. A residuals-versus-fitted plot catches violations a formal test can miss entirely, as the outbreak example showed.
 -   **Predict inside the observed range, and extrapolate beyond it only with good reason.** Interpolating within the observed range of $x$ is what regression is for. Extrapolating beyond it is sometimes justified, but only when you have good reason to believe the relationship stays the same shape past the range you observed.
--   **A good $R^2$ can still be the wrong model.** The outbreak example fit a straight line to exponential growth and got $R^2=`r sprintf("%.2f", outbreak_tidy$r.squared)`$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast about 26,000 cases short of reality. The residual plot catches this. A normality check on the same residuals gives only a borderline signal, because it tests a different assumption.
+-   **A good $R^2$ can still be the wrong model.** The outbreak example fit a straight line to exponential growth and got $R^2=`r sprintf("%.2f", outbreak_tidy$r.squared)`$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast about 26,000 cases short of the exponential curve the data came from. The residual plot catches this. A normality check on the same residuals gives only a borderline signal, because it tests a different assumption.
