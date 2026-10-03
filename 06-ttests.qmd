@@ -611,7 +611,7 @@ Note the paired write-up never mentions the before and after means separately. T
 
 ## Simulating data for t-tests
 
-Chapter 4 simulated *group mean differences* to build a chance window. Here we simulate the test statistic itself, which shows two things the earlier simulation could not: what the null distribution of $t$ looks like, and what happens to $p$-values when $H_0$ is true.
+Earlier in this chapter we simulated $t$ under $H_0$ and saw its null distribution in @fig-6t-sim. The same kind of simulation also gives a $p$-value for each repetition, and those $p$-values show what a test does when $H_0$ is true and when it is false.
 
 Simulating under conditions you choose shows how sampling error affects results for a given sample size, expected difference, and amount of variation. Formal power analyses use the same method.
 
@@ -622,7 +622,7 @@ A simulation has two steps.
 1.  Decide what the population looks like. Here each sample is 30 sites, with values drawn from a normal distribution with mean 50 and SD 25.
 2.  Draw one sample from that population, run the $t$-test, and save the statistics you care about ($t$ and $p$). Repeat 1,000 times and look at how they are distributed.
 
-Every test compares the sample mean to $\mu_0 = 50$, which is also the true population mean, so $H_0$ is true in every repetition. @fig-6nullt is the null distribution of $t$ that this produces.
+Every test compares the sample mean to $\mu_0 = 50$, which is also the true population mean, so $H_0$ is true in every repetition. @fig-6flatp shows the 1,000 $p$-values it produces.
 
 ```{r}
 # steps to create fake data from a distribution
@@ -638,14 +638,6 @@ for (i in 1:1000) {
 ```
 
 ```{r}
-#| label: fig-6nullt
-#| fig-cap: "The distribution of $t$-values under the null. These are the $t$ values that are produced by chance alone."
-#| fig-alt: "Histogram of 1000 simulated t statistics from samples with no true effect, symmetric and bell-shaped, centered at zero, with fewer and fewer values as t moves further from zero in either direction."
-
-hist_t(save_ts)
-```
-
-```{r}
 #| label: fig-6flatp
 #| fig-cap: "The distribution of $p$-values that are observed is flat under the null."
 #| fig-alt: "Histogram of 1000 simulated p-values from samples with no true effect, roughly flat across the full range from 0 to 1, with bars of similar height in every bin including the bin closest to zero."
@@ -653,88 +645,33 @@ hist_t(save_ts)
 hist_p(save_ps)
 ```
 
-The simulated $t$ values in @fig-6nullt have the bell shape of a $t$ distribution, centered on zero. The $p$-values in @fig-6flatp are flat, as they should be when $H_0$ is true. This means you have the same chance of getting a $t$ with a p-value between 0 and 0.05 as you would of getting one between 0.90 and 0.95. Those ranges are both ranges of 5%, so they hold an equal share of the $t$ values by definition.
+The $p$-values in @fig-6flatp are flat, as they should be when $H_0$ is true. This means you have the same chance of getting a $t$ with a p-value between 0 and 0.05 as you would of getting one between 0.90 and 0.95. Those ranges are both ranges of 5%, so they hold an equal share of the $t$ values by definition.
 
-You can write the same simulation more compactly with `replicate()` instead of a `for` loop; it produces the same two distributions above:
-
-```{r, echo=TRUE, eval=FALSE}
-simulated_ts <- replicate(1000, t.test(rnorm(30, 50, 25), mu = 50)$statistic)
-simulated_ps <- replicate(1000, t.test(rnorm(30, 50, 25), mu = 50)$p.value)
-```
+The first bar holds the `r sum(save_ps < 0.05)` $p$-values below 0.05. Each one is a test that rejected a true $H_0$, a Type I error. Together they make up about 5% of the 1,000, which is the $\alpha$ we chose.
 
 ### Simulating paired and independent-samples tests
 
 The paired and independent-samples cases behave the same way, because they use the same $t$ calculation on different inputs. A paired test runs a one-sample $t$ on the difference scores; an independent-samples test swaps in the pooled standard error. Simulate either one under $H_0$ and you get the same two pictures: a $t$ distribution centered on zero, and a flat $p$ distribution.
 
-To adapt the code above, change only the line that generates the data:
+Chapter 5 simulated 1,000 experiments with a real difference (two groups of 10, means 10 and 12.5, SD 5) and counted how often $p < 0.05$ to estimate power. @fig-6simtrueps shows the 1,000 $p$-values from the same setup.
 
-```{r, echo=TRUE, eval=FALSE}
-# paired: one sample of difference scores
-d <- rnorm(10, 0, 5) - rnorm(10, 0, 5)
-t.test(d, mu = 0)$p.value
-
-# independent samples: two separate groups
-t.test(rnorm(10, 10, 5), rnorm(10, 10, 5), var.equal = TRUE)$p.value
-```
-
-Next, give one condition a larger mean than the other, so the simulated data contain a real difference:
-
-```{r, echo=TRUE}
-
+```{r}
 save_ps <- numeric(1000)
-save_ts <- numeric(1000)
-for ( i in 1:1000 ){
-  condition_A <- rnorm(10,10,5)
-  condition_B <- rnorm(10,13,5)
-  t_test <- t.test(condition_A, condition_B, var.equal = TRUE)
-  save_ps[i] <- t_test$p.value
-  save_ts[i] <- t_test$statistic
+for (i in 1:1000) {
+  condition_A <- rnorm(10, 10, 5)
+  condition_B <- rnorm(10, 12.5, 5)
+  save_ps[i] <- t.test(condition_A, condition_B, var.equal = TRUE)$p.value
 }
-
 ```
 
 ```{r}
 #| label: fig-6simtrueps
-#| fig-cap: "1,000 simulated $p$-values ($n = 10$) when there is a true difference."
+#| fig-cap: "1,000 simulated $p$-values ($n = 10$ per group) when there is a true difference."
 #| fig-alt: "Histogram of 1000 simulated p-values from samples of size 10 with a real underlying difference. Unlike the flat null histogram, this one is right-skewed, with the tallest bars near zero and progressively shorter bars moving toward 1."
 hist_p(save_ps)
 ```
 
-With a real difference, the $p$-values pile up near 0, with a long tail toward 1. A true effect produces larger $t$ values than chance alone would, so $p$-values below 0.05 turn up more often.
-
-Here $H_0$ is false, so rejecting it when $p < 0.05$ is a correct decision, not a Type I error. The code below counts how often that happens in the 1,000 experiments.
-
-```{r, echo=TRUE}
-length(save_ps[save_ps<.05])
-length(save_ps[save_ps<.05])/1000
-```
-
-We got `r length(save_ps[save_ps<.05])` simulations where p was less than 0.05, or `r 100*length(save_ps[save_ps<.05])/1000`% of experiments. That percentage is the design's power. A study with power this low will usually miss a difference that is really there, so running it as designed spends the time and money of data collection on a result that is most likely to come back not significant. Improve the design before you run it.
-
-The most direct lever is $n$, the number of subjects. Let's increase $n$ from 10 to 100 and see what happens to the number of "significant" simulated experiments.
-
-```{r, echo=TRUE}
-
-save_ps <- numeric(1000)
-save_ts <- numeric(1000)
-for ( i in 1:1000 ){
-  condition_A <- rnorm(100,10,5)
-  condition_B <- rnorm(100,13,5)
-  t_test <- t.test(condition_A, condition_B, var.equal = TRUE)
-  save_ps[i] <- t_test$p.value
-  save_ts[i] <- t_test$statistic
-}
-
-```
-
-```{r}
-#| label: fig-6simpsB
-#| fig-cap: "1,000 simulated $p$-values ($n = 100$) when there is a true difference."
-#| fig-alt: "Histogram of 1000 simulated p-values from samples of size 100 with the same real underlying difference as the previous figure. Almost every simulation now produces a p-value near zero, with a tall spike in the leftmost bin and almost nothing anywhere else."
-hist_p(save_ps)
-```
-
-Now almost all of the experiments (`r sum(save_ps < .05)` of 1000) show a $p$-value of less than 0.05 (using a two-tailed test, the default in R). You can use this simulation process to determine how many subjects you need to reliably detect your effect.
+With a real difference, the $p$-values pile up near 0, while under $H_0$ in @fig-6flatp they spread evenly from 0 to 1. Here $H_0$ is false, so rejecting it is a correct decision, not a Type I error. The first bar holds the `r sum(save_ps < 0.05)` experiments that rejected $H_0$, and their share of the 1,000 is the design's power. The other `r sum(save_ps >= 0.05)` missed a difference that was really there. Chapter 5 showed how a larger sample raises power.
 
 ## Chapter Summary
 
