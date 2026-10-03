@@ -10,7 +10,7 @@ source("global_stuff.R")
 set.seed(538)
 ```
 
-# ANOVA
+# Analysis of Variance (ANOVA)
 
 ```{r}
 library(ggplot2)
@@ -18,6 +18,7 @@ library(dplyr)
 library(broom)
 
 fmt_p <- function(p) ifelse(p < .001, "< 0.001", formatC(p, digits = 3, format = "f"))
+fmt_p_eq <- function(p) ifelse(p < .001, '< 0.001', paste('=', formatC(p, digits = 3, format = 'f')))
 
 # ANOVA table in the book's style: R's row labels, blank F and p on the Residuals row
 anova_kable <- function(fit, caption = NULL) {
@@ -35,7 +36,7 @@ anova_kable <- function(fit, caption = NULL) {
 
 ## ANOVA is analysis of variance
 
-ANOVA stands for Analysis Of Variance. It tests whether differences among several group means are larger than we'd expect from chance alone.
+ANOVA stands for analysis of variance. It tests whether differences among several group means are larger than we'd expect from chance alone. Chapters 6 and 7 compared two groups. This chapter builds the one-way ANOVA by hand, runs the full workflow on one example through post-hoc comparisons and a rank-based alternative, and ends with repeated-measures ANOVA.
 
 With two groups, a $t$-test already answers that question. ANOVA extends the same logic to three or more groups. Environmental studies often compare that many, such as several sites, treatments, or time periods.
 
@@ -45,13 +46,13 @@ Sir Ronald Fisher invented the ANOVA [@salsburg2001lady] and wanted to publish i
 
 ### Why not just run multiple $t$-tests?
 
-Suppose we're comparing three restoration treatments for vegetation cover: compost, mulch, and a bare-soil control. With three groups, there are three possible pairwise comparisons: compost vs. mulch, compost vs. control, and mulch vs. control.
+Suppose we're comparing classroom CO~2~ concentrations (ppm) under three ventilation settings: windows open, mechanical ventilation, and no ventilation change. With three groups, there are three possible pairwise comparisons: windows open vs. mechanical ventilation, windows open vs. no change, and mechanical ventilation vs. no change.
 
 We could run a separate $t$-test for each. The problem is that every test carries its own 5% chance of a false positive, and those chances accumulate across tests. This follows from the independence multiplication rule in Chapter 3: if we run $m$ independent tests at $\alpha=0.05$, the probability of at least one false positive across all of them is
 
 $$P(\text{at least one false positive}) = 1-(1-\alpha)^m.$$
 
-With three groups, that's three tests and a familywise error rate of 14%, not 5%:
+With three groups, that's three tests. The chance of at least one false positive across a set of tests is the **familywise error rate**, and for three tests it is 14%, not 5%:
 
 $$1-(1-0.05)^3 = 0.14.$$
 
@@ -65,7 +66,7 @@ Even with only five groups, there's a 40% chance of turning up at least one "sig
 
 ```{r}
 #| label: fig-8multiplet
-#| fig-cap: "Familywise Type I error rate as the number of independent t-tests increases, at alpha = 0.05 per test."
+#| fig-cap: "Familywise Type I error rate as the number of independent $t$-tests increases, at $\\alpha = 0.05$ per test."
 #| fig-alt: "Line graph with points showing familywise error rate rising as the number of independent t-tests increases from 1 to 12. The rate starts at 5 percent with a single test and climbs steadily, crossing 25 percent around 6 tests and reaching over 45 percent by 12 tests."
 #| out-width: "80%"
 
@@ -92,7 +93,7 @@ Just like the $t$-test, different research designs call for different kinds of A
 
 ## One-way ANOVA
 
-The one-way ANOVA (also called a between-subjects or independent-factor ANOVA) is the simplest version of the test. It has one independent variable with two or more levels, and every unit is measured once.
+The one-way ANOVA (also called a between-subjects ANOVA) is the simplest version of the test. In ANOVA an independent variable is called a **factor**, and the groups it defines are its **levels**. A one-way ANOVA has one factor with two or more levels, and every unit is measured once.
 
 With exactly two groups, a $t$-test and a one-way ANOVA give the same answer: $t^2=F$. Both compare the size of an effect to the amount of variation you'd expect from sampling error alone. The $t$-test expresses that comparison as $t$, and the ANOVA expresses the same ratio as $F$ (named for Fisher, its inventor).
 
@@ -114,6 +115,7 @@ When the two are about the same size, $F \approx 1$, and group differences are n
 #| out-width: "100%"
 
 between_within_panel <- function(true_means, title) {
+  # same seed in both panels, so the two panels share the same noise
   set.seed(538)
   k <- 3; n <- 12
   g <- factor(rep(paste0("Group ", LETTERS[1:k]), each = n))
@@ -166,7 +168,7 @@ tab <- rbind(tab,
              data.frame(Group = "Sums",  Score = sum(scores),  Deviation = sum(dev),  Squared = sum(dev^2)),
              data.frame(Group = "Means", Score = mean(scores), Deviation = mean(dev), Squared = mean(dev^2)))
 knitr::kable(tab, col.names = c("Group", "Score", "Deviation from grand mean", "Squared deviation"),
-             digits = 2, caption = "Deviations from the grand mean")
+             digits = 2, caption = "Deviations from the grand mean.")
 ```
 
 The data are in long format, so each row is a single score. The mean of all of the scores is the **grand mean**, calculated in the table as 7.
@@ -198,7 +200,7 @@ tab <- data.frame(Group = groups, Score = scores, Mean = means, Deviation = dev,
 tab <- rbind(tab, data.frame(Group = "Sums", Score = sum(scores), Mean = sum(means),
                              Deviation = sum(dev), Squared = sum(dev^2)))
 knitr::kable(tab, col.names = c("Group", "Score", "Group mean", "Group mean minus grand mean", "Squared"),
-             digits = 2, caption = "Group means replace the scores")
+             digits = 2, caption = "Group means replace the scores.")
 ```
 
 The group mean column replaces each score with its group mean. Group A's mean is 11, so there are three 11s, one per observation in group A. Groups B and C both average to 5, so the rest of the column is 5s.
@@ -228,12 +230,12 @@ tab <- data.frame(Group = groups, Score = scores, Mean = means, Deviation = dev,
 tab <- rbind(tab, data.frame(Group = "Sums", Score = sum(scores), Mean = sum(means),
                              Deviation = sum(dev), Squared = sum(dev^2)))
 knitr::kable(tab, col.names = c("Group", "Score", "Group mean", "Score minus group mean", "Squared"),
-             digits = 2, caption = "Deviations from each group's own mean")
+             digits = 2, caption = "Deviations from each group's own mean.")
 ```
 
 This time, for each score we found the group mean first, then the leftover error. The fourth column is the difference between each score and its own group mean, and the last column squares it. Summing the last column gives $SS_\text{Within}$, the variation the group means can't explain.
 
-$SS_\text{Within}$ has several other names. It is also called the **error** sum of squares, since it is the variation left over after group membership has explained what it can. R labels its row `Residuals`, and a results sentence reports $MS_\text{Within}$ as $MSE$ (mean squared error). All of these name the same quantity.
+$SS_\text{Within}$ has several other names. It is also called the **error sum of squares**, since it is the variation left over after group membership has explained what it can. R labels its row `Residuals`, and some articles report $MS_\text{Within}$ as $MSE$ (mean squared error). All of these name the same quantity.
 
 ### Degrees of freedom
 
@@ -280,7 +282,7 @@ toy_df <- data.frame(
   scores = c(20, 11, 2, 6, 2, 7, 2, 11, 2),
   groups = rep(c("A", "B", "C"), each = 3)
 )
-anova_kable(aov(scores ~ groups, data = toy_df))
+anova_kable(aov(scores ~ groups, data = toy_df), caption = "R's ANOVA table for the toy data.")
 ```
 
 R labels the two rows `groups` (the between-groups row: what the means can explain) and `Residuals` (the within-groups row: what they can't). Other software uses slightly different labels for the same two rows. The table adds no new information beyond what we already computed. It organizes the numbers, and $MS_\text{Between}$ (36) divided by $MS_\text{Within}$ (38.33) gives the $F$-value. With $F = 0.94$, the group means vary no more than the noise within groups would make them vary, so these nine scores give no evidence that the groups differ.
@@ -333,7 +335,7 @@ ggplot(plot_df, aes(x = save_F)) +
 
 This $F$ distribution has two properties. First, it never goes below 0, because $F$ is a ratio of two variances and variances can't be negative. Second, it is right-skewed, and its exact shape depends on the numerator and denominator degrees of freedom.
 
-Most simulated $F$-values here fall near or below 1, because under the null the two mean squares estimate the same thing. All 30 plots come from one null population distribution with $\sigma = 10$. $MS_\text{Within}$ estimates $\sigma^2$ from the spread of scores inside each group. $MS_\text{Between}$ estimates the same $\sigma^2$ from how far the group means stray from the grand mean, since with no real effect, sampling variation is the only thing moving them. Two estimates of one variance give a ratio near 1. When the population means really differ, $MS_\text{Between}$ picks up those differences on top of $\sigma^2$, and $F$ grows. Values of 5 or more occur in about 1% of the simulations.
+Most simulated $F$-values here fall near or below 1, because under the null the two mean squares estimate the same thing. All 30 plots come from one null population distribution with $\sigma = 10$. $MS_\text{Within}$ estimates $\sigma^2$ from the spread of scores inside each group. $MS_\text{Between}$ estimates the same $\sigma^2$ from how far the group means stray from the grand mean, since with no real effect, sampling variation is the only thing moving them. Two estimates of one variance give a ratio near 1. When the population means really differ, $MS_\text{Between}$ picks up those differences on top of $\sigma^2$, and $F$ grows. Values of 5 or more occur in about `r round(100 * mean(save_F >= 5))`% of the simulations.
 
 ### Making decisions
 
@@ -376,11 +378,11 @@ Only 5% of $F$-values from this null distribution are 3.35 or larger. That gives
 
 ### F and the means
 
-An $F$-value and its $p$-value say whether the group means differ, but not what the means were. If a study reports $F(2,27)=6.0$, $p=0.007$, we know only that an $F$ this large would happen by chance less than 1% of the time. We still don't know which means differed, or by how much, without looking at the group means directly (the ANOVA table itself doesn't report them).
+An $F$-value and its $p$-value say whether the group means differ, but not what the means were. If a study reports $F(2, 27) = 6.0$, $p = 0.007$, we know only that an $F$ this large would happen by chance less than 1% of the time. We still don't know which means differed, or by how much, without looking at the group means directly (the ANOVA table itself doesn't report them).
 
 ### ANOVA is an omnibus test
 
-ANOVA is called an omnibus test, meaning a test that covers several items at once. It answers one overall question that stands in for several pairwise ones.
+ANOVA is called an **omnibus test**, a test that covers several comparisons at once. It answers one overall question that stands in for several pairwise ones.
 
 With three groups A, B, and C, there are three possible pairwise differences: A vs. B, B vs. C, and A vs. C. We could test each with a separate $t$-test, or ask the more general omnibus question with a single ANOVA:
 
@@ -401,7 +403,7 @@ Earlier we found a critical value of 3.35: only 5% of $F$-values from this null 
 
 ```{r}
 #| label: fig-8sigdiffs
-#| fig-cap: "Group means from 10 null simulations in which $F$ exceeded the critical value. Every one of them is a Type I error."
+#| fig-cap: "Group means from 10 null simulations in which $F$ exceeded the critical value. Error bars show ±1 SE. Every one of them is a Type I error."
 #| fig-alt: "Ten small panels, each showing the mean abundance for site types A, B and C as a point with plus-or-minus 1 SE error bars, all from simulations where F exceeded the critical value of 3.35. In every panel at least one mean's error bars do not overlap with another's, although all ten were generated with no true group difference."
 #| out-width: "100%"
 
@@ -434,7 +436,7 @@ plot_df <- all_df %>%
 
 ggplot(plot_df, aes(x = site_type, y = means)) +
   geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.25) +
-  geom_point(size = 2.5, colour = "#008cff") +
+  geom_point(size = 2.5) +
   facet_wrap( ~ simulations, nrow = 2) +
   xlab("Site type") +
   ylab("Mean abundance") +
@@ -449,7 +451,7 @@ Every panel of @fig-8sigdiffs now shows at least one group mean whose error bars
 
 In practice, software computes the ANOVA table for you. We computed one by hand so that each number in that table has a meaning when you read it.
 
-The following example applies the full ANOVA workflow, from descriptive summaries through the omnibus $F$ test to post-hoc comparisons, to a salamander study with invented counts. Lab 11 uses the same data.
+The following example applies the full ANOVA workflow, from descriptive summaries through the omnibus $F$ test to post-hoc comparisons, to a salamander study.
 
 ### Salamander abundance across forest types
 
@@ -470,15 +472,16 @@ design_groups("Forest type (categorical)",
 
 Compared with the two-group designs earlier in the book, only the number of groups has changed. ANOVA generalizes the $t$-test in the same way. More groups also means more pairwise comparisons, which is the multiple-comparisons problem from the start of the chapter.
 
-Let's look at the data.
+The hypotheses are $H_0: \mu_\text{Old-growth} = \mu_\text{Secondary} = \mu_\text{Managed}$ and $H_a$: at least one mean differs. Let's look at the data.
 
 ```{r}
 #| label: fig-8salamanderData
-#| fig-cap: "Mean salamander abundance (individuals per plot) across three forest types. Points show individual plot counts; error bars show ±1 SE."
-#| fig-alt: "Bar chart of mean salamander abundance for old-growth, secondary, and managed forest, with individual plot counts overlaid as scattered points and error bars showing one standard error. Old-growth has the tallest bar, secondary is noticeably lower, and managed is the shortest, forming a clear declining gradient. The scattered points show considerable spread within each forest type."
+#| fig-cap: "Mean salamander abundance (individuals per plot) across three forest types. Points show individual plot counts, and error bars show 95% confidence intervals."
+#| fig-alt: "Bar chart of mean salamander abundance for old-growth, secondary, and managed forest, with individual plot counts overlaid as scattered points and error bars showing 95% confidence intervals. Old-growth has the tallest bar, secondary is noticeably lower, and managed is the shortest, forming a clear declining gradient. The scattered points show considerable spread within each forest type."
 #| fig-asp: 0.5
 #| out-width: "100%"
 
+# fixed seed: the invented counts and every number quoted from them depend on it
 set.seed(288)
 old_growth <- pmax(round(rnorm(8, mean = 14, sd = 3.5)), 0)
 secondary  <- pmax(round(rnorm(8, mean = 7,  sd = 2.8)), 0)
@@ -496,12 +499,12 @@ descriptive_df <- salamander_df %>%
   dplyr::group_by(forest_type) %>%
   dplyr::summarise(
     means = mean(abundance),
-    SEs   = sd(abundance) / sqrt(n())
+    ci    = qt(.975, n() - 1) * sd(abundance) / sqrt(n())
   )
 
 ggplot(descriptive_df, aes(x = forest_type, y = means)) +
   geom_bar(stat = "identity", fill = "#008cff") +
-  geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.15) +
+  geom_errorbar(aes(ymin = means - ci, ymax = means + ci), width = 0.15) +
   geom_point(data = salamander_df, aes(x = forest_type, y = abundance),
              inherit.aes = FALSE, alpha = 0.5, size = 2, colour = "grey20",
              position = position_jitter(width = 0.08, height = 0, seed = 1)) +
@@ -510,7 +513,7 @@ ggplot(descriptive_df, aes(x = forest_type, y = means)) +
   xlab("Forest type")
 ```
 
-The bar graph shows a gradient. Old-growth plots have the highest mean abundance, managed plantations the lowest, and secondary forest is in between. The individual plot counts (dots) spread widely within each forest type. Old-growth plots range from 10 to 19 salamanders and secondary plots from 3 to 13, so even where a real difference exists, individual plots from different forest types overlap.
+The bar graph shows a gradient. Old-growth plots have the highest mean abundance, managed plantations the lowest, and secondary forest is in between. The individual plot counts (dots) spread widely within each forest type. Old-growth plots range from `r min(old_growth)` to `r max(old_growth)` salamanders and secondary plots from `r min(secondary)` to `r max(secondary)`, so even where a real difference exists, individual plots from different forest types overlap.
 
 ### Checking ANOVA's assumptions
 
@@ -530,9 +533,9 @@ aov_out <- aov(abundance ~ forest_type, data = salamander_df)
 levene_out <- leveneTest(abundance ~ forest_type, data = salamander_df)
 
 knitr::kable(
-  broom::tidy(levene_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)),
-  col.names = c("Statistic (F)", "p-value", "df", "df residual"),
-  caption = "Levene's test for homogeneity of variance"
+  broom::tidy(levene_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)) |> dplyr::select(statistic, df, df.residual, p.value),
+  col.names = c("Statistic (F)", "df", "df residual", "p"),
+  caption = "Levene's test for homogeneity of variance."
 )
 ```
 
@@ -550,14 +553,14 @@ shapiro_out <- shapiro.test(residuals(aov_out))
 
 knitr::kable(
   broom::tidy(shapiro_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)) |> dplyr::select(statistic, p.value),
-  col.names = c("Statistic (W)", "p-value"),
-  caption = "Shapiro-Wilk test on ANOVA residuals"
+  col.names = c("Statistic (W)", "p"),
+  caption = "Shapiro-Wilk test on ANOVA residuals."
 )
 ```
 
-Levene's test [@Levene1960; @BrownForsythe1974] gives $F(2,21) = 0.52$, $p = 0.60$, so there is no evidence of unequal variance across forest types. The Shapiro-Wilk test [@Shapiro1965] on the model's residuals gives $W = 0.93$, $p = 0.078$, so there is no evidence against normality either. Both checks agree with the individual plots in @fig-8salamanderData, which show similar spread across groups and no outliers far from the rest.
+Levene's test [@Levene1960; @BrownForsythe1974] gives $F(2, 21) = `r sprintf("%.2f", levene_out[1, "F value"])`$, $p `r fmt_p_eq(levene_out[1, "Pr(>F)"])`$, so there is no evidence of unequal variance across forest types. The Shapiro-Wilk test [@Shapiro1965] on the model's residuals gives $W = `r sprintf("%.2f", shapiro_out$statistic)`$, $p `r fmt_p_eq(shapiro_out$p.value)`$, so there is no evidence against normality either. Both checks agree with the individual plots in @fig-8salamanderData, which show similar spread across groups and no outliers far from the rest.
 
-**Formal assumption tests are evidence, not a gate.** It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." With a small sample (exactly when a violated assumption matters most), these tests have low power and will often say "no problem" even when there is one. With a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." Look at the diagnostic plots too and use judgment.
+**Formal assumption tests are evidence, not a gate.** Chapter 6 made this point about Shapiro-Wilk, and it holds for Levene's test too. It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." With a small sample (exactly when a violated assumption matters most), these tests have low power and will often say "no problem" even when there is one. With a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." Look at the diagnostic plots too and use judgment.
 
 In practice, one-way ANOVA is moderately robust to mild departures from these assumptions, especially with balanced group sizes like we have here (8 plots per forest type). Worry most when small, unbalanced samples come with visibly skewed data or very different spreads. In that case, the nonparametric alternative below is the better choice.
 
@@ -573,14 +576,17 @@ summary(aov_out)
 #| label: tbl-8salamanderANOVA
 #| tbl-cap: "One-way ANOVA table for salamander abundance by forest type."
 
+aov_tab <- summary(aov_out)[[1]]
+F_obs   <- aov_tab[1, "F value"]
+p_obs   <- aov_tab[1, "Pr(>F)"]
 anova_kable(aov_out)
 ```
 
-With 24 plots the design has df(2, 21), and the critical value at $\alpha = 0.05$ is `r sprintf("%.2f", qf(0.95, 2, 21))`, a little higher than the 3.35 for 30 plots because the error term has fewer degrees of freedom. Our $F$ of 14.60 is more than four times that cutoff. Values this large arise by chance less than 0.1% of the time, so we reject the null hypothesis that all three group means are equal.
+With 24 plots the degrees of freedom are 2 and 21, and the critical value at $\alpha = 0.05$ is `r sprintf("%.2f", qf(0.95, 2, 21))`, a little higher than the 3.35 for 30 plots because the error term has fewer degrees of freedom. Our $F$ of `r sprintf("%.2f", F_obs)` is more than four times that cutoff. Values this large arise by chance less than 0.1% of the time, so we reject the null hypothesis that all three group means are equal.
 
 ### Effect size: eta-squared
 
-The $F$-test answers whether the group means differ by more than chance would produce. It says nothing about *how much* of the variation in salamander abundance forest type explains. Chapter 5 made the same distinction, where $p$ told us whether a difference was detectable and Cohen's $d$ told us how large it was.
+The $F$-test answers whether the group means differ by more than chance would produce. It says nothing about *how much* of the variation in salamander abundance forest type explains. Chapter 5 made the same distinction, where $p$ told us whether a difference was detectable and Cohen's $d$ told us how large it was. Chapter 5 measured effect size in the study's units or in standard deviations. ANOVA adds a third kind, the share of the total variation that the groups explain.
 
 ANOVA's effect size is **eta-squared** ($\eta^2$), and we already computed both of its ingredients when we partitioned the sums of squares:
 
@@ -613,19 +619,13 @@ Here $\eta^2 = `r round(eta_sq, 2)`$, so forest type explains about `r round(eta
 
 $\eta^2$ is the same quantity as $R^2$ in regression (Chapter 9), computed the same way. Both divide the total variation into a part the model explains and a part it leaves over, and report the explained part as a proportion of the total.
 
-**Interpreting the number.** Cohen's conventional benchmarks are $\eta^2 = 0.01$ (small), $0.06$ (medium), and $0.14$ (large), so 0.58 is a substantial effect. Treat those cutoffs as rough orientation. What counts as a large effect depends on the system you are studying. An $\eta^2$ of 0.10 would be unremarkable in a controlled greenhouse experiment and notable in a field survey where dozens of uncontrolled factors also drive the response.
+**Interpreting the number.** Cohen's conventional benchmarks are $\eta^2 = 0.01$ (small), $0.06$ (medium), and $0.14$ (large), so `r sprintf("%.2f", eta_sq)` is a substantial effect. Treat those cutoffs as rough orientation. What counts as a large effect depends on the system you are studying. An $\eta^2$ of 0.10 would be unremarkable in a controlled greenhouse experiment and notable in a field survey where dozens of uncontrolled factors also drive the response.
 
 **$p$ depends on sample size, and $\eta^2$ does not.** Survey enough plots and a difference of half a salamander per plot will clear $p < 0.05$ while explaining almost none of the variation. Reporting both keeps a statistically detectable result from being mistaken for an ecologically meaningful one.
 
-::: {.callout-important title="Results reporting: one-way ANOVA"}
-Report the direction in plain language, the test statistic with both degrees of freedom, the error term, $p$, and the effect size.
-
-> There was a significant effect of forest type on salamander abundance, $F(2, 21) = 14.60$, $MSE = 10.70$, $p < 0.001$, $\eta^2 = 0.58$.
-:::
-
 ### Post-hoc comparisons with Tukey HSD
 
-The omnibus $F$ test tells us that at least one group mean differs, but not which pairs. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test [@Tukey1949]. Tukey HSD controls the familywise error rate across all pairwise comparisons, making it the appropriate choice after a significant ANOVA.
+The omnibus $F$ test tells us that at least one group mean differs, but not which pairs. Tests run after a significant omnibus test to find which pairs differ are **post-hoc comparisons**, a different use of "post-hoc" from Chapter 5's post-hoc power. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test [@Tukey1949]. Tukey HSD controls the familywise error rate across all pairwise comparisons, making it the appropriate choice after a significant ANOVA.
 
 ```{r}
 #| echo: true
@@ -638,7 +638,9 @@ TukeyHSD(aov_out)
 #| tbl-cap: "Tukey HSD post-hoc comparisons for salamander abundance by forest type."
 
 tukey_out <- TukeyHSD(aov_out)
-knitr::kable(round(tukey_out$forest_type, 4))
+tk <- as.data.frame(tukey_out$forest_type)
+knitr::kable(data.frame(Comparison = rownames(tk), diff = round(tk$diff, 2), lwr = round(tk$lwr, 2),
+                        upr = round(tk$upr, 2), `p adj` = fmt_p(tk$`p adj`), check.names = FALSE))
 ```
 
 **Reading the table, column by column.** Each row is one pairwise comparison, and there are three of them because three groups make three pairs.
@@ -647,23 +649,23 @@ knitr::kable(round(tukey_out$forest_type, 4))
 -   `lwr` and `upr` are the lower and upper bounds of the 95% confidence interval for that difference.
 -   `p adj` is the $p$-value *after* adjusting for the fact that you are making three comparisons at once. Because of this adjustment, running the three comparisons here does not carry the 14% familywise error rate we computed at the start of the chapter.
 
-**Watch the sign.** The row `Secondary-Old-growth` has a diff of $-6.875$, and that negative sign does *not* mean secondary forest has more salamanders. It means secondary *minus* old-growth is negative, so old-growth is the higher of the two, by 6.88 individuals per plot. Always translate the sign back into a sentence naming which group is larger before you write anything down.
+**Watch the sign.** The row `Secondary-Old-growth` has a diff of $`r sprintf("%.2f", tk["Secondary-Old-growth", "diff"])`$, and that negative sign does *not* mean secondary forest has more salamanders. It means secondary *minus* old-growth is negative, so old-growth is the higher of the two, by `r sprintf("%.2f", -tk["Secondary-Old-growth", "diff"])` individuals per plot. Always translate the sign back into a sentence naming which group is larger before you write anything down.
 
-**The confidence interval and the $p$-value say the same thing.** A pair differs significantly at $\alpha = 0.05$ exactly when its 95% interval excludes zero. Check both columns against each other as a habit: `Secondary-Old-growth` runs from $-11.00$ to $-2.75$, entirely below zero, and its $p$ is 0.0011. `Managed-Secondary` runs from $-5.50$ to $2.75$, straddling zero, and its $p$ is 0.68. The two columns can never disagree, so if they seem to, you have misread a row.
+**The confidence interval and the $p$-value say the same thing.** A pair differs significantly at $\alpha = 0.05$ exactly when its 95% interval excludes zero. Check both columns against each other as a habit: `Secondary-Old-growth` runs from $`r sprintf("%.2f", tk["Secondary-Old-growth", "lwr"])`$ to $`r sprintf("%.2f", tk["Secondary-Old-growth", "upr"])`$, entirely below zero, and its $p$ is `r fmt_p(tk["Secondary-Old-growth", "p adj"])`. `Managed-Secondary` runs from $`r sprintf("%.2f", tk["Managed-Secondary", "lwr"])`$ to $`r sprintf("%.2f", tk["Managed-Secondary", "upr"])`$, straddling zero, and its $p$ is `r fmt_p(tk["Managed-Secondary", "p adj"])`. The two columns can never disagree, so if they seem to, you have misread a row.
 
 So the three comparisons give:
 
--   **Old-growth vs. Secondary.** Old-growth is higher by 6.88 individuals/plot, $p = 0.001$, a significant difference.
--   **Old-growth vs. Managed.** Old-growth is higher by 8.25 individuals/plot, $p < 0.001$, a significant difference.
--   **Secondary vs. Managed.** They differ by 1.38 individuals/plot, $p = 0.68$, not a significant difference.
+-   **Old-growth vs. Secondary.** Old-growth is higher by `r sprintf("%.2f", -tk["Secondary-Old-growth", "diff"])` individuals/plot, $p `r fmt_p_eq(tk["Secondary-Old-growth", "p adj"])`$, a significant difference.
+-   **Old-growth vs. Managed.** Old-growth is higher by `r sprintf("%.2f", -tk["Managed-Old-growth", "diff"])` individuals/plot, $p `r fmt_p_eq(tk["Managed-Old-growth", "p adj"])`$, a significant difference.
+-   **Secondary vs. Managed.** They differ by `r sprintf("%.2f", abs(tk["Managed-Secondary", "diff"]))` individuals/plot, $p `r fmt_p_eq(tk["Managed-Secondary", "p adj"])`$, not a significant difference.
 
-**A non-significant difference is one the test could not detect.** Secondary and managed plantation differ by 1.38 salamanders per plot in this sample. That difference is real in the data. The test says that with eight plots per group, we cannot distinguish it from sampling noise. A larger study might well separate them. Report it as "we did not detect a difference," never as "there is no difference."
+**A non-significant difference is one the test could not detect.** Secondary and managed plantation differ by `r sprintf("%.2f", abs(tk["Managed-Secondary", "diff"]))` salamanders per plot in this sample. That difference is real in the data. The test says that with eight plots per group, we cannot distinguish it from sampling noise. A larger study might well separate them. Report it as "we did not detect a difference," never as "there is no difference."
 
 **Compact letter display.** Once you have more than three groups, a list of pairwise sentences gets unwieldy fast, so results are usually summarized with letters placed above each group. Groups that share a letter were not significantly different, and groups that share no letter were. @fig-8tukeyletters puts the salamander results in that form.
 
 ```{r}
 #| label: fig-8tukeyletters
-#| fig-cap: "Mean salamander abundance with Tukey letters. Old-growth carries an 'a' and differs from both other types; secondary and managed share a 'b', so they were not distinguishable from each other."
+#| fig-cap: "Mean salamander abundance with Tukey letters. Old-growth carries an 'a' and differs from both other types; secondary and managed share a 'b', so they were not distinguishable from each other. Error bars show 95% confidence intervals."
 #| fig-alt: "Bar chart of mean salamander abundance for old-growth, secondary, and managed forest, each bar labeled above its error bar with a letter from the Tukey post-hoc test. Old-growth, the tallest bar, is labeled 'a'; secondary and managed, both shorter, are each labeled 'b', showing that the letter grouping tracks the same declining pattern as the bar heights."
 #| fig-asp: 0.62
 #| out-width: "90%"
@@ -673,8 +675,8 @@ letters_df <- descriptive_df %>%
 
 ggplot(letters_df, aes(x = forest_type, y = means)) +
   geom_bar(stat = "identity", fill = "#008cff") +
-  geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.15) +
-  geom_text(aes(y = means + SEs + 1.1, label = tukey_letter),
+  geom_errorbar(aes(ymin = means - ci, ymax = means + ci), width = 0.15) +
+  geom_text(aes(y = means + ci + 1.1, label = tukey_letter),
             fontface = "bold", size = 5) +
   coord_cartesian(ylim = c(0, 20)) +
   ylab("Salamanders per plot") +
@@ -685,11 +687,22 @@ Old-growth gets its own letter because it differs from both of the others. Secon
 
 In these invented counts, old-growth plots had the highest salamander abundance. Secondary forest and managed plantation could not be told apart with 8 plots of each type, even though we built in a difference of about 2 salamanders per plot between them.
 
+::: {.callout-important title="Results reporting: one-way ANOVA"}
+Report the direction in plain language, the test statistic with both degrees of freedom, $p$, and the effect size, then which groups the post-hoc comparisons separated.
+
+> Salamander abundance differed significantly among forest types, $F(2, 21) = `r sprintf("%.2f", F_obs)`$, $p `r fmt_p_eq(p_obs)`$, $\eta^2 = `r sprintf("%.2f", eta_sq)`$. Tukey HSD comparisons showed more salamanders in old-growth plots than in secondary forest, $p `r fmt_p_eq(tk["Secondary-Old-growth", "p adj"])`$, and managed plantation, $p `r fmt_p_eq(tk["Managed-Old-growth", "p adj"])`$. Secondary forest and managed plantation did not differ significantly, $p `r fmt_p_eq(tk["Managed-Secondary", "p adj"])`$.
+:::
+
 ### Nonparametric alternative: the Kruskal-Wallis test
 
 Our assumption checks above came back clean, so the ANOVA result stands as-is. But suppose the checks had failed, with visibly unequal spread across groups or clearly skewed residuals in small or unbalanced samples. The **Kruskal-Wallis test** [@KruskalWallis1952] is the nonparametric alternative to one-way ANOVA, in exactly the same relationship that the Mann-Whitney-Wilcoxon test has to the independent-samples $t$-test (in fact, Kruskal-Wallis *is* the Mann-Whitney-Wilcoxon logic extended to more than two groups).
 
-**How it works, conceptually.** Rank every observation across all groups together, from smallest to largest, ignoring group membership. Then check whether the average rank differs more across groups than chance alone would produce. If forest type truly matters, one group's observations should occupy systematically higher or lower ranks than the others. In the salamander data, the old-growth plots have a mean rank of 19.7 out of 24, against 10.1 for secondary and 7.8 for managed. If forest type had no effect, all three mean ranks would be close to 12.5, the middle of 1 to 24.
+```{r}
+#| include: false
+kw_ranks <- tapply(rank(salamander_df$abundance), salamander_df$forest_type, mean)
+```
+
+**How it works, conceptually.** Rank every observation across all groups together, from smallest to largest, ignoring group membership. Then check whether the average rank differs more across groups than chance alone would produce. If forest type truly matters, one group's observations should occupy systematically higher or lower ranks than the others. In the salamander data, the old-growth plots have a mean rank of `r sprintf("%.1f", kw_ranks["Old-growth"])` out of 24, against `r sprintf("%.1f", kw_ranks["Secondary"])` for secondary and `r sprintf("%.1f", kw_ranks["Managed"])` for managed. If forest type had no effect, all three mean ranks would be close to 12.5, the middle of 1 to 24.
 
 **Its assumption.** Kruskal-Wallis does not require normality. Like the Mann-Whitney-Wilcoxon test, it is easiest to interpret as a test of differences in location (median) when the groups' distributions have similar shape. If the shapes differ a lot, a significant result tells you the groups differ, but not whether that difference is in location, spread, or shape.
 
@@ -703,13 +716,13 @@ kruskal.test(abundance ~ forest_type, data = salamander_df)
 kw_out <- kruskal.test(abundance ~ forest_type, data = salamander_df)
 
 knitr::kable(
-  broom::tidy(kw_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)) |> dplyr::select(statistic, p.value, parameter),
-  col.names = c("Statistic (χ²)", "p-value", "df"),
-  caption = "Kruskal-Wallis test on salamander abundance by forest type"
+  broom::tidy(kw_out) |> mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value)) |> dplyr::select(statistic, parameter, p.value),
+  col.names = c("Statistic (χ²)", "df", "p"),
+  caption = "Kruskal-Wallis test on salamander abundance by forest type."
 )
 ```
 
-$\chi^2(2) = 13.09$, $p = 0.001$, a significant result and the same conclusion as the ANOVA ($F(2,21)=14.60$, $p<0.001$). The two tests agree, as expected when the parametric assumptions hold, as ours did here.
+$\chi^2(2) = `r sprintf("%.2f", kw_out$statistic)`$, $p `r fmt_p_eq(kw_out$p.value)`$, a significant result and the same conclusion as the ANOVA ($F(2, 21) = `r sprintf("%.2f", F_obs)`$, $p `r fmt_p_eq(p_obs)`$). The two tests agree, as expected when the parametric assumptions hold, as ours did here.
 
 **Post-hoc comparisons.** Just as a significant ANOVA needs Tukey HSD to identify *which* groups differ, a significant Kruskal-Wallis result needs its own follow-up, pairwise rank-sum tests (Mann-Whitney-Wilcoxon, applied to each pair) with a correction for running multiple comparisons [@Holm1979].
 
@@ -726,12 +739,12 @@ pairwise_out <- pairwise.wilcox.test(salamander_df$abundance, salamander_df$fore
 
 knitr::kable(
   broom::tidy(pairwise_out) |> mutate(p.value = fmt_p(p.value)),
-  col.names = c("Group 1", "Group 2", "p-value"),
-  caption = "Pairwise Mann-Whitney-Wilcoxon comparisons (Holm-adjusted)"
+  col.names = c("Group 1", "Group 2", "p"),
+  caption = "Pairwise Mann-Whitney-Wilcoxon comparisons (Holm-adjusted)."
 )
 ```
 
-The pattern matches Tukey HSD exactly. Old-growth differs significantly from both Secondary ($p=0.011$) and Managed ($p=0.004$), while Secondary and Managed do not differ from each other ($p=0.49$). The two approaches use different assumptions and different calculations, and they agree here because the parametric assumptions held.
+The pattern matches Tukey HSD exactly. Old-growth differs significantly from both Secondary ($p `r fmt_p_eq(pairwise_out$p.value["Secondary", "Old-growth"])`$) and Managed ($p `r fmt_p_eq(pairwise_out$p.value["Managed", "Old-growth"])`$), while Secondary and Managed do not differ from each other ($p `r fmt_p_eq(pairwise_out$p.value["Managed", "Secondary"])`$). The two approaches use different assumptions and different calculations, and they agree here because the parametric assumptions held.
 
 ## Repeated-measures ANOVA
 
@@ -741,7 +754,7 @@ This is ANOVA's version of the paired $t$-test from Chapter 6. The paired $t$-te
 
 ### Fine particulate matter at four monitoring stations
 
-An air quality agency has four PM2.5 monitors, ordered from the most rural (A) to the most urban (D). @tbl-8pmdata gives each monitor's mean PM2.5 concentration in winter, spring, and summer. The question is whether concentrations differ by season: $H_0: \mu_\text{Winter}=\mu_\text{Spring}=\mu_\text{Summer}$ vs. $H_a$: at least one seasonal mean differs.
+An air quality agency has four PM2.5 monitors, ordered from the most rural (A) to the most urban (D). The concentrations in this example are invented. @tbl-8pmdata gives each monitor's mean PM2.5 concentration in winter, spring, and summer. The question is whether concentrations differ by season: $H_0: \mu_\text{Winter}=\mu_\text{Spring}=\mu_\text{Summer}$ vs. $H_a$: at least one seasonal mean differs.
 
 ```{r}
 #| label: tbl-8pmdata
@@ -808,7 +821,7 @@ $F$ uses the same numerator as before, $MS_\text{Between} = 56/2 = 28$. Only the
 
 $$\text{One-way: } F = \frac{28}{174/9} = \frac{28}{19.33} = 1.45 \qquad \text{Repeated measures: } F = \frac{28}{12/6} = \frac{28}{2} = 14.00$$
 
-The repeated-measures test finds a significant seasonal effect, $F(2, 6) = 14.00$, $p = 0.005$. The one-way ANOVA would give $F(2, 9) = 1.45$, $p = 0.28$, and miss it. Removing the stations shrank the error mean square from 19.33 to 2, and $F$ grew by the same factor. A repeated-measures design has more power than a between-subjects design with the same number of measurements whenever the units differ from one another, as monitoring stations usually do, because the unit-to-unit differences are no longer counted as noise.
+The repeated-measures test finds a significant seasonal effect, $F(2, 6) = 14.00$, $p = 0.005$. The one-way ANOVA would give $F(2, 9) = 1.45$, $p = 0.285$, and miss it. Removing the stations shrank the error mean square from 19.33 to 2, and $F$ grew by the same factor. A repeated-measures design has more power than a between-subjects design with the same number of measurements whenever the units differ from one another, as monitoring stations usually do, because the unit-to-unit differences are no longer counted as noise.
 
 ## Chapter Summary
 
