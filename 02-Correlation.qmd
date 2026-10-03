@@ -22,7 +22,7 @@ The chapter starts with what two related variables look like side by side, in a 
 
 ## What data look like when one thing changes another
 
-To use data for explanation, we need tools for recognizing when two things move together. Sometimes that reflects a real cause-and-effect relationship, and sometimes it doesn't. The challenge is learning to tell the difference. In this chapter we'll build intuition for what data look like when two variables are unrelated, when they move together, and when the pattern might mislead us.
+To use data for explanation, we need tools for recognizing when two things move together. Sometimes that reflects a cause-and-effect relationship, and sometimes it doesn't. This chapter shows several ways a correlation can appear without one. In this chapter we'll build intuition for what data look like when two variables are unrelated, when they move together, and when the pattern might mislead us.
 
 ### More chocolate = more happiness?
 
@@ -35,12 +35,12 @@ Our first step is to collect data from 100 people. We walk around and ask the fi
 
 For convenience, both the scales will go from 0 to 100. For the chocolate scale, 0 means no chocolate, 100 means lifetime supply of chocolate. Any other number is somewhere in between. For the happiness scale, 0 means no happiness, 100 means all of the happiness, and in between means some amount in between.
 
-The numbers in this example are invented. Here are the first 10 subjects.
+The numbers in this example are invented. We built them so that each extra unit of chocolate adds 0.6 units of happiness on average, plus other influences. Here are the first 10 subjects.
 
 ```{r 3chocHappy}
 subject <- 1:100
-chocolate <- round(1:100*runif(100,.5,1))
-happiness <- round(1:100*runif(100,.5,1))
+chocolate <- sample(0:100, 100, replace = TRUE)
+happiness <- round(pmin(100, pmax(0, 20 + 0.6 * chocolate + rnorm(100, 0, 12))))
 
 the_df_CC <- data.frame(subject,chocolate,happiness)
 
@@ -69,7 +69,7 @@ ggplot(the_df_CC,aes(x=chocolate,y=happiness))+
 
 ```
 
-Each dot has two coordinates, an x-coordinate for chocolate, and a y-coordinate for happiness. Looking at the **scatter plot**, we can see that the dots show a pattern. People with less chocolate tend to report lower happiness, while those with more chocolate tend to report higher happiness. It looks like the more chocolate you have the happier you will be, and vice-versa. This kind of relationship is called a **positive correlation**.
+Each dot has two coordinates, an x-coordinate for chocolate, and a y-coordinate for happiness. Looking at the **scatter plot**, we can see that the dots show a pattern. People with less chocolate tend to report lower happiness, while those with more chocolate tend to report higher happiness. People with more chocolate tend to be happier. This kind of relationship is called a **positive correlation**.
 
 ### Positive, negative, and no correlation
 
@@ -77,8 +77,8 @@ Two other patterns are possible: a reversed relationship, where more chocolate m
 
 ```{r}
 #| label: fig-2posnegrand
-#| fig-cap: "Three scatterplots showing negative, positive, and zero correlation."
-#| fig-alt: "Three scatter plots labeled negative, positive and random. Dots fall left to right, rise left to right, and show no pattern."
+#| fig-cap: "Three scatter plots showing a negative correlation, a positive correlation, and no correlation."
+#| fig-alt: "Three scatter plots labeled negative, positive and none. Dots fall left to right, rise left to right, and show no pattern."
 
 # the positive panel is the chocolate and happiness data from above
 df_positive <- data.frame(subject_x = subject, chocolate_x = chocolate, happiness_x = happiness)
@@ -96,7 +96,9 @@ happiness_x <- sample(0:100, 100, replace = TRUE)
 df_random<-data.frame(subject_x,chocolate_x,happiness_x)
 
 all_data<-rbind(df_positive,df_negative,df_random)
-all_data<-cbind(all_data,correlation=rep(c("positive","negative","random"),each=100))
+# factor levels keep the panels in the order negative, positive, none
+all_data<-cbind(all_data,correlation=factor(rep(c("positive","negative","none"),each=100),
+                                           levels=c("negative","positive","none")))
 
 ggplot(all_data,aes(x=chocolate_x,y=happiness_x))+
   geom_point()+
@@ -110,19 +112,15 @@ ggplot(all_data,aes(x=chocolate_x,y=happiness_x))+
 
 The first panel shows a **negative correlation**: happiness goes down as chocolate supply increases, more of X means less of Y. The second panel shows a positive correlation: happiness goes up as chocolate supply increases, more of X means more of Y. The third panel shows **no correlation**: there's no obvious relationship between chocolate supply and happiness, changes in X don't relate to changes in Y.
 
-::: {.callout-tip title="Tip: Always plot first"}
-If the scatter shows a U-shape or other curve, a single straight-line correlation will mislead. Fit a curved model (e.g., add a quadratic term) or transform variables instead of reporting $r$ alone.
-:::
-
 ## How much does one variable vary?
 
-Before we can measure how two variables move *together*, we need the proper measure of *differentness* Chapter 1 promised: a number for how much a single variable moves at all. The same calculation, applied to two variables at once, gives covariance, so we build it here and extend it in the next section.
+Before we can measure how two variables move *together*, we need the measure of *differentness* that Chapter 1 promised, a number for how much a single variable varies. The same calculation, applied to two variables at once, gives covariance, so we build it here and extend it in the next section.
 
 ### Pairwise differences
 
 It would be nice to summarize the amount of different*ness* in the data. One idea is to compare every number to every other number: pick a first number, pick a second number, and subtract them. The result tells us exactly how different the two are: a large gap means the two numbers are far apart, a gap near zero means they're close together. Do that across a whole dataset and you have a complete picture of how different everyone is from everyone else.
 
-The count grows fast, though: 10 numbers means 10 × 10 = 100 comparisons, 500 numbers means 500 × 500 = 250,000. Pairwise comparisons have a second problem: the positive and negative differences cancel out, so their average is zero no matter what the data look like. These problems motivate a much simpler approach: compare each score to one reference point instead, the mean.
+The count grows fast, though: 10 numbers means 10 × 10 = 100 comparisons, 500 numbers means 500 × 500 = 250,000. Pairwise comparisons have a second problem: the positive and negative differences cancel out, so their average is zero no matter what the data look like. A much simpler approach compares each score to one reference point, the mean.
 
 ### The variance
 
@@ -136,7 +134,7 @@ Chapter 3 explains when to divide by $N$ (when you have the entire population) a
 
 **Deviations from the mean.**
 
-Earlier we compared every number to every other number, which got unmanageable fast. The simpler approach is to compare each score to the mean instead: find the mean, then subtract it from every score. What comes back tells us both how well the mean represents the data and how much spread there is around it.
+Find the mean, then subtract it from every score. The result tells us both how well the mean represents the data and how much spread there is around it.
 
 ```{r 2deviations,echo=F, message=F,warning=F}
 library(dplyr)
@@ -153,17 +151,15 @@ knitr::kable(the_df)
 
 ```
 
-The mean here is $\frac{1+6+4+2+6+8}{6} = \frac{27}{6} = 4.5$. The third column just repeats it on every row, which looks redundant but makes the earlier point concrete: six copies of 4.5 add back to the original total of 27. The fourth column is the deviation from the mean, $X_{i}-\bar{x}$, so the score of 1 sits 3.5 below and the score of 6 sits 1.5 above.
+The mean here is $\frac{1+6+4+2+6+8}{6} = \frac{27}{6} = 4.5$. The third column just repeats it on every row, which looks redundant but shows the point from Chapter 1 that the mean spreads the total evenly: six copies of 4.5 add back to the original total of 27. The fourth column is the deviation from the mean, $x_{i}-\bar{x}$, so the score of 1 is 3.5 below and the score of 6 is 1.5 above.
 
-**And now the problem.** Those deviations sum to zero. The positives and negatives cancel exactly, which would suggest there is no variation at all, and that is obviously false. Squaring will fix it, but first we look at *why* the cancellation happens.
+**The deviations sum to zero.** The positives and negatives cancel exactly, which would suggest there is no variation at all, and that is obviously false. Squaring will fix it, but first we look at *why* the cancellation happens.
 
 **Mean as the balancing point.**
 
 The mean is the balancing point of the data. Imagine laying a ruler across your finger. The place where it balances is the point where the weight on each side is equal. Data works the same way: if we treat each value like a weight, the mean is where the total "mass" to the left and right cancel out.
 
-This balancing property explains why the deviations always sum to zero. The values below the mean contribute negative deviations, the values above contribute positive ones, and together they cancel:
-
-$-x + x = 0$
+The deviations always sum to zero because of how the mean is built. Adding up the deviations gives the sum of the scores minus $n$ copies of the mean, and $n$ copies of the mean add up to the sum of the scores: $\sum(x_i - \bar{x}) = \sum x_i - n\bar{x} = 0$. For the table above, $27 - 6 \times 4.5 = 0$.
 
 To see this more concretely, consider the numbers
 
@@ -254,7 +250,7 @@ balance_board <- function(x, a, title = NULL) {
 
     annotate("text", x = a, y = -0.3,
              label = format(a, trim = TRUE), size = 7) +
-    coord_cartesian(ylim = c(-0.4, 0.35), xlim = c(xmin, xmax), expand = FALSE) +
+    coord_cartesian(ylim = c(-0.5, 0.35), xlim = c(xmin, xmax), expand = FALSE) +
     labs(title = NULL, x = NULL, y = NULL) +
     theme(axis.ticks = element_blank(),
           axis.line = element_blank(),
@@ -282,13 +278,13 @@ top / middle/ bottom
 
 Formally, this means the signed distances from the mean always cancel out:
 
-$(1−5)+(2−5)+(6−5)+(7−5)+(9−5)=0$
+$(1-5)+(2-5)+(6-5)+(7-5)+(9-5)=0$
 
 This makes the mean unique. It is the only value for which the sum of deviations equals zero:
 
 $\sum_{i=1}^{n}(x_{i}-a) = 0 \quad \Rightarrow \quad a = \bar{x}$
 
-The mean is the one point where the data balance, which is why the raw deviations always sum to zero. To summarize variation, we need a way around this problem.
+To summarize variation, we need a way around this problem.
 
 **The squared deviations.**
 
@@ -309,11 +305,11 @@ knitr::kable(the_df)
 
 ```
 
-The first score of 1 sits 3.5 below the mean, so its deviation is $-3.5$ and its squared deviation is $(-3.5)^2 = 12.25$. Now that nothing is negative we can add them up, and that total is the **sum of squares (SS)**: take every score's deviation from the mean, square it, and add up all those squared deviations.
+The first score of 1 is 3.5 below the mean, so its deviation is $-3.5$ and its squared deviation is $(-3.5)^2 = 12.25$. Now that nothing is negative we can add them up, and that total is the **sum of squares (SS)**: take every score's deviation from the mean, square it, and add up all those squared deviations.
 
 $$SS = \sum_{i=1}^{N}(x_{i}-\bar{x})^2$$
 
-You will meet this quantity again in the ANOVA chapter, but there is nothing more to it than the sum of those squared deviations.
+You will meet this quantity again in Chapters 8 and 9, and it is always this sum of squared deviations.
 
 **Finally, the variance.**
 
@@ -327,13 +323,13 @@ For our data it comes to 5.917. On its own that number is hard to interpret, bec
 
 That square root is the **standard deviation (SD)**, so we had already computed it a step earlier without naming it:
 
-$$\text{standard deviation} = \sqrt{Variance} = \sqrt{\frac{SS}{N}} = \sqrt{\frac{\sum_{i}^{N}(x_{i}-\bar{x})^2}{N}}$$
+$$\text{standard deviation} = \sqrt{Variance} = \sqrt{\frac{SS}{N}} = \sqrt{\frac{\sum_{i=1}^{N}(x_{i}-\bar{x})^2}{N}}$$
 
 The square root "unsquares" the variance, putting the measure of spread back on the original scale of the data.
 
 Our standard deviation, $\sqrt{5.917} \approx 2.43$, makes far more sense than the variance did. A variance of 5.917 feels too large for this data because it is on the squared scale, but an SD of 2.43 lines up with the actual deviations. Their sizes run from 0.5 to 3.5, and 2.43 is within that range.
 
-**That is what makes the SD so useful.** Told only that a dataset has a mean of 4.5 and an SD of 2.4, you already have a picture of it: values cluster around 4.5, not exactly at it, with a typical spread of two to three units either way. It gives you the *typical deviation* from the mean while staying in the original units.
+**The SD is in the units of the data.** Told only that a dataset has a mean of 4.5 and an SD of 2.4, you already have a picture of it: values cluster around 4.5, not exactly at it, with a typical spread of two to three units either way. It gives you the *typical deviation* from the mean while staying in the original units.
 
 ### Mean absolute deviation
 
@@ -356,18 +352,39 @@ knitr::kable(the_df)
 
 ```
 
-The last column shows absolute deviations. If we take their mean, we get the mean absolute deviation (MAD). The MAD acts a lot like the standard deviation: it's the average size of a deviation from the mean, only without squaring. Both approaches, squaring and taking absolute values, solve the same problem in slightly different ways. Squaring is more common because it leads to nice mathematical properties (like in regression and ANOVA), but the MAD can be more intuitive to interpret.
+The last column shows absolute deviations. If we take their mean, we get the mean absolute deviation (MAD). R's `mad()` function computes a different statistic, the median absolute deviation, so use `mean(abs(x - mean(x)))` for the MAD. The MAD acts a lot like the standard deviation: it's the average size of a deviation from the mean, only without squaring. Both approaches, squaring and taking absolute values, solve the same problem in slightly different ways. Squaring is more common because it leads to nice mathematical properties (like in regression and ANOVA), but the MAD can be more intuitive to interpret.
+
+@tbl-2spread sets the range from Chapter 1 beside the three measures from this section, all computed for the same six scores.
+
+```{r}
+#| label: tbl-2spread
+#| tbl-cap: "Four measures of spread for the scores 1, 6, 4, 2, 6 and 8."
+
+spread_x <- c(1, 6, 4, 2, 6, 8)
+spread_dev <- spread_x - mean(spread_x)
+spread_tbl <- data.frame(
+  measure = c("Range", "Variance", "Standard deviation", "Mean absolute deviation"),
+  how = c("largest minus smallest", "mean of squared deviations",
+          "square root of the variance", "mean of absolute deviations"),
+  value = as.character(round(c(diff(range(spread_x)), mean(spread_dev^2),
+                               sqrt(mean(spread_dev^2)), mean(abs(spread_dev))), 2)),
+  units = c("data units", "squared units", "data units", "data units"),
+  every = c("No", "Yes", "Yes", "Yes")
+)
+knitr::kable(spread_tbl,
+             col.names = c("Measure", "How it is computed", "Value", "Units", "Uses every score?"))
+```
 
 ## Covariance
 
 We now have a number for how one variable varies. **Covariance** is the same idea for two: it tells us whether being above the mean on $X$ tends to come with being above the mean on $Y$ (positive), below the mean on $Y$ (negative), or neither (near zero).
 
-In our chocolate--happiness example, the scatter plot suggested that higher chocolate tends to come with higher happiness. That means the deviations from each mean often have the same sign, so their products are mostly positive: evidence of *positive* covariance. Put simply, the two variables vary together.
+In our chocolate--happiness example, the scatter plot suggested that higher chocolate tends to come with higher happiness. That means the deviations from each mean often have the same sign, so their products are mostly positive, which means the covariance is positive.
 
 Covariance is important because it underlies correlation, regression, and many other statistical tools. It can feel abstract at first, so keep the core idea in mind: look at how each variable's deviations from its mean behave together.
 
-::: {.callout-note title="Note: Covariance intuition"}
-Think of a three-legged race. When partners move forward together, their steps align (positive covariance). When one moves forward as the other moves back, their steps oppose (negative covariance). If their steps are uncoordinated, there's no consistent pattern (covariance near zero).
+::: {.callout-note title="Note: Covariance as two people walking side by side"}
+Picture two people walking side by side. If they step forward and back in step, their movements have positive covariance. If one steps forward whenever the other steps back, negative covariance. If their steps have no pattern, covariance near zero.
 :::
 
 ### Turning the numbers into a measure of covariance
@@ -442,11 +459,11 @@ This is the basis of *covariance*: products of paired values show whether two va
 
 ### Covariance, the measure
 
-Earlier we saw that multiplying values from two variables can highlight how they vary together: large-with-large and small-with-small pairs push the product up, while mixed pairs keep it lower. That intuition is useful, but in statistics we define covariance more precisely.
+Earlier we saw that multiplying paired values shows how two variables vary together. When large values pair with large values, the products add up to a bigger total than when large values pair with small ones. That intuition is useful, but in statistics we define covariance more precisely.
 
-Instead of multiplying raw values of $X$ and $Y$, we multiply their *deviations from the mean*. This centers each variable, so the product reflects how the two variables co-vary around their averages:
+Instead of multiplying raw values of $X$ and $Y$, we multiply their *deviations from the mean*. The raw sum of products only made sense next to the 220 and 385 for those particular numbers. After centering, a pair that is above both means or below both means gives a positive product, and a mixed pair gives a negative one. Unrelated variables then average near 0, whatever their scales.
 
-$cov(X,Y) = \frac{\sum_{i}^{N}(x_{i}-\bar{x})(y_{i}-\bar{y})}{N}$
+$cov(X,Y) = \frac{\sum_{i=1}^{N}(x_{i}-\bar{x})(y_{i}-\bar{y})}{N}$
 
 In practice, the steps are straightforward: subtract the mean of $X$ from each $x_i$, subtract the mean of $Y$ from each $y_i$, multiply the deviations, and then average those products. A positive covariance means the two variables tend to move together (above or below their means at the same time). A negative covariance means they move in opposite directions. A covariance near zero suggests no consistent relationship.
 
@@ -468,13 +485,54 @@ the_df_short <- the_df_short %>%
 
 knitr::kable(the_df_short)
 
+# values for the hand calculation of r below (dividing by N)
+c10 <- chocolate[1:10]
+h10 <- happiness[1:10]
+cov_N <- mean((c10 - mean(c10)) * (h10 - mean(h10)))
+sd_c <- sqrt(mean((c10 - mean(c10))^2))
+sd_h <- sqrt(mean((h10 - mean(h10))^2))
+r_10 <- cov_N / (sd_c * sd_h)
+n_pos <- sum((c10 - mean(c10)) * (h10 - mean(h10)) > 0)
 ```
 
 The mean of those products (in the bottom right corner of the table) is the official covariance.
 
+@fig-2covquadrants plots the same ten people, with dashed lines at the chocolate mean (`r round(mean(c10), 1)`) and the happiness mean (`r round(mean(h10), 1)`). The two lines split the plot into four quadrants, and each quadrant gives the product one sign.
+
+```{r}
+#| label: fig-2covquadrants
+#| fig-cap: !expr paste0("The ten people from the covariance table. Points in the upper-right and lower-left quadrants have positive products. ", if (n_pos == 10) "All ten points fall there" else "Most points fall there", ", so the covariance is positive.")
+#| fig-alt: "Scatter of ten people, chocolate on the x-axis and happiness on the y-axis, split into four quadrants by dashed lines at the two means. Quadrant labels show that above-above and below-below pairs give positive products and mixed pairs give negative ones. Each point is labeled with its product."
+
+quad_df <- data.frame(chocolate = c10, happiness = h10,
+                      product = (c10 - mean(c10)) * (h10 - mean(h10)))
+quad_df$sign <- factor(ifelse(quad_df$product >= 0, "positive product", "negative product"),
+                       levels = c("positive product", "negative product"))
+quad_labels <- data.frame(
+  x = c(100, 0, 100, 0),
+  y = c(114, -9, -9, 114),
+  hjust = c(1, 0, 1, 0),
+  label = c("(+)(+) = +", "(-)(-) = +", "(+)(-) = -", "(-)(+) = -")
+)
+
+ggplot(quad_df, aes(x = chocolate, y = happiness)) +
+  geom_vline(xintercept = mean(c10), linetype = "dashed", color = "grey40") +
+  geom_hline(yintercept = mean(h10), linetype = "dashed", color = "grey40") +
+  geom_text(data = quad_labels, aes(x = x, y = y, label = label, hjust = hjust),
+            size = 4.5, color = "grey30") +
+  geom_point(aes(fill = sign), shape = 21, size = 3.5, color = "black") +
+  ggrepel::geom_text_repel(aes(label = sprintf("%.1f", product)), size = 3.5,
+                           box.padding = 0.5, point.padding = 0.4, min.segment.length = Inf, seed = 538) +
+  scale_fill_manual(values = c("positive product" = "#008cff", "negative product" = "#b22222"),
+                    name = NULL) +
+  coord_cartesian(xlim = c(0, 100), ylim = c(-10, 116)) +
+  xlab("chocolate") + ylab("happiness") +
+  theme(legend.position = "bottom")
+```
+
 One note before moving on. The formula above divides by $N$, which is the population version, and that is what the table computes. R's `cov()` and `sd()` divide by $n-1$ instead, for a reason Chapter 3 explains. The two differ only by a factor of $n/(n-1)$, and that factor cancels completely in Pearson's $r$ below, so $r$ comes out identical either way. If you compute the covariance itself in R, though, expect a slightly larger number than the one in this table.
 
-Covariance has one drawback: its magnitude is hard to interpret. Just as variance is tied to squared units, covariance is tied to the scales of both variables, so a covariance of 4.8 isn't inherently "large" or "small" the way a correlation is. All we can read directly from it is the sign, not the strength. To compare strength across variables with different units or scales, we need to normalize covariance, which leads to Pearson's $r$.
+The size of a covariance is hard to interpret. Just as variance is tied to squared units, covariance is tied to the scales of both variables, so a covariance of `r sprintf('%.1f', cov_N)` isn't inherently "large" or "small" the way a correlation is. All we can read directly from it is the sign, not the strength. To compare strength across variables with different units or scales, we need to normalize covariance, which leads to Pearson's $r$.
 
 ### Pearson's $r$
 
@@ -484,30 +542,30 @@ We often want a relationship measure that is directional, unitless, and bounded.
 -   $r=0$: no linear relationship
 -   $r=-1$: perfect negative linear relationship
 
-Values closer to $\pm1$ indicate stronger linear association; values near $0$ indicate weak or no linear association.
+Values closer to $\pm1$ indicate a stronger linear association. Values near $0$ indicate a weak linear association or none.
 
 Let's take a look at a formula for Pearson's $r$:
 
-$r = \frac{cov(X,Y)}{SD_{X}SD_{Y}}$
+$$r = \frac{cov(X,Y)}{\sigma_X \sigma_Y}$$
 
-$r$ is the covariance of X and Y divided by the product of their standard deviations. Dividing by the standard deviations normalizes the covariance, constraining $r$ to fall between $-1$ and $1$, which makes correlation values comparable across variables measured in different units or on different scales.
+$r$ is the covariance of X and Y divided by the product of their standard deviations. Here $\sigma_X$ and $\sigma_Y$ are the standard deviations computed by dividing by $N$, the same way the covariance was computed. Dividing by the standard deviations normalizes the covariance, constraining $r$ to fall between $-1$ and $1$, which makes correlation values comparable across variables measured in different units or on different scales.
 
-For the ten people in the covariance table, the covariance is 4.8. Dividing by $N$, the standard deviation of chocolate is 2.492 and the standard deviation of happiness is 2.280. So $r = \frac{4.8}{2.492 \times 2.280} = \frac{4.8}{5.682} = 0.84$. That value is close to 1, which matches the upward pattern in the scatter plot.
+For the ten people in the covariance table, the covariance is `r sprintf('%.1f', cov_N)`. Dividing by $N$, the standard deviation of chocolate is `r sprintf('%.3f', sd_c)` and the standard deviation of happiness is `r sprintf('%.3f', sd_h)`. So $r = \frac{`r sprintf('%.1f', cov_N)`}{`r sprintf('%.3f', sd_c)` \times `r sprintf('%.3f', sd_h)`} = \frac{`r sprintf('%.1f', cov_N)`}{`r sprintf('%.3f', sd_c * sd_h)`} = `r sprintf('%.2f', r_10)`$. That value is close to 1. For all 100 people in @fig-2scatter1, R gives $r$ = `r sprintf('%.2f', cor(chocolate, happiness))`, which matches the upward pattern in the scatter plot.
 
 ::: {.callout-note title="Note: Computing $r$"}
-You'll see several algebraically equivalent formulas for Pearson's $r$, some easier for hand calculation, others more compact. They all produce the same result. In practice, you'll compute $r$ with software, so the priority here is understanding what $r$ means and how to interpret it. Working through one example by hand still helps: it shows where $r$ actually comes from, which is why lecture walks through a full hand calculation before you run it in R during lab.
+You'll see several algebraically equivalent formulas for Pearson's $r$, some easier for hand calculation, others more compact. They all produce the same result. In practice, you'll compute $r$ with software, so the priority here is understanding what $r$ means and how to interpret it. Working through one example by hand shows where $r$ comes from, which is why lecture walks through a full hand calculation before you run it in R during lab.
 :::
 
 ## Regression: a mini intro
 
-**Linear regression** is closely tied to correlation, and this section gives a first introduction to it.
+**Linear regression** fits the straight line that best predicts one variable from another. It is closely tied to correlation, and this section gives a first look at it.
 
 @fig-2regression shows the same three scatter plots as @fig-2posnegrand, now with a fitted line added to each.
 
 ```{r}
 #| label: fig-2regression
-#| fig-cap: "Three scatterplots showing negative, positive, and a random correlation (where the r-value is expected to be 0), along with the best fit regression line."
-#| fig-alt: "The three negative, positive and random scatter plots, each with a blue fitted line sloping down, up, and nearly flat."
+#| fig-cap: "The same three scatter plots with the best fit line added. In the no-correlation panel the true correlation is 0, so the line is nearly flat."
+#| fig-alt: "The three negative, positive and no-correlation scatter plots, each with a blue fitted line sloping down, up, and nearly flat."
 
 ggplot(all_data,aes(x=chocolate_x,y=happiness_x))+
   geom_point() +
@@ -526,7 +584,7 @@ With one variable, we use the mean to describe central tendency in one dimension
 
 Many lines could be drawn through a scatter of points, but most would miss the pattern. The best fit line is the one with the least error, defined precisely below.
 
-@fig-2regressionResiduals shows what that error looks like: a line runs through the dots, and short vertical lines drop from each dot to the line. These are **residuals**, the vertical differences between the observed data and the fitted line, showing how far off the line's prediction is for each point. Since not all dots fall exactly on the line, some error is inevitable; the best-fit line is the one that minimizes it overall.
+@fig-2regressionResiduals shows what that error looks like: a line runs through the dots, and short vertical lines drop from each dot to the line. These are **residuals**, the vertical differences between the observed data and the fitted line, showing how far off the line's prediction is for each point. The white circles on the line are the line's predicted values. Since not all dots fall exactly on the line, some error is inevitable. The best-fit line is the one that minimizes it overall.
 
 ```{r}
 #| label: fig-2regressionResiduals
@@ -542,7 +600,7 @@ ggplot(d, aes(x = hp, y = mpg)) +
   geom_smooth(method = "lm", se = FALSE, color = "#008cff", linewidth = 1.2) +  # Plot regression slope
   geom_segment(aes(xend = hp, yend = predicted), color = "#b22222", alpha = .5) +  # alpha to fade lines
   geom_point(color = "black") +
-  geom_point(aes(y = predicted), shape = 1, color = "black") +
+  geom_point(aes(y = predicted), shape = 21, fill = "white", color = "black", size = 2.2) +
   theme(legend.position="none")+
   xlab("X")+ylab("Y")
 
@@ -552,9 +610,7 @@ ggplot(d, aes(x = hp, y = mpg)) +
 
 ```
 
-@fig-2regressionResiduals shows a scatter plot of two variables $X$ and $Y$. Each black dot represents observed data; the blue line is the regression line, and the white dots show its predicted values. The red lines are residuals: they drop vertically from each observed value to its predicted value on the line, showing how far the prediction differs from what was actually observed.
-
-The regression line is chosen to minimize the total size of these residuals. In practice, we compute the sum of squared deviations: square each residual, then add them together. The blue line produces the smallest possible total squared error; any other line would yield a larger one.
+The regression line is chosen to minimize the total size of these residuals. In practice, we compute the sum of squared residuals: square each residual, then add them together. The blue line produces the smallest possible total squared error. Any other line would yield a larger one.
 
 @fig-2regressionGIF animates this directly, comparing the best fit line (blue) to other possible lines (black) as the black line moves up and down. The red lines show the error between the black line and the data points at each position, and the grey band is narrowest exactly when the black line reaches the best fit line, then widens again as it moves away.
 
@@ -575,12 +631,12 @@ knitr::include_graphics(path="imgs/gifs/regression-1.gif")
 
 Whenever the black line does not overlap with the blue line, it fits the data less well, because the blue regression line has the smallest total squared error.
 
-@fig-2minimizeSS makes that error concrete: for each position of the black line, we square the length of every red line from the animation above and add them up, giving the total sum of squared deviations at that position. The dots start high on the left, swoop down to a minimum in the middle, and rise again on the right. That minimum point is the best fit regression line.
+@fig-2minimizeSS makes that error concrete: for each position of the black line, we square the length of every red line from the animation above and add them up, giving the total sum of squared residuals at that position. The dots start high on the left, swoop down to a minimum in the middle, and rise again on the right. That minimum point is the best fit regression line.
 
 ```{r}
 #| label: fig-2minimizeSS
-#| fig-cap: "A plot of the sum of the squared deviations for different lines moving up and down, through the best fit line. The best fit line occurs at the position that minimizes the sum of the squared deviations."
-#| fig-alt: "U-shaped set of dots for the sum of squared deviations against change to the y-intercept from -5 to 5, lowest at 0."
+#| fig-cap: "A plot of the sum of squared residuals for lines moved up and down through the best fit line. The best fit line is at the position with the smallest sum of squared residuals."
+#| fig-alt: "U-shaped set of dots for the sum of squared residuals against change to the y-intercept from -6 to 6, lowest at 0."
 #| out-width: "75%"
 
 d <- mtcars
@@ -593,7 +649,7 @@ coefs<-coef(lm(mpg ~ hp, data = mtcars))
 #coefs[2]
 
 x<-d$hp
-move_line<-seq(-5,5,.5)
+move_line<-seq(-6,6,.5)
 total_error<-c(length(move_line))
 cnt<-0
 for(i in move_line){
@@ -605,16 +661,16 @@ for(i in move_line){
 df<-data.frame(move_line,total_error)
 ggplot(df,aes(x=move_line,y=total_error))+
   geom_point() +
-  ylab("sum of squared deviations")+
+  ylab("sum of squared residuals")+
   xlab("change to y-intercept")
 
 ```
 
-This graph shows how the total error behaves as the line's y-intercept moves up and down: the error rises whether we shift the line down (0 to -5) or up (0 to +5), and is smallest right in the middle, at the original best fit line.
+This graph shows how the total error behaves as the line's y-intercept moves up and down: the error rises whether we shift the line down (0 to -6) or up (0 to +6), and is smallest right in the middle, at the original best fit line.
 
 ### Computing the best fit line
 
-How do we find the line that minimizes the sum of squared deviations? In principle, you could try many possible lines and compare their errors, but that's not efficient. In practice, we let software identify the line with the smallest total error, the same `lm()` fit behind every regression line drawn in this chapter's figures.
+How do we find the line that minimizes the sum of squared residuals? In principle, you could try many possible lines and compare their errors, but that's not efficient. In practice, we let software identify the line with the smallest total error, the same `lm()` fit behind every regression line drawn in this chapter's figures.
 
 @fig-2corwithLine shows a small example: seven $x,y$ pairs, plotted with their fitted line.
 
@@ -642,7 +698,7 @@ You've heard the warning that correlation does not equal causation. Interpreting
 
 ### Spurious correlation: chance alone can look convincing
 
-Two measures that have nothing to do with one another can still show a positive or negative correlation by random chance, and this happens often. These are called **spurious** correlations.
+Two measures that have nothing to do with one another can still show a positive or negative correlation by random chance, and this happens often. These chance correlations are one kind of **spurious** correlation, a correlation that does not come from a link between the two variables. The confounding section below shows the other kind.
 
 Let's demonstrate how correlations can appear by chance when there is no causal connection between two measures. Imagine two independent participants, one at the North Pole and one at the South Pole. Each has a lottery machine containing balls numbered 1 through 10. With replacement, each participant randomly draws 10 balls and records the numbers. Because the draws occur independently and half a world apart, there is no possible causal link between the two sets of numbers. The outcomes are determined by chance alone.
 
@@ -696,7 +752,7 @@ Running the game 1,000 times, each time generating 10 random numbers for both th
 
 ```{r}
 #| label: fig-2histrandcor
-#| fig-cap: "A histogram showing the frequency distribution of r-values for completely random values between an X and Y variable (sample-size=10). A full range of r-values can be obtained by chance alone. Values of $r$ far from 0 in either direction are less common than values near 0."
+#| fig-cap: "Values of $r$ from the lottery game with 10 draws at each pole, where no relationship was built in. Chance alone produced values from about -0.9 to 0.9, and values far from 0 are less common than values near 0."
 #| fig-alt: "Histogram of 1000 simulated r values for n = 10, centered on 0, with few values beyond plus or minus 0.7."
 
 simulated_correlations <- numeric(0)
@@ -724,13 +780,13 @@ For example, if you observed $r=0.1$, the histogram shows that such values are c
 
 So far, our lottery game has used 10 draws per participant. With such small samples, chance produces a wide range of correlations: sometimes strongly positive, sometimes strongly negative. But what happens if we increase the sample size?
 
-We can repeat the simulation under four conditions: each participant draws 10, 50, 100, or 1000 numbers. In each case, we run 1000 simulations and record the correlation values.
+We can repeat the simulation at four sample sizes: each participant draws 10, 50, 100, or 1,000 numbers. At each size we run the game 1,000 times and record the correlation.
 
 @fig-2corrandN shows the resulting four histograms of Pearson $r$ values.
 
 ```{r}
 #| label: fig-2corrandN
-#| fig-cap: "Distributions of r-values between completely random X and Y variables, at four sample sizes. The distributions narrow as sample size grows."
+#| fig-cap: "Values of $r$ between unrelated X and Y at four sample sizes. The distributions narrow as sample size grows."
 #| fig-alt: "Four histograms of simulated r values for n = 10, 50, 100 and 1000. Each is centered on 0 and gets narrower as n grows."
 
 all_df<-data.frame()
@@ -754,7 +810,31 @@ ggplot(all_df,aes(x=simulated_correlations))+
 
 ```
 
-Each histogram holds 1,000 values of $r$, one per run of the game at that sample size. With $n = 10$, the correlations spread across nearly the whole range from $-1$ to $1$, and values above 0.5 or below $-0.5$ are common. With $n = 50$ or $n = 100$, the spread narrows, but correlations near 0.2 or $-0.2$ still turn up. With $n = 1000$, almost every simulated correlation falls close to zero. Larger samples shrink the range of correlations that chance alone produces, so a large $r$ from a large sample is much harder to attribute to chance.
+```{r}
+#| label: tbl-2corrandN
+#| tbl-cap: "Summary of the 1,000 values of $r$ at each sample size in @fig-2corrandN."
+
+size_summary <- all_df %>%
+  dplyr::group_by(sample_size) %>%
+  dplyr::summarise(sd_r = sd(simulated_correlations),
+                   share_half = mean(abs(simulated_correlations) > 0.5),
+                   share_02 = mean(abs(simulated_correlations) >= 0.2),
+                   max_r = max(abs(simulated_correlations)))
+pct <- function(p) sprintf("%.0f%%", 100 * p)
+size_row <- function(n) size_summary[size_summary$sample_size == n, ]
+
+knitr::kable(data.frame(format(size_summary$sample_size, big.mark = ","),
+                        sprintf("%.2f", size_summary$sd_r),
+                        pct(size_summary$share_half),
+                        pct(size_summary$share_02),
+                        sprintf("%.2f", size_summary$max_r)),
+             col.names = c("Sample size", "SD of the 1,000 values of $r$",
+                           "Share beyond $\\pm 0.5$", "Share at or beyond $\\pm 0.2$",
+                           "Largest $\\lvert r \\rvert$"),
+             align = "rrrrr", format = "pipe")
+```
+
+Each histogram holds 1,000 values of $r$, one per run of the game at that sample size, and @tbl-2corrandN summarizes each one. With $n = 10$, the correlations spread across nearly the whole range from $-1$ to $1$, and `r pct(size_row(10)$share_half)` of the runs gave $r$ above 0.5 or below $-0.5$. With $n = 50$ or $n = 100$, the spread narrows, but `r pct(size_row(50)$share_02)` and `r pct(size_row(100)$share_02)` of the runs still gave $r$ at or beyond $\pm 0.2$. With $n = 1{,}000$, the largest $\lvert r \rvert$ in 1,000 runs was `r sprintf("%.2f", size_row(1000)$max_r)`. Larger samples shrink the range of correlations that chance alone produces, so a large $r$ from a large sample is much harder to attribute to chance.
 
 ::: {.callout-tip title="Tip: Sample size"}
 Bigger $n$ narrows the chance window. If you expect a modest linear effect (e.g., \|$r$\| ≈ 0.2--0.3), plan for larger samples so random swings are less likely to mimic or mask the effect.
@@ -783,9 +863,9 @@ With $n=10$, the regression line jumps around and occasionally even points downw
 
 Even when a real positive correlation exists, a small sample might miss it, or even suggest the opposite, simply due to chance. Because we usually only have one sample, we can never know for certain whether we were "lucky" or "unlucky." The best protection is to collect more data.
 
-### Nonlinearity: when r misses real relationships
+### Nonlinearity: when $r$ misses real relationships
 
-Consider a snake plant. Like most plants, it needs water to stay alive, but also needs *the right amount* of water. Imagine we grow 1000 snake plants, each receiving a different amount of water per day, ranging from *no water* to *extreme overwatering* (say 1000 teaspoons a day), and measure their weekly growth. Water is clearly causally related to plant growth, so we'd expect to see a correlation.
+Consider a snake plant. Like most plants, it needs water to stay alive, but also needs *the right amount* of water. Imagine we grow 1,000 snake plants, each receiving a different amount of water per day, ranging from *no water* to *extreme overwatering* (say 1000 teaspoons a day), and measure their weekly growth. Water is clearly causally related to plant growth, so we'd expect to see a correlation.
 
 Plants given no water at all will eventually die, showing little or no weekly growth. With only a few teaspoons per day, plants may survive but grow only modestly. In a scatter plot, those cases would appear near the bottom left (low water, low growth) and rise upward as water increases. Growth continues to improve until a threshold is reached, beyond which excess water harms the plants. Severely overwatered plants also fail to grow and eventually die, just as those given no water do.
 
@@ -793,8 +873,8 @@ The scatter plot would form an inverted U or V: as water increases, growth rises
 
 ```{r}
 #| label: fig-2snakeplant
-#| fig-cap: "Illustration of a possible relationship between amount of water and snake plant growth. Growth goes up with water, but eventually goes back down as too much water makes snake plants die."
-#| fig-alt: "Scatter of 1000 plants with growth rising from 0 at no water to a peak near 500 teaspoons, then falling back to 0 near 1000 teaspoons."
+#| fig-cap: "Illustration of a possible relationship between amount of water and snake plant growth. Growth goes up with water, but eventually goes back down as too much water makes snake plants die. Each half has a clear straight-line trend, but the line through all the plants is flat."
+#| fig-alt: "Scatter of 1,000 plants with growth rising from 0 at no water to a peak near 500 teaspoons, then falling back to 0 near 1000 teaspoons. A fitted line through the first half rises, a fitted line through the second half falls, and a fitted line through all the plants is nearly flat."
 
 water <- seq(0, 999, 1)
 peak_growth <- 10
@@ -804,9 +884,25 @@ growth_mean <- peak_growth * exp(-((water - peak_water)^2) / (2 * spread^2))
 noise <- rnorm(1000, mean = 0, sd = 1 + growth_mean / 2)
 growth <- pmax(growth_mean + noise, 0)
 snake_df <- data.frame(growth, water)
+snake_df$half <- ifelse(snake_df$water < 500, "first", "second")
+r_first <- with(subset(snake_df, half == "first"), cor(water, growth))
+r_second <- with(subset(snake_df, half == "second"), cor(water, growth))
+r_all <- cor(snake_df$water, snake_df$growth)
+half_cols <- c(first = "#008cff", second = "#b22222")
 
 ggplot(snake_df, aes(x=water,y=growth))+
-   geom_point() +
+   geom_point(alpha = 0.5) +
+  geom_smooth(data = subset(snake_df, half == "first"), method = "lm", se = FALSE,
+              color = half_cols[["first"]], linewidth = 1.2) +
+  geom_smooth(data = subset(snake_df, half == "second"), method = "lm", se = FALSE,
+              color = half_cols[["second"]], linewidth = 1.2) +
+  geom_smooth(method = "lm", se = FALSE, color = "#10377f", linewidth = 1.2) +
+  annotate("label", x = 250, y = max(growth) * 0.97, label = sprintf("first half: r = %.2f", r_first),
+           color = half_cols[["first"]], size = 4) +
+  annotate("label", x = 750, y = max(growth) * 0.97, label = sprintf("second half: r = %.2f", r_second),
+           color = half_cols[["second"]], size = 4) +
+  annotate("label", x = 500, y = -0.6, label = sprintf("all plants: r = %.3f", r_all),
+           color = "#10377f", size = 4) +
   xlab("Water (teaspoons)")+
   ggtitle("Invented snake plant growth \n as a function of water")
 
@@ -814,9 +910,13 @@ ggplot(snake_df, aes(x=water,y=growth))+
 
 There is clearly a relationship between watering and snake plant growth. But, the correlation isn't in one direction. As a result, when we compute Pearson's $r$ for these 1,000 plants, we get `r sprintf("%.3f", cor(growth, water))`, very close to zero.
 
-This means no *single straight line* describes the relationship. When we need lines or curves going in more than one direction, we have a nonlinear relationship.
+This means no *single straight line* describes the relationship. Any relationship that a straight line does not describe is a nonlinear relationship. The snake plant is an extreme case because the direction reverses: growth rises with water and then falls.
 
 This example shows why correlations can be tricky to interpret. Water is clearly necessary for plant growth, yet the overall correlation can be misleading. The first half of the data suggests a positive relationship, the second half a negative one, and the full dataset little or none. Even with a real causal link, a single correlation coefficient may fail to capture it. This is one reason plotting matters: if you see an upside-down U in the scatter, correlation is probably not the right analysis for your data.
+
+::: {.callout-tip title="Tip: A curved scatter needs a curved model"}
+If the scatter shows a U-shape or other curve, a single straight-line correlation will mislead. Fit a curved model (e.g., add a quadratic term) or transform variables instead of reporting $r$ alone.
+:::
 
 ### Anscombe's quartet: same statistics, different data
 
@@ -824,12 +924,10 @@ Everything so far has compressed a relationship into a number: a covariance, an 
 
 Francis Anscombe (@Anscombe1973) made this point with what is now called *Anscombe's Quartet*. Each panel in @fig-anscombe shows pairs of $x$ and $y$ values as a scatterplot.
 
-Visually, the four panels are very different: one looks linear, one curved, one is mostly linear except for an outlier, and one forms a near-vertical line except for one point.
-
 ```{r}
 #| label: fig-anscombe
 #| fig-cap: "Anscombe's Quartet."
-#| fig-alt: "Anscombe's Quartet, a set of four scatter plots each with a different pattern, despite having identical descriptive statistics. This illustrates the importance of graphing data to understand underlying relationships beyond basic statistical measures" 
+#| fig-alt: "Four scatter plots with the same fitted line, y = 3 + 0.5x. Panel 1 is a linear cloud, panel 2 a smooth curve, panel 3 a tight line with one high outlier, and panel 4 ten points stacked at x = 8 with one point far to the right at x = 19. The four sets have nearly identical means, variances and correlations."
 
 library(data.table)
 ac <- fread("data/anscombe.txt")
@@ -853,7 +951,7 @@ ggplot(ac_long, aes(x=x, y=y))+
 
 ```
 
-Yet if we summarize each quartet with just its descriptive statistics:
+The four panels look nothing alike, yet their summary statistics match:
 
 ```{r}
 library(dplyr)
@@ -864,38 +962,70 @@ ac_long_summary <- ac_long %>%
                               var_x = var(x),
                               mean_y = mean(y),
                               var_y = var(y),
-                              cor_xy = cor(x, y))
+                              cor_xy = cor(x, y),
+                              b0 = coef(lm(y ~ x))[1],
+                              b1 = coef(lm(y ~ x))[2])
 
-knitr::kable(ac_long_summary, digits = 2)
+ac_long_summary$shape <- c("Linear cloud", "Smooth curve",
+                           "Straight line with one outlier",
+                           "Ten points at $x = 8$, one at $x = 19$")
+ac_long_summary$line <- sprintf("$y = %.2f + %.2fx$", ac_long_summary$b0, ac_long_summary$b1)
+
+ac_num <- c("mean_x", "var_x", "mean_y", "var_y", "cor_xy")
+ac_long_summary[ac_num] <- lapply(ac_long_summary[ac_num], function(v) sprintf("%.2f", v))
+
+knitr::kable(ac_long_summary[, c("quartet", "shape", "mean_x", "var_x", "mean_y",
+                                 "var_y", "cor_xy", "line")],
+             format = "pipe", align = "llrrrrrl",
+             col.names = c("Set", "Shape", "Mean of $x$", "Variance of $x$", "Mean of $y$",
+                           "Variance of $y$", "$r$", "Fitted line"))
 
 ```
 
-Rounded to two decimals, all four datasets have the *same* descriptive statistics:
+Rounded to two decimals, all four datasets have the same mean and variance for $x$, the same mean for $y$, the same correlation, and the same fitted line. The variances of $y$ agree to one decimal (4.12 or 4.13). (Anscombe built the four sets to agree closely, not exactly, so the values separate once you carry more decimals.)
 
--   same mean and variance for $x$
+### Confounding variables
 
--   same mean and variance for $y$
+Correlations can arise because of a third variable: something not directly measured that influences both variables of interest. Now suppose we did not set the water ourselves. We survey snake plants in people's homes and record how much each owner waters and how much each plant grows, but we ignore sunlight. If owners with sunny windows water more, and sunny plants also grow faster, we might credit water with growth that sunlight is producing.
 
--   same correlation between $x$ and $y$
+The same issue appears in human data. Suppose we find that, across an elementary school, children with bigger feet read better. Shoe size does not improve reading. Age makes feet bigger, and age also improves reading. Comparing shoe size and reading ability without accounting for age would credit shoe size with an effect that age is actually driving. @fig-2confound draws the arrows.
 
-Yet the scatterplots could not look more different. (Anscombe constructed the four sets to agree to two decimal places, so they differ very slightly beyond that. Carry more decimals and the variances of $y$ separate in the third one.)
+```{r}
+#| label: fig-2confound
+#| fig-cap: "Age causes both bigger feet and better reading, so shoe size and reading are correlated without either causing the other."
+#| fig-alt: "Diagram with Age at the top and Shoe size and Reading ability below it. Solid arrows run from Age to Shoe size and from Age to Reading ability. A dashed double-headed line between Shoe size and Reading ability is labeled correlation, no causal arrow."
+#| fig-width: 6
+#| fig-height: 3.2
 
-### Confounding variables (third-variable problem)
-
-Correlations can arise because of a third variable: something not directly measured that influences both variables of interest. Returning to the snake plant example: imagine we measure water and plant growth, but ignore sunlight. If plants in sunnier windows both receive more water and grow faster, we might attribute the effect to water alone, when in fact sunlight is doing much of the work.
-
-The same issue appears in human data. Suppose we find that, across an elementary school, children with bigger feet read better. Shoe size does not improve reading. Age makes feet bigger, and age also improves reading. Comparing shoe size and reading ability without accounting for age would credit shoe size with an effect that age is actually driving.
+boxes <- data.frame(x = c(0.5, 0.15, 0.85), y = c(0.85, 0.2, 0.2),
+                    label = c("Age", "Shoe size", "Reading ability"))
+ggplot() +
+  annotate("segment", x = 0.45, y = 0.76, xend = 0.2, yend = 0.3,
+           arrow = arrow(length = unit(0.25, "cm"), type = "closed"), linewidth = 0.8) +
+  annotate("segment", x = 0.55, y = 0.76, xend = 0.8, yend = 0.3,
+           arrow = arrow(length = unit(0.25, "cm"), type = "closed"), linewidth = 0.8) +
+  annotate("segment", x = 0.3, y = 0.2, xend = 0.65, yend = 0.2, linetype = "dashed",
+           arrow = arrow(length = unit(0.2, "cm"), ends = "both"), linewidth = 0.6,
+           color = "grey35") +
+  annotate("text", x = 0.475, y = 0.08, label = "correlation, no causal arrow",
+           size = 4, color = "grey35") +
+  geom_label(data = boxes, aes(x = x, y = y, label = label), size = 5,
+             label.padding = unit(0.4, "lines")) +
+  coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
+  theme_void()
+```
 
 ## Chapter Summary
 
-**Why it matters.** Correlation is how we quantify whether two variables move together. We use it to describe patterns (e.g., temperature and canopy cover, chocolate and happiness) and to decide whether a relationship is worth modeling or acting on.
+**Why it matters.** Correlation is how we quantify whether two variables move together. We use it to describe patterns (e.g., chocolate and happiness, water and plant growth) and to decide whether a relationship is worth modeling or acting on.
 
 **Core ideas**
 
+-   **Variance and standard deviation.** Deviations from the mean always sum to zero, so we square them. The variance is the mean of the squared deviations, and the standard deviation is its square root, back in the units of the data.
 -   **Scatter first, always.** A scatter plot shows direction (up, down, none), form (straight vs curved), and outliers. If the pattern is curved, don't stop at $r$: fit a suitable model (e.g., add a quadratic term) or transform a variable instead.
 -   **Covariance → correlation.** Covariance measures whether deviations from each mean tend to align. Pearson's $r$ rescales covariance by the standard deviations so the result is unitless and bounded (\[-1, 1\]).
 -   **Interpreting $r$.** Sign indicates direction; magnitude indicates strength of a *linear* relationship. $r$ near 0 can still hide a strong *nonlinear* pattern.
--   **Regression link.** The best-fit line summarizes the average relationship; residuals are the vertical gaps between data and the line. The line is chosen to minimize the sum of squared residuals.
--   **Chance alone can manufacture a correlation.** Small samples can produce large \|$r$\| by accident, and larger samples shrink the "chance window" toward 0. Always report $r$ alongside its sample size ($n$) and, when possible, a confidence interval. If a result hinges on a small sample, say so and treat the conclusion as tentative.
+-   **Regression link.** The best-fit line summarizes the average relationship. Residuals are the vertical gaps between data and the line. The line is chosen to minimize the sum of squared residuals.
+-   **Chance alone can manufacture a correlation.** Small samples can produce large \|$r$\| by accident, and larger samples shrink the "chance window" toward 0. Always report $r$ alongside its sample size ($n$). If a result hinges on a small sample, say so and treat the conclusion as tentative.
 -   **Nonlinearity hides real effects.** Curved relationships (e.g., too little or too much water harming plant growth) can yield $r$ ≈ 0 even when the underlying effect is strong.
--   **Confounding.** A third variable can create or inflate a correlation (e.g., sunlight affecting both watering patterns and plant growth). This is why the honest phrasing is "associated with," not "caused by."
+-   **Confounding.** A third variable can create or inflate a correlation (e.g., sunlight affecting both watering patterns and plant growth). Without a design that rules out third variables, write "associated with," not "caused by."
