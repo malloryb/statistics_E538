@@ -13,7 +13,10 @@ library(ggplot2)
 library(tidyverse)
 library(broom)
 
+set.seed(538)
+
 fmt_p <- function(p) ifelse(p < .001, "< 0.001", formatC(p, digits = 3, format = "f"))
+fmt_p_eq <- function(p) ifelse(p < .001, '< 0.001', paste('=', formatC(p, digits = 3, format = 'f')))
 
 # Critical values of a discrete statistic: the most extreme values whose tail
 # share is at most .025. Taken from the exact null (every sign pattern or every
@@ -29,7 +32,7 @@ exact_crit <- function(null) {
 }
 
 # Simulated null histogram: sky bars, red on the part of each bar in the rejection
-# region, full-height labeled critical lines, observed statistic green dotted.
+# region, full-height labeled critical lines, observed statistic lime-green dotted.
 null_hist <- function(sim, exact, obs, stat, xlab) {
   cr <- exact_crit(exact)
   d <- tibble(x = sim, region = sim <= cr["lo"] | sim >= cr["hi"])
@@ -45,7 +48,7 @@ null_hist <- function(sim, exact, obs, stat, xlab) {
              label = paste0(c("lower crit = ", "upper crit = "), cr[c("lo", "hi")]),
              colour = "red", size = 3.8) +
     annotate("segment", x = obs, xend = obs, y = 0, yend = top * 0.9,
-             colour = "#1E9E1E", linetype = "dotted", linewidth = 1.4) +
+             colour = "limegreen", linetype = "dotted", linewidth = 1.6) +
     annotate("text", x = obs - 0.8, y = top * 0.95, label = paste0("observed\n", stat, " = ", obs),
              colour = "#1E9E1E", hjust = 1, size = 3.6, lineheight = 0.9) +
     labs(x = xlab, y = "Count out of 20,000 simulations")
@@ -56,11 +59,11 @@ null_hist <- function(sim, exact, obs, stat, xlab) {
 
 ## Parametric vs. nonparametric tests
 
-Chapter 6 covered three forms of the $t$-test (one-sample, paired, and independent-samples, also called two-sample). All three need continuous, roughly normal data; the independent-samples test additionally assumes similar variance across the two groups. This chapter covers what to do when those assumptions aren't met. We'll also cover what to do if your data aren't continuous at all.
+Chapter 6 covered three forms of the $t$-test (one-sample, paired, and independent-samples, also called two-sample). All three need a continuous outcome that is roughly normal (for the paired test, the difference scores), and the pooled independent-samples test also assumes similar variance across the two groups. This chapter covers what to do when those assumptions aren't met. We'll also cover what to do if your data aren't continuous at all.
 
 So far, we've been looking at **parametric** tests, without calling them that. Every test needs a known null distribution for its test statistic, since that's the shape we compare our result against to get a $p$-value. A test is parametric when we can only know that shape by assuming something specific about the population the data came from.
 
-For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of your raw data. It's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the Central Limit Theorem for a large enough sample.
+For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of your raw data. It's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the central limit theorem for a large enough sample.
 
 When the distributional assumptions are met, parametric tests are generally the most powerful available. However, when distributional assumptions are not met, a parametric test's $p$-value can be too small or too large, and without simulation it is hard to tell which. The worse the departure from the assumed distribution, the larger the possible error.
 
@@ -78,9 +81,9 @@ This chapter covers two different kinds of tools:
 
 We'll state the assumptions explicitly for each test as we go through them.
 
-## Nonparametric alternative to one-sample & paired $t$-test: the Wilcoxon signed-rank test
+## The Wilcoxon signed-rank test
 
-Chapter 6 built the paired $t$-test around this same example, wetland restoration and soil moisture, with a full 20-plot dataset, and drew the design in @fig-6paireddesign. The same plots are measured before and after, so each plot contributes one difference. Let's run a smaller version of that design, and this time check whether we should trust the result before reporting it.
+Chapter 6 built the paired $t$-test around this same example, wetland restoration and soil moisture, with a full 20-plot dataset, and drew the design in @fig-6paireddesign. The same plots are measured before and after, so each plot contributes one difference. Let's run the same design on a separate, smaller study of 12 plots, and this time check whether we should trust the result before reporting it. The data in this example are invented.
 
 ```{r}
 before <- c(20, 15, 22, 18, 16, 24, 19, 14, 21, 17, 25, 20)
@@ -89,7 +92,7 @@ differences <- after - before
 
 knitr::kable(
   data.frame(Plot = 1:12, Before = before, After = after, Difference = differences),
-  caption = "Soil moisture (%) before and after restoration, 12 plots"
+  caption = "Soil moisture (%) before and after restoration, 12 plots."
 )
 ```
 
@@ -102,8 +105,8 @@ t_tidy <- broom::tidy(t_out) |>
 
 knitr::kable(
   t_tidy[, c("estimate", "statistic", "parameter", "p.value")],
-  col.names = c("Mean difference", "t", "df", "p-value"),
-  caption = "Paired t-test: soil moisture before vs. after restoration"
+  col.names = c("Mean difference", "t", "df", "p"),
+  caption = "Paired t-test: soil moisture before vs. after restoration."
 )
 ```
 
@@ -126,8 +129,8 @@ ggplot(tibble(differences = differences), aes(x = differences)) +
 sh_out <- shapiro.test(differences)
 
 knitr::kable(
-  data.frame(Statistic = round(unname(sh_out$statistic), 2), `p-value` = fmt_p(sh_out$p.value), check.names = FALSE),
-  caption = "Shapiro-Wilk normality test on the differences"
+  data.frame(Statistic = round(unname(sh_out$statistic), 2), `p` = fmt_p(sh_out$p.value), check.names = FALSE),
+  caption = "Shapiro-Wilk normality test on the differences."
 )
 ```
 
@@ -156,8 +159,8 @@ wilcox_tidy <- broom::tidy(wilcox_out) |>
 
 knitr::kable(
   wilcox_tidy[, c("statistic", "p.value")],
-  col.names = c("Statistic (V)", "p-value"),
-  caption = "Wilcoxon signed-rank test on restoration soil-moisture differences"
+  col.names = c("Statistic (V)", "p"),
+  caption = "Wilcoxon signed-rank test on restoration soil-moisture differences."
 )
 ```
 
@@ -174,7 +177,7 @@ sign_nz <- ifelse(nonzero_diffs > 0, "+", "-")
 knitr::kable(
   data.frame(Difference = nonzero_diffs, `Abs. difference` = abs_diffs,
              Rank = ranks_abs, Sign = sign_nz, check.names = FALSE),
-  caption = "Ranking the nonzero restoration differences to calculate V"
+  caption = "Ranking the nonzero restoration differences to calculate V."
 )
 ```
 
@@ -197,9 +200,8 @@ To see the null distribution, we keep our 9 ranks and reassign their signs at ra
 ```{r}
 #| label: fig-7wilcoxon-null
 #| fig-cap: "Simulated null distribution of the Wilcoxon signed-rank statistic V, built from 20,000 random sign-flips of the 9 nonzero ranked differences. Shaded regions mark the two-tailed 5% rejection region; our observed V = 39 falls just short of the upper critical value, 40, outside the rejection region."
-#| fig-alt: "Histogram of 20,000 simulated values of V, roughly bell-shaped and centered near 22. Bars at or below 5 and at or above 40 are shaded red, with red vertical lines labeled lower crit equals 5 and upper crit equals 40. A green dotted line marks the observed V of 39, just to the left of the upper critical line."
+#| fig-alt: "Histogram of 20,000 simulated values of V, roughly bell-shaped and centered near 22. Bars at or below 5 and at or above 40 are shaded red, with red vertical lines labeled lower crit equals 5 and upper crit equals 40. A lime-green dotted line marks the observed V of 39, just to the left of the upper critical line."
 
-set.seed(123)
 sim_V <- replicate(20000, {
   signs <- sample(c(-1, 1), length(ranks_abs), replace = TRUE)
   sum(ranks_abs[signs == 1])
@@ -221,7 +223,7 @@ The test does not need normality because nothing in this simulation assumed a sh
 
 We already flagged the symmetry assumption as shaky for these data, so the sign test avoids the one assumption the Wilcoxon test still needed. That robustness comes at a big cost in power, though, so it's usually a last resort.
 
-The sign test uses the binomial distribution from Chapter 3. `binom.test(6, 9, p = 0.5)` asks how often chance alone would give 6 or more increases out of 9, or 3 or fewer, if each plot were equally likely to go up or go down ($p = 0.5$).
+The sign test uses the binomial distribution from Chapter 3. `binom.test(6, 9, p = 0.5)` asks how often chance alone would give 6 or more increases out of 9, or 3 or fewer, if each plot were equally likely to go up or go down ($\theta = 0.5$, the binomial success probability from Chapter 3).
 
 ```{r}
 #| echo: true
@@ -236,8 +238,8 @@ sign_test <- binom.test(n_pos, n_nonzero, p = 0.5)
 
 knitr::kable(
   data.frame(`Plots increased` = n_pos, `Plots total` = n_nonzero,
-             `p-value` = fmt_p(sign_test$p.value), check.names = FALSE),
-  caption = "Sign test on restoration soil-moisture differences"
+             `p` = fmt_p(sign_test$p.value), check.names = FALSE),
+  caption = "Sign test on restoration soil-moisture differences."
 )
 ```
 
@@ -253,129 +255,128 @@ Six of the 9 nonzero plots increased, and $p = 0.508$ is far from significant.
 | Result                 | $t(11) = 2.57$                 | $V = 39$                                 | 6 of 9 increased  |
 | $p$                    | 0.026                           | 0.057                                     | 0.508              |
 
-: Three tests on the same 12 restoration plots {#tbl-7threetests}
+: Three tests on the same 12 restoration plots. {#tbl-7threetests}
 
 That's not an argument that nonparametric tests are worse. The $t$-test gave the smallest $p$-value here because it used the full size of every change, including the increases of 3 to 8 points. That $p$-value is trustworthy only if the differences are roughly normal, and these are not. Check the assumptions before you run the test, so the result cannot influence which test you choose.
 
-## Nonparametric alternative to the independent-samples $t$-test: the Mann-Whitney-Wilcoxon test
+## The Mann-Whitney-Wilcoxon test
 
-The same check applies to the independent-samples $t$-test. Researchers surveyed plant species richness, the number of distinct plant species found, at restored and unrestored wetland plots, to see whether restoration increased plant diversity. @fig-7mwwdesign gives the design.
+The same check applies to the independent-samples $t$-test. Many cities are replacing orange sodium streetlights with white LED lights, and ecologists want to know whether the switch changes how much bats use lit areas. Researchers placed acoustic detectors at 8 sites under sodium lights and 8 sites under LED lights and counted bat passes per night, the number of times a bat flew past the detector. The data in this example are invented. @fig-7mwwdesign gives the design.
 
 ```{r}
 #| label: fig-7mwwdesign
-#| fig-cap: "An independent-groups design. Unlike the paired design earlier in this chapter, the two boxes hold different plots, so there is nothing to subtract within a unit."
-#| fig-alt: "Study design schematic. IV: restoration status, categorical. Two boxes labeled Restored and Unrestored, each with n = 8 plots. DV: plant species richness, a count."
+#| fig-cap: "An independent-groups design. Unlike the paired design earlier in this chapter, the two boxes hold different sites, so there is nothing to subtract within a unit."
+#| fig-alt: "Study design schematic. IV: streetlight type, categorical. Two boxes labeled Sodium and LED, each with n = 8 sites. DV: bat activity, passes per night, a count."
 #| fig-asp: 0.34
 #| out-width: "100%"
 
-design_groups("Restoration status (categorical)", c("Restored", "Unrestored"),
-              8, "plots", "Plant species richness (count)",
+design_groups("Streetlight type (categorical)", c("Sodium", "LED"),
+              8, "sites", "Bat activity (passes per night)",
               "Do the two groups differ by more than chance?")
 ```
 
 ```{r}
-restored   <- c(21, 16, 22, 16, 17, 16, 17, 34)
-unrestored <- c(17, 18, 18, 12, 11, 11, 11, 10)
+sodium <- c(21, 16, 22, 16, 17, 16, 17, 34)
+led    <- c(17, 18, 18, 12, 11, 11, 11, 10)
 
 knitr::kable(
-  data.frame(Plot = 1:8, Restored = restored, Unrestored = unrestored),
-  caption = "Plant species richness at restored and unrestored wetland plots"
+  data.frame(Site = 1:8, Sodium = sodium, LED = led),
+  caption = "Bat passes per night at sites under sodium and LED streetlights."
 )
 ```
 
 **Step 1: run the $t$-test, the way Chapter 6 taught it.**
 
 ```{r}
-t_out <- t.test(restored, unrestored, var.equal = TRUE)
+t_out <- t.test(sodium, led, var.equal = TRUE)
 t_tidy <- broom::tidy(t_out) |>
   mutate(statistic = round(statistic, 2), p.value = fmt_p(p.value))
 
 knitr::kable(
   t_tidy[, c("estimate", "statistic", "parameter", "p.value")],
-  col.names = c("Mean difference", "t", "df", "p-value"),
-  caption = "Independent-samples t-test: restored vs. unrestored richness"
+  col.names = c("Mean difference", "t", "df", "p"),
+  caption = "Independent-samples t-test: sodium vs. LED bat activity."
 )
 ```
 
-$t(14) = 2.54$, $p = 0.024$, a significant result. Restoration looks like it increased richness.
+$t(14) = 2.54$, $p = 0.024$, a significant result. Bat activity looks higher under sodium lights.
 
 **Step 2: check the assumptions.** Chapter 6 said to check them before trusting a $p$-value, so we look at the data now.
 
 ```{r}
-#| label: fig-7richness-boxplot
-#| fig-cap: "Plant species richness by group. The circled restored plot has an unusually high richness count, visibly pulling that group's distribution away from a normal, bell-shaped one."
-#| fig-alt: "Box plots of plant species richness for 8 restored and 8 unrestored plots, with each plot drawn as a point. Restored plots mostly fall between 16 and 22, with one plot at 34 circled in red far above the rest. Unrestored plots fall between 10 and 18."
+#| label: fig-7bats-boxplot
+#| fig-cap: "Bat passes per night by streetlight type. The circled sodium site has an unusually high count, visibly pulling that group's distribution away from a normal, bell-shaped one."
+#| fig-alt: "Box plots of bat passes per night for 8 sodium and 8 LED sites, with each site drawn as a point. Sodium sites mostly fall between 16 and 22, with one site at 34 circled in red far above the rest. LED sites fall between 10 and 18."
 
-set.seed(42)
 plot_df <- tibble(
-  Group = rep(c("Restored", "Unrestored"), each = 8),
-  Richness = c(restored, unrestored)
+  Group = rep(c("Sodium", "LED"), each = 8),
+  Passes = c(sodium, led)
 ) |>
-  mutate(GroupNum = ifelse(Group == "Restored", 1, 2),
+  mutate(GroupNum = ifelse(Group == "Sodium", 1, 2),
          x_jit = GroupNum + runif(n(), -0.08, 0.08))
 
-outlier_row <- plot_df |> filter(Richness == max(Richness))
+outlier_row <- plot_df |> filter(Passes == max(Passes))
 
-ggplot(plot_df, aes(x = x_jit, y = Richness)) +
+ggplot(plot_df, aes(x = x_jit, y = Passes)) +
   geom_boxplot(aes(x = GroupNum, group = Group), outlier.shape = NA, width = 0.5, fill = "grey90") +
-  geom_point(size = 2.5, color = "#10377f") +
+  geom_point(size = 2.5) +
   geom_point(data = outlier_row, shape = 21, size = 9, color = "#b22222", stroke = 1.3) +
-  scale_x_continuous(breaks = c(1, 2), labels = c("Restored", "Unrestored"), limits = c(0.6, 2.4)) +
-  labs(y = "Plant species richness", x = NULL)
+  scale_x_continuous(breaks = c(1, 2), labels = c("Sodium", "LED"), limits = c(0.6, 2.4)) +
+  labs(y = "Bat passes per night", x = NULL)
 ```
 
-The circled plot has 34 species, 12 more than any other plot in either group. We don't just throw away outliers, since the plot may sit in an unusually favorable microhabitat. But it does make the restored group far from normal:
+The circled site has 34 passes, 12 more than any other site in either group. We don't just throw away outliers, since the site may be near a hedgerow or tree line that bats follow at night. But it does make the sodium group far from normal:
 
 ```{r}
-sh_restored   <- shapiro.test(restored)
-sh_unrestored <- shapiro.test(unrestored)
+sh_sodium <- shapiro.test(sodium)
+sh_led    <- shapiro.test(led)
 
 knitr::kable(
   data.frame(
-    Group = c("Restored", "Unrestored"),
-    Statistic = round(c(sh_restored$statistic, sh_unrestored$statistic), 2),
-    `p-value` = c(fmt_p(sh_restored$p.value), fmt_p(sh_unrestored$p.value)),
+    Group = c("Sodium", "LED"),
+    Statistic = round(c(sh_sodium$statistic, sh_led$statistic), 2),
+    `p` = c(fmt_p(sh_sodium$p.value), fmt_p(sh_led$p.value)),
     check.names = FALSE
   ),
-  caption = "Shapiro-Wilk normality test, by group"
+  caption = "Shapiro-Wilk normality test, by group."
 )
 ```
 
-Both groups fail the Shapiro-Wilk test, the restored group badly ($p=0.002$). The $t$-test's "significant" result depends on an assumption the data don't meet. The Mann-Whitney-Wilcoxon test is designed for this situation.
+Both groups fail the Shapiro-Wilk test, the sodium group badly ($p=0.002$). The $t$-test's "significant" result depends on an assumption the data don't meet. The Mann-Whitney-Wilcoxon test is designed for this situation.
 
-**The question.** Did restoration increase plant species richness, or is the difference we see consistent with random plot-to-plot variation?
+**The question.** Does bat activity differ between sites under sodium and LED lights, or is the difference we see consistent with random site-to-site variation?
 
--   $H_0$: no difference in richness between restored and unrestored plots; ranks are well-mixed between the groups.
+-   $H_0$: no difference in bat activity between sodium and LED sites; ranks are well-mixed between the groups.
 
--   $H_a$: richness tends to rank systematically higher in one group than the other.
+-   $H_a$: bat activity tends to rank systematically higher in one group than the other.
 
-**How it works, conceptually.** Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups don't differ, their ranks should be well mixed. If one group tends to have higher values, its ranks should be higher too. The outlier plot gets the highest rank, 16, whether it has 23 species or 34. Its size enters the $t$-test through both the mean and the standard deviation, but the Mann-Whitney-Wilcoxon test uses only its rank.
+**How it works, conceptually.** Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups don't differ, their ranks should be well mixed. If one group tends to have higher values, its ranks should be higher too. The outlier site gets the highest rank, 16, whether it had 23 passes or 34. Its size enters the $t$-test through both the mean and the standard deviation, but the Mann-Whitney-Wilcoxon test uses only its rank.
 
 **Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the same shape. It does not require normality. Distributions with the same shape also have equal variances, but equal variances alone do not meet the assumption, because two distributions can share a variance and differ in shape. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as "the medians differ" becomes murkier, since it could be a difference in location, shape, or both.
 
-Our two groups don't quite share a shape: the restored group is strongly right-skewed, mostly because of the one 34-species plot, while the unrestored group is only mildly skewed. So read a result from this test as "richness tends to be higher in one group," not strictly as a difference in medians.
+Our two groups don't quite share a shape. The sodium group is strongly right-skewed, mostly because of the one 34-pass site, while the LED group is only mildly skewed. So read a result from this test as "bat activity tends to be higher in one group," not strictly as a difference in medians.
 
 ```{r}
 #| echo: true
 #| eval: false
-wilcox.test(restored, unrestored)
+wilcox.test(sodium, led)
 ```
 
 ```{r}
-mww_out <- wilcox.test(restored, unrestored)
+mww_out <- wilcox.test(sodium, led)
 mww_tidy <- broom::tidy(mww_out) |>
   mutate(statistic = round(statistic, 1), p.value = fmt_p(p.value))
 
 knitr::kable(
   mww_tidy[, c("statistic", "p.value")],
-  col.names = c("Statistic (U)", "p-value"),
-  caption = "Mann-Whitney-Wilcoxon test: restored vs. unrestored richness"
+  col.names = c("Statistic (U)", "p"),
+  caption = "Mann-Whitney-Wilcoxon test: sodium vs. LED bat activity."
 )
 ```
 
-R labels this statistic $W$; for two groups it is the Mann-Whitney $U$. R falls back to the normal approximation again, because the pooled richness values include ties (three plots each at 11, 16 and 17, and two at 18).
+R labels this statistic $W$; for two groups it is the Mann-Whitney $U$. R falls back to the normal approximation again, because the pooled counts include ties (three sites each at 11, 16 and 17, and two at 18).
 
-**How the null distribution of $U$ is built.** The idea is the same as for the Wilcoxon signed-rank test, but the null distribution is built from group membership instead of signs. Under $H_0$, both groups are draws from the same population. Once you pool and rank all $N = n_A + n_B = 16$ values, chance alone decides which ranks end up in the restored group, and each of the $\binom{16}{8}$ ways of splitting the 16 ranks into two groups of 8 is equally likely. Those splits make up the null distribution of $U$, and its mean and variance are known:
+**How the null distribution of $U$ is built.** The idea is the same as for the Wilcoxon signed-rank test, but the null distribution is built from group membership instead of signs. Under $H_0$, both groups are draws from the same population. Once you pool and rank all $N = n_A + n_B = 16$ values, chance alone decides which ranks end up in the sodium group, and each of the $\binom{16}{8}$ ways of splitting the 16 ranks into two groups of 8 is equally likely. Those splits make up the null distribution of $U$, and its mean and variance are known:
 
 $$E[U] = \frac{n_A n_B}{2}, \qquad \text{Var}(U) = \frac{n_A n_B (n_A+n_B+1)}{12}$$
 
@@ -387,17 +388,16 @@ That's an SD of about 9.5. Our observed $U=50$ is about 1.9 SDs above that expec
 
 R's $p=0.063$ comes from this normal approximation, with the same two corrections as in the Wilcoxon case. The step correction raises $p$ more than the tie adjustment lowers it, so $p$ ends up slightly above what a $z$ of 1.9 alone would give. For small samples without ties, R can instead read the exact null distribution directly, no approximation needed.
 
-We simulate this null distribution the same way as before. We pool the 16 ranks, then 20,000 times pick 8 of them at random to call restored and compute $U$. Each shuffle gives one $U$, the value we would see if group labels had nothing to do with richness. The critical values marked on the figure come from listing all 12,870 splits, which is the exact null distribution the simulation approximates.
+We simulate this null distribution the same way as before. We pool the 16 ranks, then 20,000 times pick 8 of them at random to call sodium and compute $U$. Each shuffle gives one $U$, the value we would see if group labels had nothing to do with bat activity. The critical values marked on the figure come from listing all 12,870 splits, which is the exact null distribution the simulation approximates.
 
 ```{r}
 #| label: fig-7mww-null
-#| fig-cap: "Simulated null distribution of the Mann-Whitney U statistic, built from 20,000 random reshuffles of group membership among the pooled, ranked richness values. Shaded regions mark the two-tailed 5% rejection region; our observed U = 50 falls just short of the upper critical value, 50.5, outside the rejection region."
-#| fig-alt: "Histogram of 20,000 simulated values of U, roughly bell-shaped and centered near 32. Bars at or below 13.5 and at or above 50.5 are shaded red, with red vertical lines labeled lower crit and upper crit. A green dotted line marks the observed U of 50, just to the left of the upper critical line."
+#| fig-cap: "Simulated null distribution of the Mann-Whitney U statistic, built from 20,000 random reshuffles of group membership among the pooled, ranked counts of bat passes. Shaded regions mark the two-tailed 5% rejection region; our observed U = 50 falls just short of the upper critical value, 50.5, outside the rejection region."
+#| fig-alt: "Histogram of 20,000 simulated values of U, roughly bell-shaped and centered near 32. Bars at or below 13.5 and at or above 50.5 are shaded red, with red vertical lines labeled lower crit and upper crit. A lime-green dotted line marks the observed U of 50, just to the left of the upper critical line."
 
-set.seed(123)
-pooled       <- c(restored, unrestored)
+pooled       <- c(sodium, led)
 ranks_pooled <- rank(pooled)
-n_a <- length(restored)
+n_a <- length(sodium)
 N   <- length(pooled)
 
 sim_U <- replicate(20000, {
@@ -407,13 +407,13 @@ sim_U <- replicate(20000, {
 
 exact_U <- apply(combn(N, n_a), 2, function(i)
   sum(ranks_pooled[i]) - n_a * (n_a + 1) / 2)          # all choose(16, 8) splits
-obs_U <- as.numeric(wilcox.test(restored, unrestored)$statistic)
+obs_U <- as.numeric(wilcox.test(sodium, led)$statistic)
 null_hist(sim_U, exact_U, obs_U, "U", "U (Mann-Whitney statistic)")
 ```
 
 Our observed $U=50$ falls just short of the upper critical value of $50.5$, consistent with R's $p=0.063$: close to significant, but not quite.
 
-**The full picture.** The $t$-test gave $p = 0.024$, a significant result. The Mann-Whitney-Wilcoxon test on the same 16 plots gave $p = 0.063$, not significant at $\alpha = 0.05$. The $t$-test's $p$-value depends on a normality assumption that both groups fail, so it can't be taken at face value. A violated assumption can push a $p$-value too low or too high, and the $t$-test alone gives no way to tell which. If the data had been roughly normal, the $t$-test would have been the better choice, because it has more power.
+**The full picture.** The $t$-test gave $p = 0.024$, a significant result. The Mann-Whitney-Wilcoxon test on the same 16 sites gave $p = 0.063$, not significant at $\alpha = 0.05$. The $t$-test's $p$-value depends on a normality assumption that both groups fail, so it can't be taken at face value. A violated assumption can push a $p$-value too low or too high, and the $t$-test alone gives no way to tell which. If the data had been roughly normal, the $t$-test would have been the better choice, because it has more power.
 
 ## Categorical data: the chi-square tests
 
@@ -433,6 +433,7 @@ chisq_shapes$df <- factor(chisq_shapes$df, labels = paste0("df = ", c(2, 4, 8)))
 
 ggplot(chisq_shapes, aes(x, density, color = df)) +
   geom_line(linewidth = 1) +
+  scale_colour_manual(values = c("#008cff", "#10377f", "#9a7b00")) +
   labs(x = expression(chi^2), y = "Density", color = NULL)
 ```
 
@@ -440,7 +441,7 @@ ggplot(chisq_shapes, aes(x, density, color = df)) +
 
 ```{r}
 #| label: fig-7chisq-crit
-#| fig-cap: "The chi-square distribution with df = 3. The shaded region marks the rejection region at alpha = 0.05 (critical value 7.81)."
+#| fig-cap: "The chi-square distribution with df = 3. The shaded region marks the rejection region at $\\alpha = 0.05$ (critical value 7.81)."
 #| fig-alt: "A blue dot-dash chi-square curve with 3 degrees of freedom, rising steeply from zero to a peak near 1 and then trailing off to the right. A red vertical line labeled crit equals 7.81 marks the critical value, and the thin tail to its right is shaded red."
 
 crit <- qchisq(.95, 3)
@@ -461,11 +462,11 @@ For the rank tests, the null distribution comes from every possible arrangement 
 
 There are two versions of the chi-square test, depending on the question you're asking.
 
-### Chi-square goodness-of-fit: does one categorical variable match an expected pattern?
+### The chi-square goodness-of-fit test
 
 The test checks how well ("goodness") your observed counts match ("fit") a pattern you'd expect. The expectation can come from a historical baseline, a theory, or an assumption that every category is equally likely. A small chi-square statistic means a good fit (observed counts close to expected); a large one means a poor fit (observed counts far from expected).
 
-A state wildlife agency has historically found fish evenly distributed across four zones of a lake, 25% in each. This year's survey of 200 fish found between 38 and 61 fish per zone. @fig-7gofdesign lays out the structure, which differs from every design so far in this book.
+A state wildlife agency has historically found fish evenly distributed across four zones of a lake, 25% in each. The counts in this example are invented. This year's survey of 200 fish found between 38 and 61 fish per zone. @fig-7gofdesign lays out the structure, which differs from every design so far in this book.
 
 ```{r}
 #| label: fig-7gofdesign
@@ -480,14 +481,14 @@ design_gof("Lake zone (4 zones)",
            "Do the observed counts match the expected pattern?")
 ```
 
-Everywhere else in this book we have had an independent variable splitting units into groups and a dependent variable measured on each unit. Here there is only one variable, lake zone, and nothing is measured on the fish beyond which zone they turned up in. The counts *are* the data, and the comparison is against an expectation rather than against another group.
+Every other test so far has had a dependent variable measured on each unit, usually compared across groups that an independent variable defines. Here there is only one variable, lake zone, and nothing is measured on the fish beyond which zone they turned up in. The counts *are* the data, and the comparison is against an expectation rather than against another group.
 
 ```{r}
 observed_gof <- c(A = 38, B = 61, C = 52, D = 49)
 
 knitr::kable(
   data.frame(Zone = names(observed_gof), Observed = as.numeric(observed_gof)),
-  caption = "Observed fish counts by lake zone (n = 200)"
+  caption = "Observed fish counts by lake zone (n = 200)."
 )
 ```
 
@@ -510,8 +511,8 @@ gof_tidy <- broom::tidy(gof_test) |>
 
 knitr::kable(
   gof_tidy[, c("statistic", "parameter", "p.value")],
-  col.names = c("Statistic (χ²)", "df", "p-value"),
-  caption = "Chi-square goodness-of-fit test"
+  col.names = c("Statistic (χ²)", "df", "p"),
+  caption = "Chi-square goodness-of-fit test."
 )
 ```
 
@@ -528,48 +529,55 @@ contrib_gof <- unname((observed_gof - expected_gof)^2 / expected_gof)
 knitr::kable(
   data.frame(Zone = names(observed_gof), Observed = as.numeric(observed_gof),
              Expected = expected_gof, Contribution = round(contrib_gof, 2)),
-  caption = "Chi-square contribution by zone"
+  caption = "Chi-square contribution by zone."
 )
 ```
 
-Summing the last column: $2.88+2.42+0.08+0.02 = 5.4$, matching R's statistic above. For goodness-of-fit, $df = k-1$, where $k$ is the number of categories: $4-1=3$. With $df=3$, the critical value at $\alpha=0.05$ is 7.81 (the same one marked on the distribution figure earlier in this chapter); our $5.4$ falls well short of it.
+Summing the last column: $2.88+2.42+0.08+0.02 = 5.40$, matching R's statistic above. For goodness-of-fit, $df = k-1$, where $k$ is the number of categories: $4-1=3$. With $df=3$, the critical value at $\alpha=0.05$ is 7.81 (the same one marked on the distribution figure earlier in this chapter); our $5.40$ falls well short of it.
 
-**Interpretation.** $\chi^2(3) = 5.4$, $p = 0.145$, so the result is not significant. This year's zone counts are consistent with the historical 25%-each pattern. The unevenness we see is within the range chance alone would produce.
+**Interpretation.** $\chi^2(3) = 5.40$, $p = 0.145$, so the result is not significant. This year's zone counts are consistent with the historical 25%-each pattern. The unevenness we see is within the range chance alone would produce.
 
-### Chi-square test of independence: are two categorical variables related?
+### The chi-square test of independence
 
-Now suppose researchers classify 150 stream sites by land use and by whether each site's *E. coli* level exceeds a recreational safety threshold. Every site falls into exactly one cell of @fig-7indepdesign.
+Now suppose researchers classify 150 city blocks by land use and by whether each block's peak summer surface temperature, measured from satellite images, topped 40°C. The data in this example are invented. Every block falls into exactly one cell of @fig-7indepdesign.
 
 ```{r}
 #| label: fig-7indepdesign
 #| fig-cap: "A test-of-independence design. Two categorical variables are crossed, but unlike a factorial experiment the cells hold counts of units that landed there, not conditions units were assigned to."
-#| fig-alt: "Study design schematic. Variables: land use with three levels crossed with whether the site exceeds the E. coli threshold. A three by two table of counts totaling 150 stream sites."
+#| fig-alt: "Study design schematic. Variables: land use with three levels crossed with whether the block topped 40°C. A three by two table of counts totaling 150 city blocks."
 #| fig-asp: 0.42
 #| out-width: "100%"
 
-design_contingency("Land use (3) \u00d7 Exceeds E. coli threshold (2)",
-                   c("Forested", "Agricultural", "Urban"), c("No", "Yes"),
-                   c(42, 25, 20, 8, 25, 30), "150 stream sites",
+p_indep <- design_contingency("Land use (3) \u00d7 Topped 40\u00b0C (2)",
+                   c("Parkland", "Residential", "Commercial"), c("No", "Yes"),
+                   c(42, 25, 20, 8, 25, 30), "150 city blocks",
                    "Are the two variables related, or independent?")
+# the template's note says "sites"; the units here are city blocks
+for (i in seq_along(p_indep$layers)) {
+  lab <- p_indep$layers[[i]]$aes_params$label
+  if (is.character(lab))
+    p_indep$layers[[i]]$aes_params$label <- sub("count of sites", "count of blocks", lab)
+}
+p_indep
 ```
 
-In that table, nobody assigned anything. The sites already had their land use and their *E. coli* level before the researchers arrived, and the cells simply count how many turned out each way. That makes this an observational design, and it is why the cells hold counts of sites rather than measurements taken on them.
+In that table, nobody assigned anything. The blocks already had their land use and their summer temperatures before the researchers looked, and the cells simply count how many turned out each way. That makes this an observational design. Each block's temperature has been reduced to a yes or no, so the cells hold counts of blocks rather than temperatures.
 
 ```{r}
 tab <- matrix(c(42, 8,
                  25, 25,
                  20, 30), nrow = 3, byrow = TRUE,
-              dimnames = list(LandUse = c("Forested","Agricultural","Urban"),
-                               Exceeds = c("No","Yes")))
+              dimnames = list(LandUse = c("Parkland","Residential","Commercial"),
+                               Topped40C = c("No","Yes")))
 
-knitr::kable(tab, caption = "Stream sites by land use and E. coli exceedance")
+knitr::kable(tab, caption = "City blocks by land use and whether summer surface temperature topped 40\u00b0C.")
 ```
 
-**The question.** Is *E. coli* exceedance independent of land use, or are they related?
+**The question.** Is topping 40°C independent of land use, or are the two related?
 
--   $H_0$: land use and exceedance are independent; knowing one tells you nothing about the other.
+-   $H_0$: land use and topping 40°C are independent; knowing one tells you nothing about the other.
 
--   $H_a$: land use and exceedance are related; they are not independent.
+-   $H_a$: land use and topping 40°C are related; they are not independent.
 
 ```{r}
 #| echo: true
@@ -584,15 +592,15 @@ indep_tidy <- broom::tidy(indep_test) |>
 
 knitr::kable(
   indep_tidy[, c("statistic", "parameter", "p.value")],
-  col.names = c("Statistic (χ²)", "df", "p-value"),
-  caption = "Chi-square test of independence"
+  col.names = c("Statistic (χ²)", "df", "p"),
+  caption = "Chi-square test of independence."
 )
 ```
 
-**Assumption.** Same rule as goodness-of-fit: expected counts should generally be 5 or more in every cell of the table. Unlike the goodness-of-fit test, where expected counts came from a stated proportion (25% per zone), here they come from the table's own row and column totals: the expected count for a cell is $\frac{\text{row total} \times \text{column total}}{\text{grand total}}$, the count you'd see in that cell if land use and exceedance really were unrelated. For Forested/No, that's $\frac{50 \times 87}{150} = 29$ (50 forested sites total, 87 sites total with no exceedance, 150 sites overall).
+**Assumption.** Same rule as goodness-of-fit: expected counts should generally be 5 or more in every cell of the table. Unlike the goodness-of-fit test, where expected counts came from a stated proportion (25% per zone), here they come from the table's own row and column totals: the expected count for a cell is $\frac{\text{row total} \times \text{column total}}{\text{grand total}}$, the count you'd see in that cell if land use and temperature really were unrelated. For Parkland/No, that's $\frac{50 \times 87}{150} = 29$ (50 parkland blocks total, 87 blocks total that did not top 40°C, 150 blocks overall).
 
 ```{r}
-knitr::kable(round(indep_test$expected, 1), caption = "Expected counts under H0 (independence)")
+knitr::kable(round(indep_test$expected, 1), caption = "Expected counts under H0 (independence).")
 ```
 
 All six expected counts are between 21 and 29, well above the 5-count minimum. This check does not tell us whether the test is significant. It only tells us whether the chi-square approximation is trustworthy here.
@@ -602,20 +610,22 @@ All six expected counts are between 21 and 29, well above the 5-count minimum. T
 ```{r}
 contrib_tab <- (tab - indep_test$expected)^2 / indep_test$expected
 
-knitr::kable(round(contrib_tab, 2), caption = "Chi-square contribution by cell")
+knitr::kable(round(contrib_tab, 2), caption = "Chi-square contribution by cell.")
 ```
 
-Summing all six cells: $5.83+8.05+0.55+0.76+2.79+3.86 = 21.84$, matching R's statistic above. For a test of independence, $df=(r-1)(c-1)$ for $r$ rows and $c$ columns: $(3-1)(2-1)=2$. The number of sites never enters. With $df=2$, the critical value at $\alpha=0.05$ is `r round(qchisq(.95, 2), 2)`; our $21.84$ is more than three times that, which is where $p<0.001$ comes from.
+Summing all six cells: $5.83+8.05+0.55+0.76+2.79+3.86 = 21.84$, matching R's statistic above. For a test of independence, $df = (\text{rows} - 1)(\text{columns} - 1)$: $(3-1)(2-1)=2$. The number of blocks never enters. With $df=2$, the critical value at $\alpha=0.05$ is `r round(qchisq(.95, 2), 2)`; our $21.84$ is more than three times that, which is where $p<0.001$ comes from.
 
-**Interpretation.** $\chi^2(2) = 21.84$, $p < 0.001$, so the result is significant. *E. coli* exceedance is not independent of land use. To see how the two variables are related, look at the table. Divide within each row to get the exceedance rate for each land use:
+**Interpretation.** $\chi^2(2) = 21.84$, $p < 0.001$, so the result is significant. Topping 40°C is not independent of land use. To see how the two variables are related, look at the table. Divide within each row to get the share of blocks that topped 40°C for each land use (@tbl-7heatshare).
 
-| Land use     | Exceeds / total | Share |
-|:-------------|----------------:|------:|
-| Forested     |          8 / 50 |   16% |
-| Agricultural |         25 / 50 |   50% |
-| Urban        |         30 / 50 |   60% |
+| Land use     | Topped 40°C / total | Share |
+|:-------------|--------------------:|------:|
+| Parkland     |              8 / 50 |   16% |
+| Residential  |             25 / 50 |   50% |
+| Commercial   |             30 / 50 |   60% |
 
-Dividing within a row matters because raw counts only compare fairly when the row totals match. Agricultural and urban sites exceed the threshold three to four times as often as forested ones. The test says the two variables are related, but, like correlation, it does not by itself establish that land use *causes* the exceedance.
+: Share of city blocks that topped 40°C, by land use. {#tbl-7heatshare}
+
+Dividing within a row matters because raw counts only compare fairly when the row totals match. Residential and commercial blocks topped 40°C three to four times as often as parkland blocks. The test says the two variables are related, but, like correlation, it does not by itself establish that land use *causes* the heat.
 
 @tbl-7choose collects the tests in this chapter by the kind of data and design each one handles.
 
@@ -627,35 +637,35 @@ Dividing within a row matters because raw counts only compare fairly when the ro
 | Categorical (counts) | One categorical variable against an expected pattern | None                           | Chi-square goodness-of-fit test |
 | Categorical (counts) | Two categorical variables                           | None                            | Chi-square test of independence |
 
-: Choosing a test in this chapter {#tbl-7choose}
+: Choosing a test in this chapter. {#tbl-7choose}
 
 ::: {.callout-important title="Results reporting: nonparametric and chi-square tests"}
 These tests report differently from a $t$-test. There is no mean difference to quote, because none of them used the means. Give the test's own statistic, the $p$-value, and, for the rank tests, a median rather than a mean.
 
 Wilcoxon signed-rank, on the restoration differences:
 
-> Soil moisture did not change significantly after restoration, Wilcoxon signed-rank $V = 39$, $p = 0.057$ (median change +1.5 percentage points across all 12 plots; 9 non-zero differences).
+> Soil moisture did not change significantly after restoration, Wilcoxon signed-rank $V = `r sprintf("%g", wilcox_out$statistic)`$, $p `r fmt_p_eq(wilcox_out$p.value)`$ (median change +`r median(differences)` percentage points across all `r length(differences)` plots; `r n_nonzero` non-zero differences).
 
-Mann-Whitney-Wilcoxon, on the richness comparison:
+Mann-Whitney-Wilcoxon, on the bat activity comparison:
 
-> Restored plots did not differ significantly from unrestored plots in species richness, $U = 50$, $p = 0.063$ (medians 17 vs. 11.5).
+> Bat activity did not differ significantly between sites under sodium and LED streetlights, $U = `r sprintf("%g", mww_out$statistic)`$, $p `r fmt_p_eq(mww_out$p.value)`$ (medians `r median(sodium)` vs. `r median(led)` passes per night).
 
 Chi-square, where the counts themselves are the result:
 
-> *E. coli* exceedance was not independent of land use, $\chi^2(2) = 21.84$, $p < 0.001$. Forested sites exceeded the threshold in 8 of 50 cases, compared with 25 of 50 agricultural and 30 of 50 urban sites.
+> Whether a city block topped 40°C was not independent of land use, $\chi^2(`r indep_test$parameter`) = `r sprintf("%.2f", indep_test$statistic)`$, $p `r fmt_p_eq(indep_test$p.value)`$. Parkland blocks topped 40°C in `r tab["Parkland", "Yes"]` of `r sum(tab["Parkland", ])` cases, compared with `r tab["Residential", "Yes"]` of `r sum(tab["Residential", ])` residential and `r tab["Commercial", "Yes"]` of `r sum(tab["Commercial", ])` commercial blocks.
 
 Report the number of non-zero differences for a signed-rank test, since dropped zeros change the effective sample size. For chi-square, give the counts as well as the statistic, because the counts are what a reader can interpret.
 :::
 
 ## Chapter Summary
 
-**Why it matters.** Real environmental data often fails the assumptions a $t$-test needs: small samples, skewed distributions, or outcomes that are counts and categories rather than measurements. This chapter covers the tests for those cases and how to tell when you need one.
+**Why it matters.** Real environmental data often fails the assumptions a $t$-test needs: small samples, skewed distributions, or outcomes that are counts and categories rather than measurements. This chapter covers the tests for those cases and how to tell when you need one. Chapter 8 compares three or more groups, with the Kruskal-Wallis test as its rank-based option.
 
 **Core ideas**
 
 -   **Rank-based tests trade power for weaker assumptions.** The Wilcoxon signed-rank and Mann-Whitney-Wilcoxon tests ask the same questions as the paired and independent-samples $t$-tests, but work from ranks instead of raw magnitudes. That buys a milder distributional assumption at the cost of some sensitivity.
 -   **The sign test uses even less of the data.** It looks only at the direction of each difference. On the same restoration data, the $t$-test, Wilcoxon, and sign test gave $p$-values of 0.026, 0.057 and 0.508, because each one uses less of the data than the last.
 -   **Nonparametric tests have their own assumptions.** Wilcoxon assumes the differences are symmetric about their median. Mann-Whitney-Wilcoxon assumes the two distributions have the same *shape*, which is not the same as equal variance. State the assumption you are actually making.
--   **Check assumptions before you trust a $p$-value, not after.** Both worked examples in this chapter ran the parametric test first, then went back and found the violation. The chapter used that order to show what goes wrong when you test first and check assumptions afterward.
+-   **Check assumptions before you trust a $p$-value, not after.** Both worked examples in this chapter ran the parametric test first, then went back and found the violation.
 -   **Categorical data needs a different tool entirely.** The chi-square tests handle counts: goodness-of-fit asks whether one variable's counts match an expected pattern, and the test of independence asks whether two categorical variables are related.
 -   **The testing logic never changes.** State $H_0$ and $H_a$, compute a statistic, and ask how surprising that statistic would be if $H_0$ were true. Only the statistic and its null distribution differ from test to test.
