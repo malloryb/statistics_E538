@@ -60,9 +60,13 @@ Always report:
 Example: "Mean change was -0.42 units (95% CI \[-0.73, -0.11\]; *t*(11) = -2.92; *p* = 0.014)."
 :::
 
-## Signal over noise, for a mean
+## From $z$ to $t$
 
-In Chapter 5 we tested a sample mean against $\mu_0$ with $z$:
+A test statistic is the effect you observed divided by an estimate of how much it could vary by chance:
+
+$$\text{statistic}=\frac{\text{effect}}{\text{error}}$$
+
+In Chapter 5 we used this with $z$ to test a sample mean against $\mu_0$:
 
 $$z = \frac{\bar{x}-\mu_0}{\sigma/\sqrt{n}}$$
 
@@ -72,15 +76,7 @@ $z$ needs the population standard deviation $\sigma$, and real studies almost ne
 
 $$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}$$
 
-$t$ still measures the distance from $\mu_0$ in standard errors. The difference is that $s$ is itself an estimate that changes from sample to sample, and the next sections show what that does to the distribution of $t$.
-
-## One-sample t-test
-
-Use a one-sample $t$ when you want to test whether a sample mean differs from a reference value ($\mu_0$). It asks whether the observed difference is bigger than you'd expect from sampling variability, given $n$ and your sample SD $s$.
-
-$$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1$$
-
-After calculating $t$ from our data, we compare the observed $t$ to a $t$ distribution with $n-1$ degrees of freedom to get a $p$-value and a decision at $\alpha$.
+$t$ still measures the distance from $\mu_0$ in standard errors. The difference is that $s$ is itself an estimate that changes from sample to sample, and the rest of this section shows what that does to the distribution of $t$.
 
 ### Why $t$ has heavier tails than $z$
 
@@ -140,7 +136,7 @@ If the population SD $\sigma$ is known *and* the sampling distribution of the sa
 
 ### Degrees of freedom
 
-The one-sample formula carries $df = n-1$ alongside it, and @fig-6-z-vs-t-linear-log drew a different $t$ curve for each $df$. That number is the **degrees of freedom**. It is also the number in parentheses whenever a $t$-test is reported, as in $t(9) = 1.94$.
+@fig-6-z-vs-t-linear-log drew a different $t$ curve for each value of a number called the **degrees of freedom**, $df$. It is also the number in parentheses whenever a $t$-test is reported, as in $t(9) = 1.94$.
 
 For one-sample and paired $t$-tests, $df = n-1$. A sample of 10 has $df=9$.
 
@@ -212,6 +208,14 @@ ggplot(data.frame(t = t_vals, region = abs(t_vals) >= crit_9), aes(x = t)) +
 
 Most of the 1,000 values fall between $-2$ and $2$. About `r round(pct_beyond_crit)`% fall beyond $\pm 2.26$, close to the 5% the cutoff is built to allow. The blue curve is the $t$ distribution with 9 degrees of freedom, and the histogram follows it. Software uses that curve in place of a simulation to find how often chance alone produces a $t$ as large as ours.
 
+
+## One-sample t-test
+
+Use a one-sample $t$ when you want to test whether a sample mean differs from a reference value ($\mu_0$). It asks whether the observed difference is bigger than you'd expect from sampling variability, given $n$ and your sample SD $s$.
+
+$$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1$$
+
+After calculating $t$ from our data, we compare the observed $t$ to a $t$ distribution with $n-1$ degrees of freedom to get a $p$-value and a decision at $\alpha$.
 
 ### Calculating t from data
 
@@ -326,7 +330,7 @@ Software needs two things from you to compute a $p$-value: the degrees of freedo
 
 ### One-tailed vs. two-tailed, applied
 
-Chapter 4 introduced the concept: a two-tailed test asks whether $\mu$ differs from $\mu_0$ in either direction, while a one-tailed test commits to one direction in advance, and is only justified when a result in the other direction would lead to the same action as no result at all. For a $t$-test, that choice changes the critical value, and therefore the $p$-value, for the exact same data.
+Chapter 4 covered when each is justified. For a $t$-test, the choice changes the critical value, and therefore the $p$-value, for the exact same data.
 
 For our quiz-score example ($df=9$), a one-tailed test only needs to clear 5% of the distribution on one side. A two-tailed test has to clear 2.5% on each side, which pushes the critical value farther out:
 
@@ -374,11 +378,7 @@ ggplot(plot_df, aes(x = range, y = null_distribution)) +
   labs(x = "t", y = "Density")
 ```
 
-For our result, $t(9) = 1.94$, the one-tailed $p$ is 0.042 and the two-tailed $p$ is 0.084, exactly double, because a two-tailed test counts the matching region in both tails. The choice changes the decision here. One-tailed, the result is significant at $\alpha = 0.05$; two-tailed, it is not. A one-tailed test therefore has to be justified *before* you see the data, not chosen afterward because it gives the answer you wanted.
-
-### Which one should you use?
-
-Chapter 4's rule still applies. Default to two-tailed, and go one-tailed only when a result in the opposite direction would lead you to do the same thing as no result. At the same $\alpha$, the one-tailed $t_{crit}$ is closer to 0 than the two-tailed one.
+For our result, $t(9) = 1.94$, the one-tailed $p$ is 0.042 and the two-tailed $p$ is 0.084, exactly double, because a two-tailed test counts the matching region in both tails. The choice changes the decision here. One-tailed, the result is significant at $\alpha = 0.05$; two-tailed, it is not.
 
 ### Assumptions, and what to do when they don't hold {#sec-6assumptions}
 
