@@ -177,12 +177,13 @@ ggplot(stream_df, aes(x = stream_temp, y = DO)) +
   ylab("Dissolved oxygen (mg/L)")
 ```
 
-Here's the table of model coefficients R gives us.
+`summary(fit)` prints the estimate, standard error, $t$, and $p$ for each coefficient, and `confint(fit)` gives their 95% confidence intervals. The table below combines the two.
 
 ```{r}
 #| echo: true
 #| eval: false
 summary(fit)
+confint(fit)
 ```
 
 ```{r fitKable}
@@ -262,7 +263,7 @@ Our observed $t = `r sprintf("%.2f", fit_tidy$statistic[2])`$ is far past the cr
 
 We reject $H_0$ and conclude that stream temperature is linearly related to dissolved oxygen.
 
-The 95% confidence interval for the slope, also in the coefficient table above, is 95% CI [`r sprintf("%.3f", fit_tidy$conf.low[2])`, `r sprintf("%.3f", fit_tidy$conf.high[2])`] mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will. The interval also contains $\beta_1 = -0.28$, the true slope we built into the data. A 95% interval catches the true value in about 95% of samples, and this sample is one of them.
+The 95% confidence interval for the slope, from `confint(fit)`, in the last two columns of the table above, is 95% CI [`r sprintf("%.3f", fit_tidy$conf.low[2])`, `r sprintf("%.3f", fit_tidy$conf.high[2])`] mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will. The interval also contains $\beta_1 = -0.28$, the true slope we built into the data. A 95% interval catches the true value in about 95% of samples, and this sample is one of them.
 
 ## Partitioning variation: regression as ANOVA
 
@@ -356,23 +357,21 @@ As with every test in this book, the significance test is not the whole picture.
 
 A very large sample, the kind common in remote sensing and other big-data environmental work, can make a trivial effect significant, because more observations shrink the standard error until almost any nonzero slope clears $p<0.05$. A small sample can fail the other way and miss a real, sizeable effect because its standard error is too large. Because $p$ and $R^2$ answer different questions, we report both.
 
-@fig-9regeffectpanels shows three of these combinations: a strong relationship with a non-significant slope (underpowered), a weak relationship with a significant slope (a large sample), and a relationship that is both strong and significant. In the left panel, six points give $R^2 = 0.63$ but $p = 0.058$. In the middle panel, 5,000 points give $p = 0.004$ for a line that explains 0.2% of the variation.
-
 ```{r}
-#| label: fig-9regeffectpanels
-#| fig-cap: "R-squared and the slope's p-value can disagree. Left: a strong relationship (high R-squared) that isn't statistically significant. Middle: a weak relationship (low R-squared) that is significant anyway. Right: strong and significant together."
-#| fig-alt: "Three scatter plots with fitted lines. The left panel shows a steep, tight relationship with few points and a non-significant p-value. The middle panel shows a nearly flat, scattered relationship with many points and a significant p-value. The right panel shows a steep, tight relationship with many points and a significant p-value."
-
+# Three simulated data sets for fig-9regeffectpanels
 mk_panel <- function(seed, n, slope, noise, label) {
   set.seed(seed)
   x <- runif(n, 0, 10)
   y <- 5 + slope * x + rnorm(n, 0, noise)
   d <- data.frame(x, y)
   f <- lm(y ~ x, data = d)
-  g <- glance(f)
-  p_txt <- fmt_p(g$p.value)
+  r2   <- summary(f)$r.squared
+  pval <- coef(summary(f))["x", "Pr(>|t|)"]
+  p_txt <- fmt_p(pval)
   p_txt <- ifelse(startsWith(p_txt, "<"), p_txt, paste("=", p_txt))
-  d$panel <- sprintf("%s\nR² = %.3f, p %s", label, g$r.squared, p_txt)
+  d$panel <- sprintf("%s\nR² = %.3f, p %s", label, r2, p_txt)
+  attr(d, "r2") <- r2
+  attr(d, "p") <- pval
   d
 }
 
@@ -382,6 +381,14 @@ panel_both   <- mk_panel(seed = 538, n = 60,   slope = 1.4,  noise = 1.6, label 
 
 all_panels <- rbind(panel_under, panel_huge_n, panel_both)
 all_panels$panel <- factor(all_panels$panel, levels = unique(all_panels$panel))
+```
+
+@fig-9regeffectpanels shows three of these combinations: a strong relationship with a non-significant slope (underpowered), a weak relationship with a significant slope (a large sample), and a relationship that is both strong and significant. In the left panel, six points give $R^2 = `r sprintf("%.2f", attr(panel_under, "r2"))`$ but $p = `r fmt_p(attr(panel_under, "p"))`$. In the middle panel, 5,000 points give $p `r ifelse(startsWith(fmt_p(attr(panel_huge_n, "p")), "<"), "", "=")` `r fmt_p(attr(panel_huge_n, "p"))`$ for a line that explains `r sprintf("%.1f", 100 * attr(panel_huge_n, "r2"))`% of the variation. We built a true slope of 0.05 into that panel, so the line rises only half a unit across the whole range of $x$.
+
+```{r}
+#| label: fig-9regeffectpanels
+#| fig-cap: "R-squared and the slope's p-value can disagree. Left: a strong relationship (high R-squared) that isn't statistically significant. Middle: a weak relationship (low R-squared) that is significant anyway. Right: strong and significant together."
+#| fig-alt: "Three scatter plots with fitted lines. The left panel shows a steep, tight relationship with few points and a non-significant p-value. The middle panel shows a nearly flat, scattered relationship with many points and a significant p-value. The right panel shows a steep, tight relationship with many points and a significant p-value."
 
 ggplot(all_panels, aes(x, y)) +
   geom_point(alpha = 0.5, size = 1.4, color = "black") +
@@ -571,7 +578,7 @@ Once we've confirmed a real linear relationship, the fitted equation lets us pre
 
 $$\widehat{DO} = b_0 + b_1(20) = `r sprintf("%.2f", coef(fit)[1])` + (`r sprintf("%.2f", coef(fit)[2])`)(20) = `r sprintf("%.2f", coef(fit)[1] + coef(fit)[2]*20)`$$
 
-R gives the same number, along with a confidence interval:
+R gives the same number, along with a confidence interval. `predict()` takes the fitted model and a small data frame holding the new temperature. The column name, `stream_temp`, has to match the predictor's name in the model.
 
 ```{r}
 #| echo: true
@@ -590,7 +597,7 @@ kable(
 )
 ```
 
-At 20°C, the model predicts DO of `r sprintf("%.2f", pred_out[1])` mg/L, 95% CI [`r sprintf("%.2f", pred_out[2])`, `r sprintf("%.2f", pred_out[3])`]. Because 20°C falls inside the observed range of `r sprintf("%.1f", min(stream_df$stream_temp))` to `r sprintf("%.1f", max(stream_df$stream_temp))`°C, this prediction is interpolation, which is what regression is good for.
+At 20°C, the model predicts DO of `r sprintf("%.2f", pred_out[1])` mg/L, 95% CI [`r sprintf("%.2f", pred_out[2])`, `r sprintf("%.2f", pred_out[3])`]. Because 20°C falls inside the observed range of `r sprintf("%.1f", min(stream_df$stream_temp))` to `r sprintf("%.1f", max(stream_df$stream_temp))`°C, this prediction is interpolation, which is what regression is good for. This confidence interval is for the mean DO of all streams at 20°C. A single stream at 20°C will scatter around that mean by about as much as the points scatter around the line, so its DO can fall well outside this interval.
 
 Predicting DO at, say, 35°C would be extrapolation. The fitted line gives `r sprintf("%.1f", predict(fit, data.frame(stream_temp = 35)))` mg/L at 35°C, a number with no data behind it. Nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. @fig-9regextrap shows both zones on the same line.
 
