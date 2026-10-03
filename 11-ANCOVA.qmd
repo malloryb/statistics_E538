@@ -50,40 +50,41 @@ We answer it in order: first check that the model explains anything at all, then
 
 The cleanest illustration is a result called **Simpson's paradox**, where a pattern in combined data reverses once you split the data into meaningful groups.
 
-During the COVID-19 pandemic, early data showed that Italy's overall case fatality rate was higher than China's. But once researchers *disaggregated by age group,* the trend flipped. Within every age group, the fatality rate was higher in China. The apparent contradiction was explained by differences in the age distribution of cases [@vonkugelgen2021].
+During the COVID-19 pandemic, early data showed that Italy's overall case fatality rate was higher than China's. But once researchers *disaggregated by age group,* the trend flipped. In every age group except the youngest, where neither country recorded a death, the fatality rate was higher in China. The apparent contradiction was explained by differences in the age distribution of cases [@vonkugelgen2021].
 
-Using case fatality rate (CFR), here are some illustrative numbers (made up for teaching).
+The numbers below are the ones that study compared, China's cases and deaths by age as reported on February 17, 2020, and Italy's as reported on March 9, 2020. The case fatality rate (CFR) is the percentage of confirmed cases that ended in death.
 
 ```{r}
 #| label: fig-simpson-covid-overall
 #| fig-cap: "Crude case fatality rates. Italy appears to have a higher fatality rate than China when all cases are combined."
-#| fig-alt: "Bar chart of the crude case fatality rate with all ages combined. Italy's bar, labeled 3.3 percent, is far taller than China's, labeled 0.6 percent."
+#| fig-alt: "Bar chart of the crude case fatality rate with all ages combined. Italy's bar, labeled 4.4 percent, is nearly twice as tall as China's, labeled 2.3 percent."
 age_levels <- c("0–9","10–19","20–29","30–39","40–49","50–59","60–69","70–79","80+")
 
 dat <- tibble::tribble(
-  ~Country, ~Age,     ~Cases, ~Deaths,  ~CFR_band_pct,
-  "Italy",  "0–9",       500,   0.05,     0.01,
-  "Italy",  "10–19",     500,   0.10,     0.02,
-  "Italy",  "20–29",     800,   0.32,     0.04,
-  "Italy",  "30–39",    1000,   1.50,     0.15,
-  "Italy",  "40–49",    2000,   8.00,     0.40,
-  "Italy",  "50–59",    2000,  20.00,     1.00,
-  "Italy",  "60–69",    1500,  37.50,     2.50,
-  "Italy",  "70–79",    1200,  72.00,     6.00,
-  "Italy",  "80+",      1500, 225.00,    15.00,
+  ~Country, ~Age,    ~Cases, ~Deaths,
+  "Italy",  "0–9",       43,       0,
+  "Italy",  "10–19",     85,       0,
+  "Italy",  "20–29",    296,       0,
+  "Italy",  "30–39",    470,       0,
+  "Italy",  "40–49",    891,       1,
+  "Italy",  "50–59",   1453,       3,
+  "Italy",  "60–69",   1471,      37,
+  "Italy",  "70–79",   1785,     114,
+  "Italy",  "80+",     1532,     202,
 
-  "China",  "0–9",      8000,   1.60,     0.02,
-  "China",  "10–19",    8000,   2.40,     0.03,
-  "China",  "20–29",    8000,   4.00,     0.05,
-  "China",  "30–39",    7000,  14.00,     0.20,
-  "China",  "40–49",    7000,  42.00,     0.60,
-  "China",  "50–59",    3000,  45.00,     1.50,
-  "China",  "60–69",    1000,  35.00,     3.50,
-  "China",  "70–79",     700,  56.00,     8.00,
-  "China",  "80+",       300,  54.00,    18.00
+  "China",  "0–9",      416,       0,
+  "China",  "10–19",    549,       1,
+  "China",  "20–29",   3619,       7,
+  "China",  "30–39",   7600,      18,
+  "China",  "40–49",   8571,      38,
+  "China",  "50–59",  10008,     130,
+  "China",  "60–69",   8583,     309,
+  "China",  "70–79",   3918,     312,
+  "China",  "80+",     1408,     208
 ) %>%
   mutate(
-    Age = factor(Age, levels = age_levels)
+    Age = factor(Age, levels = age_levels),
+    CFR_band_pct = round(100 * Deaths / Cases, 1)
   )
 
 fig1_df <- dat %>%
@@ -103,12 +104,12 @@ ggplot(fig1_df, aes(x = Country, y = CFR_crude_pct, fill = Country)) +
   theme(legend.position = "none")
 ```
 
-At face value, Italy looks worse. Older people are much more likely to die from COVID than younger people. In these numbers, `r dat$CFR_band_pct[dat$Country == "Italy" & dat$Age == "80+"]`% of Italy's cases aged 80 and over died, against `r dat$CFR_band_pct[dat$Country == "Italy" & dat$Age == "0–9"]`% of those under 10. So we split cases into 10-year age bands. Within every band, China's fatality rate is higher.
+At face value, Italy looks worse. Older people are much more likely to die from COVID than younger people. In these numbers, `r dat$CFR_band_pct[dat$Country == "Italy" & dat$Age == "80+"]`% of Italy's cases aged 80 and over died, against none of the `r dat$Cases[dat$Country == "Italy" & dat$Age == "0–9"]` cases under 10. So we split cases into 10-year age bands. Within every band where anyone died, China's fatality rate is higher.
 
 ```{r}
 #| label: fig-simpson-by-age-group
-#| fig-cap: "Fatality rates by age group (same made-up numbers). Within each age band, China's CFR exceeds Italy's."
-#| fig-alt: "Grouped bar chart of fatality rate by 10-year age band for China and Italy. Rates climb steeply with age in both countries, from near zero in the youngest bands to 18 percent for China and 15 percent for Italy at 80 and over, and China's bar is taller than Italy's in every band."
+#| fig-cap: "Fatality rates by age group. In every age band where anyone died, China's CFR exceeds Italy's."
+#| fig-alt: "Grouped bar chart of fatality rate by 10-year age band for China and Italy. Rates climb steeply with age in both countries, from zero in the youngest band to 14.8 percent for China and 13.2 percent for Italy at 80 and over, and China's bar is taller than Italy's in every band from 10 to 19 upward."
 
 fig2_df <- dat %>%
   select(Country, Age, CFR_band_pct)
@@ -121,7 +122,7 @@ ggplot(fig2_df, aes(x = Age, y = CFR_band_pct, fill = Country)) +
 
 ```{r}
 #| label: tbl-11simpsonrates
-#| tbl-cap: "Fatality rate (%) by age band, from the same made-up numbers. China's rate is higher in every band, including the youngest, where the bars are too small to see."
+#| tbl-cap: "Fatality rate (%) by age band. China's rate is higher in every band except 0–9, where neither country recorded a death. Several bands under 50 are too small to see in the figure."
 
 rate_tbl <- tidyr::pivot_wider(dat[, c("Age", "Country", "CFR_band_pct")],
                                names_from = Country, values_from = CFR_band_pct)
@@ -133,7 +134,7 @@ knitr::kable(rate_tbl[, c("Age", "Italy", "China")], col.names = c("Age band", "
 ```{r}
 #| label: fig-age-distributions
 #| fig-cap: "Case age distribution by country. Italy’s cases are older on average; China’s are younger."
-#| fig-alt: "Two bar charts side by side showing each country's share of cases in each 10-year age band. China's cases are concentrated in the bands under 50, while Italy's are spread toward older bands, with its largest shares between 40 and 59 and a sizable share at 80 and over."
+#| fig-alt: "Two bar charts side by side showing each country's share of cases in each 10-year age band. China's cases are concentrated between 30 and 69, peaking at 50 to 59, while Italy's are concentrated from 50 upward, peaking at 70 to 79, with almost one in five cases at 80 and over."
 
 fig3_df <- dat %>%
   group_by(Country, Age) %>%
