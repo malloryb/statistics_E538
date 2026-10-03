@@ -368,16 +368,18 @@ For planning, the practical question is how large $n$ must be to reach 80% power
 
 ### Simulation walkthrough
 
-Let's see how design choices affect power with a simple simulation. We simulate two groups of $n=10$ each. We draw Group A (control) from a normal distribution with mean 10 and $SD = 5$, and Group B (treatment) from one with mean 12.5, a shift of 2.5 points, or Cohen's $d=0.5$, a medium effect.
+Let's see how design choices affect power with a simple simulation that uses the exam-score example. We simulate two groups of $n=10$ each. We draw Group A (control) from a normal distribution with mean 65 and $SD = 5$, and Group B (treatment) from one with mean 67.5, a shift of 2.5 points, or Cohen's $d=0.5$, a medium effect. These are the two distributions in Panel 2 of @fig-5.5effectdistsB.
 
-If we simulate this experiment 1,000 times and run an independent-samples $t$-test each time, how often do we reject $H_0$ at $\alpha=0.05$?
+Each simulated experiment compares the two groups with an independent-samples $t$-test. Chapter 6 covers this test. For now, treat it as a test that returns a $p$-value for the difference between two group means, the same job the $z$-test in Chapter 4 does for one mean.
 
-```{r, echo=TRUE}
+**Before you look.** One simulated experiment draws 10 scores for Group A and 10 for Group B, runs the $t$-test, and saves the $p$-value. The simulation repeats this 1,000 times and counts how often $p < 0.05$, which is how often the test rejects $H_0$ at $\alpha = 0.05$. In every one of the 1,000 experiments, Group B's true mean is 2.5 points higher. Decide roughly how often you expect the test to detect that difference with 10 per group.
+
+```{r}
 set.seed(2025)
 p <- numeric(1000)
 for(i in 1:1000){
-  A <- rnorm(10, 10, 5)
-  B <- rnorm(10, 12.5, 5)
+  A <- rnorm(10, 65, 5)
+  B <- rnorm(10, 67.5, 5)
   p[i] <- t.test(A,B,var.equal=TRUE)$p.value
 }
 power_n10 <- mean(p < 0.05)
@@ -388,17 +390,17 @@ power_n10 <- mean(p < 0.05)
 power_n10_exact <- power.t.test(n = 10, delta = 0.5, sd = 1, sig.level = 0.05)$power
 ```
 
-The proportion of simulated experiments that reject $H_0$ estimates the design's power, the probability that the test detects a real difference of this size. Here it is about `r round(power_n10 * 100)`%. With $n = 10$ per group, the test misses this medium-sized effect in most experiments.
+The test detected the 2.5-point difference in about `r round(power_n10 * 100)`% of the 1,000 experiments. With $n = 10$ per group, it misses this medium-sized effect in most experiments. The proportion of simulated experiments that reject $H_0$ estimates the design's power, the probability that the test detects a real difference of this size.
 
 ### How power changes
 
-1.  **Larger $n$.** Doubling to $n=20$ per group reduces sampling error:
+1.  **Larger $n$.** Doubling to $n=20$ per group reduces sampling error.
 
-```{r, echo=TRUE}
+```{r}
 p <- numeric(1000)
 for(i in 1:1000){
-  A <- rnorm(20, 10, 5)
-  B <- rnorm(20, 12.5, 5)
+  A <- rnorm(20, 65, 5)
+  B <- rnorm(20, 67.5, 5)
   p[i] <- t.test(A,B,var.equal=TRUE)$p.value
 }
 power_n20 <- mean(p < 0.05)
@@ -406,21 +408,21 @@ power_n20 <- mean(p < 0.05)
 
 That increases power to about `r round(power_n20 * 100)`%, up from about `r round(power_n10 * 100)`% at $n = 10$.
 
-2.  **Smaller $\alpha$.** Making the test more conservative (e.g., $\alpha=0.01$) lowers power, because fewer outcomes count as "significant". Using the same $n=20$ simulations, we just change the cutoff:
+2.  **Smaller $\alpha$.** Making the test more conservative (e.g., $\alpha=0.01$) lowers power, because fewer outcomes count as "significant". We reuse the same $n=20$ simulations and change only the cutoff.
 
-```{r, echo=TRUE}
+```{r}
 power_n20_strict <- mean(p < 0.01)
 ```
 
 Power falls to about `r round(power_n20_strict * 100)`%.
 
-3.  **Larger effect.** If the treatment produces a big shift (say 2 standard deviations), the same design at the same $\alpha=0.01$ has near-perfect power:
+3.  **Larger effect.** If the treatment produces a 2-SD shift, so that Group B's mean is 75, the same design at the same $\alpha=0.01$ has near-perfect power.
 
-```{r, echo=TRUE}
+```{r}
 p <- numeric(1000)
 for(i in 1:1000){
-  A <- rnorm(20, 10, 5)
-  B <- rnorm(20, 20, 5)   # 2SD effect
+  A <- rnorm(20, 65, 5)
+  B <- rnorm(20, 75, 5)   # 2SD effect
   p[i] <- t.test(A,B,var.equal=TRUE)$p.value
 }
 power_big <- mean(p < 0.01)
@@ -506,7 +508,7 @@ With 10 per group, only effects of about $d = 1.3$ or larger reach 80% power, an
 
 -   **Huge $n$ finds tiny effects.** With very large samples, trivial differences can register as statistically significant. For example, a satellite image can contain millions of pixels, so a difference of a fraction of a percent in greenness between two land-cover types can come out statistically significant, even though a difference that small would not change how either land cover is managed. Report an effect size and a confidence interval alongside each $p$-value so a reader can judge whether a difference matters.
 
-@fig-5.5effectsizeType1 shows the first caution. When the null hypothesis is true, 5% of tests still give $p < 0.05$. In small samples, those false positives come with large estimated effect sizes, even though the true effect is zero.
+@fig-5.5effectsizeType1 shows the first caution. When the null hypothesis is true, 5% of tests still give $p < 0.05$. In small samples, those false positives come with large estimated effect sizes, even though the true effect is zero. Each dot in @fig-5.5effectsizeType1 is one simulated study in which the true mean is exactly $\mu_0$. We ran 1,000 studies at each of four sample sizes (10, 50, 100, and 1,000) and kept only the ones that gave $p < 0.05$, about 50 at each size.
 
 ```{r}
 #| label: fig-5.5effectsizeType1
