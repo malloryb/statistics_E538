@@ -419,7 +419,22 @@ Our observed $U=50$ falls just short of the upper critical value of $50.5$, cons
 
 Every test so far (the $t$-tests in Chapter 6, and the Wilcoxon and Mann-Whitney-Wilcoxon tests above) needs a continuous outcome variable. But a lot of environmental data isn't continuous at all: a site either has an invasive species or it doesn't; a stream sample either exceeds a safety threshold or it doesn't; a plot falls into one land-cover category, not a number line. None of the tests above apply to categorical data. Counts in categories need a different test, the chi-square ($\chi^2$) test [@Pearson1900].
 
-Chapter 3 introduced the shape of the chi-square distribution: always non-negative, right-skewed, naturally one-tailed, with its exact shape depending on degrees of freedom. Only the upper tail counts against $H_0$, because $\chi^2$ adds up squared gaps between observed and expected counts. A mismatch in either direction makes it bigger, and a $\chi^2$ near 0 means the counts match the expectation closely.
+The test compares its statistic with the **chi-square distribution**. Because $\chi^2$ adds up squared gaps between observed and expected counts, it can never be negative, and a mismatch in either direction makes it bigger. A $\chi^2$ near 0 means the counts match the expectation closely, so only the upper tail counts against $H_0$. Like $t$, the chi-square distribution is a family of curves, one for each number of degrees of freedom (@fig-7chisq-shapes). With few degrees of freedom it is sharply right-skewed, and as $df$ grows it shifts right and becomes more symmetric.
+
+```{r}
+#| label: fig-7chisq-shapes
+#| fig-cap: "Chi-square distributions with 2, 4 and 8 degrees of freedom. Chi-square is never negative and is right-skewed. As df increases, the distribution shifts right and becomes more symmetric."
+#| fig-alt: "Three overlaid density curves for chi-square distributions with 2, 4 and 8 degrees of freedom, each a different color. The curve with 2 degrees of freedom starts highest, at 0.5, and falls steadily to the right. The curves with 4 and 8 degrees of freedom start at zero, rise to a peak, and trail off to the right in a long tail. As degrees of freedom increase, the peak shifts right, flattens, and the curve becomes more symmetric."
+
+x_shapes <- seq(0.01, 20, length.out = 500)
+chisq_shapes <- expand.grid(x = x_shapes, df = c(2, 4, 8))
+chisq_shapes$density <- dchisq(chisq_shapes$x, chisq_shapes$df)
+chisq_shapes$df <- factor(chisq_shapes$df, labels = paste0("df = ", c(2, 4, 8)))
+
+ggplot(chisq_shapes, aes(x, density, color = df)) +
+  geom_line(linewidth = 1) +
+  labs(x = expression(chi^2), y = "Density", color = NULL)
+```
 
 @fig-7chisq-crit shows what the rejection region looks like in practice, using the goodness-of-fit example we'll run below, which has $df = 3$. The critical value at $\alpha = 0.05$ is `r round(qchisq(.95, 3), 2)`, and any statistic beyond that point (the shaded region) occurs less than 5% of the time by chance.
 
