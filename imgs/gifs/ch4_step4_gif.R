@@ -1,6 +1,6 @@
 # Builds imgs/gifs/ch4_step4.gif for Chapter 4, build-up step 4: from individual readings to
 # sample means, then the population turns mildly right-skewed (same SD) while the sampling
-# distribution of the sample mean keeps its spread, sigma/sqrt(n), and its normal shape.
+# distribution of the sample mean keeps its spread, SE = sigma/sqrt(n), and its normal shape.
 # The skew stops at gamma shape k = 8 (skewness 0.71), so at n of about 6 (SE = 0.4 with SD 1)
 # the means have skewness of about 0.28 and a normal curve is a fair picture of them.
 # Also writes the final frame to imgs/gifs/stills/ch4_step4.png for the PDF edition.
@@ -32,12 +32,12 @@ add_png(lab(pop(base("The sample: its mean and standard deviation"), normal_pop)
             "'Estimated population distribution'", "'center '*bar(x)*', spread '*s", "green4"), 4)
 # 2. the sampling distribution of the sample mean
 p2 <- samp(pop(base("Divide the spread by the square root of n"), normal_pop, a = 0.45))
-p2 <- lab(p2, 1.2, "'Sampling distribution of the sample mean'", "N*'('*bar(x)*', '*sigma[bar(x)]^2*'):  same center, spread '*sigma[bar(x)] == sigma/sqrt(n)", "darkgreen")
+p2 <- lab(p2, 1.2, "'Sampling distribution of the sample mean'", "N*'('*bar(x)*', '*SE[bar(x)]^2*'):  same center, spread '*SE[bar(x)] == sigma/sqrt(n)", "darkgreen")
 add_png(p2, 5)
 # 3. the population turns right-skewed; the dot-dash curve does not move
 for (k in c(40, 12, 8)) add_png(samp(pop(base("Now make the population right-skewed"), skewpop(k))), 1)
 p4 <- samp(pop(base("Now make the population right-skewed"), skewpop(8)))
-p4 <- lab(p4, 1.2, "'Same sampling distribution of the sample mean'", "N*'('*bar(x)*', '*sigma[bar(x)]^2*'),  once n is large enough'", "darkgreen")
+p4 <- lab(p4, 1.2, "'Same sampling distribution of the sample mean'", "N*'('*bar(x)*', '*SE[bar(x)]^2*'),  once n is large enough'", "darkgreen")
 add_png(p4, 8)
 gifski(files, gif_file = "imgs/gifs/ch4_step4.gif", width = 720, height = 450, delay = 1)
 ggsave("imgs/gifs/stills/ch4_step4.png", p4, width = 8, height = 5, dpi = 150, bg = "white")

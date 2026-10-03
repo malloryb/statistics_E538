@@ -57,7 +57,7 @@ add <- function(p, n) for (r in seq_len(n)) { i <<- i + 1; f <- file.path(dir, s
 verdict_of <- function(z) if (abs(z) >= 1.96) "Reject" else "Fail to reject"
 
 # delay 0.25 s per frame: 16 frames = 4 s
-add(frame("'Under '*H[0]*': where the sample mean would land if '*H[0]*' were true'"), 16)
+add(frame("'Under '*H[0]*': where the sample mean would fall if '*H[0]*' were true'"), 16)
 add(frame("'From the sample: the sample mean and its sampling distribution'", xbar = 0.8 * se,
           verdict = verdict_of(0.8)), 16)
 for (z in seq(0.8, 2.4, by = 0.2)) add(frame("'The distance between them decides the test'", xbar = z * se,

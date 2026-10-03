@@ -18,13 +18,13 @@ steps <- list(
   list(add = "nullpop", title = "italic('If ')*italic(H[0])*italic(' were true')",
        lab = L(-4.4, 0.56, "'Null population distribution'", "'center '*mu[0]*', spread '*sigma*''", "blue", 0)),
   list(add = "sampH0",  title = "italic('If ')*italic(H[0])*italic(' were true')",
-       lab = L(-4.4, 1.2, "'Sampling distribution of the sample mean under '*H[0]", "N*'('*mu[0]*', '*sigma[bar(x)]^2*')'", "blue", 0)),
+       lab = L(-4.4, 1.2, "'Sampling distribution of the sample mean under '*H[0]", "N*'('*mu[0]*', '*SE[bar(x)]^2*')'", "blue", 0)),
   list(add = "xbar",    title = "italic('From the sample')",
        lab = L(xbar + 0.15, 1.3, "bar(x)*': the sample mean'", NULL, "#1E9E1E", 0)),
   list(add = "estpop",  title = "italic('From the sample')",
        lab = L(4.45, 0.68, "'Estimated population distribution'", "'center '*bar(x)*', spread '*s*''", "green4", 1)),
   list(add = "samp",    title = "italic('From the sample')",
-       lab = L(4.45, 1.2, "'Sampling distribution of the sample mean'", "N*'('*bar(x)*', '*sigma[bar(x)]^2*')'", "darkgreen", 1)),
+       lab = L(4.45, 1.2, "'Sampling distribution of the sample mean'", "N*'('*bar(x)*', '*SE[bar(x)]^2*')'", "darkgreen", 1)),
   list(add = "truepop", title = "italic('The truth')",
        lab = L(4.45, 0.68, "'True population distribution'", "'center '*mu*', spread '*sigma*': never known'", "darkorange", 1))
 )
