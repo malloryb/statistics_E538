@@ -37,19 +37,21 @@ exact_crit <- function(null) {
 null_hist <- function(sim, exact, obs, stat, xlab) {
   cr <- exact_crit(exact)
   d <- tibble(x = sim, region = sim <= cr["lo"] | sim >= cr["hi"])
-  top <- max(hist(sim, breaks = seq(cr["hi_edge"] - 2 * ceiling((cr["hi_edge"] - min(sim)) / 2) - 2,
-                                    max(sim) + 2, 2), plot = FALSE)$counts)
+  # bins of width 2 when both critical lines fall on bin edges, otherwise width 1
+  w <- if (abs(((cr["hi_edge"] - cr["lo_edge"]) / 2) %% 1) < 1e-9) 2 else 1
+  top <- max(hist(sim, breaks = seq(cr["hi_edge"] - w * ceiling((cr["hi_edge"] - min(sim)) / w) - w,
+                                    max(sim) + w, w), plot = FALSE)$counts)
   edges <- cr[c("lo_edge", "hi_edge")]
-  # height of the tallest plotted bar touching each critical line (bins of width 2 anchored
+  # height of the tallest plotted bar touching each critical line (bins of width w anchored
   # at hi_edge; a line on a bin edge touches two bars, one inside a bin touches one)
   bar_h <- sapply(edges, function(e) {
-    k <- (e - cr["hi_edge"]) / 2
+    k <- (e - cr["hi_edge"]) / w
     ks <- if (abs(k - round(k)) < 1e-9) round(k) + c(-1, 0) else floor(k)
-    lo <- cr["hi_edge"] + 2 * ks
-    max(sapply(lo, function(a) sum(sim >= a & sim < a + 2)))
+    lo <- cr["hi_edge"] + w * ks
+    max(sapply(lo, function(a) sum(sim >= a & sim < a + w)))
   })
   ggplot(d, aes(x = x, fill = region, alpha = region)) +
-    geom_histogram(binwidth = 2, boundary = cr["hi_edge"], closed = "left", colour = "white") +
+    geom_histogram(binwidth = w, boundary = cr["hi_edge"], closed = "left", colour = "white") +
     scale_fill_manual(values = c(`FALSE` = "#008cff", `TRUE` = "red"), guide = "none") +
     scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = .35), guide = "none") +
     annotate("segment", x = edges, xend = edges, y = 0, yend = bar_h,
