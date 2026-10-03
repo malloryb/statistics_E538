@@ -97,12 +97,12 @@ design_groups("Group assignment (arbitrary)", c("Group A", "Group B"), 5, "caves
               "With no real difference, what can chance alone produce?")
 ```
 
-All 10 caves are drawn from the same population. There is no treatment, no environmental gradient, nothing systematic separating them, so the true infection rate is identical everywhere. Splitting them into two groups of 5 is arbitrary. Any difference we see between those groups therefore *has* to be sampling error, so this scenario shows what chance alone can produce.
+All 10 caves are drawn from the same population. There is no treatment, no environmental gradient, nothing systematic separating them, so the true infection rate is identical everywhere. In this example every cave has the same 40% infection rate, so on average 8 of the 20 bats captured at a cave show signs of infection. Splitting them into two groups of 5 is arbitrary. Any difference we see between those groups therefore *has* to be sampling error, so this scenario shows what chance alone can produce.
 
-@fig-4gumballA shows one run of this scenario: the mean number of infected bats in each group.
+@fig-4batonerun shows one run of this scenario: the mean number of infected bats in each group.
 
 ```{r}
-#| label: fig-4gumballA
+#| label: fig-4batonerun
 #| fig-cap: "Mean number of infected bats per site for two groups drawn from the same population. Note the zoomed y-axis, which does not start at 0."
 #| fig-alt: "Bar chart with two bars, Group A and Group B, showing the mean number of infected bats. The y-axis is zoomed to run from 6 to 10, so a modest difference between the two bars looks larger than it would on a full 0-to-20 scale."
 
@@ -124,10 +124,10 @@ The bars are not the same height: Group A and Group B have different mean counts
 
 This is the core inference problem: differences appear even when nothing real caused them. How can we tell whether an observed difference is real or just the result of chance?
 
-Chapter 2 showed that chance alone can produce spurious correlations. The same is true for group means, and we can measure how large those chance differences get: run the same arbitrary split many times and record each result. We summarize each run as a single **mean difference**: the mean count for Group A minus the mean count for Group B. @fig-4gumballdiffs shows the mean differences for 10 replications of the survey, each one sampling all 10 caves from the same population, splitting them 5 and 5, and computing the means.
+Chapter 2 built a chance window for correlations by repeating a random draw 1,000 times. We can build one for group means the same way, by running the same arbitrary split many times and recording each result. We summarize each run as a single **mean difference**: the mean count for Group A minus the mean count for Group B. @fig-4batdiffs shows the mean differences for 10 replications of the survey, each one sampling all 10 caves from the same population, splitting them 5 and 5, and computing the means.
 
 ```{r}
-#| label: fig-4gumballdiffs
+#| label: fig-4batdiffs
 #| fig-cap: "Difference in mean infected count between Group A and Group B across 10 replications. The true difference is zero, but sampling error produces non-zero differences each time."
 #| fig-alt: "Bar chart of the A-minus-B mean difference for each of 10 replications, with a horizontal reference line at zero. Bars extend above and below the line by varying amounts, some replications favoring Group A, others favoring Group B."
 
@@ -153,10 +153,12 @@ ggplot(dif_df, aes(y = differences, x = experiment)) +
 
 A bar at zero means the two groups had the same mean count in that replication. Positive values indicate Group A was higher; negative values indicate Group B was higher. Chance produces a new difference every time, but not an unlimited one. To see which sizes are common and which are rare, we run 10,000 replications and plot the mean differences as a histogram.
 
+**Before you look.** Each replication gives one mean difference, the Group A mean minus the Group B mean. The height of a bar in @fig-4histdiffbat counts how many of the 10,000 replications produced a difference of that size. Decide where you expect the tallest bar to be, and how far from zero you expect the differences to reach.
+
 ```{r}
-#| label: fig-4histdiffgumball
-#| fig-cap: "Histogram of mean count differences between Group A and Group B over 10,000 replications. All differences arise from chance alone. The most frequent difference is near zero; larger differences occur less often. Differences beyond about ±3 are rare."
-#| fig-alt: "Histogram of 10,000 A-minus-B mean differences, tallest at zero in the center and tapering off symmetrically toward both larger positive and larger negative differences, with almost nothing beyond roughly plus or minus 3."
+#| label: fig-4histdiffbat
+#| fig-cap: "Histogram of mean count differences between Group A and Group B over 10,000 replications. All differences arise from chance alone. The most frequent difference is near zero; larger differences occur less often. Differences beyond about ±3 are rare. The blue dot-dash curve is a normal curve with mean 0 and standard deviation 1.39."
+#| fig-alt: "Histogram of 10,000 A-minus-B mean differences, tallest at zero in the center and tapering off symmetrically toward both larger positive and larger negative differences, with almost nothing beyond roughly plus or minus 3. A blue dot-dash bell curve drawn over the bars follows their heights closely."
 
 group <- rep(rep(c("A", "B"), each = 5), 10000)
 experiment <- rep(1:10000, each = 10)
@@ -167,12 +169,19 @@ mean_df <- aggregate(infected ~ experiment * group, df, mean)
 differences <- mean_df[mean_df$group == "A", ]$infected -
   mean_df[mean_df$group == "B", ]$infected
 
+# Normal curve for a difference between two means of 5 binomial(20, 0.4) counts,
+# scaled to counts: 10,000 replications times the bin width of 1
+sd_diff <- sqrt(2 * 20 * 0.4 * 0.6 / 5)
+curve_df <- data.frame(x = seq(-6, 6, by = 0.02))
+curve_df$y <- 10000 * 1 * dnorm(curve_df$x, mean = 0, sd = sd_diff)
+
 ggplot(data.frame(differences), aes(x = differences)) +
   geom_histogram(binwidth = 1, color = "white", linewidth = 0.2) +
+  geom_line(data = curve_df, aes(x = x, y = y), colour = "blue", linetype = "dotdash", linewidth = 1.1) +
   labs(x = "Difference in mean count (A - B)", y = "Count")
 ```
 
-This histogram is the **chance window** for this study design. It shows that chance most often produces a difference near zero, the tallest bar in the center. Larger differences in either direction occur less and less frequently. Differences beyond about $\pm 3$ are possible, but rare.
+Most replications produced a difference near zero, so the tallest bar is the one at zero. Larger differences in either direction occur less and less frequently, and differences beyond about $\pm 3$ are possible, but rare. This histogram is the **chance window** for this study design.
 
 We can use this window to evaluate any observed difference. If a study found a difference of 1 infected bat between two groups, that falls well inside the chance window: differences of that size occur frequently by random sampling alone. If the study found a difference of 6 bats, that would fall far outside the window; chance produced a difference that large 0 times out of 10,000. When an observed result almost never happens by chance, we have grounds to conclude that *something other than chance* produced it.
 
@@ -188,7 +197,7 @@ The window tells us what chance can do. It does not tell us where to draw the li
 
 ```{r}
 #| label: fig-4simdecision
-#| fig-cap: "Decision boundaries applied to the histogram of mean count differences from @fig-4histdiffgumball. Grey marks the range chance did produce across 10,000 replications; gold marks the edges of that range, which chance reached only rarely; red marks the differences chance never produced at all."
+#| fig-cap: "Decision boundaries applied to the histogram of mean count differences from @fig-4histdiffbat. Grey marks the range chance did produce across 10,000 replications; gold marks the edges of that range, which chance reached only rarely; red marks the differences chance never produced at all."
 #| fig-alt: "The same histogram of 10,000 mean differences, now overlaid with colored zones. A grey band across the middle, labeled CHANCE, covers the full range chance actually produced. Narrow gold slivers sit at the two edges of that grey band, and red zones beyond them on both sides, labeled NOT CHANCE, mark differences chance never produced in any of the 10,000 replications."
 
 diff_min <- min(differences)
@@ -252,7 +261,7 @@ $$H_0:\ \mu = \mu_0 \qquad H_a:\ \mu \neq \mu_0$$
 
 ### From simulation to a formal test
 
-Everything so far was built by brute force: thousands of replications, piled into a histogram, with hypothetical results laid against the pile. Nobody wants to rebuild a chance window for every question. Chapter 3 already supplies a shortcut. Sample means have a predictable distribution of their own: centered on the population mean, with spread $\sigma/\sqrt{n}$, and close to normal once the sample is large enough (the Central Limit Theorem). That lets us replace the simulated chance window with a curve whose shape we already know. The reasoning is the same as with the simulated chance window.
+Everything so far was built by brute force: thousands of replications, piled into a histogram, with hypothetical results laid against the pile. Nobody wants to rebuild a chance window for every question. Chapter 3 already supplies a shortcut. Sample means have a predictable distribution of their own: centered on the population mean, with spread $\sigma/\sqrt{n}$, and close to normal once the sample is large enough (the Central Limit Theorem). That lets us replace the simulated chance window with a curve whose shape we already know. The blue dot-dash curve drawn over the bat histogram in @fig-4histdiffbat is a normal curve with mean 0 and standard deviation `r round(sd_diff, 2)`, worked out from the 40% infection rate and the 5 caves per group. It follows the 10,000 simulated differences closely, so the curve could have replaced the simulation. The reasoning is the same as with the simulated chance window.
 
 ::: {.callout-note title="Note: Which curves have to be normal"}
 The tests in this chapter and the next two read their answers off a normal curve, or its close relative, the $t$ curve. Two different reasons put a normal curve there.
