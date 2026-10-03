@@ -446,7 +446,7 @@ samp10000 <- data.frame(x = rnorm(n_large, mu, sigma))
 # helper: histogram + population overlay
 hist_with_pop <- function(df, bins = 30, title = "", xlim = c(0, 6)) {
   ggplot(df, aes(x)) +
-    geom_histogram(aes(y = after_stat(density)), bins = bins, color = "white") +
+    geom_histogram(aes(y = after_stat(density)), bins = bins, color = "white", fill = "grey75") +
     geom_line(data = pop_df, aes(x, d), colour = "orange", linewidth = 0.75) +
     geom_vline(xintercept = mu, colour = "orange", linetype = "dashed", linewidth = 0.75) +
     geom_vline(xintercept = mean(df$x), colour = "#10377f", linewidth = 0.75) +
@@ -489,6 +489,14 @@ fig
 Now suppose we take a random sample of 100 adults. The histogram in panel (b) of @fig-coffeeDist shows that the sample resembles the population distribution, but not perfectly. This sample's mean is `r sprintf("%.2f", mean(samp100$x))` cups and its standard deviation is `r sprintf("%.2f", sd(samp100$x))` cups, close to $\mu = 2$ and $\sigma = 1$ but not equal to them. The solid line in panel (b) marks the sample mean, and the dashed line marks $\mu$.
 
 These are **sample statistics**: numbers we calculate from the data in hand. They approximate the population parameters, which describe the entire distribution. The central problem of inference is how to use sample statistics to estimate population parameters, and how much confidence we can place in those estimates.
+
+A statistic describes your data. An estimate is your best guess about the matching population parameter. For the mean, the two are the same number, as the table shows.
+
+| Symbol | What is it? | Do we know it? |
+|-------------------|--------------------------|---------------------------|
+| $\bar{x}$ | Sample mean | Yes, calculated from the raw data |
+| $\mu$ | True population mean | Almost never known for sure |
+| $\hat{\mu}$ | Estimate of the population mean | Yes, for simple random samples $\hat\mu=\bar x$ |
 
 ## The law of large numbers
 
@@ -961,7 +969,7 @@ ggplot(t_df, aes(x=x_range,y=dnorm_vec))+
 
 **Standardizing** converts raw scores to z-scores, also called **standardized scores**, by subtracting the mean and dividing by the standard deviation.
 
-Standardizing lets you compare values that come from distributions with different means and spreads. A stream that usually runs at 12 °C, with an SD of 2 °C, reads 18 °C one afternoon. That reading is $(18 - 12)/2 = 3$ SDs above the stream's usual temperature. A city whose summer days average 25 °C, with an SD of 5 °C, has a 30 °C day. That day is $(30 - 25)/5 = 1$ SD above usual. The city's 30 °C is the larger number, but the stream's 18 °C is the more unusual reading, and the z-scores of 3 and 1 show it.
+Standardizing lets you compare values that come from distributions with different means and spreads, because a z-score's unit is the standard deviation. A stream that usually runs at 12 °C, with an SD of 2 °C, reads 18 °C one afternoon. That reading is $(18 - 12)/2 = 3$ SDs above the stream's usual temperature. A city whose summer days average 25 °C, with an SD of 5 °C, has a 30 °C day. That day is $(30 - 25)/5 = 1$ SD above usual. The city's 30 °C is the larger number, but the stream's 18 °C is the more unusual reading, and the z-scores of 3 and 1 show it.
 
 There are two versions, depending on which mean and SD you have:
 
@@ -977,7 +985,7 @@ Interpretation is the same for both:
 
 - $z=-2$ is two SDs below the mean
 
-Because z-scores put everything on the same scale, you can compare values across different normal variables (or read probabilities from the standard normal). Standardizing a single observation like this does not rely on the central limit theorem. The CLT matters for a different calculation: standardizing a *sample mean*, where the standard error takes the place of the SD. That comes back in Chapter 4.
+Because z-scores put everything on the same scale, you can compare values across different normal variables (or read probabilities from the standard normal).
 
 ### Calculating z-scores
 
@@ -1003,33 +1011,6 @@ The two columns are close but not identical, because $\bar{x}$ and $s$ are estim
 
 Once standardized, areas under the normal curve tell you how unusual a score is. z between −1 and 1 is common (\~68% of cases), between 1 and 2 is less common (\~13.6% on each side), and beyond ±2 is relatively rare (\~2.1% in each tail segment between 2 and 3, even less beyond 3).
 
-## The chi-square distribution
-
-Not every named distribution is symmetric like the normal. The **chi-square** ($\chi^2$) distribution is another shape you'll see repeatedly once we get to hypothesis testing, particularly for categorical data, where the question isn't "how far is this mean from that one?" but "how far are these observed counts from what we'd expect?"
-
-```{r}
-#| label: fig-3chisq-shapes
-#| fig-cap: "Chi-square distributions with 2, 4, and 8 degrees of freedom. Unlike the (symmetric) normal distribution, chi-square is always non-negative and right-skewed; as df increases, the distribution shifts right and becomes more symmetric."
-#| fig-alt: "Three overlaid density curves for chi-square distributions with 2, 4, and 8 degrees of freedom, each a different color. The curve with 2 degrees of freedom starts highest, at 0.5, and falls steadily to the right. The curves with 4 and 8 degrees of freedom start at zero, rise to a peak, and trail off to the right in a long tail. As degrees of freedom increase, the peak shifts right, flattens, and the curve becomes more symmetric."
-
-library(tidyverse)
-
-x <- seq(0.01, 20, length.out = 500)
-chisq_shapes <- expand.grid(x = x, df = c(2, 4, 8)) |>
-  mutate(density = dchisq(x, df), df = factor(df, labels = paste0("df = ", c(2, 4, 8))))
-
-ggplot(chisq_shapes, aes(x, density, color = df)) +
-  geom_line(linewidth = 1) +
-  theme_classic(base_size = 13) +
-  labs(x = expression(chi^2), y = "Density", color = NULL)
-```
-
-Two things make chi-square look different from the normal shapes above. First, a chi-square statistic is built from *squared* deviations between observed and expected counts, so it can never be negative: the distribution starts at 0 and has no left tail at all. Second, its exact shape depends on degrees of freedom: with few df it's sharply right-skewed (most of the probability mass sits near 0, with a long tail to the right), and as df grows it stretches rightward and becomes more symmetric.
-
-This also means chi-square tests are naturally **one-tailed**: because deviations in *either* direction from expected get squared before being added up, only large positive values of the statistic are ever "surprising." There's no equivalent of a negative $z$-value to worry about.
-
-You'll put this distribution to work later for the chi-square goodness-of-fit and test-of-independence, once you have the hypothesis-testing framework (Chapter 4) to build a decision around it.
-
 ## Estimating population parameters
 
 ### Why estimate? (two quick motivations)
@@ -1037,16 +1018,6 @@ You'll put this distribution to work later for the chi-square goodness-of-fit an
 - **Concrete.** A bootmaker wants the mean and spread of adult foot lengths to plan inventory. Measuring everyone is impossible. A well-designed sample can estimate those parameters closely enough to act on.
 
 - **Abstract.** In experiments, we often ask whether a manipulation changes a response. Even if the broader "population" is fuzzy, we still estimate the mean response and its variability under each condition to compare them.
-
-### Sample statistic vs. estimate
-
-A statistic describes your data; an estimate is your best guess about the corresponding population parameter. For the mean, these coincide:
-
-| Symbol | What is it? | Do we know it? |
-|-------------------|--------------------------|---------------------------|
-| $\bar{x}$ | Sample mean | Yes, calculated from the raw data |
-| $\mu$ | True population mean | Almost never known for sure |
-| $\hat{\mu}$ | Estimate of the population mean | Yes, for simple random samples $\hat\mu=\bar x$ |
 
 ### Estimating the population standard deviation
 
