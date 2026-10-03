@@ -23,7 +23,7 @@ quarto render 03-SamplesPopulations.qmd --to html --lua-filter ./section_lengths
 
 ## From description to inference
 
-Up to this point, we've focused on experimental design, on describing a single variable with graphs and averages, and on describing the relationship between two variables with correlation and a best-fit line. Statistics also lets us do inference, using limited data to say something about a broader population. Inference relies on two foundations: probability theory and the behavior of samples from distributions.
+Chapter 1 covered study design and describing a single variable with graphs and averages, and Chapter 2 described the relationship between two variables with correlation and a best-fit line. Statistics also lets us do inference, using limited data to say something about a broader population. Inference relies on two foundations: probability theory and the behavior of samples from distributions. This chapter covers probability rules and distributions first, then how samples behave: the law of large numbers, the sampling distribution of the mean and its standard error, and the central limit theorem. It ends with $z$-scores, estimating a population's standard deviation, and the confidence interval.
 
 ## Probability vs. statistics
 
@@ -81,10 +81,10 @@ Flavor Probability:
 
 - Strawberry $P(\text{strawberry})=0.2$
 
-These probabilities form a distribution, plotted in @fig-icecream-prob. Each value lies between 0 and 1, and together they sum to 1: $0.5 + 0.3 + 0.2 = 1$.
+These probabilities form a distribution, plotted in @fig-3icecream-prob. Each value lies between 0 and 1, and together they sum to 1: $0.5 + 0.3 + 0.2 = 1$.
 
 ```{r}
-#| label: fig-icecream-prob
+#| label: fig-3icecream-prob
 #| fig-cap: "A simple probability distribution: the probabilities for three flavors must add to 1."
 #| fig-alt: "Bar chart with three bars: chocolate at 0.5, vanilla at 0.3, and strawberry at 0.2, each bar labeled with its probability directly above it."
 
@@ -156,7 +156,7 @@ $$P(\text{both}) = P(\text{first}) \times P(\text{second})$$
 
 Two coin flips are independent: the first landing heads does not change the odds on the second. Two soil samples taken a meter apart usually are *not*, because nearby soil tends to be alike, so knowing one sample's nitrogen content tells you something about its neighbor's.
 
-Every test in this book requires independent observations. Chapter 6 states this assumption once, and later chapters do not repeat it.
+Every test in this book requires independent observations. Chapter 6 states this assumption once, and later chapters refer back to it.
 
 Independence also gives a result used in Chapter 8. Run $m$ independent tests, each with its own 5% false-positive rate. By the multiplication rule applied $m$ times, the chance that none of them gives a false positive is $(1-0.05)^m$, so the chance of at least one false positive is $1-(1-0.05)^m$. That is 0.23 for $m = 5$ and 0.40 for $m = 10$.
 
@@ -176,18 +176,18 @@ The binomial distribution models the number of "successes" in a fixed number of 
 
 - A trial is a single attempt with two possible outcomes (success or failure).
 - The success probability is the chance of success on any one trial, usually written as $\theta$.
-- The size parameter $N$ is the number of trials.
-- The random variable $X$ is the number of successes observed in those $N$ trials.
+- The size parameter $n$ is the number of trials.
+- The random variable $X$ is the number of successes observed in those $n$ trials.
 
 We write this as:
 
-$X \sim \text{Binomial}(N, \theta)$
+$X \sim \text{Binomial}(n, \theta)$
 
-For example, if you flip a fair coin 20 times ($N=20$, $\theta=0.5$), the binomial distribution tells you the probability of getting 0 heads, 1 head, 2 heads ... all the way up to 20 heads. The bars of the distribution in @fig-binom show the probability of each outcome, and the total always sums to 1.
+For example, if you flip a fair coin 20 times ($n=20$, $\theta=0.5$), the binomial distribution tells you the probability of getting 0 heads, 1 head, 2 heads ... all the way up to 20 heads. The bars of the distribution in @fig-3binom show the probability of each outcome, and the total always sums to 1.
 
 ```{r}
-#| label: fig-binom
-#| fig-cap: "Binomial probabilities for X ~ Binomial(N = 20, θ = 0.5). Bars show P(X = x)."
+#| label: fig-3binom
+#| fig-cap: "Binomial probabilities for $X \\sim \\text{Binomial}(n = 20, \\theta = 0.5)$. Bars show $P(X = x)$."
 #| fig-alt: "Bar chart of binomial probabilities for 20 trials with a 0.5 success probability, running from 0 to 20 successes. The bars form a symmetric bell shape peaking around 10, tapering off toward both 0 and 20."
 library(ggplot2); library(tibble)
 x <- 0:20
@@ -240,47 +240,47 @@ We write this as:
 
 $X \sim \text{Normal}(\mu, \sigma)$
 
-@fig-normal shows the standard normal, with $\mu = 0$ and $\sigma = 1$.
+@fig-3normal shows the standard normal, with $\mu = 0$ and $\sigma = 1$.
 
 ```{r}
-#| label: fig-normal
-#| fig-cap: "Standard normal probability density function (PDF), where μ = 0, σ = 1. For continuous variables, probabilities are *areas* under the curve."
+#| label: fig-3normal
+#| fig-cap: "Standard normal probability density function (PDF), where $\\mu = 0$ and $\\sigma = 1$. For continuous variables, probabilities are *areas* under the curve."
 #| fig-alt: "A smooth, symmetric bell-shaped curve centered at 0. The curve peaks at zero and tapers toward both tails, approaching but never touching the horizontal axis."
 library(ggplot2); library(tibble); library(dplyr)
 x <- seq(-4,4,length=400)
 pdf <- tibble(x = x, d = dnorm(x, 0, 1))
 ggplot(pdf, aes(x, d)) +
   geom_line() +
-  labs(x = "x", y = "Probability density")
+  labs(x = "Value (x)", y = "Probability density")
 ```
 
-::: {.callout-note title="Note: For continuous distributions"}
+::: {.callout-note title="Note: A single value has probability 0"}
 The probability of any single exact point is 0, so probability is always an area under the curve.
 :::
 
 Changing $\mu$ shifts the curve left or right. Changing $\sigma$ makes it wider or narrower. The total area under the curve is always 1.
 
-@fig-normal-area shades the area between −1 and 1, which is about 0.68 of the total.
+@fig-3normal-area shades the area between −1 and 1, which is about 0.68 of the total.
 
 Areas under every normal curve follow the 68-95-99.7 rule, which @sec-zscores uses again.
 
 **68--95--99.7 rule:**\
 
-- \~68% of values fall within 1σ of the mean\
+- \~68% of values fall within $1\sigma$ of the mean\
 
-- \~95% fall within 2σ\
+- \~95% fall within $2\sigma$\
 
-- \~99.7% fall within 3σ
+- \~99.7% fall within $3\sigma$
 
 ```{r}
-#| label: fig-normal-area
-#| fig-cap: "Shaded area shows P(−1 ≤ X ≤ 1) ≈ 0.68 for X ~ Normal(0,1)."
+#| label: fig-3normal-area
+#| fig-cap: "Shaded area shows $P(-1 \\le X \\le 1) \\approx 0.68$ for $X \\sim \\text{Normal}(0, 1)$."
 #| fig-alt: "The same bell-shaped standard normal curve, with the region between negative 1 and 1 shaded to show it covers about 68 percent of the total area under the curve."
 shade <- pdf |> filter(x >= -1, x <= 1)
 ggplot(pdf, aes(x, d)) +
   geom_line() +
   geom_area(data = shade, aes(y = d), alpha = .3) +
-  labs(x = "x", y = "Probability density")
+  labs(x = "Value (x)", y = "Probability density")
 ```
 
 **Two common queries**
@@ -313,7 +313,7 @@ In R, functions like `dnorm()` return the density (the curve's height), while `p
 
 ## Samples, populations and sampling
 
-Descriptive statistics summarize what we *do* know. Inferential statistics aim to "learn what we do not know from what we do." To do that, we have to say what we want to learn about and how we learn it. Introductory statistics typically divides inference into two big ideas, estimation and hypothesis testing. This chapter introduces estimation. Estimation only makes sense once you understand how samples relate to populations, so this section covers sampling first.
+Descriptive statistics summarize what we *do* know. **Inferential statistics** aim to "learn what we do not know from what we do." To do that, we have to say what we want to learn about and how we learn it. Introductory statistics typically divides inference into two big ideas, estimation and hypothesis testing. This chapter introduces estimation. Estimation only makes sense once you understand how samples relate to populations, so this section covers sampling first.
 
 **Sampling theory** specifies the assumptions that statistical inferences require. To talk about making inferences, we must be clear about what we are drawing inferences *from* (the sample) and what we are drawing inferences *about* (the population).
 
@@ -327,10 +327,10 @@ A sample is the dataset you can open on your computer. A **population**, by cont
 
 The sample--population relationship depends on the procedure used to select the sample. This procedure is the **sampling method**.
 
-Suppose we have a bag with 10 chips, each uniquely labeled, some black and some white. This bag is the population. If we shake the bag and draw 4 chips without replacement, each chip has the same chance of being selected. This is a **simple random sample**. @fig-srs1 shows three such samples.
+Suppose we have a bag with 10 chips, each uniquely labeled, some black and some white. This bag is the population. If we shake the bag and draw 4 chips without replacement, each chip has the same chance of being selected. This is a **simple random sample**. @fig-3srs1 shows three such samples.
 
 ```{r}
-#| label: fig-srs1
+#| label: fig-3srs1
 #| fig-cap: "Simple random sampling without replacement from a finite population."
 #| fig-alt: "A row of ten lettered chips, four shaded black and six white, labeled as the population. Three arrows point from the population to three separate groups of four chips each, labeled as simple random samples drawn without replacement, showing that each sample mixes black and white chips without any letter repeating within a sample."
 
@@ -378,10 +378,10 @@ draw_sampling_diagram(samples_srs1, black_chips,
                        "simple random samples", "(without replacement)")
 ```
 
-Now imagine a different procedure: someone peeks inside and deliberately picks only black chips. That is a **biased sample**. @fig-brs shows three biased samples drawn this way. With a random sample, we can use statistical tools to generalize from the sample to the population. With a biased sample, we cannot. Every chip in the three biased samples is black, so they would put the proportion of black chips at 1, while in the population it is 0.4 (4 of 10).
+Now imagine a different procedure: someone peeks inside and deliberately picks only black chips. That is a **biased sample**. @fig-3brs shows three biased samples drawn this way. With a random sample, we can use statistical tools to generalize from the sample to the population. With a biased sample, we cannot. Every chip in the three biased samples is black, so they would put the proportion of black chips at 1, while in the population it is 0.4 (4 of 10).
 
 ```{r}
-#| label: fig-brs
+#| label: fig-3brs
 #| fig-cap: "Biased sampling without replacement from a finite population."
 #| fig-alt: "The same ten-chip population, with arrows pointing to three samples of four chips each, but every sampled chip is one of the four black ones. None of the six white chips ever appears, illustrating a biased sample restricted to just one subgroup."
 
@@ -390,10 +390,10 @@ draw_sampling_diagram(samples_brs, black_chips,
                        "biased sampling", "(without replacement)")
 ```
 
-Another variation is to draw chips **with replacement**, meaning each chip is returned to the bag before the next draw. In @fig-srs2, some letters repeat within a sample for that reason. In practice, most studies are "without replacement," but much of statistical theory assumes replacement. When the population is large, the difference is negligible. With 10 chips, removing the first chip changes each remaining chip's chance from 1/10 to 1/9. With 10,000 items, the change is from 1/10,000 to 1/9,999.
+Another variation is to draw chips **with replacement**, meaning each chip is returned to the bag before the next draw. In @fig-3srs2, some letters repeat within a sample for that reason. In practice, most studies are "without replacement," but much of statistical theory assumes replacement. When the population is large, the difference is negligible. With 10 chips, removing the first chip changes each remaining chip's chance from 1/10 to 1/9. With 10,000 items, the change is from 1/10,000 to 1/9,999.
 
 ```{r}
-#| label: fig-srs2
+#| label: fig-3srs2
 #| fig-cap: "Simple random sampling with replacement from a finite population."
 #| fig-alt: "The same ten-chip population, with arrows pointing to three samples of four chips drawn with replacement. Unlike the earlier random-sampling diagram, some letters repeat within a single sample, since a drawn chip is returned to the population before the next draw."
 
@@ -422,9 +422,9 @@ So far we have talked about populations the way a scientist might: a group of pe
 For example, suppose daily coffee consumption in adults follows an approximately normal distribution with mean $\mu = 2$ cups/day and standard deviation $\sigma = 1$ cup/day. These are the **population parameters**.
 
 ```{r}
-#| label: fig-coffeeDist
-#| fig-cap: "The population distribution of daily coffee consumption (a) and two random samples: one of size 100 (b) and one of size 10,000 (c). In panels (b) and (c), the solid blue line marks the sample's mean and the dashed orange line marks $\\mu = 2$."
-#| fig-alt: "Three side-by-side panels. Panel a shows the population's bell-shaped density curve, centered at 2 cups per day. Panel b overlays that same curve on a histogram of a sample of 100 draws, which roughly follows the curve's shape but with visible bumps and gaps. Panel c overlays the curve on a histogram of a sample of 10,000 draws, which follows the bell shape far more closely and smoothly than the smaller sample. Each sample panel's title gives that sample's mean and standard deviation, and each has a solid blue vertical line at the sample mean beside a dashed orange vertical line at the population mean of 2."
+#| label: fig-3coffeeDist
+#| fig-cap: "The population distribution of daily coffee consumption (a) and two random samples: one of size 100 (b) and one of size 10,000 (c). In panels (b) and (c), the lime-green dotted line marks the sample's mean and the dashed orange line marks $\\mu = 2$."
+#| fig-alt: "Three side-by-side panels. Panel a shows the population's bell-shaped density curve, centered at 2 cups per day. Panel b overlays that same curve on a histogram of a sample of 100 draws, which roughly follows the curve's shape but with visible bumps and gaps. Panel c overlays the curve on a histogram of a sample of 10,000 draws, which follows the bell shape far more closely and smoothly than the smaller sample. Each sample panel's title gives that sample's mean and standard deviation, and each has a lime-green dotted vertical line at the sample mean beside a dashed orange vertical line at the population mean of 2."
 #| out-width: "100%"
 
 # Figure: "Population distribution (a) and two random samples: n = 100 (b) and n = 10,000 (c)."
@@ -453,7 +453,7 @@ hist_with_pop <- function(df, bins = 30, title = "", xlim = c(0, 6)) {
     geom_histogram(aes(y = after_stat(density)), bins = bins, color = "white", fill = "grey75") +
     geom_line(data = pop_df, aes(x, d), colour = "orange", linewidth = 0.75) +
     geom_vline(xintercept = mu, colour = "orange", linetype = "dashed", linewidth = 0.75) +
-    geom_vline(xintercept = mean(df$x), colour = "#10377f", linewidth = 0.75) +
+    geom_vline(xintercept = mean(df$x), colour = "limegreen", linetype = "dotted", linewidth = 1.6) +
     coord_cartesian(xlim = xlim, ylim = c(0, max(pop_df$d)*1.05)) +
     labs(x = "Cups per day", y = "Density", title = title) +
     theme_classic(base_size = 12)+
@@ -490,7 +490,7 @@ fig <- (pA | pB | pC) + plot_annotation(tag_levels = "a")
 fig
 ```
 
-Now suppose we take a random sample of 100 adults, shown as the histogram in panel (b) of @fig-coffeeDist. The solid line marks the sample mean, and the dashed line marks $\mu$. The histogram follows the population's bell shape, with bumps and gaps the population curve does not have. This sample's mean is `r sprintf("%.2f", mean(samp100$x))` cups and its standard deviation is `r sprintf("%.2f", sd(samp100$x))` cups, close to $\mu = 2$ and $\sigma = 1$ but not equal to them.
+Now suppose we take a random sample of 100 adults, shown as the histogram in panel (b) of @fig-3coffeeDist. The lime-green dotted line marks the sample mean, and the orange dashed line marks $\mu$. The histogram follows the population's bell shape, with bumps and gaps the population curve does not have. This sample's mean is `r sprintf("%.2f", mean(samp100$x))` cups and its standard deviation is `r sprintf("%.2f", sd(samp100$x))` cups, close to $\mu = 2$ and $\sigma = 1$ but not equal to them.
 
 These are **sample statistics**: numbers we calculate from the data in hand. They approximate the population parameters, which describe the entire distribution. The central problem of inference is how to use sample statistics to estimate population parameters, and how much confidence we can place in those estimates.
 
@@ -514,9 +514,9 @@ Although easiest to see with the mean, the law applies to many sample statistics
 
 The idea is obvious enough that Jacob Bernoulli, who first formalized it in 1713, remarked that "even the most stupid of men" already know it by instinct. Averaging over more observations does reduce what he called the "danger of wandering from one's goal."
 
-In practice, any single sample statistic will differ somewhat from the population parameter. Even the sample of 10,000 in @fig-coffeeDist has a mean of `r sprintf("%.3f", mean(samp10000$x))` cups, not exactly 2.
+In practice, any single sample statistic will differ somewhat from the population parameter. Even the sample of 10,000 in @fig-3coffeeDist has a mean of `r sprintf("%.3f", mean(samp10000$x))` cups, not exactly 2.
 
-**What the law needs: random sampling.** The law of large numbers brings $\bar{x}$ to the right value only when the sample is drawn at random from the population you care about, a condition that is easy to skip past. $\bar{x}$ converges to the mean of whatever population your sampling method actually reaches. Survey 10,000 people inside coffee shops and $\bar{x}$ will settle, very precisely, on the average for coffee-shop customers, which is not the average for all adults. A larger sample shrinks random error, the scatter from one sample to the next. It does nothing about bias, a sampling method that consistently reaches the wrong people. So a random sample of 100 adults can give a better estimate of the adult average than a sample of 10,000 coffee-shop customers. Its estimate varies more from sample to sample, but it converges on the right population mean.
+**What the law needs: random sampling.** The law of large numbers brings $\bar{x}$ to the right value only when the sample is drawn at random from the population you care about, a condition that is easy to skip past. $\bar{x}$ converges to the mean of whatever population your sampling method actually reaches. Survey 10,000 people inside coffee shops and $\bar{x}$ will settle, very precisely, on the average for coffee-shop customers, which is not the average for all adults. A larger sample shrinks **sampling error**, the random scatter from one sample to the next. It does nothing about bias, a sampling method that consistently reaches the wrong people. So a random sample of 100 adults can give a better estimate of the adult average than a sample of 10,000 coffee-shop customers. Its estimate varies more from sample to sample, but it converges on the right population mean.
 
 ## Sampling distributions
 
@@ -539,7 +539,7 @@ Three distributions come up in this section, and they are easy to confuse:
 | One sample | The $n$ values you collected | Roughly the population's shape, with noise |
 | Sampling distribution of the sample mean | One mean from each of many samples of size $n$ | Close to normal once $n$ is large enough |
 
-A bigger sample makes the second row look more like the first (@fig-coffeeDist). It does not make your data look normal. A sample of 500 household electricity bills is still right-skewed, because the population of bills is. The central limit theorem is a statement about the third row only.
+A bigger sample makes the second row look more like the first (@fig-3coffeeDist). It does not make your data look normal. A sample of 500 household electricity bills is still right-skewed, because the population of bills is. The central limit theorem is a statement about the third row only.
 
 ### Building a sampling distribution step by step
 
@@ -570,12 +570,12 @@ ggplot(unif_pop, aes(x = number, y = probability)) +
 
 ```
 
-@fig-3unifsamples shows three samples of 20 numbers drawn from this population. Each dot is one number drawn, and the blue line marks that sample's mean. The three samples look different from each other, and their means, given in the panel titles, differ too.
+@fig-3unifsamples shows three samples of 20 numbers drawn from this population. Each dot is one number drawn, and the lime-green dotted line marks that sample's mean. The three samples look different from each other, and their means, given in the panel titles, differ too.
 
 ```{r}
 #| label: fig-3unifsamples
-#| fig-cap: "Three samples of 20 numbers each, drawn from the uniform distribution of the numbers 1 to 10. Each dot is one number drawn, and dots stack when a number was drawn more than once. The blue line marks each sample's mean."
-#| fig-alt: "Three dot plots stacked vertically, one per sample, each with 20 black dots over the numbers 1 to 10. Dots pile up where a number was drawn more than once, and the pattern of piles differs from sample to sample. A blue vertical line in each panel marks that sample's mean, which falls near the middle of the range but at a different place in each sample. Each panel's title gives the sample's mean."
+#| fig-cap: "Three samples of 20 numbers each, drawn from the uniform distribution of the numbers 1 to 10. Each dot is one number drawn, and dots stack when a number was drawn more than once. The lime-green dotted line marks each sample's mean."
+#| fig-alt: "Three dot plots stacked vertically, one per sample, each with 20 black dots over the numbers 1 to 10. Dots pile up where a number was drawn more than once, and the pattern of piles differs from sample to sample. A lime-green dotted vertical line in each panel marks that sample's mean, which falls near the middle of the range but at a different place in each sample. Each panel's title gives the sample's mean."
 #| fig-height: 4.5
 
 three_samples <- do.call(rbind, lapply(1:3, function(i) {
@@ -589,7 +589,7 @@ three_samples$panel <- paste0("Sample ", three_samples$sample,
 
 ggplot(three_samples, aes(x = x, y = height)) +
   geom_point(size = 2.5) +
-  geom_vline(aes(xintercept = mean), colour = "#10377f", linewidth = 0.9) +
+  geom_vline(aes(xintercept = mean), colour = "limegreen", linetype = "dotted", linewidth = 1.6) +
   facet_wrap(~panel, ncol = 1) +
   scale_x_continuous(breaks = 1:10, limits = c(0.5, 10.5)) +
   scale_y_continuous(breaks = NULL, limits = c(0.5, max(three_samples$height) + 0.5)) +
@@ -616,7 +616,6 @@ ggplot(df2, aes(x=a))+
   geom_histogram(binwidth = 0.05, boundary = 0.025, fill = "darkgreen", color = "white", alpha = 0.5)+
   scale_x_continuous(breaks = 1:10) +
   coord_cartesian(xlim = c(1, 10)) +
-  ggtitle("Histogram of 10,000 sample means")+
   xlab("Mean of one sample of 20 numbers")+
   ylab("Number of samples")
 ```
@@ -629,9 +628,9 @@ Although we've focused on means, the same idea applies to any statistic: medians
 
 ```{r}
 #| label: fig-3samplestats
-#| fig-cap: "Histograms of four statistics, each computed on 10,000 samples of size 50 from a normal population with mean 100 and standard deviation 15. The red dashed line marks the population mean, 100, in the mean, maximum and median panels, and the population SD, 15, in the SD panel."
-#| fig-alt: "Four histograms arranged in a 2 by 2 grid, titled Mean of each sample, SD of each sample, Largest value in each sample, and Median of each sample, each built from 10,000 samples of size 50 drawn from a normal population with mean 100 and standard deviation 15. A red dashed line marks 100 in the mean, maximum, and median panels and 15 in the SD panel. The mean and median histograms are narrow and symmetric around 100, the SD histogram is centered close to 15, and the maximum histogram is centered well above 100, around 134, with a longer right tail."
-#| out.width: "100%"
+#| fig-cap: "Histograms of four statistics, each computed on 10,000 samples of size 50 from a normal population with mean 100 and standard deviation 15. The orange dashed line marks the population mean, 100, in the mean, maximum and median panels, and the population SD, 15, in the SD panel."
+#| fig-alt: "Four histograms arranged in a 2 by 2 grid, titled Mean of each sample, SD of each sample, Largest value in each sample, and Median of each sample, each built from 10,000 samples of size 50 drawn from a normal population with mean 100 and standard deviation 15. An orange dashed line marks 100 in the mean, maximum, and median panels and 15 in the SD panel. The mean and median histograms are narrow and symmetric around 100, the SD histogram is centered close to 15, and the maximum histogram is centered well above 100, around 134, with a longer right tail."
+#| out-width: "100%"
 #| fig-height: 6
 
 library(patchwork)
@@ -645,22 +644,27 @@ all_df <- data.frame(sample_mean   = stat_mat[1, ],
                      sample_max    = stat_mat[3, ],
                      sample_median = stat_mat[4, ])
 
-stat_hist <- function(var, title, x_lab, ref) {
+stat_hist <- function(var, title, x_lab, ref, fill = NULL) {
+  hist_layer <- if (is.null(fill)) {
+    geom_histogram(bins = 30, color = "white")
+  } else {
+    geom_histogram(bins = 30, color = "white", fill = fill, alpha = 0.5)
+  }
   ggplot(all_df, aes(x = .data[[var]])) +
-    geom_histogram(bins = 30, color = "white") +
-    geom_vline(xintercept = ref, linetype = "dashed", colour = "#b22222", linewidth = 0.8) +
+    hist_layer +
+    geom_vline(xintercept = ref, linetype = "dashed", colour = "orange", linewidth = 0.8) +
     labs(title = title, x = x_lab, y = "Number of samples") +
     theme(plot.title = element_text(size = 12))
 }
 
-(stat_hist("sample_mean",   "Mean of each sample",          "Sample mean",    100) |
+(stat_hist("sample_mean",   "Mean of each sample",          "Sample mean",    100, fill = "darkgreen") |
  stat_hist("sample_sd",     "SD of each sample",            "Sample SD",      15)) /
 (stat_hist("sample_max",    "Largest value in each sample", "Sample maximum", 100) |
  stat_hist("sample_median", "Median of each sample",        "Sample median",  100))
 
 ```
 
-The mean and median panels center on 100. The maximum panel centers well above 100, at about `r round(mean(all_df$sample_max))`, so the largest value in a sample is a poor estimate of the population mean. The SD panel centers close to 15 at $n = 50$, but @fig-sampdistsd, later in this chapter, shows that with small samples the SD computed by dividing by $n$ falls well below 15 on average.
+The mean and median panels center on 100. The maximum panel centers well above 100, at about `r round(mean(all_df$sample_max))`, so the largest value in a sample is a poor estimate of the population mean. The SD panel centers close to 15 at $n = 50$, but @fig-3sampdistsd, later in this chapter, shows that with small samples the SD computed by dividing by $n$ falls well below 15 on average.
 
 ## The standard error
 
@@ -668,7 +672,7 @@ The law of large numbers gives a direction. As $n$ grows, $\bar{x}$ heads toward
 
 The distribution of sample means is the sampling distribution of the sample mean, defined earlier in the chapter. It also goes by the shorter name sampling distribution of the mean.
 
-@fig-3samplingmean animates this idea with a normal population (orange curve) that has $\mu = 0$ and $\sigma = 1$, at four sample sizes. Each frame draws one new sample in every panel. The top row shows that sample's values as grey points, with its mean as a lime-green dotted line. The bottom row collects the means of all the samples drawn so far, one green dot per sample. Watch three things:
+@fig-3samplingmean animates this idea with a normal population (orange curve) that has $\mu = 0$ and $\sigma = 1$, at four sample sizes. Each frame draws one new sample in every panel. The top row shows that sample's values as gray points, with its mean as a lime-green dotted line. The bottom row collects the means of all the samples drawn so far, one green dot per sample. Watch three things:
 
 - **The spread of the values in one sample stays near $\sigma = 1$ as $n$ grows.** The $s$ shown in each panel bounces around 1. At $n = 2$ it swings from below 0.1 to about 3 from frame to frame, and at $n = 128$ it stays within about 0.15 of 1. A sample's standard deviation estimates $\sigma$, which is a fixed feature of the population, so collecting more values does not shrink it.
 - **The spread of the sample means shrinks.** The pile of means is wide at $n = 2$ and narrow at $n = 128$. The SE shown in each panel is $\sigma/\sqrt{n}$, the standard deviation this pile of means approaches as more samples are drawn. It halves each time $n$ is multiplied by 4, from 0.71 at $n = 2$ to 0.35, 0.18 and 0.09. The formula is explained below.
@@ -679,15 +683,15 @@ The pile is bell-shaped at every $n$ here because the population itself is norma
 ::: {.content-visible when-format="html"}
 ```{r}
 #| label: fig-3samplingmean
-#| fig-cap: "One new sample per frame from a normal population (orange curve, $\\mu = 0$, $\\sigma = 1$), at four sample sizes. Top row: the sample's values (grey points) and its mean (lime-green dotted line). Bottom row: the means of all samples so far. The sample SD, $s$, does not shrink as $n$ grows, while the pile of means narrows."
-#| fig-alt: "Animation with four panels for sample sizes 2, 8, 32, and 128, each split into two rows. The top row shows an orange normal curve with one sample drawn as grey points along the bottom, a lime-green dotted vertical line at that sample's mean, and the sample's standard deviation shown in the corner, which bounces around 1 in every panel and swings most at sample size 2. The bottom row stacks the means of all samples so far as green dots, newest in lime green, with the standard error shown in the corner: 0.71, 0.35, 0.18, and 0.09. Frame by frame, the lime-green line jumps widely at sample size 2 and barely moves at 128, and the pile of means grows wide and low at sample size 2 and tall and narrow at 128."
+#| fig-cap: "One new sample per frame from a normal population (orange curve, $\\mu = 0$, $\\sigma = 1$), at four sample sizes. Top row: the sample's values (gray points) and its mean (lime-green dotted line). Bottom row: the means of all samples so far. The sample SD, $s$, does not shrink as $n$ grows, while the pile of means narrows."
+#| fig-alt: "Animation with four panels for sample sizes 2, 8, 32, and 128, each split into two rows. The top row shows an orange normal curve with one sample drawn as gray points along the bottom, a lime-green dotted vertical line at that sample's mean, and the sample's standard deviation shown in the corner, which bounces around 1 in every panel and swings most at sample size 2. The bottom row stacks the means of all samples so far as green dots, newest in lime green, with the standard error shown in the corner: 0.71, 0.35, 0.18, and 0.09. Frame by frame, the lime-green line jumps widely at sample size 2 and barely moves at 128, and the pile of means grows wide and low at sample size 2 and tall and narrow at 128."
 
 knitr::include_graphics(path="imgs/gifs/sampleDistNormal-1.gif")
 ```
 :::
 
 ::: {.content-visible when-format="pdf"}
-![One new sample per frame from a normal population (orange curve, $\mu = 0$, $\sigma = 1$), at four sample sizes. Top row: the sample's values (grey points) and its mean (lime-green dotted line). Bottom row: the means of all samples so far. The sample SD, $s$, does not shrink as $n$ grows, while the pile of means narrows. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/sampleDistNormal-1.png){#fig-3samplingmean width="75%"}
+![One new sample per frame from a normal population (orange curve, $\mu = 0$, $\sigma = 1$), at four sample sizes. Top row: the sample's values (gray points) and its mean (lime-green dotted line). Bottom row: the means of all samples so far. The sample SD, $s$, does not shrink as $n$ grows, while the pile of means narrows. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/sampleDistNormal-1.png){#fig-3samplingmean width="75%"}
 :::
 
 ```{r, eval=F}
@@ -856,7 +860,7 @@ This formula shows how sample size controls the precision of $\bar{x}$. As $n$ i
 
 | Idea | What it says | About which distribution | Holds at which $n$ | Where you saw it |
 |---|---|---|---|---|
-| Law of large numbers | One sample's $\bar{x}$ gets closer to $\mu$ | One sample | Describes the trend as $n$ grows | @fig-coffeeDist, and the lime-green line in @fig-3samplingmean |
+| Law of large numbers | One sample's $\bar{x}$ gets closer to $\mu$ | One sample | Describes the trend as $n$ grows | @fig-3coffeeDist, and the lime-green line in @fig-3samplingmean |
 | Unbiased $\bar{x}$ | The sampling distribution of the mean is centered on $\mu$ | Sampling distribution of the mean | Every $n$ | @fig-3unifmany, centered on 5.5 |
 | Standard error | Its spread is $\sigma/\sqrt{n}$, which is why sample means vary less in larger samples | Sampling distribution of the mean | Every $n$, even $n = 2$ | Bottom row of @fig-3samplingmean, and the SD of `r sprintf("%.2f", sd(unif_means))` in @fig-3unifmany |
 | Central limit theorem | Its shape approaches normal | Sampling distribution of the mean | Approaches normal as $n$ grows, at a speed that depends on the population's shape | @fig-3samplemeanunif and @fig-3samplemeanExp |
@@ -880,7 +884,7 @@ The skew fades as $n$ grows because each unusually large value gets averaged wit
 
 This is what later chapters mean by "once the sample is large enough." With a small sample from a skewed population, the sample means may not be close to normal, and Chapter 6 comes back to this case.
 
-## z-scores {#sec-zscores}
+## $z$-scores {#sec-zscores}
 
 A **z-score** is a standardized way to express how far a value is from its mean, measured in units of standard deviation. Z-scores are useful because (i) areas under the normal curve translate directly into probabilities, and (ii) by the CLT, many averages (e.g., sample means) are approximately normal, so z-scores let us read off probabilities for those, too.
 
@@ -900,7 +904,7 @@ ggplot(t_df, aes(x=x_range,y=dnorm_vec))+
   geom_vline(xintercept = 0)+
   geom_vline(xintercept = c(-3,-2,-1,1,2,3))+
   ylab("Density")+
-  xlab("score") +
+  xlab("z-score (SDs from the mean)") +
   scale_x_continuous(breaks=seq(-5,5,1))+
   geom_label(data = data.frame(x=-.5, y=.02,
             label=round(pnorm(c(0,1),0,1)[2]-pnorm(c(0,1),0,1)[1], digits=3)),
@@ -944,7 +948,7 @@ ggplot(t_df, aes(x=x_range,y=dnorm_vec))+
   geom_vline(xintercept = 100)+
   geom_vline(xintercept = c(25,50,75,125,150,175))+
   ylab("Density")+
-  xlab("score") +
+  xlab("Score") +
   scale_x_continuous(breaks=seq(0,200,25))+
   geom_label(data = data.frame(x=87.5, y=0.01,
             label=round(pnorm(c(0,1),0,1)[2]-pnorm(c(0,1),0,1)[1], digits=3)), 
@@ -1035,16 +1039,16 @@ An estimator is **biased** if its expected value systematically differs from the
 
 This is a second meaning of the word. Earlier, a biased *sample* came from a method that reaches the wrong individuals, like surveying adults only inside coffee shops. A biased *estimator* misses the parameter on average even when every sample is perfectly random, because of the formula used to compute it, like the SD that divides by $n$. Both kinds of bias are systematic. They push the result in the same direction on average, which is different from the random scatter of sampling error.
 
-Chapter 2 built the standard deviation dividing by $N$ and noted in passing that R divides by $n-1$ instead. The rest of this section explains that difference.
+Chapter 2 built the standard deviation dividing by $N$, the number of scores, and noted in passing that R divides by $n-1$ instead. With a sample of size $n$, that divide-by-count version is written $s_n$ below. The rest of this section explains why R uses $n-1$.
 
 ### Simulating bias
 
-We can see this by creating a sampling distribution of the standard deviation. Suppose the true population IQ distribution has mean 100 and standard deviation 15. If we draw 20,000 samples of size $n = 2$ and compute the SD of each, dividing by $n$ as in Chapter 2, the histogram of those 20,000 values looks like @fig-sampdistsd. If the sample SD had no bias, the average of the 20,000 sample SDs would be close to 15.
+We can see this by creating a sampling distribution of the standard deviation. Suppose the true population IQ distribution has mean 100 and standard deviation 15. If we draw 20,000 samples of size $n = 2$ and compute the SD of each, dividing by $n$ as in Chapter 2, the histogram of those 20,000 values looks like @fig-3sampdistsd. If the sample SD had no bias, the average of the 20,000 sample SDs would be close to 15.
 
 ```{r}
-#| label: fig-sampdistsd
-#| fig-cap: "Sampling distribution of the uncorrected sample SD (divide by n) for 20,000 samples of n = 2. The true population SD is 15 (red dashed line). The average sample SD is about 8.5 (blue line)."
-#| fig-alt: "Histogram of 20,000 simulated sample standard deviations, each computed from a sample of size 2 drawn from a population with true standard deviation 15. A red dashed vertical line marks that true value of 15, labeled Population SD. A solid blue vertical line, labeled with the average of about 8.5, is well to the left of it. The bulk of the histogram is to the left of the red line, with a long right tail, showing that most samples of size 2 underestimate the true standard deviation."
+#| label: fig-3sampdistsd
+#| fig-cap: "Sampling distribution of the uncorrected sample SD (divide by n) for 20,000 samples of n = 2. The true population SD is 15 (orange dashed line). The average sample SD is about 8.5 (blue line)."
+#| fig-alt: "Histogram of 20,000 simulated sample standard deviations, each computed from a sample of size 2 drawn from a population with true standard deviation 15. An orange dashed vertical line marks that true value of 15, labeled Population SD. A solid blue vertical line, labeled with the average of about 8.5, is well to the left of it. The bulk of the histogram is to the left of the orange line, with a long right tail, showing that most samples of size 2 underestimate the true standard deviation."
 
 sd_biased <- function(x) sqrt(mean((x - mean(x))^2))
 
@@ -1055,8 +1059,8 @@ sds_n2 <- replicate(20000, sd_biased(rnorm(2, pop_mean, pop_sd)))
 
 ggplot(data.frame(s = sds_n2), aes(x = s)) +
   geom_histogram(binwidth = 2, boundary = 0) +
-  geom_vline(xintercept = pop_sd, linetype = "dashed", colour = "#b22222", linewidth = 0.8) +
-  annotate("text", x = pop_sd, y = Inf, label = "Population SD", hjust = -0.05, vjust = 1.5, colour = "#b22222") +
+  geom_vline(xintercept = pop_sd, linetype = "dashed", colour = "orange", linewidth = 0.8) +
+  annotate("text", x = pop_sd, y = Inf, label = "Population SD", hjust = -0.05, vjust = 1.5, colour = "darkorange3") +
   geom_vline(xintercept = mean(sds_n2), colour = "#10377f", linewidth = 0.8) +
   annotate("text", x = mean(sds_n2), y = Inf, label = paste0("average = ", sprintf("%.1f", mean(sds_n2))),
            hjust = 1.05, vjust = 1.5, colour = "#10377f") +
@@ -1069,12 +1073,12 @@ Even though the true $\sigma$ is 15, the average sample SD is only about 8.5. Th
 
 Repeating the simulation at each sample size up to 10 compares the two estimators:
 
-- @fig-estimatorbiasA shows that the sample mean stays centered on $\mu$ (unbiased).
+- @fig-3estimatorbiasA shows that the sample mean stays centered on $\mu$ (unbiased).
 
-- @fig-estimatorbiasB shows that the sample SD underestimates $\sigma$ when $n$ is small, though the bias shrinks as $n$ grows.
+- @fig-3estimatorbiasB shows that the sample SD underestimates $\sigma$ when $n$ is small, though the bias shrinks as $n$ grows.
 
 ```{r}
-#| label: fig-estimatorbiasA
+#| label: fig-3estimatorbiasA
 #| fig-cap: "The sample mean is an unbiased estimator of the population mean."
 #| fig-alt: "Scatter plot of average sample mean against sample size, from 1 to 10, connected by a blue line with blue points. The points hover close to 100 at every sample size, showing no systematic drift as sample size increases."
 
@@ -1092,12 +1096,12 @@ ggplot(df_bias, aes(x = n, y = avg_mean)) +
   ylab("Average sample mean")
 ```
 
-@fig-estimatorbiasB shows the sample standard deviation as a function of sample size. Each point is the average of 5,000 sample SDs, all from samples of the size on the x-axis. The dark blue line divides by $n$, as in Chapter 2. The light blue line divides by $n - 1$, the correction explained in the next section. Unlike the mean, the uncorrected sample standard deviation does not center on the population value. Small samples especially understate variability. The dark blue line averages about 8.5 at $n = 2$ and is still about 1 below 15 at $n = 10$.
+@fig-3estimatorbiasB shows the sample standard deviation as a function of sample size. Each point is the average of 5,000 sample SDs, all from samples of the size on the x-axis. The dark blue line divides by $n$, as in Chapter 2. The light blue line divides by $n - 1$, the correction explained in the next section. Unlike the mean, the uncorrected sample standard deviation does not center on the population value. Small samples especially understate variability. The dark blue line averages about 8.5 at $n = 2$ and is still about 1 below 15 at $n = 10$.
 
 ```{r}
-#| label: fig-estimatorbiasB
-#| fig-cap: "The sample standard deviation is a biased estimator of the population standard deviation. Each point is the average of 5,000 sample SDs at that sample size, computed by dividing by n (dark blue) or by n - 1 (light blue). The red dashed line marks the population SD, 15."
-#| fig-alt: "Line plot of the average of 5,000 sample standard deviations against sample size, from 2 to 10, with two series and a red dashed horizontal reference line at the true population SD of 15. The dark blue series, dividing by n, starts near 8.5 at sample size 2 and climbs toward 15 but is still about 1 below it at sample size 10. The light blue series, dividing by n minus 1, starts near 12 at sample size 2 and is close to 15 by sample size 10. Both series are below the reference line at every sample size, and the gap is largest at the smallest sample sizes."
+#| label: fig-3estimatorbiasB
+#| fig-cap: "The sample standard deviation is a biased estimator of the population standard deviation. Each point is the average of 5,000 sample SDs at that sample size, computed by dividing by n (dark blue) or by n - 1 (light blue). The orange dashed line marks the population SD, 15."
+#| fig-alt: "Line plot of the average of 5,000 sample standard deviations against sample size, from 2 to 10, with two series and an orange dashed horizontal reference line at the true population SD of 15. The dark blue series, dividing by n, starts near 8.5 at sample size 2 and climbs toward 15 but is still about 1 below it at sample size 10. The light blue series, dividing by n minus 1, starts near 12 at sample size 2 and is close to 15 by sample size 10. Both series are below the reference line at every sample size, and the gap is largest at the smallest sample sizes."
 
 ns_b <- 2:10
 avg_sd_n  <- sapply(ns_b, function(n) mean(replicate(5000, sd_biased(rnorm(n, pop_mean, pop_sd)))))
@@ -1110,9 +1114,9 @@ df_bias_b <- data.frame(
 )
 
 ggplot(df_bias_b, aes(x = n, y = avg, colour = version)) +
-  geom_hline(yintercept = pop_sd, linetype = "dashed", colour = "#b22222", linewidth = 0.8) +
+  geom_hline(yintercept = pop_sd, linetype = "dashed", colour = "orange", linewidth = 0.8) +
   annotate("text", x = 2, y = pop_sd, label = "sigma == 15", parse = TRUE,
-           hjust = 0, vjust = -0.5, colour = "#b22222") +
+           hjust = 0, vjust = -0.5, colour = "darkorange3") +
   geom_line(linewidth = 0.8) +
   geom_point(size = 2) +
   scale_colour_manual(values = c("#10377f", "#008cff"), name = NULL) +
@@ -1127,7 +1131,7 @@ ggplot(df_bias_b, aes(x = n, y = avg, colour = version)) +
 
 **Sample values are closer to their own mean than to $\mu$.** Picture a tiny sample of $n=3$ values. The sample mean $\bar{x}$ might be close to the true population mean $\mu$, or it might be far from it, and we don't know in advance which. But $\bar{x}$ is always computed from those three sample points, so it is always at the center of *those specific* points. As a result, distances from the sample points to $\bar{x}$ tend to be a little shorter, on average, than distances from those same points to the true $\mu$ would be.
 
-One small sample shows how this works. The numbers are invented. Take the three values 3, 4 and 8, so $\bar{x} = 5$, and say the population they came from has mean $\mu = 6$. @fig-sdbias-348 draws the distance from each value to $\bar{x}$ in one panel and to $\mu$ in the other. Squaring each distance and adding them up gives the sum of squared distances around each center:
+One small sample shows how this works. The numbers are invented. Take the three values 3, 4 and 8, so $\bar{x} = 5$, and say the population they came from has mean $\mu = 6$. @fig-3sdbias-348 draws the distance from each value to $\bar{x}$ in one panel and to $\mu$ in the other. Squaring each distance and adding them up gives the sum of squared distances around each center:
 
 | Center | Squared distances | Sum |
 |---|---|---|
@@ -1136,20 +1140,20 @@ One small sample shows how this works. The numbers are invented. Take the three 
 | Gap | $17 - 14$ | $3 = 3 \times (5 - 6)^2$ |
 
 ```{r}
-#| label: fig-sdbias-348
-#| fig-cap: "One invented sample, 3, 4 and 8. Left, each value's distance to the sample mean, $\\bar{x} = 5$ (blue). Right, each value's distance to the population mean, $\\mu = 6$ (red). The panel titles add up the squared distances."
-#| fig-alt: "Two number lines side by side, each with black points labeled 3, 4 and 8. In the left panel a blue dashed line marks the sample mean at 5, and blue arrows run from each point to it, labeled 2, 1 and 3; the title reads squared distances to the sample mean, 4 + 1 + 9 = 14. In the right panel a red dashed line marks the population mean at 6, and red arrows run from each point to it, labeled 3, 2 and 2; the title reads squared distances to the population mean, 9 + 4 + 4 = 17."
+#| label: fig-3sdbias-348
+#| fig-cap: "One invented sample, 3, 4 and 8. Left, each value's distance to the sample mean, $\\bar{x} = 5$ (lime green). Right, each value's distance to the population mean, $\\mu = 6$ (orange). The panel titles add up the squared distances."
+#| fig-alt: "Two number lines side by side, each with black points labeled 3, 4 and 8. In the left panel a lime-green dotted line marks the sample mean at 5, and lime-green arrows run from each point to it, labeled 2, 1 and 3; the title reads squared distances to the sample mean, 4 + 1 + 9 = 14. In the right panel an orange dashed line marks the population mean at 6, and orange arrows run from each point to it, labeled 3, 2 and 2; the title reads squared distances to the population mean, 9 + 4 + 4 = 17."
 #| fig-width: 9
 #| fig-height: 2.8
 
 vals_348 <- c(3, 4, 8)
-panel_348 <- function(center, col, center_lab, sum_lab) {
+panel_348 <- function(center, col, center_lab, sum_lab, center_lty = "dashed") {
   d <- data.frame(x = vals_348, h = c(0.45, 0.7, 0.95))
   d$dist <- abs(d$x - center)
   ggplot(d) +
     annotate("segment", x = 2, xend = 10, y = 0, yend = 0, linewidth = 0.5) +
     annotate("segment", x = center, xend = center, y = -0.15, yend = 1.12,
-             colour = col, linetype = "dashed", linewidth = 0.6) +
+             colour = col, linetype = center_lty, linewidth = 0.6) +
     geom_segment(aes(x = x, xend = x, y = 0, yend = h), colour = "grey70", linewidth = 0.3) +
     geom_segment(aes(x = x, xend = center, y = h, yend = h), colour = col, linewidth = 1,
                  arrow = arrow(length = grid::unit(5, "pt"), type = "closed")) +
@@ -1163,8 +1167,9 @@ panel_348 <- function(center, col, center_lab, sum_lab) {
     theme(plot.title = element_text(hjust = 0.5, size = 12))
 }
 gridExtra::grid.arrange(
-  panel_348(5, "#10377f", "bar(x) == 5", "Squared distances to the sample mean: 4 + 1 + 9 = 14"),
-  panel_348(6, "#b22222", "mu == 6", "Squared distances to the population mean: 9 + 4 + 4 = 17"),
+  panel_348(5, "#1E9E1E", "bar(x) == 5", "Squared distances to the sample mean: 4 + 1 + 9 = 14",
+            center_lty = "dotted"),
+  panel_348(6, "orange", "mu == 6", "Squared distances to the population mean: 9 + 4 + 4 = 17"),
   nrow = 1
 )
 ```
@@ -1187,12 +1192,12 @@ This $s_{n-1}^2$ is an unbiased estimator of $\sigma^2$, so its average across m
 
 **A note on notation.** The subscripts on $s_n^2$ and $s_{n-1}^2$ exist only so we can contrast the two formulas here. Everywhere else in this book, and in most other writing you will encounter, plain $s^2$ means the corrected version that divides by $n-1$, and plain $s$ is its square root, the sample standard deviation. That is also what R's `sd()` and `var()` return. When you see $s$ in the $t$-test formulas in Chapter 6 and after, it is this quantity.
 
-One sample shows why the distances run short. Bias is about the average over many samples, and a single sample's SD can come out above $\sigma$ or below it. @fig-sdbias-simulation checks the average by drawing 8,000 samples at each of two sample sizes, $n = 3$ and $n = 30$, from the IQ population used above ($\mu = 100$, $\sigma = 15$). For each sample it computes the SD both ways, dividing by $n$ and by $n - 1$. Each panel is a histogram of 8,000 sample SDs.
+One sample shows why the distances run short. Bias is about the average over many samples, and a single sample's SD can come out above $\sigma$ or below it. @fig-3sdbias-simulation checks the average by drawing 8,000 samples at each of two sample sizes, $n = 3$ and $n = 30$, from the IQ population used above ($\mu = 100$, $\sigma = 15$). For each sample it computes the SD both ways, dividing by $n$ and by $n - 1$. Each panel is a histogram of 8,000 sample SDs.
 
-```{r, echo=F}
-#| label: fig-sdbias-simulation
-#| fig-cap: "Sample SDs from 8,000 samples of n = 3 (left) and n = 30 (right) from a normal population with σ = 15. The top row divides by n and the bottom row by n − 1. The dashed red line marks σ = 15, and the solid blue line marks the average sample SD in each panel."
-#| fig-alt: "A 2 by 2 grid of histograms: rows show the uncorrected sample SD (divide by n) versus the corrected sample SD (divide by n minus 1), and columns show sample sizes of 3 and 30, each built from 8000 simulated samples. All four panels share one x-axis. A dashed red line in every panel marks the true population SD of 15, and a solid blue line marks the average sample SD for that panel. At n = 3, the histograms are wide and right-skewed, and the blue line is noticeably left of the red line in both rows, more so in the top row. At n = 30, the histograms are much narrower, and the blue and red lines are nearly on top of each other in both rows."
+```{r}
+#| label: fig-3sdbias-simulation
+#| fig-cap: "Sample SDs from 8,000 samples of n = 3 (left) and n = 30 (right) from a normal population with $\\sigma = 15$. The top row divides by n and the bottom row by n − 1. The dashed orange line marks $\\sigma = 15$, and the solid blue line marks the average sample SD in each panel."
+#| fig-alt: "A 2 by 2 grid of histograms: rows show the uncorrected sample SD (divide by n) versus the corrected sample SD (divide by n minus 1), and columns show sample sizes of 3 and 30, each built from 8000 simulated samples. All four panels share one x-axis. A dashed orange line in every panel marks the true population SD of 15, and a solid blue line marks the average sample SD for that panel. At n = 3, the histograms are wide and right-skewed, and the blue line is noticeably left of the orange line in both rows, more so in the top row. At n = 30, the histograms are much narrower, and the blue and orange lines are nearly on top of each other in both rows."
 #| fig-width: 7
 #| fig-height: 5
 
@@ -1239,11 +1244,11 @@ corner_labels <- avg_lines |>
 
 ggplot(plot_data, aes(x = value)) +
   geom_histogram(bins = 40, linewidth = 0.2, fill = "grey50") +
-  geom_vline(xintercept = sigma, linetype = "dashed", colour = "#b22222", linewidth = 0.8) +
+  geom_vline(xintercept = sigma, linetype = "dashed", colour = "orange", linewidth = 0.8) +
   geom_vline(data = avg_lines, aes(xintercept = avg), colour = "#10377f", linewidth = 0.8) +
   geom_text(data = corner_labels,
             aes(x = Inf, y = Inf, label = sigma_label),
-            parse = TRUE, hjust = 1.1, vjust = 2, colour = "#b22222",
+            parse = TRUE, hjust = 1.1, vjust = 2, colour = "darkorange3",
             inherit.aes = FALSE, size = 3.3) +
   geom_text(data = corner_labels,
             aes(x = Inf, y = Inf, label = s_label),
@@ -1260,16 +1265,16 @@ ggplot(plot_data, aes(x = value)) +
   )
 ```
 
-The red dashed line marks the true $\sigma = 15$, and the blue solid line marks the average of the 8,000 sample SDs in that panel. The averages shown in each panel come from 8,000 random samples, so they differ slightly from the exact values given earlier, for example `r sprintf("%.2f", avg_lines$avg[avg_lines$stat == "divide by n−1" & avg_lines$n == "n = 3"])` against 13.3 at $n = 3$.
+The orange dashed line marks the true $\sigma = 15$, and the blue solid line marks the average of the 8,000 sample SDs in that panel. The averages shown in each panel come from 8,000 random samples, so they differ slightly from the exact values given earlier, for example `r sprintf("%.2f", avg_lines$avg[avg_lines$stat == "divide by n−1" & avg_lines$n == "n = 3"])` against 13.3 at $n = 3$.
 
-First, compare the top row (divide by $n$) to the bottom row (divide by $n-1$). The blue line is closer to the red line in the bottom row, so the correction helps. Second, compare the columns. At $n = 30$ the bias is much smaller than at $n = 3$, in both rows. Dividing by $n$, the average sample SD is `r sprintf("%.1f", avg_lines$avg[avg_lines$stat == "divide by n" & avg_lines$n == "n = 3"])` at $n = 3$ and `r sprintf("%.1f", avg_lines$avg[avg_lines$stat == "divide by n" & avg_lines$n == "n = 30"])` at $n = 30$. The $n-1$ correction matters most for small samples and becomes negligible as sample size grows. Third, compare the widths. The columns share one x-axis, and the $n = 30$ histograms are much narrower than the $n = 3$ histograms, so at $n = 30$ a typical sample SD is much closer to $\sigma$.
+First, compare the top row (divide by $n$) to the bottom row (divide by $n-1$). The blue line is closer to the orange line in the bottom row, so the correction helps. Second, compare the columns. At $n = 30$ the bias is much smaller than at $n = 3$, in both rows. Dividing by $n$, the average sample SD is `r sprintf("%.1f", avg_lines$avg[avg_lines$stat == "divide by n" & avg_lines$n == "n = 3"])` at $n = 3$ and `r sprintf("%.1f", avg_lines$avg[avg_lines$stat == "divide by n" & avg_lines$n == "n = 30"])` at $n = 30$. The $n-1$ correction matters most for small samples and becomes negligible as sample size grows. Third, compare the widths. The columns share one x-axis, and the $n = 30$ histograms are much narrower than the $n = 3$ histograms, so at $n = 30$ a typical sample SD is much closer to $\sigma$.
 
 On an exam, if you are asked for the sample standard deviation, use the $n-1$ version unless told otherwise. R's `sd()` already does this.
 
 ::: {.callout-note title="Note: The law of large numbers and the CLT for the sample SD"}
 Two ideas from earlier in this chapter also apply to the sample SD:
 
-- **Law of large numbers.** As $n$ grows, a single sample's $s$ heads toward $\sigma$, the same way $\bar{x}$ heads toward $\mu$. In @fig-sdbias-simulation this shows as a typical single $s$ at $n = 30$ being much closer to $\sigma$ than at $n = 3$. The shrinking gap between the blue and red lines is a different fact, that the bias of $s$ gets smaller as $n$ grows.
+- **Law of large numbers.** As $n$ grows, a single sample's $s$ heads toward $\sigma$, the same way $\bar{x}$ heads toward $\mu$. In @fig-3sdbias-simulation this shows as a typical single $s$ at $n = 30$ being much closer to $\sigma$ than at $n = 3$. The shrinking gap between the blue and orange lines is a different fact, that the bias of $s$ gets smaller as $n$ grows.
 - **Central limit theorem.** The CLT describes the sampling distribution of the *mean*, not the standard deviation. At $n = 3$ the histograms of sample SDs are right-skewed, so we cannot assume sample SDs are normal.
 :::
 
@@ -1328,12 +1333,12 @@ n_miss <- sum(ci_df$covers == "misses mu")
 
 ```{r}
 #| label: fig-3cicoverage
-#| fig-cap: !expr paste0("95% confidence intervals from 50 samples of size 25 from a normal population with μ = 100 and σ = 15. Each horizontal line is one interval, with a dot at its sample mean, and the dashed line marks μ = 100. Dark blue intervals contain μ. ", n_miss, " of the 50 intervals ", ifelse(n_miss == 1, "misses", "miss"), " μ (red).")
-#| fig-alt: !expr paste0("Fifty horizontal line segments stacked from sample 1 at the bottom to sample 50 at the top, on an IQ axis centered on 100, each with a dot at its sample mean. A vertical dashed line marks the population mean of 100. Most segments are dark blue and cross the dashed line. ", n_miss, " ", ifelse(n_miss == 1, "segment is", "segments are"), " red and ", ifelse(n_miss == 1, "lies", "lie"), " entirely to one side of it.")
+#| fig-cap: !expr paste0("95% confidence intervals from 50 samples of size 25 from a normal population with $\\mu = 100$ and $\\sigma = 15$. Each horizontal line is one interval, with a dot at its sample mean, and the dashed orange line marks $\\mu = 100$. Dark blue intervals contain $\\mu$. ", n_miss, " of the 50 intervals ", ifelse(n_miss == 1, "misses", "miss"), " $\\mu$ (red).")
+#| fig-alt: !expr paste0("Fifty horizontal line segments stacked from sample 1 at the bottom to sample 50 at the top, on an IQ axis centered on 100, each with a dot at its sample mean. A vertical orange dashed line marks the population mean of 100. Most segments are dark blue and cross the dashed line. ", n_miss, " ", ifelse(n_miss == 1, "segment is", "segments are"), " red and ", ifelse(n_miss == 1, "lies", "lie"), " entirely to one side of it.")
 #| fig-height: 6
 
 ggplot(ci_df, aes(y = sample, colour = covers)) +
-  geom_vline(xintercept = 100, linetype = "dashed", colour = "black", linewidth = 0.6) +
+  geom_vline(xintercept = 100, linetype = "dashed", colour = "orange", linewidth = 0.6) +
   geom_segment(aes(x = lower, xend = upper, yend = sample), linewidth = 0.7) +
   geom_point(aes(x = xbar), size = 1.6) +
   scale_colour_manual(values = c("contains mu" = "#10377f", "misses mu" = "#b22222"), guide = "none") +
@@ -1353,7 +1358,7 @@ $$SE_{\bar{x}} = \frac{s}{\sqrt{n}}$$
 
 We write it $SE_{\bar{x}}$ to mark that $s$ replaces $\sigma$. The $n-1$ correction is already built into $s$, so the denominator here is still $\sqrt{n}$.
 
-Estimating $\sigma$ with $s$ adds uncertainty, because $s$ itself varies from sample to sample, as @fig-sdbias-simulation showed. To account for this, we swap the normal cutoffs for those from the $t$-distribution, which depends on sample size. With small $n$, the $t$ values are larger, so the CI widens. At $n = 5$ the 95% cutoff is 2.78 instead of 1.96. As $n$ grows, $t$ values shrink toward 1.96 (2.05 at $n = 30$), and the $t$-based CI becomes indistinguishable from the normal version.
+Estimating $\sigma$ with $s$ adds uncertainty, because $s$ itself varies from sample to sample, as @fig-3sdbias-simulation showed. To account for this, we swap the normal cutoffs for those from the $t$-distribution, which depends on sample size. With small $n$, the $t$ values are larger, so the CI widens. At $n = 5$ the 95% cutoff is 2.78 instead of 1.96. As $n$ grows, $t$ values shrink toward 1.96 (2.05 at $n = 30$), and the $t$-based CI becomes indistinguishable from the normal version.
 
 **A confidence interval shows how precise an estimate is.** A larger $n$ gives a smaller standard error and so a narrower interval. With $\sigma = 15$, the interval is $\bar{x} \pm 5.88$ at $n = 25$ and $\bar{x} \pm 2.94$ at $n = 100$. A wide interval means the estimate is imprecise, and a narrow one means it is precise.
 
@@ -1369,6 +1374,6 @@ Estimating $\sigma$ with $s$ adds uncertainty, because $s$ itself varies from sa
 - **Law of large numbers.** As $n$ grows, a sample statistic settles onto the value for the population your method actually samples. With random sampling, that is the population value. A biased method converges on the wrong value.
 - **Sampling distributions.** Any statistic computed over repeated samples has its own distribution. The sampling distribution of the mean is the one most of classical inference uses, and its spread is the standard error, $\sigma/\sqrt{n}$, estimated by $s/\sqrt{n}$ when $\sigma$ is unknown.
 - **The central limit theorem.** As $n$ grows, the sampling distribution of the mean approaches normal *regardless of the population's shape*. Because of that, normal-based methods work on data that are not themselves normal. The center ($\mu$) and the spread ($\sigma/\sqrt{n}$) do not come from the CLT. They hold at every $n$.
-- **z-scores.** A z-score gives a value's distance from the mean in standard deviations, so areas under the normal curve turn into probabilities.
+- **$z$-scores.** A $z$-score gives a value's distance from the mean in standard deviations, so areas under the normal curve turn into probabilities.
 - **The sample SD is a biased estimator.** The sample mean equals $\mu$ on average, but the sample SD systematically underestimates $\sigma$, because the values in a sample are closer to their own mean than to $\mu$. Dividing by $n-1$ makes the variance unbiased and removes most of the SD's bias. The correction matters most when $n$ is small.
 - **Confidence intervals express uncertainty.** Rather than reporting a single estimate, a CI reports a range of plausible values. The 95% describes the method: across many repeated samples, about 95% of intervals built this way would contain $\mu$. It is not a 95% probability that any one interval does.
