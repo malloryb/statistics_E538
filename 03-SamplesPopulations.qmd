@@ -1162,56 +1162,48 @@ ggplot(df_bias_b, aes(x = n, y = avg, colour = version)) +
 
 **Sample values are closer to their own mean than to $\mu$.** Picture a tiny sample of $n=3$ values. The sample mean $\bar{x}$ might be close to the true population mean $\mu$, or it might be far from it, and we don't know in advance which. But $\bar{x}$ is always computed from those three sample points, which pulls it toward the middle of *those specific* points. As a result, distances from the sample points to $\bar{x}$ tend to be a little shorter, on average, than distances from those same points to the true $\mu$ would be.
 
-One small sample shows how this works. The numbers are invented. Take the three values 3, 6 and 9, so $\bar{x} = 6$, and say the population they came from has mean $\mu = 5$. @fig-sdbias-369 marks both centers on one number line, with the distance from each value to $\bar{x}$ drawn above the line and the distance to $\mu$ drawn below it. Squaring each distance and adding them up gives the sum of squared distances around each center:
+One small sample shows how this works. The numbers are invented. Take the three values 3, 4 and 8, so $\bar{x} = 5$, and say the population they came from has mean $\mu = 6$. @fig-sdbias-348 draws the distance from each value to $\bar{x}$ in one panel and to $\mu$ in the other. Squaring each distance and adding them up gives the sum of squared distances around each center:
 
 | Center | Squared distances | Sum |
 |---|---|---|
-| $\bar{x} = 6$ | $(3-6)^2 + (6-6)^2 + (9-6)^2 = 9 + 0 + 9$ | 18 |
-| $\mu = 5$ | $(3-5)^2 + (6-5)^2 + (9-5)^2 = 4 + 1 + 16$ | 21 |
+| $\bar{x} = 5$ | $(3-5)^2 + (4-5)^2 + (8-5)^2 = 4 + 1 + 9$ | 14 |
+| $\mu = 6$ | $(3-6)^2 + (4-6)^2 + (8-6)^2 = 9 + 4 + 4$ | 17 |
 
 ```{r}
-#| label: fig-sdbias-369
-#| fig-cap: "One invented sample, 3, 6 and 9, with its mean $\\bar{x} = 6$ (blue) and a population mean $\\mu = 5$ (red). Arrows above the line show each value's distance to $\\bar{x}$, and arrows below show its distance to $\\mu$."
-#| fig-alt: "A number line from 2 to 10 with three black points at 3, 6, and 9. A blue dashed vertical line marks the sample mean at 6 and a red dashed vertical line marks the population mean at 5. Above the line, blue arrows run from 3 to 6 and from 9 to 6, each labeled 3, and the point at 6 is labeled 0. Below the line, red arrows run from 3 to 5 labeled 2, from 6 to 5 labeled 1, and from 9 to 5 labeled 4."
-#| fig-width: 7
-#| fig-height: 3
+#| label: fig-sdbias-348
+#| fig-cap: "One invented sample, 3, 4 and 8. Left, each value's distance to the sample mean, $\\bar{x} = 5$ (blue). Right, each value's distance to the population mean, $\\mu = 6$ (red). The panel titles add up the squared distances."
+#| fig-alt: "Two number lines side by side, each with black points labeled 3, 4 and 8. In the left panel a blue dashed line marks the sample mean at 5, and blue arrows run from each point to it, labeled 2, 1 and 3; the title reads squared distances to the sample mean, 4 + 1 + 9 = 14. In the right panel a red dashed line marks the population mean at 6, and red arrows run from each point to it, labeled 3, 2 and 2; the title reads squared distances to the population mean, 9 + 4 + 4 = 17."
+#| fig-width: 9
+#| fig-height: 2.8
 
-vals <- c(3, 6, 9)
-xbar_369 <- 6
-mu_369 <- 5
-seg_df <- data.frame(
-  x    = c(vals, vals),
-  xend = c(rep(xbar_369, 3), rep(mu_369, 3)),
-  y    = c(0.35, 0.35, 0.6, -0.35, -0.6, -0.85),
-  col  = rep(c("xbar", "mu"), each = 3)
+vals_348 <- c(3, 4, 8)
+panel_348 <- function(center, col, center_lab, sum_lab) {
+  d <- data.frame(x = vals_348, h = c(0.45, 0.7, 0.95))
+  d$dist <- abs(d$x - center)
+  ggplot(d) +
+    annotate("segment", x = 2, xend = 10, y = 0, yend = 0, linewidth = 0.5) +
+    annotate("segment", x = center, xend = center, y = -0.15, yend = 1.12,
+             colour = col, linetype = "dashed", linewidth = 0.6) +
+    geom_segment(aes(x = x, xend = x, y = 0, yend = h), colour = "grey70", linewidth = 0.3) +
+    geom_segment(aes(x = x, xend = center, y = h, yend = h), colour = col, linewidth = 1,
+                 arrow = arrow(length = grid::unit(5, "pt"), type = "closed")) +
+    geom_text(aes(x = (x + center) / 2, y = h + 0.11, label = dist), colour = col, size = 4.2) +
+    geom_point(aes(x = x, y = 0), size = 3.2) +
+    geom_text(aes(x = x, y = -0.25, label = x), size = 4.2) +
+    annotate("text", x = center, y = 1.28, label = center_lab, parse = TRUE, colour = col, size = 4.5) +
+    coord_cartesian(xlim = c(2, 10), ylim = c(-0.4, 1.4)) +
+    labs(title = sum_lab) +
+    theme_void(base_size = 12) +
+    theme(plot.title = element_text(hjust = 0.5, size = 12))
+}
+gridExtra::grid.arrange(
+  panel_348(5, "#10377f", "bar(x) == 5", "Squared distances to the sample mean: 4 + 1 + 9 = 14"),
+  panel_348(6, "#b22222", "mu == 6", "Squared distances to the population mean: 9 + 4 + 4 = 17"),
+  nrow = 1
 )
-seg_df$dist <- abs(seg_df$x - seg_df$xend)
-seg_df$lab_x <- ifelse(seg_df$dist == 0, seg_df$x + 0.25, (seg_df$x + seg_df$xend) / 2)
-seg_df$lab_y <- ifelse(seg_df$dist == 0, 0.15, seg_df$y + 0.12)
-
-ggplot() +
-  geom_vline(xintercept = xbar_369, colour = "#10377f", linetype = "dashed", linewidth = 0.6) +
-  geom_vline(xintercept = mu_369, colour = "#b22222", linetype = "dashed", linewidth = 0.6) +
-  geom_segment(aes(x = 2, xend = 10, y = 0, yend = 0), linewidth = 0.5) +
-  geom_segment(data = subset(seg_df, dist > 0),
-               aes(x = x, xend = xend, y = y, yend = y, colour = col), linewidth = 1,
-               arrow = arrow(length = grid::unit(5, "pt"), type = "closed")) +
-  geom_text(data = seg_df, aes(x = lab_x, y = lab_y, label = dist, colour = col), size = 4.2) +
-  geom_point(aes(x = vals, y = 0), size = 3.2) +
-  annotate("label", x = xbar_369, y = 0.95, label = "bar(x) == 6", parse = TRUE,
-           colour = "#10377f", fill = "white", label.size = 0, size = 4.5) +
-  annotate("label", x = mu_369, y = -1.2, label = "mu == 5", parse = TRUE,
-           colour = "#b22222", fill = "white", label.size = 0, size = 4.5) +
-  scale_colour_manual(values = c(xbar = "#10377f", mu = "#b22222"), guide = "none") +
-  scale_x_continuous(breaks = 2:10) +
-  coord_cartesian(xlim = c(2, 10), ylim = c(-1.4, 1.15)) +
-  theme_void(base_size = 12) +
-  theme(axis.text.x = element_text(size = 10, margin = margin(t = 2)),
-        axis.ticks.x = element_line(),
-        axis.ticks.length.x = grid::unit(3, "pt"))
 ```
 
-Measured from $\bar{x}$, the sum of squared distances is 18. Measured from the true mean, it is 21. The distances from $\bar{x}$ come out smaller because $\bar{x}$ was calculated from these same three values. This happens in every sample. The sum of squared distances is smallest around the sample's own mean, so it is never larger than the sum around $\mu$.
+Measured from $\bar{x}$, the sum of squared distances is 14. Measured from the true mean, it is 17. The distances from $\bar{x}$ come out smaller because $\bar{x}$ was calculated from these same three values. This happens in every sample. The sum of squared distances is smallest around the sample's own mean, so it is never larger than the sum around $\mu$.
 
 Variance and SD are built from these squared distances, so the shrinkage carries through. Dividing the sum around $\bar{x}$ by $n$ gives a variance that underestimates $\sigma^2$, and the sample SD inherits that bias. Dividing by $n-1$ instead corrects it.
 
