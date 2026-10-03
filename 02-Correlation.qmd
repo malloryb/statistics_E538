@@ -7,6 +7,7 @@ aliases: [redirects/Correlation.html]
 source("global_stuff.R")
 library(tidyverse)
 set.seed(538)
+source("imgs/gifs/ch2_cor_true_r.R")  # true_r, the true correlation in fig-2realcorFour
 ```
 
 # Correlation {#Correlation}
@@ -27,14 +28,14 @@ To use data for explanation, we need tools for recognizing when two things move 
 
 Suppose a person's chocolate supply has a causal influence on their happiness: more chocolate means more happiness, less chocolate means less. Because happiness is also caused by plenty of other things in a person's life, we'd expect the relationship between chocolate and happiness to be real but imperfect, not a perfect one-to-one match.
 
-Our first step is to collect some imaginary data from 100 people. We walk around and ask the first 100 people we meet to answer two questions:
+Our first step is to collect data from 100 people. We walk around and ask the first 100 people we meet to answer two questions:
 
 1.  how much chocolate do you have? and
 2.  how happy are you?
 
 For convenience, both the scales will go from 0 to 100. For the chocolate scale, 0 means no chocolate, 100 means lifetime supply of chocolate. Any other number is somewhere in between. For the happiness scale, 0 means no happiness, 100 means all of the happiness, and in between means some amount in between.
 
-Here is some sample data from the first 10 imaginary subjects.
+The numbers in this example are invented. Here are the first 10 subjects.
 
 ```{r 3chocHappy}
 subject <- 1:100
@@ -57,8 +58,8 @@ When you have two measurements worth of data, you can always turn them into dots
 
 ```{r}
 #| label: fig-2scatter1
-#| fig-cap: "Imaginary data showing a positive correlation between amount of chocolate and amount of happiness."
-#| fig-alt: "Scatter plot of 100 imaginary people, chocolate supply on the x-axis and happiness on the y-axis, with dots rising from lower left to upper right."
+#| fig-cap: "Invented data showing a positive correlation between amount of chocolate and amount of happiness."
+#| fig-alt: "Scatter plot of 100 invented people, chocolate supply on the x-axis and happiness on the y-axis, with dots rising from lower left to upper right."
 
 library(ggplot2)
 
@@ -79,11 +80,8 @@ Two other patterns are possible: a reversed relationship, where more chocolate m
 #| fig-cap: "Three scatterplots showing negative, positive, and zero correlation."
 #| fig-alt: "Three scatter plots labeled negative, positive and random. Dots fall left to right, rise left to right, and show no pattern."
 
-subject_x<-1:100
-chocolate_x<-round(1:100*runif(100,.5,1))
-happiness_x<-round(1:100*runif(100,.5,1))
-
-df_positive<-data.frame(subject_x,chocolate_x,happiness_x)
+# the positive panel is the chocolate and happiness data from above
+df_positive <- data.frame(subject_x = subject, chocolate_x = chocolate, happiness_x = happiness)
 
 subject_x<-1:100
 chocolate_x<-round(1:100*runif(100,.5,1))
@@ -331,22 +329,7 @@ That square root is the **standard deviation (SD)**, so we had already computed 
 
 $$\text{standard deviation} = \sqrt{Variance} = \sqrt{\frac{SS}{N}} = \sqrt{\frac{\sum_{i}^{N}(x_{i}-\bar{x})^2}{N}}$$
 
-The square root "unsquares" the variance, putting the measure of spread back on the original scale of the data. Here is the table one more time:
-
-```{r,echo=F}
-scores<-1:6
-values<-c(1,6,4,2,6,8)
-mean_scores<-mean(values)
-Difference_from_Mean<-values-mean_scores
-Squared_Deviations <- Difference_from_Mean^2
-the_df<-data.frame(scores,values,mean=rep(mean_scores,6),Difference_from_Mean,Squared_Deviations)
-
-the_df <- the_df %>%
-  rbind(c("Sums",round(colSums(the_df[1:6,2:5]),2))) %>%
-  rbind(c("Means",round(colMeans(the_df[1:6,2:5]),2)))
-knitr::kable(the_df)
-
-```
+The square root "unsquares" the variance, putting the measure of spread back on the original scale of the data.
 
 Our standard deviation, $\sqrt{5.917} \approx 2.43$, makes far more sense than the variance did. A variance of 5.917 feels too large for this data because it is on the squared scale, but an SD of 2.43 lines up with the actual deviations. Their sizes run from 0.5 to 3.5, and 2.43 is within that range.
 
@@ -447,26 +430,7 @@ $X$ and $Y$ are perfectly aligned: $1$ with $1$, $2$ with $2$, up to $10$ with $
 
 $A$ and $B$ are perfectly reversed: $1$ with $10$, $2$ with $9$, and so on. Their products add up to 220, the *smallest* possible sum.
 
-Any other pairing of 1--10 with 1--10 will fall between these two extremes. @fig-2simsum shows the sums of products from 1000 random pairings. Every result falls between 220 (perfect negative alignment) and 385 (perfect positive alignment).
-
-```{r}
-#| label: fig-2simsum
-#| fig-cap: "Simulated sums of products showing the kinds of values that can be produced by randomly ordering the numbers in X and Y."
-#| fig-alt: "1000 dots for simulated sums of products, all lying between dashed lines at 220 and 385."
-
-simulated_sums <- numeric(1000)
-for (sim in 1:1000){
-  X <- sample(1:10)
-  Y <- sample(1:10)
-  simulated_sums[sim] <- sum(X * Y)
-}
-sim_df <- data.frame(sims = 1:1000, simulated_sums)
-
-ggplot(sim_df, aes(x = sims, y = simulated_sums)) +
-  geom_point() +
-  geom_hline(yintercept = 385, linetype = "dashed") +
-  geom_hline(yintercept = 220, linetype = "dashed")
-```
+Any other pairing of 1 to 10 with 1 to 10 gives a sum between these two extremes, 220 and 385.
 
 The sum of the products tells us about the direction of the relationship:
 
@@ -534,60 +498,16 @@ For the ten people in the covariance table, the covariance is 4.8. Dividing by $
 You'll see several algebraically equivalent formulas for Pearson's $r$, some easier for hand calculation, others more compact. They all produce the same result. In practice, you'll compute $r$ with software, so the priority here is understanding what $r$ means and how to interpret it. Working through one example by hand still helps: it shows where $r$ actually comes from, which is why lecture walks through a full hand calculation before you run it in R during lab.
 :::
 
-To confirm $r$ really does stay between $-1$ and $1$, @fig-2onethousandr shows a simulation: we randomly ordered the numbers 1 to 10 for both an X measure and a Y measure, computed Pearson's $r$ between them, and repeated the process 1000 times. Every dot falls between -1 and 1.
-
-```{r}
-#| label: fig-2onethousandr
-#| fig-cap: "A simulation of correlations. Each dot is the r-value between an X and Y variable that each contain the numbers 1 to 10 in random orders."
-#| fig-alt: "1000 simulated r values plotted in order, all between solid lines at -1 and 1."
-
-simulated_sums <- numeric(0)
-for(sim in 1:1000){
-  X <- sample(1:10)
-  Y <- sample(1:10)
-  simulated_sums[sim] <- cor(X,Y)
-}
-
-sim_df <- data.frame(sims=1:1000,simulated_sums)
-
-ggplot(sim_df, aes(x = sims, y = simulated_sums))+
-  geom_point() +
-  geom_hline(yintercept = -1)+
-  geom_hline(yintercept = 1)
-
-```
-
 ## Regression: a mini intro
 
 **Linear regression** is closely tied to correlation, and this section gives a first introduction to it.
 
-@fig-2regression shows three new scatter plots of the same three kinds, drawn from fresh random data, now with a fitted line added to each.
+@fig-2regression shows the same three scatter plots as @fig-2posnegrand, now with a fitted line added to each.
 
 ```{r}
 #| label: fig-2regression
 #| fig-cap: "Three scatterplots showing negative, positive, and a random correlation (where the r-value is expected to be 0), along with the best fit regression line."
 #| fig-alt: "The three negative, positive and random scatter plots, each with a blue fitted line sloping down, up, and nearly flat."
-
-subject_x<-1:100
-chocolate_x<-round(1:100*runif(100,.5,1))
-happiness_x<-round(1:100*runif(100,.5,1))
-
-df_positive<-data.frame(subject_x,chocolate_x,happiness_x)
-
-subject_x<-1:100
-chocolate_x<-round(1:100*runif(100,.5,1))
-happiness_x<-round(100:1*runif(100,.5,1))
-
-df_negative<-data.frame(subject_x,chocolate_x,happiness_x)
-
-subject_x<-1:100
-chocolate_x <- sample(0:100, 100, replace = TRUE)
-happiness_x <- sample(0:100, 100, replace = TRUE)
-
-df_random<-data.frame(subject_x,chocolate_x,happiness_x)
-
-all_data<-rbind(df_positive,df_negative,df_random)
-all_data<-cbind(all_data,correlation=rep(c("positive","negative","random"),each=100))
 
 ggplot(all_data,aes(x=chocolate_x,y=happiness_x))+
   geom_point() +
@@ -636,13 +556,13 @@ ggplot(d, aes(x = hp, y = mpg)) +
 
 The regression line is chosen to minimize the total size of these residuals. In practice, we compute the sum of squared deviations: square each residual, then add them together. The blue line produces the smallest possible total squared error; any other line would yield a larger one.
 
-@fig-2regressionGIF animates this directly, comparing the best fit line (blue) to other possible lines (black) as the black line moves up and down. The red lines show the error between the black line and the data points at each position, and the shaded grey area shrinks to its minimum exactly when the black line reaches the best fit line, then expands again as it moves away.
+@fig-2regressionGIF animates this directly, comparing the best fit line (blue) to other possible lines (black) as the black line moves up and down. The red lines show the error between the black line and the data points at each position, and the grey band is narrowest exactly when the black line reaches the best fit line, then widens again as it moves away.
 
 ::: {.content-visible when-format="html"}
 ```{r}
 #| label: fig-2regressionGIF
-#| fig-cap: "The black line moves through alternative positions while the blue best-fit line stays put. Red lines show each point's error, and the shaded grey area is their total, which shrinks to a minimum exactly at the best-fit line."
-#| fig-alt: "Animation of a scatter plot with a fixed blue best-fit line and a black line that moves through other positions. Red vertical segments connect each point to the black line, and a grey band shows their total squared error, which is smallest when the black line lies on the blue one."
+#| fig-cap: "The black line moves through alternative positions while the blue best-fit line stays put. Red lines show each point's error. The grey band's width is the typical size of those errors, and the band is narrowest when the black line sits on the best-fit line."
+#| fig-alt: "Animation of a scatter plot with a fixed blue best-fit line and a black line that moves through other positions. Red vertical segments connect each point to the black line, and a grey band whose width shows the typical size of those errors is narrowest when the black line lies on the blue one."
 #| out-width: "75%"
 
 knitr::include_graphics(path="imgs/gifs/regression-1.gif")
@@ -650,7 +570,7 @@ knitr::include_graphics(path="imgs/gifs/regression-1.gif")
 :::
 
 ::: {.content-visible when-format="pdf"}
-![The black line moves through alternative positions while the blue best-fit line stays put. Red lines show each point's error, and the shaded grey area is their total, which shrinks to a minimum exactly at the best-fit line. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/regression-1.png){#fig-2regressionGIF width="75%"}
+![The black line moves through alternative positions while the blue best-fit line stays put. Red lines show each point's error. The grey band's width is the typical size of those errors, and the band is narrowest when the black line sits on the best-fit line. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/regression-1.png){#fig-2regressionGIF width="75%"}
 :::
 
 Whenever the black line does not overlap with the blue line, it fits the data less well, because the blue regression line has the smallest total squared error.
@@ -714,7 +634,7 @@ ggplot(plot_df,aes(x=x,y=y))+
 
 ```
 
-In Week 11 we compute a line's slope and intercept by hand and use those values to compute and interpret residuals for individual points.
+Chapter 9 returns to this example and computes the line's slope and intercept by hand.
 
 ## Interpreting correlations: why caution is warranted
 
@@ -745,43 +665,12 @@ knitr::kable(the_df_balls)
 
 In this one case, if we computed Pearson's $r$, we would find that $r =$ `r round(cor(North_pole,South_pole), 2)`. But, we already know that this value does not tell us anything about the relationship between the balls chosen in the north and south pole. We know that relationship should be completely random, because that is how we set up the game.
 
-A more useful question is what range of correlations chance alone can produce. If we ran this game thousands of times, each time drawing new balls and computing the correlation, the $r$ value would fluctuate across the whole range. Looking at the shape of that fluctuation tells us what kinds of correlations chance can produce.
-
-**Monte Carlo: what chance produces.**
-
-We can use a computer to repeat the lottery game as many times as we like. This process, repeated random sampling to explore possible outcomes, is called a **Monte Carlo simulation**.
-
-Running the game 1,000 times, each time generating 10 random numbers for both the North Pole and South Pole participants and computing the correlation between them, gives 1,000 different values of Pearson's $r$, each produced under conditions where we know no real relationship exists.
-
-```{r}
-#| label: fig-2anotherthousand
-#| fig-cap: "Another figure showing a range of r-values that can be obtained by chance."
-#| fig-alt: "1000 simulated r values from random lottery draws, scattered between about -0.85 and 0.9 inside lines at -1 and 1."
-#| echo: false
-
-simulated_correlations <- numeric(0)
-for(sim in 1:1000){
-  North_pole <- sample(1:10,10,replace=TRUE)
-  South_pole <- sample(1:10,10,replace=TRUE)
-  simulated_correlations[sim] <- cor(North_pole,South_pole)
-}
-
-sim_df <- data.frame(sims=1:1000,simulated_correlations)
-
-ggplot(sim_df, aes(x = sims, y = simulated_correlations))+
-  geom_point() +
-  geom_hline(yintercept = -1)+
-  geom_hline(yintercept = 1)
-```
-
-@fig-2anotherthousand shows the outcome. Each dot is one simulated correlation. All of them fall between $-1$ and $1$, but the values scatter widely: sometimes strongly positive, sometimes strongly negative, often near zero. Chance alone can generate correlations of any size. Finding a correlation in your data does not by itself guarantee a meaningful relationship.
-
-To visualize this process more concretely, we can animate a single run. In @fig-2randcor10gif, each frame shows two sets of 10 random values plotted against each other, along with the fitted regression line. Because the data are random, we expect no consistent pattern. Yet across repetitions, the line slopes upward, then downward, then occasionally flat. This is what spurious correlation looks like.
+@fig-2randcor10gif runs the game 10 more times. Each frame is one run, with the North Pole's 10 numbers on the x-axis, the South Pole's 10 numbers on the y-axis, and the fitted line. We built the game with no relationship, so we might expect a flat line every time. The line instead tilts up in some runs and down in others.
 
 ::: {.content-visible when-format="html"}
 ```{r}
 #| label: fig-2randcor10gif
-#| fig-cap: "Completely random data points drawn from a uniform distribution with a small sample size of 10. The blue trend line twirls around sometimes showing large correlations that are produced by chance"
+#| fig-cap: "Ten runs of the lottery game, with 10 draws at each pole. The fitted line tilts up in some runs and down in others, although the game has no relationship built in."
 #| fig-alt: "Animation of 10 random points with a blue fitted line that swings to a different slope with each new sample, sometimes steeply up or down, even though the two variables are unrelated."
 #| out.width: "75%"
 
@@ -790,19 +679,34 @@ knitr::include_graphics(path="imgs/gifs/corUnifn10-1.gif")
 :::
 
 ::: {.content-visible when-format="pdf"}
-![Completely random data points drawn from a uniform distribution with a small sample size of 10. The blue trend line twirls around sometimes showing large correlations that are produced by chance (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/corUnifn10-1.png){#fig-2randcor10gif width="75%"}
+![Ten runs of the lottery game, with 10 draws at each pole. The fitted line tilts up in some runs and down in others, although the game has no relationship built in. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/corUnifn10-1.png){#fig-2randcor10gif width="75%"}
 :::
 
 ```{r, eval=FALSE}
 # The animation is built by imgs/gifs/ch2_cor_gifs.R
 ```
 
-How do we know whether the correlation we observed is meaningful or just chance? One way forward is to look at the whole distribution of outcomes chance produces, rather than at a single outcome. By simulating 1,000 random correlations and plotting them in a histogram, we can see which values occur frequently and which are rare.
+**Monte Carlo: what chance produces.**
+
+We can use a computer to repeat the lottery game as many times as we like. This process, repeated random sampling to explore possible outcomes, is called a **Monte Carlo simulation**.
+
+Running the game 1,000 times, each time generating 10 random numbers for both the North Pole and South Pole participants and computing the correlation between them, gives 1,000 different values of Pearson's $r$, each produced under conditions where we know no real relationship exists. @fig-2histrandcor sorts those 1,000 values into a histogram.
+
+**Before you look.** Each bar in @fig-2histrandcor counts the runs whose $r$ fell in one 0.1-wide interval. Decide how often you expect a game with no relationship built in to give an $r$ above 0.5 or below $-0.5$.
 
 ```{r}
 #| label: fig-2histrandcor
 #| fig-cap: "A histogram showing the frequency distribution of r-values for completely random values between an X and Y variable (sample-size=10). A full range of r-values can be obtained by chance alone. Values of $r$ far from 0 in either direction are less common than values near 0."
 #| fig-alt: "Histogram of 1000 simulated r values for n = 10, centered on 0, with few values beyond plus or minus 0.7."
+
+simulated_correlations <- numeric(0)
+for(sim in 1:1000){
+  North_pole <- sample(1:10,10,replace=TRUE)
+  South_pole <- sample(1:10,10,replace=TRUE)
+  simulated_correlations[sim] <- cor(North_pole,South_pole)
+}
+sim_df <- data.frame(sims=1:1000,simulated_correlations)
+n_beyond_half <- sum(abs(simulated_correlations) > 0.5)
 
 ggplot(sim_df, aes(x = simulated_correlations)) +
   geom_histogram(breaks = seq(-1, 1, .1)) +
@@ -810,7 +714,9 @@ ggplot(sim_df, aes(x = simulated_correlations)) +
   ylab("Count")
 ```
 
-@fig-2histrandcor shows that most chance correlations cluster near zero. Moderate correlations (around $\pm 0.5$) occur less frequently, and near-perfect correlations ($\pm 0.95$) are almost absent. This distribution defines a "window of chance." When we compute a correlation in real data, we can ask: is our observed $r$ consistent with what chance alone could plausibly generate?
+Each of the 1,000 values in @fig-2histrandcor is the $r$ from one run of the lottery game, with 10 draws at each pole. Even though we built the game so that no relationship exists, `r n_beyond_half` of the 1,000 runs gave a correlation above 0.5 or below $-0.5$.
+
+@fig-2histrandcor also shows that most chance correlations cluster near zero. Moderate correlations (around $\pm 0.5$) occur less frequently, and near-perfect correlations ($\pm 0.95$) are almost absent. This distribution defines a "chance window." When we compute a correlation in real data, we can ask: is our observed $r$ consistent with what chance alone could plausibly generate?
 
 For example, if you observed $r=0.1$, the histogram shows that such values are common in random data, so chance could easily explain it. An observed $r=0.5$ is less common but still possible by chance. An observed $r=0.95$, however, falls outside what chance typically produces, suggesting that something more systematic is driving the relationship.
 
@@ -848,63 +754,20 @@ ggplot(all_df,aes(x=simulated_correlations))+
 
 ```
 
-As sample size grows, the spread of chance correlations narrows:
-
--   With $n$ = 10, correlations spread widely across the range $-1$ to $1$. Chance alone frequently produces values that would look "strong" in real data.
--   With $n$ = 50 or 100, the spread narrows, but moderate correlations still appear.
--   With $n$ = 1000, almost all simulated correlations fall close to zero.
-
-**Larger samples reduce the influence of chance.** Small samples are highly unstable, making it difficult to distinguish signal from noise. As sample size increases, the distribution of chance correlations collapses toward zero, so observing a large $r$ becomes far less likely under randomness alone.
-
-This illustrates why researchers place so much emphasis on collecting sufficient data. With too few observations, even strong-looking correlations may be spurious. With larger samples, a correlation of the same size is much harder to attribute to chance, and therefore more likely to reflect a real underlying relationship.
+Each histogram holds 1,000 values of $r$, one per run of the game at that sample size. With $n = 10$, the correlations spread across nearly the whole range from $-1$ to $1$, and values above 0.5 or below $-0.5$ are common. With $n = 50$ or $n = 100$, the spread narrows, but correlations near 0.2 or $-0.2$ still turn up. With $n = 1000$, almost every simulated correlation falls close to zero. Larger samples shrink the range of correlations that chance alone produces, so a large $r$ from a large sample is much harder to attribute to chance.
 
 ::: {.callout-tip title="Tip: Sample size"}
-Bigger $n$ narrows the "window of chance." If you expect a modest linear effect (e.g., \|$r$\| ≈ 0.2--0.3), plan for larger samples so random swings are less likely to mimic or mask the effect.
+Bigger $n$ narrows the chance window. If you expect a modest linear effect (e.g., \|$r$\| ≈ 0.2--0.3), plan for larger samples so random swings are less likely to mimic or mask the effect.
 :::
 
-**Visualizing the effect of sample size.**
+**When there is a true correlation.**
 
-Animations make it easier to see how sample size influences the stability of correlation estimates. When the sample is very small, chance variation can create apparent patterns in any direction. As the sample size increases, those chance fluctuations diminish.
-
-**When there is no true correlation**
-
-In @fig-2corRandfour, each panel shows two random variables sampled with no real relationship. The panels differ only in sample size: 10, 50, 100, or 1000 observations. Each frame of the animation re-samples the data, plots them, and fits a line.
-
-With $n=10$, the line swings from steep positive to steep negative slopes. At $n=50$ and $n=100$, the line still shifts but is more restrained. At $n=1000$, the line is consistently flat, as expected when no correlation exists.
-
-::: {.content-visible when-format="html"}
-```{r}
-#| label: fig-2corRandfour
-#| fig-cap: "Animation of how correlation behaves for completely random X and Y variables as a function of sample size. The best fit line is not very stable for small sample-sizes, but becomes more reliably flat as sample-size increases."
-#| fig-alt: "Animation of four scatter plots of random data with sample sizes of 10, 50, 100 and 1000, each with a blue fitted line. The line swings widely at 10 points and stays nearly flat at 1000 points."
-#| out.width: "75%"
-
-#Same with this one - want to make this in the same format, this is old one. 
-
-knitr::include_graphics(path="imgs/gifs/corUnifFourNs-1.gif")
-```
-:::
-
-::: {.content-visible when-format="pdf"}
-![Animation of how correlation behaves for completely random X and Y variables as a function of sample size. The best fit line is not very stable for small sample-sizes, but becomes more reliably flat as sample-size increases. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/corUnifFourNs-1.png){#fig-2corRandfour width="75%"}
-:::
-
-```{r, eval=FALSE}
-# The animation is built by imgs/gifs/ch2_cor_gifs.R
-```
-
-The line from the sample with 1000 observations is the most reliable. It stays nearly flat across repetitions, as we would expect when no true correlation exists. The line from a sample of only 10 observations swings widely from one repetition to the next.
-
-**When there is a true correlation**
-
-In @fig-2realcorFour, the simulation is repeated with a real positive correlation built into the data. Again, we vary the sample size from 10 to 1000.
-
-With $n=10$, the regression line jumps around and occasionally even points downward, despite the underlying positive relationship. As the sample size grows, the line becomes more stable and consistently reflects the true positive slope. Sampling error still introduces some noise, but with larger samples the real correlation is much easier to detect.
+In @fig-2realcorFour, we built a true correlation of `r true_r` into the population, then drew a new sample in every frame at each of the same four sample sizes. Before watching, predict which panel will sometimes show a line sloping down.
 
 ::: {.content-visible when-format="html"}
 ```{r}
 #| label: fig-2realcorFour
-#| fig-cap: "How correlation behaves as a function of sample-size when there is a true correlation between X and Y variables."
+#| fig-cap: !expr paste0("How the fitted line behaves at four sample sizes when X and Y have a true correlation of ", true_r, ". Each frame is a new sample at each size.")
 #| fig-alt: "Animation of four scatter plots with sample sizes of 10, 50, 100 and 1000, drawn from variables with a real positive relationship, each with a blue fitted line. The slope varies a lot at 10 points and settles on a steady upward slope at 1000 points."
 #| out.width: "75%"
 
@@ -913,8 +776,10 @@ knitr::include_graphics(path="imgs/gifs/corRealgif-1.gif")
 :::
 
 ::: {.content-visible when-format="pdf"}
-![How correlation behaves as a function of sample-size when there is a true correlation between X and Y variables. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/corRealgif-1.png){#fig-2realcorFour width="75%"}
+![How the fitted line behaves at four sample sizes when X and Y have a true correlation of `r true_r`. Each frame is a new sample at each size. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/corRealgif-1.png){#fig-2realcorFour width="75%"}
 :::
+
+With $n=10$, the regression line jumps around and occasionally even points downward, despite the underlying positive relationship. As the sample size grows, the line becomes more stable and consistently reflects the true positive slope. Sampling error still introduces some noise, but with larger samples the real correlation is much easier to detect.
 
 Even when a real positive correlation exists, a small sample might miss it, or even suggest the opposite, simply due to chance. Because we usually only have one sample, we can never know for certain whether we were "lucky" or "unlucky." The best protection is to collect more data.
 
@@ -924,7 +789,7 @@ Consider a snake plant. Like most plants, it needs water to stay alive, but also
 
 Plants given no water at all will eventually die, showing little or no weekly growth. With only a few teaspoons per day, plants may survive but grow only modestly. In a scatter plot, those cases would appear near the bottom left (low water, low growth) and rise upward as water increases. Growth continues to improve until a threshold is reached, beyond which excess water harms the plants. Severely overwatered plants also fail to grow and eventually die, just as those given no water do.
 
-The scatter plot would form an inverted U or V: as water increases, growth rises to a peak and then declines with overwatering. A relationship like this can produce a Pearson's $r$ close to zero, even though water clearly affects growth. @fig-2snakeplant illustrates this pattern.
+The scatter plot would form an inverted U or V: as water increases, growth rises to a peak and then declines with overwatering. A relationship like this can produce a Pearson's $r$ close to zero, even though water clearly affects growth. The numbers in this example are invented, with growth built to peak at 500 teaspoons a day. @fig-2snakeplant illustrates this pattern.
 
 ```{r}
 #| label: fig-2snakeplant
@@ -943,15 +808,11 @@ snake_df <- data.frame(growth, water)
 ggplot(snake_df, aes(x=water,y=growth))+
    geom_point() +
   xlab("Water (teaspoons)")+
-  ggtitle("Imaginary snake plant growth \n as a function of water")
+  ggtitle("Invented snake plant growth \n as a function of water")
 
 ```
 
-There is clearly a relationship between watering and snake plant growth. But, the correlation isn't in one direction. As a result, when we compute the correlation in terms of Pearson's r, we get a value very close to zero, suggesting no relationship.
-
-```{r}
-cor(growth,water)
-```
+There is clearly a relationship between watering and snake plant growth. But, the correlation isn't in one direction. As a result, when we compute Pearson's $r$ for these 1,000 plants, we get `r sprintf("%.3f", cor(growth, water))`, very close to zero.
 
 This means no *single straight line* describes the relationship. When we need lines or curves going in more than one direction, we have a nonlinear relationship.
 
