@@ -62,13 +62,17 @@ Example: "Mean change was -0.42 units (95% CI \[-0.73, -0.11\]; *t*(11) = -2.92;
 
 ## Signal over noise, for a mean
 
-Chapter 4 introduced the general shape of a test statistic: the effect you observed, divided by an estimate of how much it could vary by chance.
+In Chapter 5 we tested a sample mean against $\mu_0$ with $z$:
 
-$$\text{statistic}=\frac{\text{effect}}{\text{error}}$$
+$$z = \frac{\bar{x}-\mu_0}{\sigma/\sqrt{n}}$$
 
-The $t$-test is the first place we fill that in with real quantities. The effect is the distance between the sample mean and the value $H_0$ names. The error is the standard error, $s/\sqrt{n}$, not the raw standard deviation, because what varies from study to study is the *mean*, not an individual observation.
+The numerator is the effect, the distance between the sample mean and the value $H_0$ names. The denominator is the standard error, the standard deviation of the sampling distribution of the sample mean. The thing being tested is a sample mean, so the yardstick is how far sample means of size $n$ fall from $\mu_0$ by chance. Means vary less than individual observations do, by a factor of $\sqrt{n}$, which is why the denominator is $\sigma/\sqrt{n}$ rather than $\sigma$.
 
-$$t = \frac{\text{effect}}{\text{standard error}} = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}$$
+$z$ needs the population standard deviation $\sigma$, and real studies almost never know it. The $t$-test estimates it with the sample standard deviation $s$:
+
+$$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}$$
+
+$t$ still measures the distance from $\mu_0$ in standard errors. The difference is that $s$ is itself an estimate that changes from sample to sample, and the next sections show what that does to the distribution of $t$.
 
 ## One-sample t-test
 
@@ -78,11 +82,7 @@ $$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1$$
 
 After calculating $t$ from our data, we compare the observed $t$ to a $t$ distribution with $n-1$ degrees of freedom to get a $p$-value and a decision at $\alpha$.
 
-### Comparing $z$ and $t$
-
-Under a known population SD ($\sigma$), the standardized mean uses the $z$ statistic: $$z = \frac{\bar{x}-\mu_0}{\sigma/\sqrt{n}}$$
-
-When $\sigma$ is *unknown* (the usual case), we estimate it with the sample SD ($s$) and use the $t$ statistic: $$t = \frac{\bar{x}-\mu_0}{s/\sqrt{n}}, \qquad df = n-1$$
+### Why $t$ has heavier tails than $z$
 
 Because $s$ varies from sample to sample, the $t$ distribution has heavier tails than the standard normal. As $n$ grows, $s$ stabilizes and $t$ converges to $z$.
 
@@ -138,14 +138,9 @@ p_lin / p_log
 If the population SD $\sigma$ is known *and* the sampling distribution of the sample mean is (approximately) normal, use $z$. In practice, $\sigma$ is rarely known, so we use $t$ with $s$ and $df=n-1$.
 :::
 
-**Rule of thumb.** For two-tailed tests at $\alpha=0.05$:
-
--   $z$ uses critical values $\pm 1.96$.
--   $t$ is a bit wider for small $n$ (e.g., $df=9 \Rightarrow \pm 2.262$; $df=29 \Rightarrow \pm 2.045$), and approaches $\pm 1.96$ as $n$ increases.
-
 ### Degrees of freedom
 
-Every $t$ formula so far has carried $df = n-1$ alongside it, and @fig-6-z-vs-t-linear-log drew a different $t$ curve for each $df$. That number is the **degrees of freedom**. It is also the number in parentheses whenever a $t$-test is reported, as in $t(9) = 1.94$.
+The one-sample formula carries $df = n-1$ alongside it, and @fig-6-z-vs-t-linear-log drew a different $t$ curve for each $df$. That number is the **degrees of freedom**. It is also the number in parentheses whenever a $t$-test is reported, as in $t(9) = 1.94$.
 
 For one-sample and paired $t$-tests, $df = n-1$. A sample of 10 has $df=9$.
 
@@ -168,16 +163,18 @@ pct_beyond2_n101 <- 100 * mean(abs(sim_t(101)) > 2)
 
 In a simulation with $H_0$ true, `r sprintf("%.1f", pct_beyond2_n10)`% of $t$ values from samples of 10 fall beyond $\pm 2$, against `r sprintf("%.1f", pct_beyond2_n101)`% from samples of 101, close to the 5% a normal curve gives. Small samples produce more large $t$ values because $s$ is sometimes well below $\sigma$, which shrinks the denominator. That is why a test with few degrees of freedom needs a larger cutoff (2.26 at $df = 9$) to keep false alarms at 5%.
 
-### What t represents
+### Critical values
 
-$t$ expresses how far a sample mean is from the hypothesized mean, in standard error units (signal over noise).
+For two-tailed tests at $\alpha = 0.05$:
 
-$t$ can be positive or negative depending on direction. Under $H_0$, $t \sim t_{(df=n-1)}$.\
-**Rule of thumb.** Under $H_0$, $|t|$ beyond about 2 is rare. The exact two-tailed cutoff at $\alpha = 0.05$ is 2.09 at $df = 20$, and higher for smaller $df$ (2.26 at $df = 9$).
+-   $z$ uses critical values $\pm 1.96$.
+-   $t$ uses wider cutoffs for small samples: $\pm 2.262$ at $df = 9$, $\pm 2.086$ at $df = 20$, $\pm 2.045$ at $df = 29$. They approach $\pm 1.96$ as $n$ increases.
 
-::: {.callout-note title="Note: Standard error, again"}
-Remember that $s/\sqrt{n}$ is the standard error (SE), the standard deviation of the sampling distribution of the sample mean.
-:::
+**Rule of thumb.** Under $H_0$, $|t|$ beyond about 2 is rare.
+
+### $t$ when $H_0$ is true
+
+$t$ can be positive or negative depending on direction. Under $H_0$, $t \sim t_{(df=n-1)}$.
 
 To see how $t$ behaves when $H_0$ is true, we can simulate it. We set up a population whose mean really is $\mu_0 = 0$, draw a sample of 10, and compute one $t$. Then we repeat that 1,000 times.
 
