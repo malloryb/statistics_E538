@@ -39,8 +39,11 @@ The numbers in this example are invented. We built them so that each extra unit 
 
 ```{r 3chocHappy}
 subject <- 1:100
-chocolate <- sample(0:100, 100, replace = TRUE)
-happiness <- round(pmin(100, pmax(0, 20 + 0.6 * chocolate + rnorm(100, 0, 12))))
+# Own seed, restored afterwards, so the chapter's other random draws are unchanged
+withr::with_seed(13, {
+  chocolate <- sample(0:100, 100, replace = TRUE)
+  happiness <- round(pmin(100, pmax(0, 20 + 0.6 * chocolate + rnorm(100, 0, 20))))
+})
 
 the_df_CC <- data.frame(subject,chocolate,happiness)
 
@@ -550,7 +553,7 @@ $$r = \frac{cov(X,Y)}{\sigma_X \sigma_Y}$$
 
 $r$ is the covariance of X and Y divided by the product of their standard deviations. Here $\sigma_X$ and $\sigma_Y$ are the standard deviations computed by dividing by $N$, the same way the covariance was computed. Dividing by the standard deviations normalizes the covariance, constraining $r$ to fall between $-1$ and $1$, which makes correlation values comparable across variables measured in different units or on different scales.
 
-For the ten people in the covariance table, the covariance is `r sprintf('%.1f', cov_N)`. Dividing by $N$, the standard deviation of chocolate is `r sprintf('%.3f', sd_c)` and the standard deviation of happiness is `r sprintf('%.3f', sd_h)`. So $r = \frac{`r sprintf('%.1f', cov_N)`}{`r sprintf('%.3f', sd_c)` \times `r sprintf('%.3f', sd_h)`} = \frac{`r sprintf('%.1f', cov_N)`}{`r sprintf('%.3f', sd_c * sd_h)`} = `r sprintf('%.2f', r_10)`$. That value is close to 1. For all 100 people in @fig-2scatter1, R gives $r$ = `r sprintf('%.2f', cor(chocolate, happiness))`, which matches the upward pattern in the scatter plot.
+For the ten people in the covariance table, the covariance is `r sprintf('%.1f', cov_N)`. Dividing by $N$, the standard deviation of chocolate is `r sprintf('%.3f', sd_c)` and the standard deviation of happiness is `r sprintf('%.3f', sd_h)`. So $r = \frac{`r sprintf('%.1f', cov_N)`}{`r sprintf('%.3f', sd_c)` \times `r sprintf('%.3f', sd_h)`} = \frac{`r sprintf('%.1f', cov_N)`}{`r sprintf('%.3f', sd_c * sd_h)`} = `r sprintf('%.2f', r_10)`$. That is a moderate positive correlation. For all 100 people in @fig-2scatter1, R gives $r$ = `r sprintf('%.2f', cor(chocolate, happiness))`, which matches the upward pattern in the scatter plot.
 
 ::: {.callout-note title="Note: Computing $r$"}
 You'll see several algebraically equivalent formulas for Pearson's $r$, some easier for hand calculation, others more compact. They all produce the same result. In practice, you'll compute $r$ with software, so the priority here is understanding what $r$ means and how to interpret it. Working through one example by hand shows where $r$ comes from, which is why lecture walks through a full hand calculation before you run it in R during lab.
