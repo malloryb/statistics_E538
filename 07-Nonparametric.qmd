@@ -32,18 +32,30 @@ exact_crit <- function(null) {
 }
 
 # Simulated null histogram: sky bars, red on the part of each bar in the rejection
-# region, full-height labeled critical lines, observed statistic lime-green dotted.
+# region, labeled critical lines (solid up to the bar height at the boundary, thin dashed
+# above it), observed statistic lime-green dotted.
 null_hist <- function(sim, exact, obs, stat, xlab) {
   cr <- exact_crit(exact)
   d <- tibble(x = sim, region = sim <= cr["lo"] | sim >= cr["hi"])
   top <- max(hist(sim, breaks = seq(cr["hi_edge"] - 2 * ceiling((cr["hi_edge"] - min(sim)) / 2) - 2,
                                     max(sim) + 2, 2), plot = FALSE)$counts)
+  edges <- cr[c("lo_edge", "hi_edge")]
+  # height of the tallest plotted bar touching each critical line (bins of width 2 anchored
+  # at hi_edge; a line on a bin edge touches two bars, one inside a bin touches one)
+  bar_h <- sapply(edges, function(e) {
+    k <- (e - cr["hi_edge"]) / 2
+    ks <- if (abs(k - round(k)) < 1e-9) round(k) + c(-1, 0) else floor(k)
+    lo <- cr["hi_edge"] + 2 * ks
+    max(sapply(lo, function(a) sum(sim >= a & sim < a + 2)))
+  })
   ggplot(d, aes(x = x, fill = region, alpha = region)) +
     geom_histogram(binwidth = 2, boundary = cr["hi_edge"], closed = "left", colour = "white") +
     scale_fill_manual(values = c(`FALSE` = "#008cff", `TRUE` = "red"), guide = "none") +
     scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = .35), guide = "none") +
-    annotate("segment", x = cr[c("lo_edge", "hi_edge")], xend = cr[c("lo_edge", "hi_edge")],
-             y = 0, yend = top * 1.08, colour = "red", linewidth = 0.8) +
+    annotate("segment", x = edges, xend = edges, y = 0, yend = bar_h,
+             colour = "red", linewidth = 0.8) +
+    annotate("segment", x = edges, xend = edges, y = bar_h, yend = top * 1.08,
+             colour = "red", linetype = "dashed", linewidth = 0.6) +
     annotate("text", x = cr[c("lo_edge", "hi_edge")], y = top * 1.13,
              label = paste0(c("lower crit = ", "upper crit = "), cr[c("lo", "hi")]),
              colour = "red", size = 3.8) +
@@ -200,7 +212,7 @@ To see the null distribution, we keep our 9 ranks and reassign their signs at ra
 ```{r}
 #| label: fig-7wilcoxon-null
 #| fig-cap: "Simulated null distribution of the Wilcoxon signed-rank statistic V, built from 20,000 random sign-flips of the 9 nonzero ranked differences. Shaded regions mark the two-tailed 5% rejection region; our observed V = 39 falls just short of the upper critical value, 40, outside the rejection region."
-#| fig-alt: "Histogram of 20,000 simulated values of V, roughly bell-shaped and centered near 22. Bars at or below 5 and at or above 40 are shaded red, with red vertical lines labeled lower crit equals 5 and upper crit equals 40. A lime-green dotted line marks the observed V of 39, just to the left of the upper critical line."
+#| fig-alt: "Histogram of 20,000 simulated values of V, roughly bell-shaped and centered near 22. Bars at or below 5 and at or above 40 are shaded red, with red vertical lines labeled lower crit equals 5 and upper crit equals 40, each solid up to the top of the bars beside it and thin dashed above. A lime-green dotted line marks the observed V of 39, just to the left of the upper critical line."
 
 sim_V <- replicate(20000, {
   signs <- sample(c(-1, 1), length(ranks_abs), replace = TRUE)
@@ -393,7 +405,7 @@ We simulate this null distribution the same way as before. We pool the 16 ranks,
 ```{r}
 #| label: fig-7mww-null
 #| fig-cap: "Simulated null distribution of the Mann-Whitney U statistic, built from 20,000 random reshuffles of group membership among the pooled, ranked counts of bat passes. Shaded regions mark the two-tailed 5% rejection region; our observed U = 50 falls just short of the upper critical value, 50.5, outside the rejection region."
-#| fig-alt: "Histogram of 20,000 simulated values of U, roughly bell-shaped and centered near 32. Bars at or below 13.5 and at or above 50.5 are shaded red, with red vertical lines labeled lower crit and upper crit. A lime-green dotted line marks the observed U of 50, just to the left of the upper critical line."
+#| fig-alt: "Histogram of 20,000 simulated values of U, roughly bell-shaped and centered near 32. Bars at or below 13.5 and at or above 50.5 are shaded red, with red vertical lines labeled lower crit and upper crit, each solid up to the top of the bars beside it and thin dashed above. A lime-green dotted line marks the observed U of 50, just to the left of the upper critical line."
 
 pooled       <- c(sodium, led)
 ranks_pooled <- rank(pooled)
@@ -442,7 +454,7 @@ ggplot(chisq_shapes, aes(x, density, color = df)) +
 ```{r}
 #| label: fig-7chisq-crit
 #| fig-cap: "The chi-square distribution with df = 3. The shaded region marks the rejection region at $\\alpha = 0.05$ (critical value 7.81)."
-#| fig-alt: "A blue dot-dash chi-square curve with 3 degrees of freedom, rising steeply from zero to a peak near 1 and then trailing off to the right. A red vertical line labeled crit equals 7.81 marks the critical value, and the thin tail to its right is shaded red."
+#| fig-alt: "A blue dot-dash chi-square curve with 3 degrees of freedom, rising steeply from zero to a peak near 1 and then trailing off to the right. A red vertical line labeled crit equals 7.81 marks the critical value, solid up to the curve and thin dashed above it, and the thin tail to its right is shaded red."
 
 crit <- qchisq(.95, 3)
 x3 <- seq(0.01, 16, length.out = 500)
@@ -451,8 +463,10 @@ df3 <- tibble(x = x3, density = dchisq(x3, 3))
 ggplot(df3, aes(x, density)) +
   geom_area(data = filter(df3, x >= crit), fill = "red", alpha = 0.18) +
   geom_line(colour = "blue", linetype = "dotdash", linewidth = 1.1) +
-  annotate("segment", x = crit, xend = crit, y = 0, yend = max(df3$density) * 1.02,
+  annotate("segment", x = crit, xend = crit, y = 0, yend = dchisq(crit, 3),
            colour = "red", linewidth = 0.8) +
+  annotate("segment", x = crit, xend = crit, y = dchisq(crit, 3), yend = max(df3$density) * 1.02,
+           colour = "red", linetype = "dashed", linewidth = 0.6) +
   annotate("text", x = crit, y = max(df3$density) * 1.07,
            label = paste0("crit = ", round(crit, 2)), colour = "red", size = 4.2) +
   labs(x = expression(chi^2*" (df = 3)"), y = "Density")
