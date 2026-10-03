@@ -9,7 +9,7 @@ source("global_stuff.R")
 
 # Measuring and Describing Data
 
-> *To call in statisticians after the experiment is done may be no more than asking them to perform a post-mortem examination: They may be able to say what the experiment died of.*
+> *To consult the statistician after an experiment is finished is often merely to ask him to conduct a post mortem examination. He can perhaps say what the experiment died of.*
 >
 > Sir Ronald Fisher
 
@@ -35,21 +35,20 @@ It would be reasonable to ask why you need to learn this yourself rather than ha
 
 3.  **Practicality.** Hiring a specialist for every question isn't realistic. A working knowledge of statistics makes you more self-sufficient, whether you end up working as a scientist, an environmental manager, or a decision-maker who has to evaluate someone else's analysis.
 
-> *"We are drowning in information, but we are starved for knowledge"*
+> *We are drowning in information, but we are starved for knowledge.*
 >
-> Various authors, original probably John Naisbitt
+> John Naisbitt, *Megatrends* (1982)
 
-Finally, none of this is only for researchers, or only for environmental science. Weather forecasts, air quality alerts, and wildlife population trends are all communicated through numbers, and so are the statistical claims that turn up in news coverage and policy debates. Once you can recognize the difference between a correlation and a cause, or spot a claim based on a sample too small to support it, you start noticing these errors everywhere. Statistics lets you tell whether the numbers support the claim being made, or whether someone is stretching them.
+Statistics is useful outside research and outside environmental science. Weather forecasts, air quality alerts, and wildlife population trends are all communicated through numbers, and so are the statistical claims that turn up in news coverage and policy debates. Once you can recognize the difference between a correlation and a cause, or spot a claim based on a sample too small to support it, you can check whether the numbers support the claim being made.
 
-## Introduction to measurements
+## Measurement and operationalization
 
 Every dataset begins with measurement: assigning numbers, labels, or categories to aspects of the world so they can be recorded and analyzed. Science often deals with broad ideas that need to be pinned down before they can be studied. For example, *soil health* or *forest change* are meaningful, but vague. To analyze them, we have to decide exactly what we mean and how to capture it. That process is called **operationalization**: turning a general concept into something measurable.
 
-Let's clarify how operationalization fits with three related terms:
+Operationalization works together with two related terms:
 
--   **Operationalization:** the step where you define exactly how a broad idea will be captured with a measure
 -   **Measure:** the tool or method used to make observations
--   **Variable:** the actual values you record once the measure is applied. Variables are the actual data that end up in our dataset.
+-   **Variable:** the values you record once the measure is applied. These are the data that end up in the dataset.
 
 **Example:**
 
@@ -60,23 +59,23 @@ Let's clarify how operationalization fits with three related terms:
 
 *Soil health* is the idea we care about, but you cannot go outside and measure an idea. Organic carbon is a defensible stand-in, since healthy soils generally store more of it, but soil health also involves compaction, pH, microbial activity, and how well the soil holds water. So the first decision is which facet of soil health will stand in for the whole:
 
-**Which facet?**:
+**Which facet?**
 
--   [ ] pH
--   [ ] compaction
+-   ☐ pH
+-   ☐ compaction
 -   ☑ *organic carbon*
--   [ ] microbial activity
--   [ ] water-holding capacity
+-   ☐ microbial activity
+-   ☐ water-holding capacity
 
 Choosing carbon means the other facets go unmeasured. Choosing carbon still leaves more choices to make. How deep will you sample? Thirty centimeters is conventional, but 10 cm or a full meter would give different answers:
 
-**Sampling depth?** :
+**Sampling depth?**
 
--   [ ] 10 cm
+-   ☐ 10 cm
 -   ☑ *30 cm*
--   [ ] 1 m
+-   ☐ 1 m
 
-There are a dozen more, and each one is a place where another reasonable person might go the other way:
+There are many more, and each one is a place where another reasonable person might go the other way. Four of them:
 
 -   **Which carbon counts?** ☑ *organic* ☐ carbonate minerals ☐ total
 -   **How many cores per plot?** ☐ 1 ☐ 3 ☑ *6* ☐ 9
@@ -84,6 +83,47 @@ There are a dozen more, and each one is a place where another reasonable person 
 -   **When in the season?** ☐ spring ☑ *after harvest* ☐ same calendar date each year
 
 Every checked box narrows what "soil health" now means in your dataset, and every unchecked box is a part of soil health your data can no longer speak to. Another researcher could work down the same list, check different boxes, report a different number, and both of you would be right, because you measured different things and gave them the same name.
+
+@fig-1operationalization collects those choices into one path, from the idea we care about to the number that ends up in the dataset. The faint branch on the left lists the parts of soil health that this dataset no longer speaks to.
+
+```{r}
+#| label: fig-1operationalization
+#| fig-cap: "From concept to variable for the soil health example. Each box narrows the one before it, and the facets of soil health that were not chosen drop out at the first step."
+#| fig-alt: "Four boxes in a row joined by arrows. Concept: soil health. Operationalization: organic carbon, top 30 cm, 6 stratified random cores per plot, after harvest. Measure: lab analysis of the cores. Variable: one carbon value per plot in the dataset. A faint dashed branch below the Concept box lists the facets left unmeasured: pH, compaction, microbial activity, and water-holding capacity."
+#| out-width: "100%"
+#| fig-asp: 0.36
+
+library(ggplot2)
+
+bx <- data.frame(
+  x     = c(1, 2.45, 3.9, 5.35),
+  title = c("Concept", "Operationalization", "Measure", "Variable"),
+  body  = c("soil health",
+            "organic carbon\ntop 30 cm\n6 stratified random\ncores, after harvest",
+            "lab analysis\nof the cores",
+            "one carbon value\nper plot in\nthe dataset")
+)
+w <- 0.58; ytop <- 0.75; ybot <- -0.75
+
+ggplot() +
+  geom_rect(data = bx, aes(xmin = x - w, xmax = x + w, ymin = ybot, ymax = ytop),
+            fill = "white", color = "#10377f", linewidth = 0.7) +
+  geom_text(data = bx, aes(x = x, y = ytop - 0.22, label = title),
+            fontface = "bold", size = 3.6, color = "#10377f") +
+  geom_text(data = bx, aes(x = x, y = -0.12, label = body),
+            size = 3.3, lineheight = 0.95, color = "grey15") +
+  annotate("segment", x = bx$x[-4] + w + 0.03, xend = bx$x[-1] - w - 0.03,
+           y = 0, yend = 0, color = "grey35", linewidth = 0.6,
+           arrow = arrow(length = grid::unit(0.18, "cm"))) +
+  # the facets that were not chosen
+  annotate("segment", x = 1, xend = 1, y = ybot, yend = -1.25,
+           linetype = "dashed", color = "grey65", linewidth = 0.5) +
+  annotate("text", x = 1, y = -1.32, vjust = 1, size = 3.2, color = "grey55",
+           lineheight = 0.95, fontface = "italic",
+           label = "left unmeasured:\npH, compaction,\nmicrobial activity,\nwater-holding capacity") +
+  coord_cartesian(xlim = c(0.35, 6.0), ylim = c(-2.05, 0.85)) +
+  theme_void()
+```
 
 Operationalization is rarely straightforward, and there is no single correct way to do it. The best choice depends on the question you are asking and how the data will be used. In many fields, scientists have developed common practices, but every project still requires case-by-case judgment. Even so, some principles of good operationalization apply across studies: be precise about what you mean, how you will measure it, and what values are possible.
 
@@ -130,7 +170,7 @@ ggplot(tiles, aes(x = x, y = 0)) +
   theme_void()
 ```
 
-You get a color back. Nothing on the map is that color, and more importantly there is no class it could represent, because there's no midpoint between wetland and urban. That is what makes a variable nominal: the values are labels, not quantities, so arithmetic on them runs perfectly well and tells you nothing. Land cover is unusual in even having numbers attached that *could* be averaged, and only because someone chose colors for a map. Most nominal variables, like species identity or watershed name, have nothing there to average in the first place.
+You get a color back. Nothing on the map is that color. More importantly, it does not stand for any class. Land cover classes have no order and no amount, so an average of them is not a land cover class. A variable is nominal when its values are labels, not quantities. Arithmetic on labels runs perfectly well and tells you nothing. Land cover is unusual in even having numbers attached that *could* be averaged, and only because someone chose colors for a map. Most nominal variables, like species identity or watershed name, have nothing there to average in the first place.
 
 ### Ordinal scale
 
@@ -138,12 +178,12 @@ Ordinal scale variables have a meaningful order, but the spacing between values 
 
 **Example.** Finishing position in a competition. First place comes before second, and second before third, but the ranks themselves tell you nothing about how far apart the competitors actually were.
 
-An Olympic weightlifting meet makes this concrete, because the thing being ranked is a weight, so we can see both scales at once. @fig-1ordinal-lifting shows a podium alongside the weights the three athletes actually lifted.
+An Olympic weightlifting event makes this concrete, because athletes are ranked by a weight, so we can see both scales at once. The weights in @fig-1ordinal-lifting are invented.
 
 ```{r}
 #| label: fig-1ordinal-lifting
-#| fig-cap: "The same three athletes shown two ways. On the podium the steps are one place apart and one place apart again. On the scale below, the weights they lifted are 29 kg and 2 kg apart."
-#| fig-alt: "A three-step podium with athletes holding bronze, silver, and gold medals, the steps evenly spaced. Dotted guides drop from each athlete to a horizontal kilogram scale below, where third place sits at 71 kg and second and first sit close together at 100 and 102 kg. Brackets label the gaps as 29 kg apart and 2 kg apart."
+#| fig-cap: "The same three athletes shown two ways. On the podium, each step is one place above the last. On the scale below, the weights they lifted are 29 kg and 2 kg apart."
+#| fig-alt: "A three-step podium with stick-figure athletes standing on evenly spaced steps, each step marked with a bronze, silver, or gold medal. Dotted guides drop from each athlete to a horizontal kilogram scale below, where third place is at 71 kg and second and first are close together at 100 and 102 kg. A bracket labels the 29 kg gap, and a leader line labels the 2 kg gap."
 #| out-width: "92%"
 #| fig-asp: 0.62
 
@@ -243,11 +283,11 @@ p +
   theme_void()
 ```
 
-On the podium, second place looks exactly as far from first as it does from third. On the scale below, second place is nearly tied with first and nowhere near third. That is the cost of ranking: it keeps the order and throws away the distances. Notice also that a single event gives us both kinds of variable. The finishing place is ordinal, the weight lifted is ratio, and only one of them can be averaged.
+On the podium, second place looks exactly as far from first as it does from third. On the scale below, second place is nearly tied with first and nowhere near third. Ranking keeps the order and throws away the distances. Notice also that a single event gives us both kinds of variable. The finishing place is ordinal, the weight lifted is ratio, and only one of them can be averaged.
 
 ### Interval scale
 
-Interval variables have equal intervals between values, so differences are meaningful. However, zero is arbitrary, so multiplication and division are not valid.
+Interval variables have equal intervals between values, so differences are meaningful. Zero is arbitrary, though, so the ratio of two values means nothing. For example, 80°F is not twice as hot as 40°F.
 
 **Example.** Temperature in degrees Celsius.
 
@@ -257,7 +297,7 @@ A difference of 3$^\circ$ means the same regardless of whether it is 7 → 10 or
 
 ### Ratio scale
 
-Ratio scale variables have all the properties of interval variables, plus a true zero, meaning zero really does indicate none of the thing. That is what makes multiplication and division valid.
+Ratio scale variables have all the properties of interval variables, plus a true zero, meaning zero really does indicate none of the thing. That is what makes ratios between values meaningful. A 40-year-old tree is twice as old as a 20-year-old one, and 10 kg is twice 5 kg.
 
 **Example.** Age in years. Zero means no age at all, and someone who is 20 really is twice as old as someone who is 10. Differences (20 - 10 = 10 years) and ratios (20 ÷ 10 = 2) are both meaningful.
 
@@ -265,7 +305,7 @@ Temperature makes an unusually clean comparison here, because the same physical 
 
 ```{r}
 #| label: fig-1temp-scales
-#| fig-cap: "The same physical range of temperatures on two scales. Both scales cover the same range of heat content and differ only in where they put zero. Celsius anchors its zero to the freezing point of water, and Kelvin anchors it to the absence of thermal energy."
+#| fig-cap: "The same physical range of temperatures on two scales. Both scales span the same physical temperatures and differ only in where they put zero. Celsius anchors its zero to the freezing point of water, and Kelvin anchors it to the absence of thermal energy."
 #| fig-alt: "Two vertical temperature scales side by side spanning the same physical range. On the Celsius scale, zero sits near the top with a shaded region of negative temperatures extending far below it. On the Kelvin scale, zero sits at the very bottom, with an arrow noting that nothing colder exists."
 #| out-width: "78%"
 #| fig-asp: 0.72
@@ -324,9 +364,9 @@ ggplot() +
   theme_void()
 ```
 
-The consequence is easy to check. Going from 10$^\circ$C to 20$^\circ$C doubles the Celsius number, so it is tempting to call it twice as hot. On the Kelvin scale those same two temperatures are 283 K and 293 K, an increase of about 3.5%. The physical change is small. The doubling was an artifact of where Celsius happens to put its zero. Kelvin has a true zero, so its ratios do hold: 200 K really does carry twice the thermal energy of 100 K.
+The consequence is easy to check. Going from 10$^\circ$C to 20$^\circ$C doubles the Celsius number, so it is tempting to call it twice as hot. On the Kelvin scale those same two temperatures are 283 K and 293 K, an increase of about 3.5%. The physical change is small. The doubling was an artifact of where Celsius happens to put its zero. Kelvin has a true zero, so its ratios hold. A gas molecule at 200 K has, on average, twice the kinetic energy of one at 100 K.
 
-|          | can rank | can subtract/add | can multiply/divide | example          |
+|          | can rank | can subtract/add |   can form ratios   | example          |
 |----------|:--------:|:----------------:|:-------------------:|------------------|
 | nominal  |          |                  |                     | land cover class |
 | ordinal  |    x     |                  |                     | finishing place  |
@@ -352,7 +392,7 @@ The table below shows how the scales of measurement relate to this distinction. 
 | interval |     x      |    x     |
 | ratio    |     x      |    x     |
 
-### A note on real data
+### Treating ordinal scales as interval
 
 These categories are guides, not hard rules. For example, survey responses on a 1--5 "strongly disagree" to "strongly agree" scale are technically ordinal, but researchers often treat them as "quasi-interval" because the spacing is assumed to be roughly equal.
 
@@ -370,18 +410,18 @@ Two alternative vocabularies are often clearer. In experiments, IVs are **manipu
 | "to do the explaining" ($X$) | independent variable (IV) | manipulation   | predictor     |
 
 ::: {.callout-note title="Note: Which terms this course uses"}
-You should recognize all three pairs, since all three appear in the literature. This book uses IV and DV when comparing groups ($t$-tests, ANOVA) and predictor and outcome for regression, where the predictor is often measured rather than manipulated and "independent variable" would mislead. A later chapter switching vocabulary is following the convention of the method, not introducing a new idea.
+You should recognize all three pairs, since all three appear in the literature. This book mostly uses IV and DV, and in regression and ANCOVA it also calls a measured $X$ a predictor. Both names refer to the same role.
 :::
 
 ## Experimental and non-experimental research
 
 A central distinction in research is between experimental and non-experimental studies. The difference is how much control the researcher has.
 
-In **experimental research**, the researcher deliberately manipulates something (the manipulation, or IV) and measures its effect (the measurement, or DV). The goal is to isolate causal effects. To avoid the problem of "something else" influencing the outcome, researchers try to hold other factors constant. In practice, it's almost impossible to identify *everything* that might matter, much less keep it constant. The standard solution is **randomization**. Randomization doesn't eliminate confounds, but it makes them less likely to systematically bias results.
+In **experimental research**, the researcher deliberately manipulates something (the manipulation, or IV) and measures its effect (the measurement, or DV). The goal is to isolate causal effects. To avoid the problem of "something else" influencing the outcome, researchers try to hold other factors constant. In practice, it's almost impossible to identify *everything* that might matter, much less keep it constant. The standard solution is **randomization**. A **confounding variable** is something other than the manipulation that differs between groups and also affects the outcome. Randomization doesn't eliminate confounding variables, but it makes them less likely to differ systematically between groups.
 
 For instance, suppose we wanted to know if smoking causes lung cancer. Observing smokers and non-smokers can only get us so far, because those groups differ in many ways besides smoking, like occupation, income, and diet. A true experiment would require randomly assigning people to smoke or not. That would be unethical. The same problem comes up in medicine: we know surprisingly little about how certain drugs or exposures affect pregnant people, precisely because we cannot ethically assign them to risky conditions.
 
-In environmental science the limitation is usually not ethics but feasibility. There is no control planet to set aside as a baseline, and nobody can dial precipitation or temperature up and down. So the field leans heavily on **non-experimental research**, which mostly takes three forms.
+In environmental science the limitation is usually not ethics but feasibility. There is no control planet to set aside as a baseline, and nobody can change precipitation or temperature across a whole region. Limits like these are why much of the field relies on **non-experimental research**, which mostly takes three forms.
 
 **Quasi-experiments** compare conditions the researcher did not create. You cannot control what a factory discharges into a river, but you can compare reaches above and below the outfall and use statistical tools to account for the confounding variables you could not hold constant.
 
@@ -389,14 +429,36 @@ In environmental science the limitation is usually not ethics but feasibility. T
 
 **Case studies** go deep on a single event or place: the aftermath of a wildfire, the ecology of a threatened habitat, the consequences of a policy. One case is tied to its context, but a well-designed one can still expose a mechanism that will generalize elsewhere. A drought in one forest can reveal how water potential and transpiration respond to stress, which helps anticipate what other forests will do.
 
+@tbl-1study-types sets the four designs side by side. Only the experiment assigns conditions at random, which is why it supports the strongest claims about cause.
+
+```{r}
+#| label: tbl-1study-types
+#| tbl-cap: "Four kinds of study compared on who sets the conditions, whether they are randomized, and what each can say about cause."
+
+study_types <- data.frame(
+  design   = c("Experiment", "Quasi-experiment", "Time series", "Case study"),
+  who      = c("The researcher", "Nature or someone else",
+               "Nobody (one system over time)", "Nobody (one event)"),
+  random   = c("Yes", "No", "No", "No"),
+  example  = c("Fertilizer plots", "Reaches above vs. below an outfall",
+               "Global temperature record", "One forest's drought response"),
+  cause    = c("Strongest", "With care, after accounting for confounding variables",
+               "Trend, not cause", "A mechanism to test elsewhere")
+)
+knitr::kable(study_types,
+             col.names = c("Design", "Who sets the conditions?", "Randomized?",
+                           "Environmental example", "What it can say about cause"))
+```
+
 ## From measurement to description
 
 The first half of this chapter was about what data *are*: how a broad concept gets operationalized into a variable, what scale that variable is on, and what kind of study produced it. The rest of the chapter is about what to do with a dataset once you have one.
 
-> Far better an approximate answer to the right question, which is often vague, than an exact answer to the wrong question, which can always be made precise.\
+> *Far better an approximate answer to the right question, which is often vague, than an exact answer to the wrong question, which can always be made precise.*
+>
 > John W. Tukey
 
-Statistics often begins with the problem of too much data. Rainfall at hundreds of stations, thousands of tree measurements in a forest survey, millions of satellite pixels: looking at the raw numbers tells you almost nothing. We need tools to summarize and visualize, and those tools are **descriptive statistics**.
+Statistics often begins with too much data. Nobody can learn much by reading rainfall records from hundreds of stations or millions of satellite pixels one number at a time. We need tools to summarize and visualize, and those tools are **descriptive statistics**.
 
 There is more than one useful way to describe a dataset, and which one you use depends on the pattern you want to show.
 
@@ -501,9 +563,9 @@ Three terms will keep coming up: distribution, central tendency, and variation. 
 
 -   **Distribution:** how values are spread across their range. A histogram is one way of showing a distribution. The shape of the distribution tells us where values are concentrated, where they're rare, and how far the extremes reach. Later we'll also use distributions to generate theoretical data, which is the basis for sampling distributions and tools like $t$-tests.
 
--   **Central tendency** is about *sameness*: where values cluster. In the temperature histogram, the tallest bars sit in the high 70s and low 80s, so we say the data have a central tendency around 80°F. Central tendency doesn't mean "everything is the same", just that many values gather in a common area. Some datasets even have more than one cluster, and therefore more than one central tendency.
+-   **Central tendency** is about *sameness*: where values cluster. In the temperature histogram, the tallest bars are in the high 70s and low 80s, so we say the data have a central tendency around 80°F. Central tendency doesn't mean "everything is the same", just that many values gather in a common area. Some datasets even have more than one cluster, and therefore more than one central tendency.
 
--   **Variation** is about *differentness*: how spread out the values are. If every day had been 78°F, variance would be zero. Instead the days run from 56°F to 97°F, so there is real variance to describe. In practice, variance is a family of measures we use to quantify differences, and we'll introduce those next.
+-   **Variation** is about *differentness*: how spread out the values are. If every day had been 78°F, there would be no variation at all. Instead the days run from 56°F to 97°F, so there is variation to describe. Variation is measured by a family of statistics. This chapter introduces the first of them, the range, and the next chapter builds the variance and the standard deviation.
 
 ## Measures of central tendency (sameness)
 
@@ -515,7 +577,7 @@ The **mode** is the most frequently occurring value: count how often each value 
 
 Ties are allowed. In `1 1 1 2 2 2 3 4 5 6` both 1 and 2 appear three times, so the data have two modes.
 
-**The mode does not always land where you would call the center.** In `1 1 2 3 4 5 6 7 8 9` the mode is 1, but nearly every value is larger. It is most useful when values in a dataset repeat.
+**The mode can be far from the center.** In `1 1 2 3 4 5 6 7 8 9` the mode is 1, but eight of the ten values are larger. It is most useful when values in a dataset repeat.
 
 ### Median
 
@@ -531,21 +593,21 @@ The median is 5, with three numbers on each side.
 
 With an even count there is no single middle value, so the median is the midpoint of the two central numbers. In `1 2 3 4 5 6` that is halfway between 3 and 4, or 3.5.
 
-**Extreme values do not move the median.** Consider `1 2 3 4 4 4 5 6 6 6 7 7 1000`. Most values are modest and one is wildly out of line, yet the median is still 5, sitting right where the bulk of the data is. That value of 1000 is an **outlier**, a value much farther out than the rest. Outliers can drag the mean a long way while leaving the median untouched, and how to handle them is a question we return to later in the course.
+**An extreme value moves the median far less than the mean.** Consider `1 2 3 4 4 4 5 6 6 6 7 7 1000`. Most values are modest and one is wildly out of line. The median is 5, in the middle of the bulk of the data. If that last value were 8 instead of 1000, the median would still be 5. That value of 1000 is an **outlier**, a value much farther out than the rest. Outliers can drag the mean a long way while moving the median very little, and how to handle them is a question we return to later in the course. @tbl-1mean-median-sensitivity, in the section comparing the three measures, shows how far the mean moves for these same numbers.
 
 ### Mean
 
 The **mean**, also called the average, is the sum of a set of numbers divided by how many numbers there are.
 
-$$Mean = \bar{x} = \frac{\sum_{i=1}^{n} x_{i}}{n}$$
+$$\text{Mean} = \bar{x} = \frac{\sum_{i=1}^{n} x_{i}}{n}$$
 
-The $\sum$ symbol is **sigma**, and it means "sum these up." The $x_{i}$ are the individual numbers, $i$ runs from the first to the last, $n$ is how many there are, and $\bar{x}$ is the mean. In plainer terms, it is the sum of your numbers divided by the count of your numbers.
+The $\sum$ symbol is a capital Greek **sigma**, and it means "sum these up." (The lowercase $\sigma$ you will meet in Chapter 3 means something different.) The $x_{i}$ are the individual numbers, $i$ runs from the first to the last, $n$ is how many there are, and $\bar{x}$ is the mean. In plainer terms, it is the sum of your numbers divided by the count of your numbers.
 
 For the five numbers 3, 7, 9, 2, and 6, that gives
 
 $$\bar{x} = \frac{3+7+9+2+6}{5} = \frac{27}{5} = 5.4$$
 
-Whether the mean is a *good* summary, as with the mode, depends on the data.
+Like the mode, the mean is a good summary for some data and a poor one for others.
 
 ### What does the mean mean?
 
@@ -553,33 +615,72 @@ Knowing how to calculate a mean is not the same as knowing what it represents. T
 
 Think about plain division. When we compute $\frac{12}{3} = 4$, we are splitting 12 into three equal parts of 4 each. Division equalizes the numerator into identical pieces.
 
-The same logic applies to the mean. Suppose you add up every daily temperature across the whole summer into one large total. If that total were redistributed equally across all the days, each day would get the same value. That value is the mean. Individual days were originally warmer or cooler, but the mean is the balance point created by spreading the total evenly.
+The same logic applies to the mean. Suppose you add up every day's rainfall across the summer into one total. If that total were spread equally across all the days, each day would get the same amount. That amount is the mean. Individual days were wetter or drier, but the mean is what each day would get if the total were shared evenly.
 
 The mean is the only single value that can replace every observation and still leave the total unchanged.
 
+@fig-1mean-equal-share shows this for the five numbers from earlier. The parts of the bars above the mean of 5.4 add up to 5.8, and the gaps below it also add up to 5.8. Moving the excess into the gaps levels every bar at the mean.
+
+```{r}
+#| label: fig-1mean-equal-share
+#| fig-cap: "The five values 3, 7, 9, 2, and 6 with their mean of 5.4 as a dashed line. The shaded parts above the line exactly fill the outlined gaps below it."
+#| fig-alt: "Bar chart of five observations with values 3, 7, 9, 2, and 6 and a dashed horizontal line at 5.4. The parts of bars 2, 3, and 5 above the line are shaded blue and labeled 1.6, 3.6, and 0.6, totaling 5.8. Dashed outlines above bars 1 and 4 mark the gaps up to the line, labeled 2.4 and 3.4, also totaling 5.8."
+#| out-width: "80%"
+#| fig-asp: 0.55
+
+library(ggplot2)
+
+v  <- c(3, 7, 9, 2, 6)
+mu <- mean(v)
+d  <- data.frame(obs = seq_along(v), v = v)
+above <- subset(d, v > mu)
+below <- subset(d, v < mu)
+
+ggplot(d) +
+  geom_rect(aes(xmin = obs - 0.35, xmax = obs + 0.35, ymin = 0, ymax = pmin(v, mu)),
+            fill = "grey85", color = "grey55") +
+  geom_rect(data = above, aes(xmin = obs - 0.35, xmax = obs + 0.35, ymin = mu, ymax = v),
+            fill = "#008cff", alpha = 0.75, color = "grey55") +
+  geom_rect(data = below, aes(xmin = obs - 0.35, xmax = obs + 0.35, ymin = v, ymax = mu),
+            fill = "#008cff", alpha = 0.15, color = "#008cff", linetype = "dashed") +
+  annotate("segment", x = 0.5, xend = 5.4, y = mu, yend = mu,
+           color = "#b22222", linetype = "dashed", linewidth = 0.9) +
+  geom_text(data = above, aes(x = obs, y = v + 0.35, label = sprintf("%.1f", v - mu)),
+            size = 3.6, color = "#10377f", fontface = "bold") +
+  geom_text(data = below, aes(x = obs, y = (v + mu) / 2, label = sprintf("%.1f", mu - v)),
+            size = 3.6, color = "#10377f", fontface = "bold") +
+  annotate("text", x = 5.45, y = mu, label = paste0("mean = ", mu),
+           hjust = 0, size = 3.6, color = "#b22222") +
+  scale_x_continuous(breaks = 1:5, limits = c(0.5, 6.1)) +
+  scale_y_continuous(breaks = seq(0, 10, 2), expand = expansion(mult = c(0, 0.05))) +
+  labs(x = "Observation", y = "Value") +
+  theme_classic()
+```
+
 ### The weighted mean
 
-We introduce one variation now because it returns later in the course. When you average across groups that aren't the same size, a plain average of the group means gives the wrong answer.
+We introduce one variation now because it returns later in the course. When you average across groups that aren't the same size, a plain average of the group means does not give the mean of all the observations.
 
 Suppose you're monitoring vegetation recovery at three restored wetland sites. Each site was surveyed with a different number of plots:
 
-| Site | Mean vegetation cover (%) | Plots ($n$) |
-|:-----|--------------------------:|------------:|
-| A    |                        46 |          12 |
-| B    |                        58 |          14 |
-| C    |                        73 |          30 |
+| Site  | Mean vegetation cover (%) | Plots ($n$) | Plots × mean |
+|:------|--------------------------:|------------:|-------------:|
+| A     |                        46 |          12 |          552 |
+| B     |                        58 |          14 |          812 |
+| C     |                        73 |          30 |         2190 |
+| Total |                           |          56 |         3554 |
 
-What is the average cover across all three sites? The tempting answer is to average the three site means:
+What is the average cover across all 56 plots? The tempting answer is to average the three site means:
 
 $$\frac{46 + 58 + 73}{3} = 59$$
 
 That answer treats a 12-plot site and a 30-plot site as equally informative, when Site C has more than twice as many observations as Site A. The **weighted mean** fixes this by letting each value count in proportion to a weight $w_i$:
 
-$$\bar{x}_W = \frac{\sum_{i} w_i x_i}{\sum_{i} w_i} = \frac{\text{weighted sum}}{\text{total weight}}$$
+$$\bar{x}_w = \frac{\sum_{i} w_i x_i}{\sum_{i} w_i} = \frac{\text{weighted sum}}{\text{total weight}}$$
 
-When the values being averaged are group means, the natural weight is each group's sample size, so $w_j = n_j$:
+Here the values being averaged are the site means, so we index sites with $j$. When the values being averaged are group means, the natural weight is each group's sample size, so $w_j = n_j$:
 
-$$\bar{x}_W = \frac{\sum_j n_j \bar{x}_j}{\sum_j n_j} = \frac{(46)(12)+(58)(14)+(73)(30)}{12+14+30} = \frac{3554}{56} = 63.5$$
+$$\bar{x}_w = \frac{\sum_j n_j \bar{x}_j}{\sum_j n_j} = \frac{(46)(12)+(58)(14)+(73)(30)}{12+14+30} = \frac{3554}{56} = 63.5$$
 
 The weighted answer, 63.5, is well above the unweighted 59, pulled toward Site C because Site C has 30 of the 56 plots.
 
@@ -591,7 +692,7 @@ Whenever you see an average of averages, check whether the groups behind it were
 
 So far we have three summaries of the "middle" of a dataset. When they disagree, the disagreement tells you about the shape of the distribution.
 
-Temperature was a well-behaved variable: its mean (`r round(mean(airquality$Temp),1)`°F) and median (`r median(airquality$Temp)`°F) sit almost on top of each other, which is what you expect when a distribution is roughly symmetric. Ozone is a different story.
+Temperature was a well-behaved variable: its mean (`r round(mean(airquality$Temp),1)`°F) and median (`r median(airquality$Temp)`°F) are only about 1°F apart, which is what you expect when a distribution is roughly symmetric. Ozone is a different story.
 
 ```{r}
 #| label: fig-1meanmedian
@@ -629,13 +730,33 @@ ggplot(data.frame(oz = oz), aes(x = oz)) +
   theme_classic()
 ```
 
-The three measures fall in different places. For a right-skewed distribution you will nearly always find mode \< median \< mean, which is exactly what @fig-1meanmedian shows: the mode at `r as.numeric(names(sort(table(airquality$Ozone), decreasing = TRUE))[1])` ppb, the median at `r median(airquality$Ozone, na.rm = TRUE)` ppb, and the mean at `r round(mean(airquality$Ozone, na.rm = TRUE), 1)` ppb.
+The three measures fall in different places. For a right-skewed distribution you will usually find mode \< median \< mean, which is exactly what @fig-1meanmedian shows: the mode at `r as.numeric(names(sort(table(airquality$Ozone), decreasing = TRUE))[1])` ppb, the median at `r median(airquality$Ozone, na.rm = TRUE)` ppb, and the mean at `r round(mean(airquality$Ozone, na.rm = TRUE), 1)` ppb. The mode line is not at the tallest bar, because the mode counts exact repeats while a bar counts every day within its range. `r oz_mode` ppb occurred `r max(table(oz))` times, and no other single value occurred more than `r sort(table(oz), decreasing = TRUE)[[2]]`.
 
 They differ because each one is sensitive to something different.
 
 -   The mean uses every value, so the seven bad-air days above 100 ppb raise it. Add one extreme day and the mean moves.
--   The median only cares about which value sits in the middle. Those same extreme days push it over by one position at most, so it stays down where the bulk of the days actually are.
+-   The median depends only on which value is in the middle. Each extreme day shifts the middle by half a position.
 -   The mode ignores position entirely and reports whichever value occurred most often. It answers a different question: not "what is the center" but "what happened most".
+
+@tbl-1mean-median-sensitivity puts numbers on the first two points, using the small dataset from the median section and the ozone days. In each pair of rows the median barely changes, while the mean moves much further.
+
+```{r}
+#| label: tbl-1mean-median-sensitivity
+#| tbl-cap: "How much one extreme value, or a few extreme days, moves the median and the mean."
+
+toy   <- c(1, 2, 3, 4, 4, 4, 5, 6, 6, 6, 7, 7)
+oz_lo <- oz[oz <= 100]
+sens <- data.frame(
+  data   = c("1 2 3 4 4 4 5 6 6 6 7 7 8",
+             "1 2 3 4 4 4 5 6 6 6 7 7 1000",
+             paste0("Ozone, all ", length(oz), " days"),
+             paste0("Ozone, without the ", sum(oz > 100), " days above 100 ppb")),
+  median = as.character(c(median(c(toy, 8)), median(c(toy, 1000)), median(oz), median(oz_lo))),
+  mean   = c(sprintf("%.2f", c(mean(c(toy, 8)), mean(c(toy, 1000)))),
+             sprintf("%.1f", c(mean(oz), mean(oz_lo))))
+)
+knitr::kable(sens, col.names = c("Data", "Median", "Mean"), align = "lrr")
+```
 
 Neither the mean nor the median is wrong here. They answer different questions. If you want to know what a typical day looked like, the median is the better guide. If you care about the total ozone burden across the summer, the mean is the number that relates to that total.
 
@@ -645,7 +766,7 @@ Ozone is a continuous measurement, so exact repeats are largely an accident of r
 
 ## Measures of variation (differentness)
 
-Central tendency tells us what values have in common. Measures of variation tell us how they differ. Any dataset with more than one value will show some variation, and summarizing that spread is as important as finding the center.
+Central tendency tells us what values have in common. Measures of variation tell us how they differ. Any dataset whose values are not all identical shows some variation, and summarizing that spread is as important as finding the center.
 
 ### The range
 
@@ -653,9 +774,9 @@ Consider these 10 ordered numbers:
 
 > 1 3 4 5 5 6 7 8 9 24
 
-The smallest is 1, the largest is 24. Together they define the **range**. The range quickly shows the boundaries of the data and can flag possible outliers. For instance, if you expected values between 1 and 7 but found one at 340,500, you'd know something unusual happened and might investigate.
+The smallest is 1 and the largest is 24. The **range** is the distance between them, 24 - 1 = 23. The range quickly shows the boundaries of the data and can flag possible outliers. For instance, if you expected values between 1 and 7 but found one at 340,500, you'd know something unusual happened and might investigate.
 
-The range is a blunt instrument: it uses only two numbers and ignores everything in between, so a single unusual value moves it a long way. We want a measure built from *every* observation, one that says how far a typical value is from the center.
+The range is a blunt instrument: it uses only two numbers and ignores everything in between, so a single unusual value moves it a long way. Drop the single value of 24 and the range falls from 23 to 8. We want a measure built from *every* observation, one that says how far a typical value is from the center.
 
 That measure is the variance, and its square root the standard deviation. We build both in the next chapter, because the same calculation (squared deviations from the mean) that describes how one variable varies also describes how two variables vary *together*, which is what correlation measures.
 
@@ -683,7 +804,7 @@ When the numbers and the graph disagree, believe the graph. A summary can only r
 
 -   **Operationalization and measurement.** Turning a broad concept like *soil health* into something recordable is a decision you have to make and justify, not something the data hands you.
 
--   **Scales of measurement.** Nominal, ordinal, interval, and ratio, plus the continuous-versus-discrete distinction. These determine which statistical tools are available to you, which is why we return to them all semester.
+-   **Scales of measurement.** Nominal, ordinal, interval, and ratio, plus the continuous-versus-discrete distinction. These determine which statistical tools are available to you. Chapter 7 uses the ordinal scale to choose a rank-based test over a $t$-test.
 
 -   **Predictors and outcomes.** The roles variables play in an analysis, and the several vocabularies used to describe them.
 
