@@ -1,4 +1,5 @@
 # Builds imgs/gifs/ch4_players.gif for Chapter 4 (the players appearing one at a time, ending on the crowded all-together frame).
+# Also writes the final frame to imgs/gifs/stills/ch4_players.png for the PDF edition.
 # Run from the project root: Rscript imgs/gifs/ch4_players_gif.R
 suppressMessages({library(ggplot2); library(gifski)})
 mu0 <- -1.2; xbar <- 0.6; true_m <- 0.9; SE <- 0.4
@@ -17,13 +18,13 @@ steps <- list(
   list(add = "nullpop", title = "italic('If ')*italic(H[0])*italic(' were true')",
        lab = L(-4.4, 0.56, "'Null population distribution'", "'center '*mu[0]*', spread '*sigma*''", "blue", 0)),
   list(add = "sampH0",  title = "italic('If ')*italic(H[0])*italic(' were true')",
-       lab = L(-4.4, 1.2, "'Sampling distribution of the sample mean under '*H[0]", "N*'('*mu[0]*', '*SE[bar(x)]^2*')'", "blue", 0)),
+       lab = L(-4.4, 1.2, "'Sampling distribution of the sample mean under '*H[0]", "N*'('*mu[0]*', '*sigma[bar(x)]^2*')'", "blue", 0)),
   list(add = "xbar",    title = "italic('From the sample')",
        lab = L(xbar + 0.15, 1.3, "bar(x)*': the sample mean'", NULL, "#1E9E1E", 0)),
   list(add = "estpop",  title = "italic('From the sample')",
        lab = L(4.45, 0.68, "'Estimated population distribution'", "'center '*bar(x)*', spread '*s*''", "green4", 1)),
   list(add = "samp",    title = "italic('From the sample')",
-       lab = L(4.45, 1.2, "'Sampling distribution of the sample mean'", "N*'('*bar(x)*', '*SE[bar(x)]^2*')'", "darkgreen", 1)),
+       lab = L(4.45, 1.2, "'Sampling distribution of the sample mean'", "N*'('*bar(x)*', '*sigma[bar(x)]^2*')'", "darkgreen", 1)),
   list(add = "truepop", title = "italic('The truth')",
        lab = L(4.45, 0.68, "'True population distribution'", "'center '*mu*', spread '*sigma*': never known'", "darkorange", 1))
 )
@@ -58,3 +59,4 @@ p_all <- draw(base("italic('All together: crowded fast')"), all_keys, fade = FAL
   annotate("text", x = xbar + 0.1, y = 1.3, label = "bar(x)", parse = TRUE, hjust = 0, colour = "#1E9E1E", fontface = "bold", size = 5)
 add_png(p_all, 10)
 gifski(files, gif_file = "imgs/gifs/ch4_players.gif", width = 720, height = 450, delay = 1)
+ggsave("imgs/gifs/stills/ch4_players.png", p_all, width = 8, height = 5, dpi = 150, bg = "white")

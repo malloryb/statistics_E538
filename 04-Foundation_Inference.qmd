@@ -15,9 +15,9 @@ set.seed(538)
 >
 > Kate Crawford
 
-**Inferential statistics** is the branch of statistics concerned with drawing conclusions about populations or causal relationships from sample data. It answers questions such as whether a manipulation caused a change, or whether a gap in infected-bat counts between two groups of caves could have arisen by random chance alone.
+Inferential statistics is the branch of statistics concerned with drawing conclusions about populations or causal relationships from sample data. It answers questions such as whether a manipulation caused a change, or whether a gap in infected-bat counts between two groups of caves could have arisen by random chance alone.
 
-This chapter does that in two parts. The first part builds the logic by simulation, with no formulas. We work out what chance alone can produce, then compare a result against it. The rest of the chapter replaces the simulation with a standard hypothesis test. Once you can assume a known reference distribution, such as the normal curve, you no longer have to rebuild the chance window from scratch every time.
+Chapter 3 built the sampling distribution of the sample mean and used it to estimate a confidence interval. This chapter uses the same tools to test a hypothesis, in two parts. The first part builds the logic by simulation, with no formulas. We work out what chance alone can produce, then compare a result against it. The rest of the chapter replaces the simulation with a standard hypothesis test. Once you can assume a known reference distribution, such as the normal curve, you no longer have to rebuild the chance window from scratch every time.
 
 ```{r, include=FALSE}
 library(ggplot2)
@@ -49,10 +49,10 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
 
   
   p <- ggplot() + 
-    { if (show_null) geom_line(aes(x=x_vals, y=h0, color="Null Population Distribution"), size=1.5) } +
-    { if (show_samp) geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling Distribution of the Sample Mean"), linetype="dotdash", size=1) } +
-    { if (show_true) geom_line(aes(x=x_vals, y=true_parent, color="True Population Distribution"), size=1.5) } +
-    geom_line(aes(x=x_vals, y=inferred_parent, color="Estimated Population Distribution"), linetype="dashed", size=1.5) +
+    { if (show_null) geom_line(aes(x=x_vals, y=h0, color="Null population distribution"), size=1.5) } +
+    { if (show_samp) geom_line(aes(x=x_vals, y=sampling_mean, color="Sampling distribution of the sample mean"), linetype="dotdash", size=1) } +
+    { if (show_true) geom_line(aes(x=x_vals, y=true_parent, color="True population distribution"), size=1.5) } +
+    geom_line(aes(x=x_vals, y=inferred_parent, color="Estimated population distribution"), linetype="dashed", size=1.5) +
     { if (show_ci) geom_segment(aes(x = CI_left, xend = CI_right, y = 0., yend = 0), color="darkgreen", size=1.5) } +
     { if (show_xbar) annotate("segment", x = inferred_mean, xend = inferred_mean, y = 0, yend = y_top * 0.92, colour = "limegreen", linetype = "dotted", linewidth = 1.6) } +
     { if (show_xbar) annotate("text", x = inferred_mean, y = y_top * 0.97, label = "bar(x)", parse = TRUE, colour = "#1E9E1E", fontface = "bold", size = 4.5) } +
@@ -65,10 +65,10 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
           axis.ticks = element_blank(), 
           legend.text = element_text(size = 12)) + 
     guides(color=guide_legend(title=NULL, nrow=2)) +
-    scale_color_manual(values=c("Null Population Distribution"="blue", 
-                                "Sampling Distribution of the Sample Mean"="darkgreen", 
-                                "Estimated Population Distribution"="green3", 
-                                "True Population Distribution"="orange"))
+    scale_color_manual(values=c("Null population distribution"="blue", 
+                                "Sampling distribution of the sample mean"="darkgreen", 
+                                "Estimated population distribution"="green3", 
+                                "True population distribution"="orange"))
 
   return(p)
 }
@@ -115,8 +115,7 @@ ggplot(mean_df, aes(x = group, y = infected)) +
   xlab("Group") +
   ylab("Mean infected bats") +
   geom_bar(stat = "identity") +
-  coord_cartesian(ylim = c(6, 10)) +
-  theme_classic(base_size = 20)
+  coord_cartesian(ylim = c(6, 10))
 
 ```
 
@@ -146,7 +145,6 @@ dif_df$experiment <- as.factor(dif_df$experiment)
 ggplot(dif_df, aes(y = differences, x = experiment)) +
   geom_bar(stat = "identity") +
   geom_hline(yintercept = 0) +
-  theme_classic(base_size = 18) +
   xlab("Replication") +
   ylab("Difference in mean count (A - B)")
 ```
@@ -197,8 +195,8 @@ Where to draw the line between "chance could have" and "chance didn't" is a judg
 
 ```{r}
 #| label: fig-4simdecision
-#| fig-cap: "Decision boundaries applied to the histogram of mean count differences from @fig-4histdiffbat. Grey marks the range chance did produce across 10,000 replications; gold marks the edges of that range, which chance reached only rarely; red marks the differences chance never produced at all."
-#| fig-alt: "The same histogram of 10,000 mean differences, now overlaid with colored zones. A grey band across the middle, labeled CHANCE, covers the full range chance actually produced. Narrow gold slivers mark the two edges of that grey band, and red zones beyond them on both sides, labeled NOT CHANCE, mark differences chance never produced in any of the 10,000 replications."
+#| fig-cap: "Decision boundaries applied to the histogram of mean count differences from @fig-4histdiffbat. Gray marks the range chance did produce across 10,000 replications; gold marks the edges of that range, which chance reached only rarely; red marks the differences chance never produced at all."
+#| fig-alt: "The same histogram of 10,000 mean differences, now overlaid with colored zones. A gray band across the middle, labeled CHANCE, covers the full range chance actually produced. Narrow gold slivers mark the two edges of that gray band, and red zones beyond them on both sides, labeled NOT CHANCE, mark differences chance never produced in any of the 10,000 replications."
 
 diff_min <- min(differences)
 diff_max <- max(differences)
@@ -213,9 +211,9 @@ ggplot(data.frame(differences), aes(x = differences)) +
   annotate("rect", xmin = diff_max - grey_width, xmax = diff_max, ymin = 0, ymax = Inf,
            alpha = 0.5, fill = "#f5d547") +
   annotate("rect", xmin = -Inf, xmax = diff_min, ymin = 0, ymax = Inf,
-           alpha = 0.35, fill = "#b22222") +
+           alpha = 0.18, fill = "red") +
   annotate("rect", xmin = diff_max, xmax = Inf, ymin = 0, ymax = Inf,
-           alpha = 0.35, fill = "#b22222") +
+           alpha = 0.18, fill = "red") +
   geom_histogram(binwidth = 1, center = 0, color = "white") +
   geom_vline(xintercept = c(diff_min, diff_max)) +
   coord_cartesian(xlim = c(diff_min - pad, diff_max + pad)) +
@@ -229,7 +227,7 @@ ggplot(data.frame(differences), aes(x = differences)) +
 
 Across the 10,000 replications, chance produced differences from about `r round(diff_min,1)` to `r round(diff_max,1)` bats.
 
-- **Chance (grey).** Chance produced differences like this routinely, so there is no reason for suspicion.
+- **Chance (gray).** Chance produced differences like this routinely, so there is no reason for suspicion.
 - **Ambiguous (gold).** The gold zones are the edges of what chance produced. Chance *can* produce differences this large, but rarely, so chance is unlikely here but not ruled out.
 - **Not chance (red).** Chance never produced a difference this large in 10,000 tries, which gives grounds to suspect something beyond sampling error.
 
@@ -288,7 +286,7 @@ We can check the shortcut on the bat histogram. The blue dot-dash curve drawn ov
 
 : The simulated chance window and the formal test it turns into. {#tbl-4sim-formal}
 
-Tests read their answers off the sampling distribution of the sample mean, not off the population. That distribution is close to normal once the sample is large enough, whatever the population's shape (the central limit theorem). With a small sample, it is normal only if the population is roughly normal, and the only check is the sample's histogram: no strong skew and no extreme outliers. When that check fails, the nonparametric tests in Chapter 7 take over.
+Tests read their answers off the sampling distribution of the sample mean, not off the population. That distribution is close to normal once the sample is large enough, whatever the population's shape (the central limit theorem). With a small sample, it is normal only if the population is roughly normal. The first check is the sample's histogram, which should show no strong skew and no extreme outliers, and Chapter 6 adds more. When the checks fail, the nonparametric tests in Chapter 7 take over.
 
 ### The players
 
@@ -398,10 +396,10 @@ x_vals <- seq(-4.5, 4.5, by=0.01)
 h0 <- dnorm(x_vals, mean=0, sd=1)
 
 p_null <- ggplot() +
-  geom_line(aes(x_vals, h0, color="Null Population Distribution"), linetype="solid", size=1) +
+  geom_line(aes(x_vals, h0, color="Null population distribution"), linetype="solid", size=1) +
   annotate("text", x = -2.5, y = 0.35, label = expression("H"[0] ~ ": " ~ mu == mu[0]), size = 5) +
   geom_vline(aes(xintercept=0), linetype="dashed", color="magenta", linewidth=1) +
-  scale_color_manual(values=c("Null Population Distribution"="blue")) +
+  scale_color_manual(values=c("Null population distribution"="blue")) +
   theme_classic() +
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
 
@@ -427,11 +425,11 @@ h0 <- dnorm(x_vals, mean=0, sd=1)
 
 # Plot: Two identical distributions
 p3 <- ggplot() + 
-  geom_line(aes(x_vals, h0, color="True Population Distribution"), linetype="solid", size=4, alpha=1) +
-  geom_line(aes(x_vals, h0, color="Null Population Distribution"), linetype="solid", size=1) +
+  geom_line(aes(x_vals, h0, color="True population distribution"), linetype="solid", size=4, alpha=1) +
+  geom_line(aes(x_vals, h0, color="Null population distribution"), linetype="solid", size=1) +
   annotate("text", x = -2.5, y = 0.35, label = expression("H"[0] ~ ": " ~ mu == mu[0]), size = 5) +
   geom_vline(aes(xintercept=0), linetype="dashed", color="magenta", linewidth=1) +
-scale_color_manual(values=c("Null Population Distribution"="blue", "True Population Distribution"="orange"))+
+scale_color_manual(values=c("Null population distribution"="blue", "True population distribution"="orange"))+
   theme_classic() + 
   theme(legend.position="none", axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank())
 
@@ -449,7 +447,7 @@ print(p3 + coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 0.45)))
 #| label: fig-4key.perfectly_representative_sample
 #| fig-height: 2.52
 #| fig-cap: 'A representative sample: the estimated population distribution, built from the sample, lines up closely with the true population distribution.'
-#| fig-alt: "Two wide bell curves nearly on top of one another: the solid orange true population and the light-green dashed estimated population."
+#| fig-alt: "Two wide bell curves nearly on top of one another, the solid orange true population and the light-green dashed estimated population, with a lime-green dotted line labeled x-bar at the center of the estimated population."
 #| out-width: "100%"
 
 p4 <-  plot_distributions(null_mean=0.5, null_sd=1, sample_mean=0.52, sample_sd=0.3, inferred_mean=0.52, inferred_sd=1, true_mean=0.54, true_sd=1, show_ci = FALSE, show_samp = FALSE, show_null = FALSE, show_xbar = TRUE, y_top = 0.53)  # wide curves only: crop the empty space, same scale
@@ -457,20 +455,26 @@ print(p4)
 
 ```
 
-**4. From individual readings to sample means.** By the central limit theorem, the sampling distribution of the sample mean is close to a normal curve once the sample is large enough, so it needs only a center and a spread. Its center is $\bar{x}$, the same as the estimated population. Its spread is the standard error: the standard deviation divided by $\sqrt{n}$. With real data that is the sample's standard deviation, $s$, divided by $\sqrt{n}$, not $\sqrt{n-1}$, because the $n-1$ already went into computing $s$ in Chapter 3. This chapter treats $\sigma$ as known, so the standard error here is $\sigma/\sqrt{n}$. In the shorthand, it is $N(\bar{x}, SE_{\bar{x}}^2)$, with the same center as the estimated population and a much smaller spread.
+**4. From individual readings to sample means.** By the central limit theorem, the sampling distribution of the sample mean is close to a normal curve once the sample is large enough, so it needs only a center and a spread. Its center is $\bar{x}$, the same as the estimated population. Its spread is the standard error: the standard deviation divided by $\sqrt{n}$. With real data that is the sample's standard deviation, $s$, divided by $\sqrt{n}$, not $\sqrt{n-1}$, because the $n-1$ already went into computing $s$ in Chapter 3. This chapter treats $\sigma$ as known, so the standard error here is $\sigma/\sqrt{n}$. In the shorthand, it is $N(\bar{x}, \sigma_{\bar{x}}^2)$, with the same center as the estimated population and a much smaller spread.
 
 @fig-4key.sample_to_sampling then makes the population right-skewed while keeping its standard deviation. The skew leaves the spread of the sampling distribution unchanged at every $n$, because that spread is still the standard deviation divided by $\sqrt{n}$. Only the normal shape depends on the central limit theorem, and it needs a large enough sample.
 
+::: {.content-visible when-format="html"}
 ```{r}
 #| label: fig-4key.sample_to_sampling
 #| fig-cap: 'From individual readings to sample means. The sampling distribution of the sample mean (dark-green dot-dash) shares the estimated population''s center, $\bar{x}$, with the standard error as its spread. When the population turns right-skewed with the same standard deviation, the sampling distribution keeps the same spread, and once the sample is large enough it keeps its normal shape as well.'
-#| fig-alt: "Animation. A wide light-green dashed bell curve centered on a lime-green dotted line labeled x-bar, labeled estimated population, center x-bar, spread s. A much narrower dark-green dot-dash curve appears at the same center, labeled sampling distribution of the sample mean, N of x-bar and SE squared, same center, spread SE equals sigma over the square root of n. The wide curve then gradually becomes mildly right-skewed, with a longer right tail, while the narrow dot-dash curve stays exactly the same; the final label reads same sampling distribution of the sample mean, once n is large enough."
+#| fig-alt: "Animation. A wide light-green dashed bell curve centered on a lime-green dotted line labeled x-bar, labeled estimated population, center x-bar, spread s. A much narrower dark-green dot-dash curve appears at the same center, labeled sampling distribution of the sample mean, N of x-bar and sigma sub x-bar squared, same center, spread sigma sub x-bar equals sigma over the square root of n. The wide curve then gradually becomes mildly right-skewed, with a longer right tail, while the narrow dot-dash curve stays exactly the same; the final label reads same sampling distribution of the sample mean, once n is large enough."
 #| out-width: "100%"
 
 knitr::include_graphics("imgs/gifs/ch4_step4.gif")
 ```
+:::
 
-**5. From the null population to sample means.** The **sampling distribution of the sample mean under $H_0$**, $N(\mu_0, SE_{\bar{x}}^2)$, is centered at $\mu_0$. Its spread is again the standard error, the null population's standard deviation divided by $\sqrt{n}$. With $\sigma$ treated as known, this is the same standard error as in step 4. @fig-4key.null_to_sampling draws it as a blue dot-dash curve, much narrower than the null population distribution. It describes how $\bar{x}$ would vary across many samples if $H_0$ were true, which makes it the formal version of the chance window in @fig-4histdiffbat. The critical values later in the chapter come from it.
+::: {.content-visible when-format="pdf"}
+![From individual readings to sample means. The sampling distribution of the sample mean (dark-green dot-dash) shares the estimated population's center, $\bar{x}$, with the standard error as its spread. When the population turns right-skewed with the same standard deviation, the sampling distribution keeps the same spread, and once the sample is large enough it keeps its normal shape as well. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/ch4_step4.png){#fig-4key.sample_to_sampling width="100%"}
+:::
+
+**5. From the null population to sample means.** The **sampling distribution of the sample mean under $H_0$**, $N(\mu_0, \sigma_{\bar{x}}^2)$, is centered at $\mu_0$. Its spread is again the standard error, the null population's standard deviation divided by $\sqrt{n}$. With $\sigma$ treated as known, this is the same standard error as in step 4. @fig-4key.null_to_sampling draws it as a blue dot-dash curve, much narrower than the null population distribution. It describes how $\bar{x}$ would vary across many samples if $H_0$ were true, which makes it the formal version of the chance window in @fig-4histdiffbat. The critical values later in the chapter come from it.
 
 ```{r}
 #| label: fig-4key.null_to_sampling
@@ -480,17 +484,22 @@ knitr::include_graphics("imgs/gifs/ch4_step4.gif")
 
 xs_null <- seq(-6, 6, by = 0.01)
 null_pair <- rbind(
-  data.frame(x = xs_null, y = dnorm(xs_null, 0, 1),   curve = "Null Population Distribution"),
-  data.frame(x = xs_null, y = dnorm(xs_null, 0, 0.4), curve = "Sampling Distribution of the Sample Mean under H0")
+  data.frame(x = xs_null, y = dnorm(xs_null, 0, 1),   curve = "Null population distribution"),
+  data.frame(x = xs_null, y = dnorm(xs_null, 0, 0.4), curve = "Sampling distribution of the sample mean under H0")
 )
+null_pair_labels <- c("Null population distribution" = "Null population distribution",
+                      "Sampling distribution of the sample mean under H0" =
+                        expression(paste("Sampling distribution of the sample mean under ", H[0])))
 ggplot(null_pair, aes(x, y, color = curve, linetype = curve)) +
   geom_line(linewidth = 1.3) +
   annotate("segment", x = 0, xend = 0, y = 0, yend = 1.3, linetype = "dashed", color = "magenta", linewidth = 1) +
   annotate("text", x = 0.12, y = 1.34, label = "mu[0]", parse = TRUE, hjust = 0, colour = "magenta", size = 5) +
-  scale_color_manual(values = c("Null Population Distribution" = "blue",
-                                "Sampling Distribution of the Sample Mean under H0" = "blue")) +
-  scale_linetype_manual(values = c("Null Population Distribution" = "solid",
-                                   "Sampling Distribution of the Sample Mean under H0" = "dotdash")) +
+  scale_color_manual(values = c("Null population distribution" = "blue",
+                                "Sampling distribution of the sample mean under H0" = "blue"),
+                     labels = null_pair_labels) +
+  scale_linetype_manual(values = c("Null population distribution" = "solid",
+                                   "Sampling distribution of the sample mean under H0" = "dotdash"),
+                        labels = null_pair_labels) +
   coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 1.4)) +  # shared axes across the four-color figures
   theme_classic() +
   theme(legend.position = "bottom", legend.title = element_blank(), legend.text = element_text(size = 12),
@@ -500,6 +509,7 @@ ggplot(null_pair, aes(x, y, color = curve, linetype = curve)) +
 
 **All of them at once.** With every player on one set of axes the picture is crowded, so the rest of the book shows only the pieces a given question needs. @fig-4players-gif adds them one at a time, grouped as in @tbl-4players, and ends with all of them together.
 
+::: {.content-visible when-format="html"}
 ```{r}
 #| label: fig-4players-gif
 #| fig-cap: 'The players, added one at a time: first everything built from $H_0$, then everything built from the sample, then the true population, ending with all of them on one set of axes.'
@@ -508,6 +518,11 @@ ggplot(null_pair, aes(x, y, color = curve, linetype = curve)) +
 
 knitr::include_graphics("imgs/gifs/ch4_players.gif")
 ```
+:::
+
+::: {.content-visible when-format="pdf"}
+![The players, added one at a time: first everything built from $H_0$, then everything built from the sample, then the true population, ending with all of them on one set of axes. (Final frame; the animated version is in the web edition of this book.)](imgs/gifs/stills/ch4_players.png){#fig-4players-gif width="100%"}
+:::
 
 **The two curves a decision uses.** Strip the picture back to the two sampling distributions of the sample mean (@fig-4two-sampling). The next section uses only these two: the critical values and the $p$-value come from the one built from $H_0$, and the confidence interval comes from the one built from the sample.
 
@@ -527,9 +542,9 @@ ggplot() +
   annotate("text", x = mu0_2 - 0.1, y = 1.3, label = "mu[0]", parse = TRUE, hjust = 1, colour = "magenta", size = 5) +
   annotate("text", x = xbar_2 + 0.1, y = 1.3, label = "bar(x)", parse = TRUE, hjust = 0, colour = "#1E9E1E", fontface = "bold", size = 5) +
   annotate("text", x = -4.4, y = 1.12, label = "'Under '*H[0]", parse = TRUE, hjust = 0, colour = "blue", size = 4.5) +
-  annotate("text", x = -4.4, y = 1.03, label = "N*'('*mu[0]*', '*SE[bar(x)]^2*')'", parse = TRUE, hjust = 0, colour = "blue", size = 4) +
+  annotate("text", x = -4.4, y = 1.03, label = "N*'('*mu[0]*', '*sigma[bar(x)]^2*')'", parse = TRUE, hjust = 0, colour = "blue", size = 4) +
   annotate("text", x = 4.45, y = 1.12, label = "'From the sample'", parse = TRUE, hjust = 1, colour = "darkgreen", size = 4.5) +
-  annotate("text", x = 4.45, y = 1.03, label = "N*'('*bar(x)*', '*SE[bar(x)]^2*')'", parse = TRUE, hjust = 1, colour = "darkgreen", size = 4) +
+  annotate("text", x = 4.45, y = 1.03, label = "N*'('*bar(x)*', '*sigma[bar(x)]^2*')'", parse = TRUE, hjust = 1, colour = "darkgreen", size = 4) +
   coord_cartesian(xlim = c(-4.5, 4.5), ylim = c(0, 1.38)) +  # shared axes across the four-color figures
   labs(x = NULL, y = NULL) +
   theme_classic() +
@@ -550,7 +565,7 @@ $$\text{statistic}=\frac{\text{effect}}{\text{error}}$$
 | Term | In this chapter |
 |---|---|
 | effect | $\bar{x} - \mu_0$, the distance between the sample mean and the value $H_0$ proposes |
-| error | $SE_{\bar{x}} = \sigma/\sqrt{n}$, how far sample means move around by chance alone |
+| error | $\sigma_{\bar{x}} = \sigma/\sqrt{n}$, how far sample means move around by chance alone |
 
 Put together, this chapter's test statistic is $z$:
 
@@ -577,17 +592,7 @@ A large statistic means the effect is big compared to the noise, and a small one
 
 $$\text{Confidence Level} = 1 - \alpha$$
 
-With $\alpha=0.05$, about 95% of intervals constructed this way will capture the true value.
-
-::: {.callout-caution title="Warning: Don't misread a confidence interval"}
-Do *not* say:
-
-> "There is a 95% probability this interval contains $\mu$."
-
-Instead say:
-
-> "We used a procedure that captures $\mu$ about 95% of the time in the long run."
-:::
+With $\alpha=0.05$, about 95% of intervals constructed this way will capture the true value. Chapter 3's warning still applies, because the 95% describes the procedure and any one interval either contains $\mu$ or misses it.
 
 ### Three equivalent ways to test $H_0$
 
@@ -628,19 +633,19 @@ The critical-value route gives only a decision at $\alpha$, reject. The confiden
 
 Critical values come from the sampling distribution of the sample mean under $H_0$, built in @fig-4key.null_to_sampling.
 
-@fig-rejection-region draws it for the PM2.5 example, a two-tailed test at $\alpha = 0.05$, marked off in standard errors from $\mu_0$. The red lines are the critical values, 1.96 standard errors on either side of $\mu_0$. They cut off the most extreme 5% of the curve, 2.5% in each tail, and those shaded tails are the rejection regions. The county's $\bar{x} = 14.1$ is `r sprintf("%.2f", z_pm)` standard errors above $\mu_0 = 12$, inside the right-hand rejection region. Counting that distance in standard errors is exactly the test statistic from @tbl-4routes, $z = (\bar{x} - \mu_0)/SE = `r sprintf("%.2f", z_pm)`$.
+@fig-4rejection-region draws it for the PM2.5 example, a two-tailed test at $\alpha = 0.05$, marked off in standard errors from $\mu_0$. The red lines are the critical values, 1.96 standard errors on either side of $\mu_0$. They cut off the most extreme 5% of the curve, 2.5% in each tail, and those shaded tails are the rejection regions. The county's $\bar{x} = 14.1$ is `r sprintf("%.2f", z_pm)` standard errors above $\mu_0 = 12$, inside the right-hand rejection region. Counting that distance in standard errors is exactly the test statistic from @tbl-4routes, $z = (\bar{x} - \mu_0)/SE = `r sprintf("%.2f", z_pm)`$.
 
 Decision rule:
 
 - If the observed test statistic falls inside the central region, we fail to reject $H_0$ because the result is consistent with chance variation.
 - If it falls in either rejection region, we reject $H_0$ because the result is too extreme to attribute to chance alone at the 5% level.
 
-$\alpha$ is the red area in @fig-rejection-region. The $p$-value (Route 3) is the area beyond the observed statistic, in both tails. Because $\bar{x}$ is inside a red tail, the area beyond it is smaller than the red area. Here $p = `r sprintf("%.3f", p_pm)`$, below $\alpha = 0.05$.
+$\alpha$ is the red area in @fig-4rejection-region. The $p$-value (Route 3) is the area beyond the observed statistic, in both tails. Because $\bar{x}$ is inside a red tail, the area beyond it is smaller than the red area. Here $p = `r sprintf("%.3f", p_pm)`$, below $\alpha = 0.05$.
 
 ```{r}
-#| label: fig-rejection-region
+#| label: fig-4rejection-region
 #| fig-cap: 'Two-tailed test at $\alpha = 0.05$: the sampling distribution of the sample mean under $H_0$ (blue dot-dash), centered at $\mu_0$ (magenta) and marked off in standard errors. Red lines are the critical values at $\pm 1.96$ SE. The shaded tails are the rejection regions. The PM2.5 example''s $\bar{x}$ (dotted) falls 2.10 SE above $\mu_0$, in the rejection region.'
-#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0. The x-axis is marked mu sub 0 minus 2 SE, minus 1 SE, mu sub 0, plus 1 SE, plus 2 SE. Red vertical lines at plus and minus 1.96 SE, each labeled critical value, with the small tail areas beyond them shaded red and labeled rejection region. A lime-green dotted line labeled x-bar is at 2.1 SE, just inside the right-hand shaded region."
+#| fig-alt: "A blue dot-dash bell curve centered on a magenta dashed line labeled mu sub 0. The x-axis is marked mu sub 0 minus 2 SE, minus 1 SE, mu sub 0, plus 1 SE, plus 2 SE. Red vertical lines at plus and minus 1.96 SE, solid up to the curve and thin dashed above it, each labeled critical value in red, with the small tail areas beyond them shaded red and labeled rejection region. A lime-green dotted line labeled x-bar is at 2.1 SE, just inside the right-hand shaded region."
 #| fig-width: 7
 #| fig-height: 4.5
 
@@ -655,9 +660,11 @@ ggplot(rr, aes(x, y)) +
   geom_area(data = dplyr::filter(rr, x >=  crit), fill = "red", alpha = 0.18) +
   geom_line(color = "blue", linewidth = 1.2, linetype = "dotdash") +
   annotate("segment", x = 0, xend = 0, y = 0, yend = y_peak, colour = "magenta", linetype = "dashed", linewidth = 1) +
-  geom_vline(xintercept = c(-crit, crit), color = "red", linewidth = 0.9) +
-  annotate("text", x =  crit, y = y_peak * 1.02, label = "critical value\n(1.96 SE)", hjust = -0.05, size = 3.6) +
-  annotate("text", x = -crit, y = y_peak * 1.02, label = "critical value\n(-1.96 SE)", hjust =  1.05, size = 3.6) +
+  # critical values: solid up to the curve, thin dashed above it to the height of the mu0 line
+  annotate("segment", x = c(-crit, crit), xend = c(-crit, crit), y = 0, yend = dnorm(crit), colour = "red", linewidth = 0.9) +
+  annotate("segment", x = c(-crit, crit), xend = c(-crit, crit), y = dnorm(crit), yend = y_peak, colour = "red", linetype = "dashed", linewidth = 0.6) +
+  annotate("text", x =  crit, y = y_peak * 1.02, label = "critical value\n(1.96 SE)", hjust = -0.05, size = 3.6, colour = "red") +
+  annotate("text", x = -crit, y = y_peak * 1.02, label = "critical value\n(-1.96 SE)", hjust =  1.05, size = 3.6, colour = "red") +
   annotate("text", x =  3.1, y = 0.12, label = "rejection\nregion", size = 3.4) +
   annotate("text", x = -3.1, y = 0.12, label = "rejection\nregion", size = 3.4) +
   annotate("segment", x = xbar_se, xend = xbar_se, y = 0, yend = 0.3, colour = "limegreen", linetype = "dotted", linewidth = 1.6) +
@@ -675,10 +682,10 @@ ggplot(rr, aes(x, y)) +
 
 The confidence-interval route makes the same decision from the sample's side. It never uses the null population distribution, only the single value $\mu_0$.
 
-Start from the sampling distribution of the sample mean built in @fig-4key.sample_to_sampling: centered at $\bar{x}$, with the standard error as its spread. A sample mean falls within 1.96 standard errors of the true mean $\mu$ about 95% of the time, so the middle 95% of this curve, $\bar{x} \pm 1.96\,SE$, is the 95% confidence interval. It contains the values of $\mu$ that are consistent with our sample (@fig-ci-lens-build). For the PM2.5 example the interval is 95% CI [`r sprintf("%.2f", ci_pm[1])`, `r sprintf("%.2f", ci_pm[2])`] µg/m³. Then ask where $\mu_0$ falls (@fig-ci-lens-decision).
+Start from the sampling distribution of the sample mean built in @fig-4key.sample_to_sampling: centered at $\bar{x}$, with the standard error as its spread. A sample mean falls within 1.96 standard errors of the true mean $\mu$ about 95% of the time, so the middle 95% of this curve, $\bar{x} \pm 1.96\,SE$, is the 95% confidence interval. It contains the values of $\mu$ that are consistent with our sample (@fig-4ci-lens-build). For the PM2.5 example the interval is 95% CI [`r sprintf("%.2f", ci_pm[1])`, `r sprintf("%.2f", ci_pm[2])`] µg/m³. Then ask where $\mu_0$ falls (@fig-4ci-lens-decision).
 
 ```{r}
-#| label: fig-ci-lens-build
+#| label: fig-4ci-lens-build
 #| fig-cap: 'The 95% confidence interval: the middle 95% of the sampling distribution of the sample mean, $\bar{x} \pm 1.96$ standard errors.'
 #| fig-alt: "A narrow dark-green dot-dash bell curve centered on a lime-green dotted vertical line labeled x-bar, with a thick dark-green bar along the baseline under its middle, labeled 95% CI."
 #| fig-width: 4.5
@@ -717,7 +724,7 @@ Decision rule:
 - If $\mu_0$ lies outside the CI bar, we reject $H_0$ at $\alpha=0.05$.
 
 ```{r}
-#| label: fig-ci-lens-decision
+#| label: fig-4ci-lens-decision
 #| fig-cap: 'The decision for the PM2.5 sample, the same in both panels. Left: a target of $\mu_0 = 13$ (magenta) would fall inside the 95% confidence interval, so we would fail to reject $H_0$. Right: the county''s target, $\mu_0 = 12$, falls outside it, so we reject $H_0$.'
 #| fig-alt: "Two panels, each showing the same narrow dark-green dot-dash curve centered on a lime-green dotted line labeled x-bar, with a thick dark-green confidence interval bar underneath. Left: a magenta dashed line labeled mu sub 0 is just left of x-bar, inside the bar, with a box reading Fail to reject. Right: the magenta line is farther left, outside the bar, with a box reading Reject."
 #| fig-width: 9
@@ -730,7 +737,7 @@ mu0_panel <- function(mu0) {
     annotate("segment", x = mu0, xend = mu0, y = 0, yend = 1.2, colour = "magenta", linetype = "dashed", linewidth = 1) +
     annotate("text", x = mu0 - 0.1, y = 1.28, label = "mu[0]", parse = TRUE, hjust = 1, colour = "magenta", size = 5) +
     annotate("label", x = 3.1, y = 1.0, label = ifelse(inside, "Fail to reject", "Reject"),
-             colour = ifelse(inside, "black", "red3"), size = 3.8, fill = "white", label.size = 0.2)
+             colour = ifelse(inside, "grey25", "red3"), size = 3.8, fill = "white", label.size = 0.2)
 }
 
 # PM2.5 example, drawn in standard-error units: a target of 13 is (14.1 - 13)/SE below x-bar, the target of 12 is z_pm SEs below
@@ -743,12 +750,12 @@ For common models, a two-tailed level-$\alpha$ test of $H_0:\ \mu=\mu_0$ is equi
 
 ### Route 3: $p$-value
 
-The $p$-value is an area under the curve, so it comes from `pnorm()`, which Chapter 3 introduced as the area to the left of a value. For the PM2.5 example's $z = `r sprintf("%.2f", z_pm)`$ in @fig-pvalue-lens, `pnorm(-2.10)` gives the area below $-2.10$, about `r sprintf("%.3f", pnorm(-z_pm))`, which by symmetry equals the area above $+2.10$. A two-tailed test counts both tails, so $p$ = `2 * pnorm(-2.10)` $\approx `r sprintf("%.3f", p_pm)`$. Reject if $p<\alpha$. Here $`r sprintf("%.3f", p_pm)` < 0.05$, so we reject.
+The $p$-value is an area under the curve, so it comes from `pnorm()`, which Chapter 3 introduced as the area to the left of a value. For the PM2.5 example's $z = `r sprintf("%.2f", z_pm)`$ in @fig-4pvalue-lens, `pnorm(-2.10)` gives the area below $-2.10$, about `r sprintf("%.3f", pnorm(-z_pm))`, which by symmetry equals the area above $+2.10$. A two-tailed test counts both tails, so $p$ = `2 * pnorm(-2.10)` $\approx `r sprintf("%.3f", p_pm)`$. Reject if $p<\alpha$. Here $`r sprintf("%.3f", p_pm)` < 0.05$, so we reject.
 
 ```{r}
-#| label: fig-pvalue-lens
-#| fig-cap: '$p$-value lens: the two-tailed $p$-value is the grey area beyond the observed statistic (dotted line), in both tails, under the null. Red lines mark the critical values.'
-#| fig-alt: "A blue dot-dash standard normal curve centered at zero, marked with a magenta dashed vertical line at the center for the null value and a lime-green dotted vertical line further right labeled 'observed z' at about 2.1. The areas beyond plus and minus 2.1 in both tails are shaded grey. Short thin red vertical lines at plus and minus 1.96 mark the critical values, a little closer to the center than the start of the grey shading. Text on the left reports a two-tailed p-value of 0.036, labeled reject."
+#| label: fig-4pvalue-lens
+#| fig-cap: '$p$-value lens: the two-tailed $p$-value is the gray area beyond the observed statistic (dotted line), in both tails, under the null. Red lines mark the critical values.'
+#| fig-alt: "A blue dot-dash standard normal curve centered at zero, marked with a magenta dashed vertical line at the center for the null value and a lime-green dotted vertical line further right labeled 'observed z' at about 2.1. The areas beyond plus and minus 2.1 in both tails are shaded gray. Red vertical lines at plus and minus 1.96, solid up to the curve and thin dashed above it, mark the critical values, a little closer to the center than the start of the gray shading. Text on the left reports a two-tailed p-value of 0.036, labeled reject."
 #| out-width: "100%"
 
 library(tidyverse)
@@ -768,8 +775,11 @@ ggplot(x, aes(x, y)) +
   geom_area(data = filter(x, x <= -abs(z_obs)), fill = "grey60", alpha = 0.35) +
   geom_line(color = "blue", linewidth = 1.2, linetype = "dotdash") +
   # critical values (red, as in the rejection-region figure)
+  # solid up to the curve, thin dashed above it to the height of the mu0 line
   annotate("segment", x = c(-1, 1) * qnorm(1 - alpha/2), xend = c(-1, 1) * qnorm(1 - alpha/2),
-           y = 0, yend = dnorm(0) * 0.6, colour = "red", linewidth = 0.6) +
+           y = 0, yend = dnorm(qnorm(1 - alpha/2)), colour = "red", linewidth = 0.8) +
+  annotate("segment", x = c(-1, 1) * qnorm(1 - alpha/2), xend = c(-1, 1) * qnorm(1 - alpha/2),
+           y = dnorm(qnorm(1 - alpha/2)), yend = dnorm(0), colour = "red", linetype = "dashed", linewidth = 0.6) +
   # mu0 reference (magenta dashed at 0)
   annotate("segment", x = 0, xend = 0, y = 0, yend = dnorm(0),
            linetype = "dashed", colour = "magenta", linewidth = 1) +
@@ -779,13 +789,12 @@ ggplot(x, aes(x, y)) +
   annotate("text", x = z_obs, y = dnorm(0)*0.95,
            label = expression(paste("observed ", z)),
            hjust = ifelse(z_obs > 0, -0.05, 1.05), size = 4, colour = "#1E9E1E", fontface = "bold") +
-  annotate("text", x = -2.2, y = dnorm(0)*0.75,
+  annotate("text", x = -3.15, y = dnorm(0)*0.75,
            label = paste0("two-tailed p = ", sprintf("%.3f", p_two),
                           ifelse(p_two < alpha, "\n(reject)", "\n(fail to reject)")),
            size = 4.2) +
   labs(x = "z", y = "Density") +
-  coord_cartesian(ylim = c(0, dnorm(0)*1.05)) +
-  theme_classic()
+  coord_cartesian(ylim = c(0, dnorm(0)*1.05))
 ```
 
 **A $p$-value is a conditional probability.** Chapter 3 introduced conditional probability and its notation, $P(A \mid B)$, which puts the event you are asking about to the left of the bar and the condition you already know to the right. A $p$-value has exactly that form:
@@ -811,7 +820,7 @@ Report the exact $p$ and the confidence interval. For the PM2.5 example, that is
 
 A two-tailed test has two possible outcomes.
 
-1.  **Reject the null hypothesis (two-tailed test).** The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean. In @fig-4key.reject_2_two_tailed, $\bar{x}$ is 3.75 standard errors from $\mu_0$ ($z = -3.75$), well past the critical values of $\pm 1.96$, and the two-tailed $p$-value is about 0.0002, far below $\alpha = 0.05$. All three routes say reject.
+1.  **Reject the null hypothesis (two-tailed test).** The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean. In @fig-4key.reject_2_two_tailed, $\bar{x}$ is 3.75 standard errors from $\mu_0$ ($z = -3.75$), well past the critical values of $\pm 1.96$, and the two-tailed $p$-value is below 0.001, far below $\alpha = 0.05$. All three routes say reject.
 
 ```{r}
 #| label: fig-4key.reject_2_two_tailed
@@ -828,7 +837,9 @@ decision_panel <- function(xbar, se = 0.4, mu0 = 0, xlim = c(-3.2, 1.8)) {
     geom_area(data = subset(h0, x >= mu0 + crit), aes(x, y), fill = "red", alpha = 0.18) +
     geom_line(data = h0, aes(x, y), colour = "blue", linetype = "dotdash", linewidth = 1.2) +
     geom_line(aes(xs_d, dnorm(xs_d, xbar, se)), colour = "darkgreen", linetype = "dotdash", linewidth = 1.2) +
+    # critical values: solid up to the curve, thin dashed above it to the height of the mu0 and x-bar lines
     annotate("segment", x = mu0 + c(-crit, crit), xend = mu0 + c(-crit, crit), y = 0, yend = dnorm(crit, 0, se), colour = "red", linewidth = 0.8) +
+    annotate("segment", x = mu0 + c(-crit, crit), xend = mu0 + c(-crit, crit), y = dnorm(crit, 0, se), yend = 1.22, colour = "red", linetype = "dashed", linewidth = 0.6) +
     annotate("segment", x = xbar - crit, xend = xbar + crit, y = -0.04, yend = -0.04, colour = "darkgreen", linewidth = 3) +
     annotate("segment", x = mu0, xend = mu0, y = -0.04, yend = 1.22, colour = "magenta", linetype = "dashed", linewidth = 1) +
     annotate("segment", x = xbar, xend = xbar, y = -0.04, yend = 1.22, colour = "limegreen", linetype = "dotted", linewidth = 1.6) +
@@ -897,7 +908,7 @@ The test builds in those claims by where it places $\alpha$. A two-tailed test s
 ```{r}
 #| label: fig-4tails
 #| fig-cap: 'Where $\alpha$ goes. Both panels show the sampling distribution of the sample mean under $H_0$ (blue dot-dash), in standard-error units. Left, two-tailed ($H_a:\ \mu \neq \mu_0$): $\alpha/2$ in each tail, critical values at $\pm 1.96$. Right, one-tailed ($H_a:\ \mu > \mu_0$): all of $\alpha$ in the right tail, critical value at 1.645.'
-#| fig-alt: "Two panels, each a blue dot-dash bell curve centered on a magenta dashed line. Left panel, titled two-tailed with an arrow pointing both ways: small red shaded areas in both tails beyond red vertical lines at minus 1.96 and plus 1.96. Right panel, titled one-tailed with an arrow pointing right: a single, larger red shaded area in the right tail beyond a red vertical line at 1.645, which is closer to the center than 1.96."
+#| fig-alt: "Two panels, each a blue dot-dash bell curve centered on a magenta dashed line. Left panel, titled two-tailed with an arrow pointing both ways: small red shaded areas in both tails beyond red vertical lines labeled -crit = -1.96 and +crit = 1.96. Right panel, titled one-tailed with an arrow pointing right: a single, larger red shaded area in the right tail beyond a red vertical line labeled +crit = 1.645, which is closer to the center than 1.96. Each red line is solid up to the curve and thin dashed above it."
 #| fig-width: 9
 #| fig-height: 3.6
 #| out-width: "100%"
@@ -915,9 +926,13 @@ tail_panel <- function(cuts, ttl, arrow_dir) {
   p <- p +
     geom_line(color = "blue", linewidth = 1.1, linetype = "dotdash") +
     annotate("segment", x = 0, xend = 0, y = 0, yend = dnorm(0), colour = "magenta", linetype = "dashed", linewidth = 0.9) +
-    geom_vline(xintercept = cuts, color = "red") +
-    annotate("text", x = cuts + ifelse(cuts > 0, 0.12, -0.12), y = 0.3, hjust = ifelse(cuts > 0, 0, 1),
-             label = ifelse(abs(abs(cuts) - 1.645) < 0.01, "1.645", sprintf("%.2f", cuts)), size = 3.6) +
+    # critical values: solid up to the curve, thin dashed above it to the height of the mu0 line
+    annotate("segment", x = cuts, xend = cuts, y = 0, yend = dnorm(cuts), colour = "red", linewidth = 0.8) +
+    annotate("segment", x = cuts, xend = cuts, y = dnorm(cuts), yend = dnorm(0), colour = "red", linetype = "dashed", linewidth = 0.6) +
+    annotate("text", x = cuts + ifelse(cuts > 0, 0.08, -0.08), y = dnorm(0) + 0.025, hjust = ifelse(cuts > 0, 0, 1),
+             label = ifelse(cuts > 0, "+crit = ", "-crit = ") |>
+               paste0(ifelse(abs(abs(cuts) - 1.645) < 0.01, "1.645", sprintf("%.2f", cuts))),
+             size = 3.6, colour = "red") +
     labs(x = "Standard errors from the null mean", y = NULL, title = ttl) +
     coord_cartesian(ylim = c(0, 0.55)) +
     theme_classic(base_size = 12) +
