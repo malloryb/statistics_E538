@@ -301,7 +301,7 @@ We run this simulation 10,000 times. Each time we compute $F$ from the sample da
 
 ```{r}
 #| label: fig-8fnull
-#| fig-cap: "A simulation of 10,000 experiments from a null population distribution with no group differences. The histogram shows 10,000 $F$-values, one for each simulation. These are values that F can take in this situation. All of these $F$-values were produced by random sampling error."
+#| fig-cap: "A simulation of 10,000 experiments from a null population distribution with no group differences. The histogram shows 10,000 $F$-values, one for each simulation. These are values that F can take in this situation. All of these $F$-values were produced by random sampling error. The blue dot-dash curve is the $F$ distribution with 2 and 27 degrees of freedom."
 #| fig-alt: "Histogram of 10,000 simulated F values from a null population distribution, with the theoretical F distribution for 2 and 27 degrees of freedom drawn over it as a blue dot-dash curve that follows the bars closely. The histogram is tallest at zero and falls off steadily into a long right-hand tail, with very few values reaching as high as 5."
 #| fig-asp: 0.5
 #| out-width: "100%"
@@ -337,18 +337,20 @@ This $F$ distribution has two properties. First, it never goes below 0, because 
 
 Most simulated $F$-values here fall near or below 1, because under the null the two mean squares estimate the same thing. All 30 plots come from one null population distribution with $\sigma = 10$. $MS_\text{Within}$ estimates $\sigma^2$ from the spread of scores inside each group. $MS_\text{Between}$ estimates the same $\sigma^2$ from how far the group means stray from the grand mean, since with no real effect, sampling variation is the only thing moving them. Two estimates of one variance give a ratio near 1. When the population means really differ, $MS_\text{Between}$ picks up those differences on top of $\sigma^2$, and $F$ grows. Values of 5 or more occur in about `r round(100 * mean(save_F >= 5))`% of the simulations.
 
+**From simulation to the $F$ distribution.** Everything in @fig-8fnull so far came from simulation. The blue dot-dash curve drawn over the histogram is the $F$ distribution with 2 and 27 degrees of freedom ($k - 1 = 2$ for the three site types, $N - k = 27$ for the 30 plots), worked out from theory with no simulation at all. It follows the histogram closely, so from here on we use the curve. Software does the same. The $p$-value in an ANOVA table comes from the $F$ distribution for the design's two $df$s, and nothing is simulated.
+
 ### Making decisions
 
 We can use this null distribution of $F$ to decide when a real experiment's result is too large to be explained by chance:
 
 1.  Set $\alpha = 0.05$.
-2.  Find the critical value of $F$ for our design's numerator and denominator $df$s.
+2.  Find the critical value of $F$ for our design's numerator and denominator $df$s, from the $F$ distribution (in R, `qf(0.95, 2, 27)`).
 
 @fig-8criticalF marks that critical value on the histogram:
 
 ```{r}
 #| label: fig-8criticalF
-#| fig-cap: "The critical value of $F$ at $\\alpha = 0.05$ for df = 2 and 27. Five percent of the simulated $F$-values lie beyond it."
+#| fig-cap: "The critical value of $F$ at $\\alpha = 0.05$ for df = 2 and 27. Five percent of the $F$ distribution lies beyond it, and about 5% of the simulated $F$-values do too."
 #| fig-alt: "The same histogram of 10,000 simulated F values with the blue dot-dash F curve over it, now with a red vertical line labeled crit equals 3.35, solid up to the curve and thin dashed above it. The bars beyond that line are shaded red and labeled '5% of F-values'; they form only the thin tail at the far right of the histogram."
 #| out-width: "100%"
 #| fig-asp: 0.5
@@ -376,7 +378,7 @@ ggplot(plot_df, aes(x = save_F)) +
 
 ```
 
-Only 5% of $F$-values from this null distribution are 3.35 or larger. That gives us a decision rule. If we ran the same design for real (30 plots, 10 per site type), we could treat $F\geq3.35$ as evidence that the differences between site types are larger than chance would produce. An observed $F$ of 3.4, for instance, would occur less than 5% of the time under the null, so seeing it would lead us to reject the null and conclude that site type mattered.
+Only 5% of the $F$ distribution lies at or beyond 3.35. The simulation agrees, with `r round(100 * mean(save_F >= crit_F), 1)`% of the 10,000 simulated $F$-values at or beyond it. That gives us a decision rule. If we ran the same design for real (30 plots, 10 per site type), we could treat $F\geq3.35$ as evidence that the differences between site types are larger than chance would produce. An observed $F$ of 3.4, for instance, would occur less than 5% of the time under the null, so seeing it would lead us to reject the null and conclude that site type mattered.
 
 ### F and the means
 
