@@ -17,7 +17,7 @@ save_gif <- function(anim, name) {
                  renderer = gifski_renderer())
   anim_save(file.path("imgs/gifs", name), gif)
   frames <- image_read(file.path("imgs/gifs", name))
-  image_write(frames[length(frames)], file.path("imgs/gifs/stills", sub("\\.gif$", ".png", name)))
+  image_write(frames[length(frames)], file.path("imgs/gifs/stills", sub("\\.gif$", ".png", name)), format = "png")
 }
 
 animate_sims <- function(p) p +
