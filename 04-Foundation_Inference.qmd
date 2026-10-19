@@ -15,7 +15,7 @@ set.seed(538)
 >
 > Kate Crawford
 
-Inferential statistics is the branch of statistics concerned with drawing conclusions about populations or causal relationships from sample data. It answers questions such as whether a manipulation caused a change, or whether a gap in infected-bat counts between two groups of caves could have arisen by random chance alone.
+Inferential statistics (Chapter 3) is the branch of statistics concerned with drawing conclusions about populations or causal relationships from sample data. It answers questions such as whether a manipulation caused a change, or whether a gap in infected-bat counts between two groups of caves could have arisen by random chance alone.
 
 Chapter 3 built the sampling distribution of the sample mean and used it to estimate a confidence interval. This chapter uses the same tools to test a hypothesis, in two parts. The first part builds the logic by simulation, with no formulas. We work out what chance alone can produce, then compare a result against it. The rest of the chapter replaces the simulation with a standard hypothesis test. Once you can assume a known reference distribution, such as the normal curve, you no longer have to rebuild the chance window from scratch every time.
 
@@ -79,7 +79,7 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
 
 An experiment asks whether a manipulation causes a change in what we measure. Some manipulations are so overwhelming that no statistics are required to see them. Flip a light switch up and the light comes on; flip it down and it goes off, every time. You don't need a $t$-test to tell you that flipping the light switch is the cause of the change in brightness.
 
-Few effects in environmental science behave like this. An effect is a real signal in measurements that also contain noise. Flipping the switch changes the outcome *on average*, but not in every instance and not by the same amount every time.
+Few effects in environmental science behave like this. An effect is the difference a study is about, such as the change a manipulation causes in the outcome. In measurements that also contain noise, the effect is the signal. Flipping the switch changes the outcome *on average*, but not in every instance and not by the same amount every time.
 
 Random chance can produce apparent differences between groups even when no real difference exists. We have already seen this with sampling: two samples from the same distribution come out differently. The same principle applies when we compare group means. So a difference between group means is not, by itself, evidence of a real effect.
 
@@ -179,7 +179,7 @@ ggplot(data.frame(differences), aes(x = differences)) +
   labs(x = "Difference in mean count (A - B)", y = "Count")
 ```
 
-Most replications produced a difference near zero, so the tallest bar is the one at zero. Larger differences in either direction occur less and less frequently, and differences beyond about $\pm 3$ are possible, but only `r round(100 * mean(round(abs(differences), 1) > 3), 1)`% of the 10,000 replications produced one. This histogram is the **chance window** for this study design.
+Most replications produced a difference near zero, so the tallest bar is the one at zero. Larger differences in either direction occur less and less frequently, and differences beyond about $\pm 3$ are possible, but only `r round(100 * mean(round(abs(differences), 1) > 3), 1)`% of the 10,000 replications produced one. The chance window for a study design is the distribution of results that chance alone produces when the study is repeated many times with no real effect (Chapter 2). This histogram is the chance window for this study design.
 
 We can use this window to evaluate any observed difference. If a study found a difference of 1 infected bat between two groups, that falls well inside the chance window, because `r round(100 * mean(round(abs(differences), 1) >= 1))`% of the 10,000 replications produced a difference at least that large. If the study found a difference of 6 bats, that would fall outside the window. Chance never produced a difference that large in 10,000 replications. When an observed result almost never happens by chance, we have grounds to conclude that *something other than chance* produced it.
 
@@ -271,7 +271,7 @@ $$H_0:\ \mu = \mu_0 \qquad H_a:\ \mu \neq \mu_0$$
 
 ### From simulation to a formal test
 
-Everything so far was built by simulation: 10,000 replications, plotted as a histogram, with hypothetical results compared against it. Chapter 3 already supplies a shortcut that saves rebuilding a chance window for every question. Sample means have a predictable distribution of their own: centered on the population mean, with spread $\sigma/\sqrt{n}$, and close to normal once the sample is large enough (the central limit theorem). That lets us replace the simulated chance window with a curve whose shape we already know.
+Everything so far was built by simulation: 10,000 replications, plotted as a histogram, with hypothetical results compared against it. Chapter 3 already supplies a shortcut that saves rebuilding a chance window for every question. Sample means have a predictable distribution of their own. At every sample size it is centered on the population mean, with spread $\sigma/\sqrt{n}$. The central limit theorem adds that it is close to normal once the sample is large enough. That lets us replace the simulated chance window with a curve whose shape we already know.
 
 We can check the shortcut on the bat histogram. The blue dot-dash curve drawn over it in @fig-4histdiffbat is a normal curve with mean 0 and standard deviation `r round(sd_diff, 2)`, worked out from the 40% infection rate and the 5 caves per group. One cave's count, 20 bats at a 40% infection rate, has standard deviation 2.19, so a 5-cave group mean has standard error $2.19/\sqrt{5} = 0.98$. The histogram shows a difference between two such means, and its spread is $\sqrt{0.98^2 + 0.98^2} = 1.39$. Chapter 6 gives the general formula for the spread of a difference between two means. The curve follows the 10,000 simulated differences closely, so it could have replaced the simulation.
 
@@ -455,7 +455,7 @@ print(p4)
 
 ```
 
-**4. From individual readings to sample means.** By the central limit theorem, the sampling distribution of the sample mean is close to a normal curve once the sample is large enough, so it needs only a center and a spread. Its center is $\bar{x}$, the same as the estimated population. Its spread is the standard error: the standard deviation divided by $\sqrt{n}$. With real data that is the sample's standard deviation, $s$, divided by $\sqrt{n}$, not $\sqrt{n-1}$, because the $n-1$ already went into computing $s$ in Chapter 3. This chapter treats $\sigma$ as known, so the standard error here is $SE_{\bar{x}} = \sigma/\sqrt{n}$. In the shorthand, it is $N(\bar{x}, SE_{\bar{x}}^2)$, with the same center as the estimated population and a much smaller spread.
+**4. From individual readings to sample means.** By the central limit theorem, the sampling distribution of the sample mean is close to a normal curve once the sample is large enough, so it needs only a center and a spread. This curve is our estimate of the Chapter 3 sampling distribution. That distribution is centered at $\mu$, which we do not know, so the estimate is centered at $\bar{x}$, the same as the estimated population. Its spread is the standard error: the standard deviation divided by $\sqrt{n}$. With real data that is the sample's standard deviation, $s$, divided by $\sqrt{n}$, not $\sqrt{n-1}$, because the $n-1$ already went into computing $s$ in Chapter 3. This chapter treats $\sigma$ as known, so the standard error here is $SE_{\bar{x}} = \sigma/\sqrt{n}$. In the shorthand, it is $N(\bar{x}, SE_{\bar{x}}^2)$, with the same center as the estimated population and a much smaller spread.
 
 @fig-4key.sample_to_sampling then makes the population right-skewed while keeping its standard deviation. The skew leaves the spread of the sampling distribution unchanged at every $n$, because that spread is still the standard deviation divided by $\sqrt{n}$. Only the normal shape depends on the central limit theorem, and it needs a large enough sample.
 
@@ -558,7 +558,7 @@ ggplot() +
 
 Four terms guide the decision in a hypothesis test. The first is the quantity every test computes.
 
-**Test statistic.** A test statistic is a ratio. On top goes the effect you observed, the distance between what you measured and what $H_0$ predicted. On the bottom goes how much that distance varies by chance alone (in later chapters, an estimate of it):
+**Test statistic.** A test statistic is the effect you observed divided by how much it varies by chance. On top goes the effect you observed, the distance between what you measured and what $H_0$ predicted. On the bottom goes how much that distance varies by chance alone (in later chapters, an estimate of it):
 
 $$\text{statistic}=\frac{\text{effect}}{\text{error}}$$
 
@@ -586,7 +586,7 @@ A large statistic means the effect is big compared to the noise, and a small one
 
 **Significance level ($\alpha$).** $\alpha$ is the probability of rejecting $H_0$ given that $H_0$ is true, and we choose it *before* the test. It is a conditional probability, $P(\text{reject } H_0 \mid H_0 \text{ true})$. Rejecting a true $H_0$ is called a Type I error, and Chapter 5 covers error types. A common choice is $\alpha = 0.05$. Smaller $\alpha$ makes tests more cautious and produces wider confidence intervals. At $\alpha = 0.01$, for example, the two-tailed critical value is 2.58 instead of 1.96, and the 99% interval is $\bar{x} \pm 2.58$ standard errors.
 
-**$p$-value.** Assuming $H_0$ is true, the $p$-value is the probability of seeing a test statistic at least as extreme as what we observed. Small $p$ means our data look unusual under $H_0$.
+**$p$-value.** A $p$-value is the probability, assuming $H_0$ is true, of obtaining a test statistic at least as extreme as the one we observed. Small $p$ means our data look unusual under $H_0$.
 
 **Confidence level.** Confidence level is the long-run proportion of confidence intervals that contain the true parameter when we repeat the entire data collection and interval procedure.
 
