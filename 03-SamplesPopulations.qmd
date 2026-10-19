@@ -516,7 +516,7 @@ The idea is obvious enough that Jacob Bernoulli, who first formalized it in 1713
 
 In practice, any single sample statistic will differ somewhat from the population parameter. Even the sample of 10,000 in @fig-3coffeeDist has a mean of `r sprintf("%.3f", mean(samp10000$x))` cups, not exactly 2.
 
-**What the law needs: random sampling.** The law of large numbers brings $\bar{x}$ to the right value only when the sample is drawn at random from the population you care about, a condition that is easy to skip past. $\bar{x}$ converges to the mean of whatever population your sampling method actually reaches. Survey 10,000 people inside coffee shops and $\bar{x}$ will settle, very precisely, on the average for coffee-shop customers, which is not the average for all adults. A larger sample shrinks **sampling error**, the random scatter from one sample to the next. It does nothing about bias, a sampling method that consistently reaches the wrong people. So a random sample of 100 adults can give a better estimate of the adult average than a sample of 10,000 coffee-shop customers. Its estimate varies more from sample to sample, but it converges on the right population mean.
+**What the law needs: random sampling.** The law of large numbers brings $\bar{x}$ to the right value only when the sample is drawn at random from the population you care about, a condition that is easy to skip past. $\bar{x}$ converges to the mean of whatever population your sampling method actually reaches. Survey 10,000 people inside coffee shops and $\bar{x}$ will settle, very precisely, on the average for coffee-shop customers, which is not the average for all adults. A larger sample shrinks **sampling error**, the gap between a sample statistic and the population value that comes from seeing only a subset. It does nothing about bias, a sampling method that consistently reaches the wrong people. So a random sample of 100 adults can give a better estimate of the adult average than a sample of 10,000 coffee-shop customers. Its estimate varies more from sample to sample, but it converges on the right population mean.
 
 ## Sampling distributions
 
@@ -700,7 +700,7 @@ knitr::include_graphics(path="imgs/gifs/sampleDistNormal-1.gif")
 
 So the sampling distribution of the mean is itself a distribution, with its own spread. The standard deviation of this sampling distribution has a special name, the **standard error (SE)**. In this context, it is the standard error of the mean, written $SE_{\bar{x}}$.
 
-Two facts about the sampling distribution of the mean hold at every sample size, for any population:
+Two facts about the sampling distribution of the mean hold at every sample size, for any population with a finite standard deviation:
 
 1.  Its mean equals the population mean, $\mu$. This is what it means to call $\bar{x}$ unbiased.
 
@@ -718,7 +718,7 @@ The second fact also gives the width of @fig-3unifmany. The numbers 1 to 10 have
 
 The **central limit theorem (CLT)** adds a third fact, about shape:
 
-3.  As $n$ grows, the sampling distribution of the mean approaches a normal shape, no matter what shape the population has.
+3.  As $n$ grows, the sampling distribution of the mean approaches a normal shape, no matter what shape the population has, as long as the population has a finite standard deviation.
 
 The CLT is why the normal curve appears so often. The distribution of sample means tends toward normal even when the underlying data are skewed or flat. The full theorem is more general and has a complicated [proof](https://en.wikipedia.org/wiki/Central_limit_theorem#Proof_of_classical_CLT), but this is the part we need.
 
@@ -879,16 +879,15 @@ The facts about sample means in this chapter fall into two groups: three facts a
 
 ### How large is large enough?
 
-The CLT says the sampling distribution of the mean approaches normal as $n$ grows. It does not say how fast. That depends on the shape of the population:
+The CLT says the sampling distribution of the mean approaches normal as $n$ grows. It does not say how fast. That depends on the shape of the population. The three populations simulated in this chapter show the range:
 
-| Population shape | Sample size for roughly normal sample means |
+| Population shape | What this chapter's simulations show |
 |---|---|
-| Normal | Any $n$; the sample means are normal at every sample size |
-| Symmetric but not normal (e.g., uniform) | Small, often 10 to 15 |
-| Moderately skewed | Around 30 |
-| Strongly skewed, or with extreme outliers | 50, 100, or more |
+| Normal | Sample means are normal at every sample size (@fig-3sampledistmeannorm) |
+| Flat (uniform, the numbers 1 to 10) | Sample means are already bell-shaped at $n = 10$ (@fig-3samplemeanunif) |
+| Strongly right-skewed (exponential) | Sample means are still right-skewed at $n = 10$ and close to a bell shape by $n = 50$ (@fig-3samplemeanExp) |
 
-You will often see $n \ge 30$ given as the sample size at which sample means become roughly normal. Treat it as a rough default for moderately skewed data. A strongly skewed population needs 50, 100, or more. In @fig-3samplemeanExp, the exponential population's sample means are still right-skewed at $n = 10$, and they are close to a bell shape only by $n = 50$.
+You will often see $n \ge 30$ given as the sample size at which sample means become roughly normal. No single cutoff works for every population. The exponential example needs more than 30, and a population with a longer tail or extreme outliers needs more still.
 
 The skew fades as $n$ grows because each unusually large value gets averaged with more ordinary ones. The longer the tail, the more ordinary values it takes.
 
@@ -1285,7 +1284,7 @@ On an exam, if you are asked for the sample standard deviation, use the $n-1$ ve
 Two ideas from earlier in this chapter also apply to the sample SD:
 
 - **Law of large numbers.** As $n$ grows, a single sample's $s$ heads toward $\sigma$, the same way $\bar{x}$ heads toward $\mu$. In @fig-3sdbias-simulation this shows as a typical single $s$ at $n = 30$ being much closer to $\sigma$ than at $n = 3$. The shrinking gap between the blue and orange lines is a different fact, that the bias of $s$ gets smaller as $n$ grows.
-- **Central limit theorem.** The CLT describes the sampling distribution of the *mean*, not the standard deviation. At $n = 3$ the histograms of sample SDs are right-skewed, so we cannot assume sample SDs are normal.
+- **Central limit theorem.** The CLT as this chapter states it is about the sampling distribution of the *mean*. With large samples the sample SD also becomes close to normal, but at $n = 3$ the histograms of sample SDs are right-skewed, so we cannot assume sample SDs are normal.
 :::
 
 To summarize:
@@ -1383,7 +1382,7 @@ Estimating $\sigma$ with $s$ adds uncertainty, because $s$ itself varies from sa
 - **A population is a distribution, not just a group.** Treating the population as a probability distribution lets us calculate how samples from it behave.
 - **Law of large numbers.** As $n$ grows, a sample statistic settles onto the value for the population your method actually samples. With random sampling, that is the population value. A biased method converges on the wrong value.
 - **Sampling distributions.** Any statistic computed over repeated samples has its own distribution. The sampling distribution of the mean is the one most of classical inference uses, and its spread is the standard error, $\sigma/\sqrt{n}$, estimated by $s/\sqrt{n}$ when $\sigma$ is unknown.
-- **The central limit theorem.** As $n$ grows, the sampling distribution of the mean approaches normal *regardless of the population's shape*. Because of that, normal-based methods work on data that are not themselves normal. The center ($\mu$) and the spread ($\sigma/\sqrt{n}$) do not come from the CLT. They hold at every $n$.
+- **The central limit theorem.** As $n$ grows, the sampling distribution of the mean approaches normal *regardless of the population's shape*, as long as its standard deviation is finite. Because of that, normal-based methods work on data that are not themselves normal. The center ($\mu$) and the spread ($\sigma/\sqrt{n}$) do not come from the CLT. They hold at every $n$.
 - **$z$-scores.** A $z$-score gives a value's distance from the mean in standard deviations, so areas under the normal curve turn into probabilities.
 - **The sample SD is a biased estimator.** The sample mean equals $\mu$ on average, but the sample SD systematically underestimates $\sigma$, because the values in a sample are closer to their own mean than to $\mu$. Dividing by $n-1$ makes the variance unbiased and removes most of the SD's bias. The correction matters most when $n$ is small.
 - **Confidence intervals express uncertainty.** Rather than reporting a single estimate, a CI reports a range of plausible values. The 95% describes the method: across many repeated samples, about 95% of intervals built this way would contain $\mu$. It is not a 95% probability that any one interval does.
