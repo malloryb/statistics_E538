@@ -40,7 +40,7 @@ hist_p <- function(ps, title = NULL) {
 
 In the early 1900s, William Sealy Gosset worked as a brewer at Guinness, where quality control depended on testing ingredients such as barley and hops. Every test used up beer or ingredients, so Guinness could only test small samples. The statistics of the time relied on the normal ($z$) distribution, which works when samples are large.
 
-Gosset set out to measure how much extra uncertainty small samples add, and derived a new sampling distribution for it, now known as the **Student's $t$ distribution**. Guinness restricted outside publication, so he published the 1908 paper under the pseudonym "Student" [@Student1908], which is why we still say Student's $t$-test. This chapter uses Gosset's approach. We measure a signal, divide it by its standard error, and compare the resulting $t$ to the $t$ distribution for $n-1$ degrees of freedom.
+Gosset set out to measure how much extra uncertainty small samples add. He derived the **Student's $t$ distribution**, the sampling distribution of $t$ when the population standard deviation is estimated from the sample. Guinness restricted outside publication, so he published the 1908 paper under the pseudonym "Student" [@Student1908], which is why we still say Student's $t$-test. This chapter uses Gosset's approach. We measure a signal, divide it by its standard error, and compare the resulting $t$ to the $t$ distribution for $n-1$ degrees of freedom.
 
 We often compare a sample mean to a reference (drinking-water standard, historical average) or compare two conditions (before/after, site A vs site B). A $t$-test asks whether the observed difference is larger than you would expect from sampling variation alone, given your $n$ and variability. Chapter 5 added two questions to every test: how large the effect is, and whether the design had the power to detect it. Both carry over to the $t$-tests here.
 
@@ -126,7 +126,7 @@ If the population SD $\sigma$ is known *and* the sampling distribution of the sa
 
 ### Degrees of freedom
 
-@fig-6-z-vs-t-linear-log drew a different $t$ curve for each value of a number called the **degrees of freedom**, $df$. It is also the number in parentheses whenever a $t$-test is reported, as in $t(9) = 1.94$.
+@fig-6-z-vs-t-linear-log drew a different $t$ curve for each value of the **degrees of freedom**, $df$. The degrees of freedom are the number of values still free to vary once something has been estimated from the data. The $df$ is also the number in parentheses whenever a $t$-test is reported, as in $t(9) = 1.94$. It is also the number in parentheses whenever a $t$-test is reported, as in $t(9) = 1.94$.
 
 For one-sample and paired $t$-tests, $df = n-1$. A sample of 10 has $df=9$.
 
@@ -251,7 +251,7 @@ t.test(sound_db, mu = 50)
 
 **Results:** $t(9) = `r sprintf("%.2f", tt$statistic)`$, $p `r fmt_p_eq(tt$p.value)`$, mean $= `r sprintf("%.1f", tt$estimate)`$ dB, 95% CI [`r ci_lo`, `r ci_hi`].
 
-**Confidence interval.** The 95% CI in that output is $\bar{x} \pm t_{crit} \cdot SE_{\bar{x}}$, with $t_{crit}$ taken from the $t$ distribution with $n-1$ degrees of freedom. Here that is $`r round(x,2)` \pm `r round(qt(.975, n-1),3)`(`r round(SE,2)`)$, or \[`r ci_lo`, `r ci_hi`\]. The interval contains 50, so the test does not reject $H_0$. For a two-tailed test at $\alpha$, the $100(1-\alpha)\%$ CI and the critical value always reach the same decision, the same equivalence Chapter 4 showed for $z$.
+**Confidence interval.** The 95% CI in that output is $\bar{x} \pm t_{crit} \cdot SE_{\bar{x}}$, with $t_{crit}$ taken from the $t$ distribution with $n-1$ degrees of freedom. Here that is $`r round(x,2)` \pm `r round(qt(.975, n-1),3)`(`r round(SE,2)`)$, or \[`r ci_lo`, `r ci_hi`\]. The interval contains 50, so the test does not reject $H_0$. For a two-tailed test at $\alpha$, the $100(1-\alpha)\%$ CI and the critical value always reach the same decision, the same equivalence Chapter 4 showed for $z$. The critical value is a cutoff on the $t$ scale, and we compare the observed $t$ to it. The confidence interval is a range on the scale of the data (dB here), built around $\bar{x}$, and we check whether it contains $\mu_0$. Both use the same $t_{crit}$ and the same standard error, so they agree.
 
 **Interpretation.** The mean (`r round(x,0)` dB) is above the 50 dB guideline, but the difference is not statistically significant at $\alpha=0.05$.
 
@@ -261,7 +261,7 @@ t.test(sound_db, mu = 50)
 
 Extreme sample means are unlikely if $H_0$ is true, which is why large $|t|$ values are rare. That is the basis of the decision rule for $t$-tests: if your observed $t$ falls beyond the critical values, you reject $H_0$.
 
-We're asking whether our $t$-value could plausibly have come from the **null distribution** of $t$, the distribution of $t$-values we'd see across many samples of size 10 if the true mean were exactly 50 dB, the guideline. It is the $t$ version of Chapter 4's chance window and of the sampling distribution of the sample mean under $H_0$. It is a different curve from the null population distribution, which describes individual values. @fig-6tnull shows what that distribution looks like, at $df=9$.
+The **null distribution** of $t$ is the distribution of $t$ values across many samples when $H_0$ is true. For the highway noise example, it is the distribution of $t$ values from many samples of 10 sites if the true mean were exactly the 50 dB guideline. We are asking whether our $t$ could plausibly have come from that distribution. It is the $t$ version of Chapter 4's chance window and of the sampling distribution of the sample mean under $H_0$. It is a different curve from the null population distribution, which describes individual values. @fig-6tnull shows what that distribution looks like, at $df=9$.
 
 ```{r}
 #| label: fig-6tnull
@@ -391,13 +391,13 @@ Every test in this book has assumptions. Assumptions are conditions that need to
 
 **Test-specific assumptions.** These come from how a particular test's math works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is approximate normality of the outcome itself (one-sample) or of the difference scores (paired). The $t$-distribution we've been using to get $p$-values is *derived* assuming the population is normal, which makes the sample mean normally distributed too. If your data are badly skewed and your sample is small, that assumption fails, and the $p$-value may not be the true probability of a result this extreme under $H_0$.
 
-**How worried should you be?** It depends on $n$. With a large sample, the sampling distribution of the sample mean tends toward normal even when individual observations are skewed (the central limit theorem), so the $t$-test is fairly **robust** to non-normality once $n$ is reasonably large. Much environmental field data comes from small samples that are also skewed. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit in a season. A $t$-test's answer becomes questionable when the sample is small and the data are also non-normal.
+**How worried should you be?** It depends on $n$. With a large sample, the sampling distribution of the sample mean tends toward normal even when individual observations are skewed (the central limit theorem), so once $n$ is reasonably large, the $t$-test's $p$-values stay close to correct even when the data are not normal. Much environmental field data comes from small samples that are also skewed. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit in a season. A $t$-test's answer becomes questionable when the sample is small and the data are also non-normal.
 
 **What to do about it.** First, look at your data. A histogram or a Q-Q plot (Chapter 9 shows how to read one) will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. Treat it as one more piece of evidence, though, rather than a strict gate. With a small sample, exactly when a violation matters most, it has low power and will often say "no problem" even when there is one. If your data look far from normal and your sample is small, you can use a nonparametric test instead, which does not assume normality (Chapter 7). You'll meet these nonparametric alternatives in the next chapter, once we've covered all three $t$-test forms below.
 
 ## The paired $t$-test
 
-When the same units are measured twice (before/after, matched pairs), the question is whether they changed. The natural data unit is the **difference score**, each unit's second measurement minus its first.
+When the same units are measured twice (before/after, matched pairs), the question is whether they changed. The data for the test are difference scores. A **difference score** is one unit's second measurement minus its first.
 
 **Design in this worked example.** Ecologists measured soil moisture at 20 field plots before wetland restoration and again one year later, to see whether restoration increased moisture enough to support plant reestablishment and carbon sequestration. The soil moisture values are invented. @fig-6paireddesign shows the design.
 
@@ -554,7 +554,7 @@ This is the interval R reports in the table above. It is the 95% CI for the effe
 
 The independent-samples $t$-test is the third and last design in this chapter. The logic is the same as the one-sample and paired cases: a mean difference divided by an estimate of its variability. Only the research design is different.
 
-Use an independent-samples $t$-test for a **between-subjects** design: different people or units in each condition, each measured once. With two groups of 5, that's 10 units in total, none of them paired. Without repeated measures on the same unit, there's no meaningful way to subtract scores between conditions the way the paired $t$-test does.
+A **between-subjects** design has different units in each condition, and each unit is measured once. The independent-samples $t$-test is the $t$-test for this design. With two groups of 5, that's 10 units in total, none of them paired. Without repeated measures on the same unit, there's no meaningful way to subtract scores between conditions the way the paired $t$-test does.
 
 The numerator is the mean difference between groups, as in the other two tests. The denominator differs from the paired case, because now we need a single estimate of variability built from two separate samples instead of one.
 
@@ -562,11 +562,11 @@ A natural first guess is to average the two groups' standard errors:
 
 $$t = \frac{\bar{x}_A-\bar{x}_B}{\left(\dfrac{SE_A+SE_B}{2}\right)}$$
 
-That average understates how much a difference between two means varies. The standard error of a difference between two independent means is $\sqrt{SE_A^2 + SE_B^2}$, which is always larger than the average of the two SEs. Instead of averaging, the independent-samples $t$-test pools the two groups' variances into a single estimate for the denominator. The pooled variance is Chapter 1's weighted mean of $s_A^2$ and $s_B^2$, with each weighted by its degrees of freedom:
+That average understates how much a difference between two means varies. The standard error of a difference between two independent means is $\sqrt{SE_A^2 + SE_B^2}$, which is always larger than the average of the two SEs. Instead of averaging, the independent-samples $t$-test assumes the two populations share one variance. Both samples estimate that shared variance, so the test combines them, which gives a better estimate, with more degrees of freedom, than either group alone. The **pooled variance**, $s_p^2$, is that combined estimate, a weighted average of the two sample variances, $s_A^2$ and $s_B^2$, with each weighted by its degrees of freedom (Chapter 1's weighted mean). The **pooled standard deviation**, $s_p$, is its square root, and the standard error of the difference is built from it:
 
 $$t = \frac{\bar{x}_A-\bar{x}_B}{s_p\sqrt{\dfrac{1}{n_A}+\dfrac{1}{n_B}}}$$
 
-where the pooled standard deviation $s_p$ is (note $s_A^2$ and $s_B^2$ here are variances, not standard deviations):
+where (note $s_A^2$ and $s_B^2$ here are variances, not standard deviations)
 
 $$s_p = \sqrt{\frac{(n_A-1)s_A^2 + (n_B-1)s_B^2}{n_A+n_B-2}}$$
 
@@ -766,5 +766,5 @@ With a real difference, the $p$-values pile up near 0, while under $H_0$ in @fig
 -   **Three forms, one idea.** The one-sample, paired, and independent-samples $t$-tests differ in how they compute the effect and its standard error, but all three ask whether an observed difference is large compared to its own standard error. The paired test is just the one-sample test applied to difference scores.
 -   **Why $t$ and not $z$.** When the population SD $\sigma$ is unknown, we estimate it with $s$, which adds uncertainty. The $t$ distribution accounts for that by being fatter in the tails than the normal, and it tightens toward the normal as degrees of freedom grow.
 -   **Assumptions come in two kinds.** *Independence and a sound study design* apply to every test in this book and are assumed from here on. The *test-specific* assumption is approximate normality: of the outcome (one-sample), of the difference scores (paired), or of each group (independent samples). The pooled independent-samples test also assumes similar variances.
--   **How worried to be depends on $n$.** Thanks to the central limit theorem, $t$-tests are fairly robust to non-normality once samples are reasonably large. $t$-tests are least trustworthy when samples are small *and* skewed, which describes a lot of environmental field data. Plot your data first, and treat a Shapiro-Wilk result as evidence rather than a gate, since it has the least power with small samples, when a violation matters most.
+-   **How worried to be depends on $n$.** Thanks to the central limit theorem, a $t$-test's $p$-values stay close to correct with non-normal data once samples are reasonably large. $t$-tests are least trustworthy when samples are small *and* skewed, which describes a lot of environmental field data. Plot your data first, and treat a Shapiro-Wilk result as evidence rather than a gate, since it has the least power with small samples, when a violation matters most.
 -   **The tail choice changes $p$ for the same data.** For the highway noise example, $t(9) = 1.94$ gives a one-tailed $p$ of 0.042 and a two-tailed $p$ of 0.084. Decide which you need before seeing the result, using the rule from Chapters 4 and 5.

@@ -88,8 +88,10 @@ The table crosses the two possible decisions with the two possible truths, givin
 
 | Decision                 | If the null hypothesis is True | If the null hypothesis is False |
 |---------------------|-------------------------|--------------------------|
-| **Reject $H_0$**         | Type I error (prob = $\alpha$) | Correct (prob = $1 - \beta$) |
+| **Reject $H_0$**         | Type I error (prob = $\alpha$) | Correct (prob = $1 - \beta$, the power) |
 | **Fail to reject $H_0$** | Correct (prob = $1 - \alpha$) | Type II error (prob = $\beta$)  |
+
+The two correct outcomes have different probabilities. If $H_0$ is true, the test correctly fails to reject with probability $1 - \alpha$. If $H_0$ is false, the test correctly rejects with probability $1 - \beta$, which is the power of the test (defined in the Working definitions later in this chapter).
 
 For a fixed sample size and effect size, lowering $\alpha$ raises $\beta$, because a stricter standard for rejecting $H_0$ makes it easier to miss a real difference. Rows 2 and 3 of @tbl-5power-sims later show this in numbers for one design.
 
@@ -132,6 +134,8 @@ error_panel(xbar = t1_xbar_se * err_se, mu = 0, verdict = "Reject")
 ```
 
 -   In @fig-5key.type2_error, the true population mean (orange) is `r t2_mu_se` standard errors from $\mu_0$. By chance, however, the sample mean is only `r t2_xbar_se` standard errors from $\mu_0$, inside the critical value, and the CI includes $\mu_0$. The test fails to reject $H_0$ even though it is false, which is a Type II error.
+
+These two bullets describe each decision two ways, and the two always agree. For a two-tailed test at $\alpha = 0.05$, the sample mean falls past a critical value exactly when the 95% confidence interval excludes $\mu_0$. The critical values are drawn around $\mu_0$ and ask whether $\bar{x}$ is far from it. The confidence interval is drawn around $\bar{x}$ and asks whether $\mu_0$ is far from it. Both use the same distance, 1.96 standard errors.
 
 ```{r}
 #| label: fig-5key.type2_error
@@ -266,7 +270,7 @@ patchwork::wrap_plots(
 
 ### How to interpret $p$-values
 
-A $p$-value is the probability, assuming $H_0$ is true, of obtaining a test statistic at least as extreme as the one we observed. We reject at level $\alpha$ when $p<\alpha$.
+A $p$-value is the probability, assuming $H_0$ is true, of obtaining a test statistic at least as extreme as the one we observed. We reject at level $\alpha$ when $p<\alpha$. $\alpha$ is chosen before the data are collected, and it sets how far out the critical values are. The $p$-value is computed from the data, and it measures how far out the observed test statistic is. Comparing the two gives the decision.
 
 **Tails.** Count only the tail or tails that $H_a$ points to: both tails for a two-tailed test, one tail for a one-tailed test.
 
@@ -283,15 +287,16 @@ Effect size and power answer two questions that a decision at $\alpha = 0.05$ le
 
 **Working definitions**
 
--   **Statistical significance:** the result is unlikely under $H_0$, at your chosen $\alpha$.
+-   **Statistical significance:** a result is statistically significant when $p < \alpha$, which means the data would be unlikely if $H_0$ were true.
 
 -   **Effect:** the difference a study is about, such as how far apart two group means are, or how far a mean is from the value $H_0$ states (Chapter 4).
 
+-   **Effect size:** the number that says how large the effect is, in the study's units or in standard deviations.
+
 -   **Practical significance:** the effect is large enough to change what someone does about it. This is a judgment about the world, not a calculation. With a large enough $n$, a result can be statistically significant and practically trivial. With too small an $n$, a result can be practically important and still not statistically significant.
 
--   **Effect size:** how large that difference is, in the study's units or in standard deviations.
 
--   **Power ($1-\beta$):** the probability your design will detect a real effect of a specified size at your chosen $\alpha$.
+-   **Power ($1-\beta$):** the probability that your design correctly rejects $H_0$ when a real effect of a specified size exists, at your chosen $\alpha$.
 
 **Plan effect size and power before you sample.** Decide what effect is *meaningful* for your context (e.g., a 0.3 mg/L nitrate reduction) and size your study to have adequate power, commonly 80%, to detect that effect.
 
@@ -381,7 +386,7 @@ Effect size comes in two kinds of units. You can express it in original units, w
 
 These statements are easy to interpret, but they are hard to compare across contexts or measures. To say whether a 5-point exam gain is a larger effect than a 1,000-hour cut in practice time, you need each one measured against the variability of its own scale.
 
-**Standardized (unitless).** When units are unfamiliar or scales differ, standardize by typical variability. The most common standardized effect size metric is **Cohen's $d$** [@Cohen1988]. It divides the raw difference, $\Delta$, by the population standard deviation:
+**Standardized (unitless).** When units are unfamiliar or scales differ, standardize by typical variability. The most common standardized effect size is **Cohen's $d$** [@Cohen1988]. Cohen's $d$ is the raw difference, $\Delta$, divided by the population standard deviation, so it gives the effect in standard deviations:
 
 $$\text{Cohen's } d = \frac{\Delta}{\sigma}$$
 
@@ -469,7 +474,7 @@ In practice, we rarely know beforehand how big a shift to expect, so the power c
 
 ## Power
 
-A design's power is the probability that it will detect a real effect of a specified size at your chosen $\alpha$. Effects vary in size, and designs vary in power. A design with low power will usually fail to reject $H_0$ even when a real effect exists.
+A design's power is the probability that it correctly rejects $H_0$ when a real effect of a specified size exists, at your chosen $\alpha$. Effects vary in size, and designs vary in power. A design with low power will usually fail to reject $H_0$ even when a real effect exists.
 
 Power rises when:
 
@@ -637,7 +642,7 @@ patchwork::wrap_plots(plan_plots, ncol = 2, guides = "collect") &
 
 ### Power curves
 
-A design's power depends on how large the true effect is. A power curve plots the power of one fixed design against a range of effect sizes. @fig-5powercurve fixes the design at an independent-samples $t$-test with $n=10$ per group and $\alpha=0.05$, and plots power against the true effect size, Cohen's $d$.
+A design's power depends on how large the true effect is. A **power curve** plots the power of a design against one quantity that varies, such as the true effect size or the sample size, with everything else held fixed. @fig-5powercurve fixes the design at an independent-samples $t$-test with $n=10$ per group and $\alpha=0.05$, and plots power against the true effect size, Cohen's $d$.
 
 ```{r}
 #| label: fig-5powercurve
@@ -699,18 +704,10 @@ Planning a study means working through the following, in order:
 -   Compute $n$ for $\ge 80\%$ power (or explain tradeoffs if you can't reach it).
 -   Pre-specify one- vs two-tailed before data collection.
 
-This sequence is a **formal power analysis**. It applies when you are about to collect data and can still choose $n$, for example when deciding how many plots to establish or how many samples a permit application commits you to. When the data already exist, as in your course project, $n$ is fixed. Report the effect and its confidence interval instead.
+This sequence is a **formal power analysis**. A formal power analysis finds the sample size $n$ that gives a target power, usually 80%, for a chosen $\Delta$, $\sigma$, $\alpha$ and number of tails, before any data are collected. It applies when you are about to collect data and can still choose $n$, for example when deciding how many plots to establish or how many samples a permit application commits you to. When the data already exist, as in your course project, $n$ is fixed. Report the effect and its confidence interval instead.
 
 ::: {.callout-caution title="Warning: Post-hoc power"}
-Do not compute power after the fact for the effect you observed. This **post-hoc power** is a restatement of the $p$-value. @tbl-5power-before-after compares it with power planned before a study.
-
-|  | Before the study | After the study |
-|---|---|---|
-| Difference used | A target difference you choose, such as the smallest that matters | The difference you observed |
-| What it gives | The probability the design detects that difference | A restatement of the $p$-value |
-| Worth reporting | Yes | No. A non-significant result always has low post-hoc power. |
-
-: Power planned before a study and post-hoc power computed after it. {#tbl-5power-before-after}
+**Post-hoc power** is power computed after a study, using the effect size the study observed. It is a restatement of the $p$-value, so a non-significant result always has low post-hoc power. Do not compute it. Power for a difference chosen in advance, such as the smallest effect that matters, is fine to report.
 :::
 
 ### Low power and very large samples
@@ -808,5 +805,5 @@ A results statement is one sentence that states the finding in plain language an
 -   **Significance and effect size answer different questions.** A significant result says the data would be unlikely if $H_0$ were true. The standard error shrinks as $n$ grows, so the same small difference produces a larger and larger test statistic. With a large enough $n$, even a trivially small difference is likely to be significant. Report an effect size and a confidence interval next to every $p$-value so a reader can judge whether the result matters.
 -   **One tail only when the other direction would not change the action.** Choose a one-tailed test before seeing the data, and only when a result in the other direction would lead to the same action as no result. Choosing the tail afterward doubles the actual Type I error rate.
 -   **Effect size in two kinds of units.** The same difference can be written in original units, $\Delta$, which carry practical meaning for the people who act on your result, or in standard deviations, Cohen's $d = \Delta/\sigma$, which makes results comparable across studies and scales. Report both when you can, and plan in $\Delta$, because the smallest difference worth detecting is a judgment made in the units of the measurement.
--   **Power is a design decision.** Power depends on $n$, effect size, $\alpha$, and variability together. An underpowered study usually misses real effects, and when it does reach significance, the effect it reports tends to be too large. Run a power analysis before collecting data, while $n$ can still be chosen.
+-   **Power is set by the design.** Power is the probability that a design correctly rejects $H_0$ when a real effect of a specified size exists. It depends on $n$, effect size, $\alpha$, and variability together. An underpowered study usually misses real effects, and when it does reach significance, the effect it reports tends to be too large. Run a power analysis before collecting data, while $n$ can still be chosen.
 -   **Report a result as a sentence.** State the direction in words, then give the statistic with its df or $n$, the $p$-value, and the effect in the study's units with its 95% CI, all separated by commas. Add Cohen's $d$ where the chapter uses it, and name the test only when the statistic does not identify it.
