@@ -109,7 +109,7 @@ With exactly two groups, a $t$-test and a one-way ANOVA give the same answer: $t
 
 $$F = \frac{\text{measure of effect}}{\text{measure of error}}$$
 
-The difference is that $F$ uses variances for both the numerator and the denominator. It divides the variance you can explain (differences between group means) by the variance you can't (leftover noise within each group).
+The $t$-test puts a difference between two means over its standard error. $F$ uses variances for both the numerator and the denominator. It divides the variance you can explain (differences between group means) by the variance you can't (leftover noise within each group).
 
 $$F = \frac{\text{Can explain}}{\text{Can't explain}}$$
 
@@ -163,7 +163,7 @@ $$SS_\text{Total} = SS_\text{Between} + SS_\text{Within}$$
 
 ### SS Total
 
-$SS_\text{Total}$ captures all of the variation in a dataset. It squares the difference between each score and the grand mean and adds them up. Writing $Y_{ij}$ for score $i$ in group $j$ and $\bar{Y}_\text{grand}$ for the grand mean,
+$SS_\text{Total}$ is the sum of the squared differences between each score and the grand mean. It captures all of the variation in a dataset. Writing $Y_{ij}$ for score $i$ in group $j$ and $\bar{Y}_\text{grand}$ for the grand mean,
 
 $$SS_\text{Total} = \sum (Y_{ij} - \bar{Y}_\text{grand})^2.$$
 
@@ -193,7 +193,7 @@ We only need to compute one of the two remaining pieces directly. The other foll
 
 ### SS Between
 
-$SS_\text{Total}$ captured all of the variation in the data. $SS_\text{Between}$ isolates the piece of that variation we can explain by group membership, which is how far each group's mean is from the grand mean.
+$SS_\text{Total}$ captured all of the variation in the data. $SS_\text{Between}$ is the part of the total variation that group membership can explain. It measures how far each group's mean is from the grand mean.
 
 To find it, replace every score with its own group's mean, then square and sum each group mean's distance from the grand mean. Writing $\bar{Y}_j$ for the mean of group $j$ and $n_j$ for its number of scores,
 
@@ -261,7 +261,7 @@ $df_\text{Total} = N-1$, and it splits the same way the sums of squares do: $df_
 
 We're building toward $F=\dfrac{\text{measure of effect}}{\text{measure of error}}$, and it's tempting to just divide $SS_\text{Between}$ by $SS_\text{Within}$ directly. The problem is that each sum of squares grows with the number of independent pieces that go into it. $SS_\text{Between}$ is built from 3 group means and $SS_\text{Within}$ from 9 individual deviations, so their raw ratio has no fixed scale to compare against the way $t$ or $z$ does.
 
-The fix is to convert each sum of squares into an average, or **mean square**, by dividing by its degrees of freedom. We divide by degrees of freedom rather than by $n$, because each group mean we estimate uses up a degree of freedom, as the previous section showed.
+A **mean square** is a sum of squares divided by its degrees of freedom. It turns each sum of squares into an average. We divide by degrees of freedom rather than by $n$, because each group mean we estimate uses up a degree of freedom, as the previous section showed.
 
 $$MS_\text{Between} = \frac{SS_\text{Between}}{df_\text{Between}} = \frac{72}{2} = 36$$
 
@@ -277,7 +277,7 @@ $$F = \frac{MS_\text{Between}}{MS_\text{Within}} = \frac{36}{38.33} = 0.94$$
 
 ### The ANOVA table
 
-All of these pieces, the $df$s, $SS$es, $MS$es, and finally $F$, are organized into an **ANOVA table**. @tbl-8anovaformulas gives the formulas, and the table below fills them in for the toy data.
+An **ANOVA table** lists the sums of squares, degrees of freedom, mean squares, and $F$ for each source of variation. @tbl-8anovaformulas gives the formulas, and the table below fills them in for the toy data.
 
 | Source         | SS                                                 | df      | MS                                     | F                                        |
 |:---------------|:---------------------------------------------------|:--------|:---------------------------------------|:-----------------------------------------|
@@ -299,13 +299,13 @@ R labels the two rows `groups` (the between-groups row: what the means can expla
 
 ## What does $F$ mean?
 
-Every number in the ANOVA table so far was computed directly from the data except the $p$-value. It means the same thing as for every other test we've covered, the probability of observing an $F$ this large or larger if the null hypothesis (no real group differences) were true.
+Every number in the ANOVA table so far was computed directly from the data except the $p$-value. It means the same thing as for every other test we've covered. The $p$-value is the probability of observing an $F$ this large or larger if the null hypothesis (no real group differences) were true.
 
 Since $F$ is a sample statistic, we can find out how it behaves the same way we found out how $t$ behaves, by simulating it many times under the null and looking at the resulting distribution.
 
 To build intuition for the $F$ distribution, consider a simulated monitoring study with three site types (A, B, C). Each site type has 10 sampling plots, for 30 total. We measure species abundance at each plot. All 30 plots are drawn from the same null population distribution (mean = 100, $\sigma$ = 10), so site type has no real effect on abundance. Any differences between group means arise from sampling error alone.
 
-We run this simulation 10,000 times. Each time we compute $F$ from the sample data. The histogram of those 10,000 $F$-values, shown in @fig-8fnull, is the null distribution of $F$ for this design.
+We run this simulation 10,000 times. Each time we compute $F$ from the sample data. The histogram of those 10,000 $F$-values, shown in @fig-8fnull, is the null distribution of $F$ for this design. The null population distribution gives the individual abundance scores (mean 100, $\sigma = 10$). The null distribution of $F$ describes the $F$-values, one per experiment, that repeated experiments drawn from that population produce.
 
 **Before you look.** Each bar in @fig-8fnull counts $F$-values from these null experiments. Decide whether most of them will fall near 0, near 1, or well above 1.
 
@@ -347,7 +347,7 @@ This $F$ distribution has two properties. First, it never goes below 0, because 
 
 Most simulated $F$-values here fall near or below 1, because under the null the two mean squares estimate the same thing. All 30 plots come from one null population distribution with $\sigma = 10$. $MS_\text{Within}$ estimates $\sigma^2$ from the spread of scores inside each group. $MS_\text{Between}$ estimates the same $\sigma^2$ from how far the group means stray from the grand mean, since with no real effect, sampling variation is the only thing moving them. Two estimates of one variance give a ratio near 1. When the population means really differ, $MS_\text{Between}$ picks up those differences on top of $\sigma^2$, and $F$ grows. Values of 5 or more occur in about `r round(100 * mean(save_F >= 5))`% of the simulations.
 
-**From simulation to the $F$ distribution.** Everything in @fig-8fnull so far came from simulation. The blue dot-dash curve drawn over the histogram is the $F$ distribution with 2 and 27 degrees of freedom ($k - 1 = 2$ for the three site types, $N - k = 27$ for the 30 plots), worked out from theory with no simulation at all. It follows the histogram closely, so from here on we use the curve. Software does the same. The $p$-value in an ANOVA table comes from the $F$ distribution for the design's two $df$s, and nothing is simulated.
+**From simulation to the $F$ distribution.** Everything in @fig-8fnull so far came from simulation. The **$F$ distribution** is the theoretical distribution of $F$ when the null hypothesis is true. Its shape is set by two degrees of freedom, the numerator $df$ ($k - 1$) and the denominator $df$ ($N - k$). The blue dot-dash curve drawn over the histogram is the $F$ distribution with 2 and 27 degrees of freedom ($k - 1 = 2$ for the three site types, $N - k = 27$ for the 30 plots), worked out from theory with no simulation at all. It follows the histogram closely, so from here on we use the curve. Software does the same. The $p$-value in an ANOVA table comes from the $F$ distribution for the design's two $df$s, and nothing is simulated.
 
 ### Making decisions
 
@@ -388,7 +388,7 @@ ggplot(plot_df, aes(x = save_F)) +
 
 ```
 
-Only 5% of the $F$ distribution lies at or beyond 3.35. The simulation agrees, with `r round(100 * mean(save_F >= crit_F), 1)`% of the 10,000 simulated $F$-values at or beyond it. That gives us a decision rule. If we ran the same design for real (30 plots, 10 per site type), we could treat $F\geq3.35$ as evidence that the differences between site types are larger than chance would produce. An observed $F$ of 3.4, for instance, would occur less than 5% of the time under the null, so seeing it would lead us to reject the null and conclude that site type mattered.
+Only 5% of the $F$ distribution lies at or beyond 3.35. The $F$-test has one critical value, in the upper tail. Differences among the means in any direction make $MS_\text{Between}$ larger, so they all push $F$ up. A small $F$ is consistent with $H_0$. The simulation agrees, with `r round(100 * mean(save_F >= crit_F), 1)`% of the 10,000 simulated $F$-values at or beyond it. That gives us a decision rule. If we ran the same design for real (30 plots, 10 per site type), we could treat $F\geq3.35$ as evidence that the differences between site types are larger than chance would produce. An observed $F$ of 3.4, for instance, would occur less than 5% of the time under the null, so seeing it would lead us to reject the null and conclude that site type mattered. The critical value and the $p$-value give the same decision. $F$ is at or beyond the critical value exactly when its $p$-value is at or below $\alpha$.
 
 ### F and the means
 
@@ -396,7 +396,7 @@ An $F$-value and its $p$-value say whether the group means differ, but not what 
 
 ### ANOVA is an omnibus test
 
-ANOVA is called an **omnibus test**, a test that covers several comparisons at once. It answers one overall question that stands in for several pairwise ones.
+An **omnibus test** is a single test that covers several comparisons at once. ANOVA is an omnibus test. It answers one overall question that stands in for several pairwise ones.
 
 With three groups A, B, and C, there are three possible pairwise differences: A vs. B, B vs. C, and A vs. C. We could test each with a separate $t$-test, or ask the more general omnibus question with a single ANOVA:
 
@@ -533,7 +533,7 @@ The bar graph shows a gradient. Old-growth plots have the highest mean abundance
 
 Before running the ANOVA, check whether its assumptions hold. (Recall from Chapter 6 that independence is the universal assumption that applies to every test we cover and won't be re-listed here; what follows are ANOVA's *test-specific* assumptions.)
 
-ANOVA has two: **homogeneity of variance** (the groups' spread around their own means should be roughly comparable) and approximately normal residuals. In ANOVA the model predicts each score with its group mean, so a residual is the score minus its group mean, the same idea as the residuals in Chapter 2. Here each residual is a plot's count minus its forest type's mean, the same deviations that make up $SS_\text{Within}$, and the residuals should be roughly bell-shaped. Both matter because the $F$-test pools the within-group spread of every group into one error variance, $MS_\text{Within}$, and then compares $F$ to a null distribution that assumes normal residuals. Pooling only makes sense when the groups have similar spread.
+The first is **homogeneity of variance**, which means the groups have roughly equal spread around their own means. The second is approximately normal residuals. In ANOVA the model predicts each score with its group mean, so a residual is the score minus its group mean, the same idea as the residuals in Chapter 2. Here each residual is a plot's count minus its forest type's mean, the same deviations that make up $SS_\text{Within}$, and the residuals should be roughly bell-shaped. Both matter because the $F$-test pools the within-group spread of every group into one error variance, $MS_\text{Within}$, and then compares $F$ to a null distribution that assumes normal residuals. Pooling only makes sense when the groups have similar spread.
 
 ```{r}
 #| echo: true
@@ -615,7 +615,7 @@ ANOVA's effect size is **eta-squared** ($\eta^2$), and we already computed both 
 
 $$\eta^2 = \frac{SS_\text{Between}}{SS_\text{Total}} = \frac{SS_\text{Between}}{SS_\text{Between} + SS_\text{Within}}$$
 
-$SS_\text{Between}$ is the variation the group means explain and $SS_\text{Total}$ is all the variation there is, so $\eta^2$ is the proportion of the total variation explained by the grouping variable. It runs from 0 to 1.
+$SS_\text{Between}$ is the variation the group means explain and $SS_\text{Total}$ is all the variation there is. So $\eta^2$ is the proportion of the total variation in the response that the grouping variable explains. It runs from 0 to 1.
 
 ```{r}
 #| label: tbl-8etasq
@@ -648,7 +648,7 @@ $\eta^2$ is the same quantity as $R^2$ in regression (Chapter 9), computed the s
 
 ### Post-hoc comparisons with Tukey HSD
 
-The omnibus $F$ test tells us that at least one group mean differs, but not which pairs. Tests run after a significant omnibus test to find which pairs differ are **post-hoc comparisons**, a different use of "post-hoc" from Chapter 5's post-hoc power. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test [@Tukey1949]. Tukey HSD controls the familywise error rate across all pairwise comparisons, making it the appropriate choice after a significant ANOVA.
+The omnibus $F$ test tells us that at least one group mean differs, but not which pairs. **Post-hoc comparisons** are tests run after a significant omnibus test to find which pairs of groups differ. This is a different use of "post-hoc" from Chapter 5's post-hoc power. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test [@Tukey1949]. Tukey HSD compares every pair of groups while keeping the familywise error rate across all of the comparisons at $\alpha$. That is why it is the standard choice after a significant ANOVA.
 
 ```{r}
 #| echo: true
@@ -684,7 +684,7 @@ So the three comparisons give:
 
 **A non-significant difference is one the test could not detect.** Secondary and managed plantation differ by `r sprintf("%.2f", abs(tk["Managed-Secondary", "diff"]))` salamanders per plot in this sample. That difference is real in the data. The test says that with eight plots per group, we cannot distinguish it from sampling noise. A larger study might well separate them. Report it as "we did not detect a difference," never as "there is no difference."
 
-**Compact letter display.** Once you have more than three groups, a list of pairwise sentences gets unwieldy fast, so results are usually summarized with letters placed above each group. Groups that share a letter were not significantly different, and groups that share no letter were. @fig-8tukeyletters puts the salamander results in that form.
+**Compact letter display.** A compact letter display summarizes post-hoc results with a letter above each group. With more than three groups, a list of pairwise sentences gets long, so this is the usual summary. Groups that share a letter were not significantly different, and groups that share no letter were. @fig-8tukeyletters puts the salamander results in that form.
 
 ```{r}
 #| label: fig-8tukeyletters
@@ -718,7 +718,7 @@ Report the direction in plain language, the test statistic with both degrees of 
 
 ### Nonparametric alternative: the Kruskal-Wallis test
 
-Our assumption checks above came back clean, so the ANOVA result stands as-is. Suppose instead the groups had visibly unequal spread. Then Welch's ANOVA (`oneway.test()` in R) compares the means without assuming equal variances, the same fix Welch's $t$-test makes in Chapter 6. If the residuals were clearly skewed in a small or unbalanced sample, the **Kruskal-Wallis test** [@KruskalWallis1952] is the nonparametric alternative to one-way ANOVA, in exactly the same relationship that the Mann-Whitney-Wilcoxon test has to the independent-samples $t$-test (in fact, Kruskal-Wallis *is* the Mann-Whitney-Wilcoxon logic extended to more than two groups).
+Our assumption checks above came back clean, so the ANOVA result stands as-is. Suppose instead the groups had visibly unequal spread. Then Welch's ANOVA (`oneway.test()` in R) compares the means without assuming equal variances, the same fix Welch's $t$-test makes in Chapter 6. If the residuals were clearly skewed in a small or unbalanced sample, the **Kruskal-Wallis test** [@KruskalWallis1952] is the rank-based, nonparametric alternative to one-way ANOVA. It has the same relationship to ANOVA that the Mann-Whitney-Wilcoxon test has to the independent-samples $t$-test. Kruskal-Wallis uses the Mann-Whitney-Wilcoxon logic, extended to more than two groups.
 
 ```{r}
 #| include: false
@@ -771,7 +771,7 @@ The pattern matches Tukey HSD exactly. Old-growth differs significantly from bot
 
 ## Repeated-measures ANOVA
 
-Every unit in the salamander study was measured once: 24 plots, 8 per forest type. Many environmental studies instead measure the *same* units under every condition, such as the same monitoring stations in every season or the same streams before, during, and after a drought. That is a **repeated-measures** (within-subjects) design, and it calls for a repeated-measures ANOVA.
+Every unit in the salamander study was measured once: 24 plots, 8 per forest type. Many environmental studies instead measure the *same* units under every condition, such as the same monitoring stations in every season or the same streams before, during, and after a drought. A **repeated-measures** (within-subjects) design measures the same units under every condition, and it calls for a repeated-measures ANOVA.
 
 This is ANOVA's version of the paired $t$-test from Chapter 6. The paired $t$-test subtracted each plot's before score from its own after score, so differences between plots dropped out and only the change was left. With three or more conditions there is no single difference to take, so repeated-measures ANOVA does the equivalent with sums of squares, measuring how much the units differ from one another and removing that variation from the error term.
 
