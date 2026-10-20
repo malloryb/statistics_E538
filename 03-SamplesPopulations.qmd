@@ -23,7 +23,7 @@ quarto render 03-SamplesPopulations.qmd --to html --lua-filter ./section_lengths
 
 ## From description to inference
 
-Chapter 1 covered study design and describing a single variable with graphs and averages, and Chapter 2 described the relationship between two variables with correlation and a best-fit line. Statistics also lets us do inference, using limited data to say something about a broader population. Inference relies on two foundations: probability theory and the behavior of samples from distributions. This chapter covers probability rules and distributions first, then how samples behave: the law of large numbers, the sampling distribution of the mean and its standard error, and the central limit theorem. It ends with $z$-scores, estimating a population's standard deviation, and the confidence interval.
+Chapter 1 covered study design and describing a single variable with graphs and averages, and Chapter 2 described the relationship between two variables with correlation and a best-fit line. Statistics also lets us do **inference**. Inference uses data from a sample to draw conclusions about the broader population the sample came from. Inference relies on two foundations: probability theory and the behavior of samples from distributions. This chapter covers probability rules and distributions first, then how samples behave: the law of large numbers, the sampling distribution of the mean and its standard error, and the central limit theorem. It ends with $z$-scores, estimating a population's standard deviation, and the confidence interval.
 
 ## Probability vs. statistics
 
@@ -61,7 +61,7 @@ Imagine a soccer game between Arsenal and West Ham. You say Arsenal has an 80% c
 
 3.  Subjective belief: your confidence that Arsenal wins is four times your confidence that it doesn't.
 
-All three interpretations follow the same rules, so the math works the same whichever one you hold. In this course we'll use the **frequentist** view, so you can think of probability as the long-run proportion of times an event would occur if you could repeat the process many times (that's #1 above).
+All three interpretations follow the same rules, so the math works the same whichever one you hold. The **frequentist** view defines probability as the long-run proportion of times an event would occur if the process were repeated many times. This is interpretation 1 above, and it is the view this course uses.
 
 ## Basic probability theory
 
@@ -110,7 +110,7 @@ $$P(A) = P(\text{vanilla}) + P(\text{strawberry}) = 0.5$$
 
 **Expected value**
 
-Every probability distribution over numeric outcomes has its own mean, called the **expected value**. It is the number the average of the results converges on if you repeat the random process forever.
+The **expected value** of a probability distribution is its mean, the long-run average of the outcomes if the random process were repeated forever.
 
 A **random variable** is any quantity whose value is not settled in advance, such as the flavor the next customer picks or the number of rainy days next month. For a discrete random variable $X$ with outcomes $x_i$ and probabilities $P(X=x_i)$, the expected value is a probability-weighted average:
 
@@ -122,7 +122,7 @@ Each outcome counts in proportion to how often it actually happens, not equally.
 
 $$E[X] = (1)(1/6) + (2)(1/6) + (3)(1/6) + (4)(1/6) + (5)(1/6) + (6)(1/6) = 21/6 = 3.5$$
 
-The expected value, 3.5, is not itself a possible outcome. You can never roll a 3.5. The expected value is a long-run average across many rolls, not a prediction for any single roll. The same distinction applies to any mean.
+The expected value, 3.5, is not itself a possible outcome. You can never roll a 3.5. The expected value is a long-run average across many rolls, not a prediction for any single roll. It is the mean of the probability distribution. The average of the rolls in one sample is a sample mean, $\bar{x}$, and it varies from sample to sample around the expected value.
 
 Change the probabilities and the expected value moves. Take a die manufactured with a defect: two faces show 2, and no face shows 3, so the faces are 1, 2, 2, 4, 5, 6. The outcomes 1, 4, 5, and 6 each have probability $1/6$, and the outcome 2 has probability $2/6$:
 
@@ -142,7 +142,13 @@ A **conditional probability** is the probability of one thing *given that* somet
 
 We write the second one as $P(\text{exceed} \mid \text{heavy rain}) = 0.60$, read "the probability of exceeding the threshold given heavy rain." The event you are asking about goes to the left of the bar, and the condition you already know goes to the right.
 
-The order matters. Suppose heavy rain comes before 10% of days. Then 6% of all days are rainy days that exceed the threshold (60% of 10%). Among the 20% of days that exceed it, those 6% give $P(\text{heavy rain} \mid \text{exceed}) = 0.06/0.20 = 0.30$. Flipping the two sides of the bar turned 0.60 into 0.30, because each version counts within a different group of days.
+The order matters. Suppose heavy rain comes before 10% of days. Then 6% of all days are rainy days that exceed the threshold (60% of 10%). This 6% is the probability that both things happen on a day, counted among all days. The conditional probabilities count among a smaller group of days. Among the 20% of days that exceed it, those 6% give $P(\text{heavy rain} \mid \text{exceed}) = 0.06/0.20 = 0.30$. Flipping the two sides of the bar turned 0.60 into 0.30, because each version counts within a different group of days.
+
+The step from 60% of 10% to 6% is the **multiplication rule**. The probability that two events both happen is the probability of the first times the conditional probability of the second given the first:
+
+$$P(\text{both}) = P(\text{first}) \times P(\text{second} \mid \text{first})$$
+
+Here, $P(\text{heavy rain and exceed}) = 0.10 \times 0.60 = 0.06$.
 
 Every inference from here on uses a conditional probability. A $p$-value, which Chapter 4 introduces, is a conditional probability. It is the probability of data at least this extreme *given that* the null hypothesis is true.
 
@@ -150,7 +156,7 @@ Every inference from here on uses a conditional probability. A $p$-value, which 
 
 Two events are **independent** when knowing that one occurred tells you nothing about whether the other did. In symbols, $P(\text{first} \mid \text{second}) = P(\text{first})$.
 
-Independence gives us the multiplication rule. When two events are independent, the probability that *both* happen is the product of their separate probabilities:
+Independence simplifies the multiplication rule. When two events are independent, $P(\text{second} \mid \text{first}) = P(\text{second})$, so the probability that *both* happen is the product of their separate probabilities:
 
 $$P(\text{both}) = P(\text{first}) \times P(\text{second})$$
 
@@ -166,9 +172,9 @@ A **probability distribution** is a rule that assigns probabilities to all possi
 
 The binomial and the normal represent two kinds of distributions: discrete and continuous.
 
-- **Discrete distributions** assign probabilities to distinct outcomes.
+- **Discrete distributions** assign a probability to each of a set of separate, countable values, such as 0, 1, 2, ... heads.
 
-- **Continuous distributions** describe ranges of values, where probabilities are measured as *areas* under a curve.
+- **Continuous distributions** apply to variables that can take any value in a range, such as temperature. Probabilities for them are measured as *areas* under a curve, explained in What's probability density? below.
 
 ### The binomial distribution (discrete)
 
@@ -222,7 +228,7 @@ dbinom(x = 4, size = 20, prob = 0.5)
 
 The probability is about $0.5$%.
 
-2.  Cumulative probability. For example, $P(X \leq 4)$:
+2.  Cumulative probability, the probability of a value at or below a cutoff. For example, $P(X \leq 4)$:
 
 ```{r, echo=TRUE}
 pbinom(q = 4, size = 20, prob = 0.5)
@@ -255,7 +261,7 @@ We write this as:
 
 $X \sim \text{Normal}(\mu, \sigma)$
 
-@fig-3normal shows the standard normal, with $\mu = 0$ and $\sigma = 1$.
+The **standard normal** distribution is the normal distribution with $\mu = 0$ and $\sigma = 1$. A variable with this distribution is written $Z$, so $Z \sim N(0, 1)$, and one value of it is a $z$-score (@sec-zscores). @fig-3normal shows it.
 
 ```{r}
 #| label: fig-3normal
@@ -286,6 +292,8 @@ Areas under every normal curve follow the 68-95-99.7 rule, which @sec-zscores us
 - \~95% fall within $2\sigma$\
 
 - \~99.7% fall within $3\sigma$
+
+The 2 in the 95% line is rounded. The exact cutoff for 95% is 1.96 standard deviations, which the confidence interval at the end of this chapter uses.
 
 ```{r}
 #| label: fig-3normal-area
@@ -322,7 +330,7 @@ The 97.5th percentile of the standard normal is 1.96, so 2.5% of the area is abo
 
 For continuous distributions like the normal, probabilities belong to ranges of values instead of to single values. You cannot ask for the probability of one exact value (e.g., $P(X = 23)$), because the answer is zero. Instead, we calculate the probability of being in a range, such as $22.5 \leq X \leq 23.5$.
 
-This is why the $y$-axis of a normal curve is labeled **probability density**. The height of the curve at a point, $p(x)$, is not itself a probability. Instead, probabilities come from the area under the curve between two values. For example, about 68% of values from a standard normal fall between −1 and 1, because the area between −1 and 1 is 0.68.
+**Probability density** is the height of a continuous distribution's curve at a point, written $p(x)$. The $y$-axis of a normal curve shows density. A density is not itself a probability. Probabilities come from the area under the curve between two values. For example, about 68% of values from a standard normal fall between −1 and 1, because the area between −1 and 1 is 0.68.
 
 In R, functions like `dnorm()` return the density (the curve's height), while `pnorm()` and `qnorm()` work with cumulative probabilities and quantiles, which are usually more useful for applied problems.
 
@@ -341,11 +349,11 @@ In R, functions like `dnorm()` return the density (the curve's height), while `p
 
 ## Samples, populations and sampling
 
-Descriptive statistics summarize what we *do* know. **Inferential statistics** is the branch of statistics concerned with drawing conclusions about populations or causal relationships from sample data. It aims to "learn what we do not know from what we do." To do that, we have to say what we want to learn about and how we learn it. Introductory statistics typically divides inference into two big ideas, estimation and hypothesis testing. This chapter introduces estimation. Estimation only makes sense once you understand how samples relate to populations, so this section covers sampling first.
+Descriptive statistics summarize what we *do* know. **Inferential statistics** is the branch of statistics concerned with drawing conclusions about populations or causal relationships from sample data. It aims to "learn what we do not know from what we do." To do that, we have to say what we want to learn about and how we learn it. Introductory statistics typically divides inference into two big ideas, estimation and hypothesis testing. **Estimation** uses sample data to give a best guess of a population value, along with how uncertain that guess is. This chapter introduces estimation, and Chapter 4 introduces hypothesis testing. Estimation only makes sense once you understand how samples relate to populations, so this section covers sampling first.
 
 **Sampling theory** specifies the assumptions that statistical inferences require. To talk about making inferences, we must be clear about what we are drawing inferences *from* (the sample) and what we are drawing inferences *about* (the population).
 
-In almost every study, we have only a **sample**, a finite set of data points. We cannot survey every voter in a country or measure every tree in a forest. Earlier, our goal was just to describe the sample. Now we turn to how samples can be used to generalize.
+A **sample** is the finite set of data points a study actually collects. In almost every study, the sample is all we have. We cannot survey every voter in a country or measure every tree in a forest. Earlier, our goal was just to describe the sample. Now we turn to how samples can be used to generalize.
 
 ### Defining a population
 
@@ -353,9 +361,9 @@ A sample is the dataset you can open on your computer. A **population**, by cont
 
 ### Simple random samples
 
-The sample--population relationship depends on the procedure used to select the sample. This procedure is the **sampling method**.
+The **sampling method** is the procedure used to choose which members of the population end up in the sample. The relationship between a sample and its population depends on it.
 
-Suppose we have a bag with 10 chips, each uniquely labeled, some black and some white. This bag is the population. If we shake the bag and draw 4 chips without replacement, each chip has the same chance of being selected. This is a **simple random sample**. @fig-3srs1 shows three such samples.
+Suppose we have a bag with 10 chips, each uniquely labeled, some black and some white. This bag is the population. A **simple random sample** is a sample chosen so that every member of the population has the same chance of being selected. If we shake the bag and draw 4 chips without replacement (no chip goes back in the bag), each chip has the same chance of being selected, so the 4 chips are a simple random sample. @fig-3srs1 shows three such samples.
 
 ```{r}
 #| label: fig-3srs1
@@ -458,7 +466,7 @@ When designing your own studies, choose a sampling method that reaches the whole
 
 So far we have talked about populations the way a scientist might: a group of people, a stand of trees, a set of rivers. Statisticians formalize this idea by treating a population as a probability distribution, the abstract source from which data are drawn.
 
-For example, suppose daily coffee consumption in adults follows an approximately normal distribution with mean $\mu = 2$ cups/day and standard deviation $\sigma = 1$ cup/day. These are the **population parameters**.
+**Population parameters** are the numbers that describe a population distribution, such as its mean $\mu$ and standard deviation $\sigma$. For example, suppose daily coffee consumption in adults follows an approximately normal distribution with mean $\mu = 2$ cups/day and standard deviation $\sigma = 1$ cup/day. These two numbers are the population parameters.
 
 ```{r}
 #| label: fig-3coffeeDist
@@ -531,9 +539,9 @@ fig
 
 Now suppose we take a random sample of 100 adults, shown as the histogram in panel (b) of @fig-3coffeeDist. The lime-green dotted line marks the sample mean, and the orange dashed line marks $\mu$. The histogram follows the population's bell shape, with bumps and gaps the population curve does not have. This sample's mean is `r sprintf("%.2f", mean(samp100$x))` cups and its standard deviation is `r sprintf("%.2f", sd(samp100$x))` cups, close to $\mu = 2$ and $\sigma = 1$ but not equal to them.
 
-These are **sample statistics**: numbers we calculate from the data in hand. They approximate the population parameters, which describe the entire distribution. The central problem of inference is how to use sample statistics to estimate population parameters, and how much confidence we can place in those estimates.
+**Sample statistics** are numbers calculated from the data in a sample, such as $\bar{x}$ and $s$. This sample's mean and standard deviation are sample statistics. They approximate the population parameters, which describe the entire distribution. The central problem of inference is how to use sample statistics to estimate population parameters, and how much confidence we can place in those estimates.
 
-A statistic describes your data. An estimate is your best guess about the matching population parameter. For the mean, the two are the same number, as the table shows.
+A statistic describes your data. An estimate is your best guess about the matching population parameter. An **estimator** is the formula that produces the estimate, such as "add up the values and divide by $n$." The estimate is the number that formula gives for one sample. For the mean, the two are the same number, as the table shows.
 
 | Symbol | What is it? | Do we know it? |
 |-------------------|--------------------------|---------------------------|
@@ -564,9 +572,9 @@ The law of large numbers tells us that with enough data, our sample mean will ge
 ### Sampling distribution of the sample mean
 
 - A **sample mean** is just the average of one sample.\
-- A **sampling distribution** is the distribution of a statistic, such as the mean, across many samples.
+- A **sampling distribution** is the distribution of a statistic, such as the mean, across many samples of the same size $n$.
 
-So the sampling distribution of the sample mean is the distribution formed by repeating your study many times and collecting all those sample averages.
+The sampling distribution of the sample mean is the distribution of the means of many samples of size $n$, as if the study were repeated many times.
 
 The sampling distribution tells us how much the sample mean varies from sample to sample, and how close we can expect it to be to the population mean.
 
@@ -737,7 +745,7 @@ knitr::include_graphics(path="imgs/gifs/sampleDistNormal-1.gif")
 # The animation is built by imgs/gifs/ch3_sampling_mean_gif.R
 ```
 
-So the sampling distribution of the mean is itself a distribution, with its own spread. The standard deviation of this sampling distribution has a special name, the **standard error (SE)**. In this context, it is the standard error of the mean, written $SE_{\bar{x}}$.
+So the sampling distribution of the mean is itself a distribution, with its own spread. The **standard error (SE)** is the standard deviation of a sampling distribution. In this context, it is the standard error of the mean, written $SE_{\bar{x}}$. The standard deviation describes how spread out the individual values are. The standard error describes how spread out the sample means are. Collecting more data does not shrink the standard deviation, but it does shrink the standard error.
 
 Two facts about the sampling distribution of the mean hold at every sample size, for any population with a finite standard deviation:
 
@@ -755,7 +763,7 @@ The second fact also gives the width of @fig-3unifmany. The numbers 1 to 10 have
 
 ## The central limit theorem
 
-The **central limit theorem (CLT)** adds a third fact, about shape:
+The **central limit theorem (CLT)** states a third fact about the sampling distribution, and the only one about shape:
 
 3.  As $n$ grows, the sampling distribution of the mean approaches a normal shape, no matter what shape the population has, as long as the population has a finite standard deviation.
 
@@ -934,7 +942,7 @@ This is what later chapters mean by "once the sample is large enough." With a sm
 
 ## $z$-scores {#sec-zscores}
 
-A **$z$-score** is a standardized way to express how far a value is from its mean, measured in units of standard deviation. Z-scores are useful because (i) areas under the normal curve translate directly into probabilities, and (ii) by the CLT, many averages (e.g., sample means) are approximately normal, so z-scores let us read off probabilities for those, too.
+A **$z$-score** is the number of standard deviations a value is above or below its mean. Standardizing, defined below, is the step that turns a value into its $z$-score. $z$-scores are useful for two reasons. Areas under the normal curve translate directly into probabilities. And by the CLT, many averages, such as sample means, are approximately normal, so $z$-scores give probabilities for those too.
 
 First, recall the geometry of the normal curve. In @fig-3normalSDspercents we draw vertical lines at 0, ±1, ±2, and ±3 standard deviations for a standard normal ($\mu=0,\sigma=1$). The labels show familiar areas: about 34.1% between 0 and 1, 13.6% between 1 and 2, and so on. Altogether, about 68.3% of values lie between −1 and +1 SD.
 
@@ -1027,7 +1035,7 @@ ggplot(t_df, aes(x=x_range,y=dnorm_vec))+
 
 ### What "standardized" means
 
-**Standardizing** converts raw scores to z-scores, also called **standardized scores**, by subtracting the mean and dividing by the standard deviation.
+**Standardizing** converts a raw score, the value as measured, into a $z$-score by subtracting the mean and dividing by the standard deviation. $z$-scores are also called **standardized scores**.
 
 Standardizing lets you compare values that come from distributions with different means and spreads, because a z-score's unit is the standard deviation. A stream that usually runs at 12 °C, with an SD of 2 °C, reads 18 °C one afternoon. That reading is $(18 - 12)/2 = 3$ SDs above the stream's usual temperature. A city whose summer days average 25 °C, with an SD of 5 °C, has a 30 °C day. That day is $(30 - 25)/5 = 1$ SD above usual. The city's 30 °C is the larger number, but the stream's 18 °C is the more unusual reading, and the z-scores of 3 and 1 show it.
 
@@ -1081,7 +1089,7 @@ Once you standardize a score, areas under the normal curve tell you how unusual 
 
 ### Estimating the population standard deviation
 
-Estimating the population mean was straightforward, because the sample mean $\bar x$ is an **unbiased estimator** of $\mu$, meaning that its average across many samples equals the true mean. Standard deviation is trickier.
+An estimator is **unbiased** when its expected value, its average across many samples, equals the population parameter it estimates. Estimating the population mean was straightforward, because the sample mean $\bar x$ is an unbiased estimator of $\mu$. Standard deviation is trickier.
 
 An estimator is **biased** if its expected value systematically differs from the true population parameter. The sample standard deviation computed by dividing by $n$ is such a case: it tends to underestimate $\sigma$, especially when $n$ is small.
 
@@ -1336,9 +1344,9 @@ To summarize:
 
 ## Estimating a confidence interval
 
-So far, we've focused on using sample data to estimate population parameters, but every estimate comes with some uncertainty. A single number, like "the mean IQ in this sample is 104," does not show how confident we are. A **confidence interval (CI)** is a range of plausible values for the true population mean, built by a method whose long-run success rate we know.
+So far, we've focused on using sample data to estimate population parameters, but every estimate comes with some uncertainty. A single number, like "the mean IQ in this sample is 104," does not show how confident we are. A **confidence interval (CI)** is a range of plausible values for the population mean, built by a method that captures the true mean a known percentage of the time, such as 95%, across repeated samples.
 
-You'll use this directly in Chapter 4, where a confidence interval becomes one of three equivalent ways to decide whether to reject $H_0$.
+You'll use this directly in Chapter 4, where a confidence interval becomes one of three equivalent ways to decide whether to reject the null hypothesis, $H_0$. The same cutoff, 1.96, appears there as a critical value. In a confidence interval, 1.96 standard errors sets how far the interval reaches on each side of $\bar{x}$. In a test, it marks how far the test statistic must be from 0 before we reject $H_0$.
 
 **Sample means fall within about 1.96 standard errors of $\mu$ 95% of the time.** Thanks to the central limit theorem, we know the sampling distribution of the mean is approximately normal. In a normal distribution, 95% of values fall within about 1.96 standard deviations of the mean.
 
