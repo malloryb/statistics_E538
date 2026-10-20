@@ -535,9 +535,14 @@ n_full   <- length(after_full)
 d_full   <- after_full - before_full
 se_dfull <- sd(d_full) / sqrt(n_full)
 tcrit_19 <- qt(0.975, df = n_full - 1)
+
+# The same 20 plots analyzed, wrongly, as two independent groups
+wrong_indep <- t.test(after_full, before_full, var.equal = TRUE)
 ```
 
 At $n=20$, $t(19) = `r sprintf("%.2f", full20_out$statistic)`$, $p `r fmt_p_eq(full20_out$p.value)`$, a significant result. The mean difference (`r sprintf("%.2f", full20_out$estimate)` percentage points) is smaller than the 5-plot subset's `r round(mean(differences), 1)`. The larger $t$ comes from the standard error, which fell from `r round(sd(differences)/sqrt(5), 2)` to `r round(sd(after_full - before_full)/sqrt(20), 2)` with four times as many plots. A mean increase of `r round(full20_out$estimate, 1)` points would be unlikely if restoration had no effect, so the extra plots gave more power to detect a real effect.
+
+Analyzed wrongly as two independent groups, the same 20 plots give $t(`r wrong_indep$parameter`) = `r sprintf("%.2f", wrong_indep$statistic)`$, $p `r fmt_p_eq(wrong_indep$p.value)`$, and the test fails to reject $H_0$. The pooled SD still contains the plot-to-plot differences that pairing removes.
 
 **Confidence interval.** The CI for a paired test follows the same recipe as the one-sample CI, the estimate plus or minus $t_{crit}$ times the estimate's standard error. Here the estimate is $\bar d$, its standard error is $s_d/\sqrt{n}$, and $t_{crit}$ comes from the $t$ distribution with $df = `r n_full - 1`$:
 
