@@ -50,7 +50,7 @@ Each question pairs a continuous relationship, a continuous variable's effect on
 
 The first question points to a limitation of the last chapter. "Pollution: present or absent" simplifies a continuous measurement, a concentration in parts per billion. Sorting continuous measurements into "high" and "low" buckets throws away the information a covariate needs, which is how much more polluted a channel is, not just whether it is polluted. Whenever you have the measured values, ANCOVA (or, if there's no categorical factor left at all, plain regression) is almost always the better tool than forcing them into groups first.
 
-ANCOVA is a linear model built directly on regression's own equation. A simple linear model is
+**Analysis of covariance (ANCOVA)** is a linear model with a continuous outcome, at least one continuous predictor (the covariate), and at least one categorical predictor (the factor). It asks whether the covariate's relationship with the outcome is the same in every group and, if it is, whether the groups differ at the same covariate value. ANCOVA is built directly on regression's own equation. A simple linear model is
 
 $$y = \beta_0 + \beta_1 x + \varepsilon$$
 
@@ -182,16 +182,16 @@ ANCOVA handles this situation when the third variable is continuous, instead of 
 
 ## Covariates and fixed factors
 
-**Covariate:** a continuous variable that changes alongside the outcome and helps explain part of its variation. In environmental studies, common covariates include temperature, rainfall, soil moisture, or pollution concentration, which may influence the outcome but aren't the main treatment of interest. Including one lets us adjust for its influence, giving a clearer test of the categorical effect once that continuous background variation is accounted for.
+A **covariate** is a continuous predictor that is related to the outcome and helps explain part of its variation. In environmental studies, common covariates include temperature, rainfall, soil moisture, or pollution concentration, which may influence the outcome but aren't the main treatment of interest. Including one lets us adjust for its influence, giving a clearer test of the categorical effect once that continuous background variation is accounted for.
 
-The categorical predictor itself, in every example this chapter uses, is a **fixed factor**, with specific levels the researcher chose (urban vs. rural, shaded vs. open canopy) rather than a random sample of possible groups. That distinction matters more once you're building mixed-effects models, which mix fixed and random factors and are beyond where this course goes. They are a different idea from Chapter 10's mixed design, which mixes between-subjects and within-subjects factors. A random factor, by contrast, would be something like the counties your streams are in. You aren't interested in those ten counties for their own sake. They represent a larger population of counties, and you want your conclusions to apply beyond the ones you sampled.
+A **fixed factor** is a categorical predictor whose levels the researcher chose on purpose, such as urban vs. rural or shaded vs. open canopy. Every categorical predictor in this chapter is a fixed factor. That distinction matters more once you're building mixed-effects models, which mix fixed and random factors and are beyond where this course goes. They are a different idea from Chapter 10's mixed design, which mixes between-subjects and within-subjects factors. A **random factor** is a categorical predictor whose levels are a sample from a larger population of possible levels. For example, the counties your streams are in could be a random factor. You aren't interested in those ten counties for their own sake. They represent a larger population of counties, and you want your conclusions to apply beyond the ones you sampled.
 
 ## What ANCOVA is
 
 ANCOVA asks whether a *relationship* holds up across groups. That framing fits environmental work particularly well, because you usually can't experimentally strip out a covariate like temperature, rainfall, or season anyway. Often you wouldn't want to. It may be the reason you designed the study in the first place. In this chapter's main example, the covariate is what we care about and the interaction is the result we're testing for.
 
 ::: {.callout-note title="Note: ANCOVA with a nuisance covariate"}
-Elsewhere the covariate is a **nuisance** instead, something you control for so a group comparison is fair. In that version, you test the interaction hoping it is not significant.
+Elsewhere the covariate is a nuisance instead, something you control for so a group comparison is fair (the second example at the end of this chapter). In that version, you test the interaction hoping it is not significant.
 
 A classic version from psychology compares anxiety scores across two therapy groups after treatment, controlling for pre-treatment scores.
 
@@ -208,7 +208,7 @@ For ANCOVA, you need:
 
 Before reading coefficients off an ANCOVA table, it helps to see how one equation can represent two groups at once.
 
-Categorical predictors get into a linear model by being coded as **indicator variables** (you'll also see them called dummy variables). For a factor with $k$ groups you include $k-1$ indicators. The omitted group becomes the **reference**, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:
+An **indicator variable** is a variable that equals 1 for observations in one group and 0 for all other observations. Categorical predictors get into a linear model as indicator variables (you'll also see them called dummy variables). For a factor with $k$ groups you include $k-1$ indicators. The omitted group becomes the **reference**, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:
 
 $$G = \begin{cases} 0 & \text{group 1 (the reference group)} \\ 1 & \text{group 2} \end{cases}$$
 
@@ -238,9 +238,9 @@ $$y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x}
 
 -   $\beta_0$ and $\beta_1$ describe the line for the reference group ($G=0$).
 -   $\beta_2$ is how much the intercept moves for the other group.
--   $\beta_3$ is how much the slope changes for the other group. This is the interaction term.
+-   $\beta_3$ is how much the slope changes for the other group. This is the interaction term. In Chapter 10, an interaction meant that the effect of one factor depended on the level of the other factor. Here it means that the effect of $x$, its slope, depends on the group. Both are the same idea, because an interaction means the effect of one predictor depends on the value of another, whether that predictor is a factor or a covariate.
 
-If we only include $\beta_2$ and leave out $\beta_3$, we get a restricted version in which the intercept can shift but the slope cannot, so the two lines are forced to be parallel. That is the **parallel-lines model**, and it is the one we fall back to when the slope difference turns out not to be significant.
+The **parallel-lines model** includes $\beta_2$ but leaves out $\beta_3$, so the intercept can shift between groups but the slope cannot, and the two lines are parallel. When the slope difference is not significant, we use this simpler model instead of keeping the interaction term.
 
 ::: {.callout-note title="Note: How R names the four coefficients"}
 These are the four coefficients R reports for this model, and each one can be checked against a graph of the two group lines. For `lm(y ~ x * Group)`, where `Group` has levels A (the reference) and B, R names the rows `(Intercept)` for $\beta_0$, `x` for $\beta_1$, `GroupB` for $\beta_2$, and `x:GroupB` for $\beta_3$. The worked example below follows the same pattern: `(Intercept)`, `AirPollution`, `AreaTypeUrban`, and `AirPollution:AreaTypeUrban`.
@@ -316,11 +316,11 @@ $$y=\beta_0+\beta_1 x+\beta_2 G+\varepsilon$$
 -   Null: $H_{0,\text{group}}:\beta_2=0$
 -   Alternative: $H_{a,\text{group}}:\beta_2\neq 0$
 
-With parallel lines, $\beta_2$ is the vertical gap between the two lines, and it is the same at every value of $x$. That gap is the **adjusted difference**, how much the groups differ when they are compared at the same covariate value. Evaluating each group's line at the overall mean of $x$ gives the **adjusted means**, the group means you would expect if both groups had the same average covariate. The second example at the end of this chapter works through one.
+With parallel lines, $\beta_2$ is the vertical gap between the two lines, and it is the same at every value of $x$. The **adjusted difference** is how much the groups differ when they are compared at the same covariate value. With parallel lines, it equals that gap, $\beta_2$. The **adjusted means** are the group means you would expect if both groups had the same average covariate value. To get them, evaluate each group's line at the overall mean of $x$. Raw group means compare the groups at whatever covariate values each group happens to have. Adjusted means compare them at one shared covariate value, the overall mean of $x$. So if one group happens to have higher covariate values, that difference does not enter the comparison. The second example at the end of this chapter works through one.
 
 In the parallel-lines model, $\beta_1$ is the common slope and $\beta_2$ is the adjusted difference between groups.
 
-**Intercepts and centering.** Intercepts are evaluated at $x=0$. In the model with an interaction, the lines are not parallel, so $\beta_2$ compares the groups at $x=0$ only, which may be far outside the data. Centering the covariate, $\tilde x=x-\bar x$, moves that comparison to the average covariate value. In the parallel-lines model the gap is the same everywhere, so centering changes the intercept but not $\beta_2$.
+**Intercepts and centering.** Intercepts are evaluated at $x=0$. In the model with an interaction, the lines are not parallel, so $\beta_2$ compares the groups at $x=0$ only, which may be far outside the data. **Centering** the covariate means subtracting its mean from every value, $\tilde x = x - \bar x$. That moves the comparison to the average covariate value. In the parallel-lines model the gap is the same everywhere, so centering changes the intercept but not $\beta_2$.
 
 **What to report.**
 
@@ -610,7 +610,7 @@ If the interaction had *not* been significant, we would instead drop the interac
 
 ## Second example: when the covariate is a nuisance
 
-The bird example used ANCOVA the way this chapter leads with it. The covariate relationship was the question, and the interaction was the finding. The other way you'll see ANCOVA reverses those roles. The group comparison is the question, and the covariate is something to adjust for so that the comparison is fair. This is also the continuous version of the Simpson's paradox problem the chapter opened with.
+The bird example used ANCOVA the way this chapter leads with it. The covariate relationship was the question, and the interaction was the finding. The other way you'll see ANCOVA reverses those roles. The group comparison is the question, and the covariate is something to adjust for so that the comparison is fair. A **nuisance covariate** is a covariate you adjust for so that a group comparison is fair, when the group comparison is the question. This is also the continuous version of the Simpson's paradox problem the chapter opened with.
 
 @tbl-11tworoles compares the two ways this chapter uses ANCOVA.
 

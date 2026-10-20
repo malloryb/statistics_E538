@@ -88,7 +88,7 @@ Now we have two IVs, soil pH and water availability, each with two levels. A **f
 
 Each combination of soil type and water availability creates a unique environment for the plants, giving four distinct scenarios to measure growth rates: 2 IVs, each with 2 levels, for 2x2 = 4 conditions total. The notation directly tells you the number of conditions.
 
-Anytime all of the levels of each IV in a design are fully crossed, so that they all occur for each level of every other IV, we can say the design is a **fully factorial** design.
+A **fully factorial** design includes every combination of the levels of its IVs, so each level of one IV occurs with each level of every other IV. A design with this property is also called fully crossed. A factorial design that leaves some combinations of levels unmeasured is only partly crossed. Every design in this chapter is fully factorial, so the rest of the chapter uses factorial to mean fully factorial.
 
 The notation system indicates the structure of the factorial design. Each IV gets a number representing its levels. Here are a few examples:
 
@@ -149,7 +149,7 @@ knitr::kable(raw_tbl, align = "crrrr")
 
 ### Cell means and marginal means
 
-Each combination of conditions, such as no pollution with low flow, is called a **cell**. The **cell mean** is the mean species count across the five stream channels assigned to that combination. A **marginal mean** is the mean for one level of a factor, averaged across the levels of the other factor. For example, the no-pollution marginal mean averages the two no-pollution cells, one at each flow rate. @tbl-10means shows the means from the experiment this chapter analyzes.
+Each combination of conditions, such as no pollution with low flow, is a cell, the same word Chapter 7 used for one combination in a table of counts. A **cell mean** is the mean of the scores in one cell. Here, each cell mean averages the species counts of the five stream channels assigned to that combination. A **marginal mean** is the mean for one level of a factor, averaged across the levels of the other factor. For example, the no-pollution marginal mean averages the two no-pollution cells, one at each flow rate. @tbl-10means shows the means from the experiment this chapter analyzes.
 
 ```{r}
 #| label: tbl-10means
@@ -214,11 +214,11 @@ Under low flow, species count drops sharply with pollution (`r f1(mean(A))` to `
 
 A factorial design gives you two kinds of results: main effects and interactions. How many of each depends on the number of IVs.
 
-A **main effect** is the average difference associated with a single IV, the difference between its marginal means, one per IV. A 2x2 design has two IVs, so two main effects: one for Pollution and one for Flow. A 2x2x2 design has three main effects, one per IV. A 3x3x3 design also has three, since the number of main effects tracks the number of IVs, not their levels.
+A **main effect** is the difference between the marginal means of one IV. Each IV has one main effect, so a 2x2 design has two, one for Pollution and one for Flow. A 2x2x2 design has three main effects, one per IV. A 3x3x3 design also has three, since the number of main effects tracks the number of IVs, not their levels.
 
-The effect of one IV at a single level of the other, such as the pollution effect under low flow, is a **simple effect**. @fig-10flowB shows two of them, one per flow rate, and the main effect of pollution is their average: $(`r f1(simple_low)` + `r f1(simple_high)`)/2 = `r f1((simple_low + simple_high)/2)`$, the same `r f1(nopoll_mean - poll_mean)` you get by subtracting the pollution marginal means.
+A **simple effect** is the effect of one IV at a single level of the other IV, such as the pollution effect under low flow. @fig-10flowB shows two of them, one per flow rate, and the main effect of pollution is their average: $(`r f1(simple_low)` + `r f1(simple_high)`)/2 = `r f1((simple_low + simple_high)/2)`$, the same `r f1(nopoll_mean - poll_mean)` you get by subtracting the pollution marginal means.
 
-An **interaction** occurs when the effect of one IV depends on the level of another, and @fig-10flowB shows one, since the simple effect of pollution changed with flow.
+An **interaction** occurs when the effect of one IV depends on the level of another. @fig-10flowB shows one, since the simple effect of pollution changed with flow.
 
 Equivalently, an interaction is a **difference between differences**, which is what the arithmetic computes. Each simple effect of pollution is a difference (unpolluted minus polluted). If that difference itself changes across flow rates, that's an interaction.
 
@@ -243,7 +243,7 @@ A two-way ANOVA tests three effects and therefore has three null hypotheses:
 2.  a main effect of flow, and
 3.  a pollution × flow interaction.
 
-We can represent the four combinations of conditions and their mean species counts as:
+The hypotheses are about the population mean species count for each combination of conditions, written $\mu$. The cell means computed from the 20 channels, written $\bar{Y}$ later in this chapter, estimate them. We can represent the four combinations of conditions and their mean species counts as:
 
 | Pollution    | Flow      | Mean species count         |
 |--------------|-----------|----------------------------|
@@ -466,7 +466,7 @@ anova_kable(aov_fit)
 
 The SS column matches the hand-calculated values above: `r round(ss_poll,2)` for Pollution, `r round(ss_flow,2)` for Flow, `r round(ss_int,2)` for the interaction, `r round(ss_error,2)` for Error. All three effects are significant here, including the interaction we previewed informally. The difference in the pollution effect between the two flow rates is larger than chance would produce.
 
-This example is balanced: every combination of conditions has the same number of stream channels. With unequal numbers, two things change. The sums of squares depend on the order of terms in `aov()`, because R computes them sequentially, and the marginal means become model-based estimates (estimated marginal means) rather than simple averages of the scores. Balanced designs avoid both complications, so plan equal sample sizes when you can.
+This example is balanced (Chapter 8), with five stream channels in every combination of conditions. With unequal numbers, two things change. The sums of squares depend on the order of terms in `aov()`, because R computes them sequentially, and the marginal means become model-based estimates (estimated marginal means) rather than simple averages of the scores. Balanced designs avoid both complications, so plan equal sample sizes when you can.
 
 ### Checking the assumptions
 
@@ -484,7 +484,7 @@ $$
 
 Each effect then reports its share of *all* the variation in the study, so the three values plus error's share add to 1. That is easy to interpret, but adding a second factor to a study inflates $SS_\text{Total}$, which shrinks the $\eta^2$ of a factor whose behavior did not change at all. The same effect looks smaller purely because you studied something else alongside it.
 
-**Partial eta-squared** avoids that by setting the other factors' variation aside instead of counting it:
+**Partial eta-squared** ($\eta_p^2$) is the share of the variation left after setting the other effects aside that one effect explains. Its denominator is that effect's $SS$ plus $SS_\text{Error}$:
 
 $$
 \eta_p^2 = \frac{SS_\text{Effect}}{SS_\text{Effect} + SS_\text{Error}}
@@ -619,7 +619,7 @@ ggplot(all_22s, aes(x = Flow, y = means, colour = Pollution, group = Pollution))
 In the line graphs, interactions are easiest to see:
 
 -   **Parallel lines** mean no interaction (the pollution effect is the same at both flow rates).
--   **Crossing lines** mean an interaction (the pollution effect differs by flow). The lines don't have to cross inside the plot: converging or diverging lines would cross if you extended them, so they count too.
+-   **Crossing lines** mean an interaction (the pollution effect differs by flow). The lines don't have to cross inside the plot: converging or diverging lines would cross if you extended them, so they count too. In a plot of sample cell means, the lines are almost never exactly parallel. The plot shows the pattern, and the interaction $F$ test says whether the lines differ from parallel by more than chance would produce.
 -   The average gap between the two lines is the main effect of pollution, and the lines' average rise or fall from low to high flow is the main effect of flow.
 
 ::: {.callout-tip title="Tip: Which factor goes on the x-axis?"}
@@ -958,7 +958,7 @@ Larger factorial designs use the same logic as the 2x2. But complexity grows qui
 A 2x2x2 design includes three independent variables, each with two levels. That creates:
 
 -   three main effects (one per variable)
--   three **two-way interactions** (A×B, A×C, B×C)
+-   three **two-way interactions** (A×B, A×C, B×C), each an interaction between two of the three variables
 -   one three-way interaction (A×B×C)
 
 You can think of it as two 2x2 plots side by side, one for each level of the third variable.
@@ -969,7 +969,7 @@ Interactions can themselves interact. The math is identical in structure, but th
 
 ### Mixed designs
 
-Sometimes one factor is between-subjects (e.g., different sites or treatments) and another is within-subjects (e.g., repeated measures over time). This is called a **mixed design**.
+A **mixed design** has at least one between-subjects factor and at least one within-subjects factor. For example, sites or treatments could be a between-subjects factor, and repeated measures over time a within-subjects factor.
 
 The interpretation of main effects and interactions is the same, but the error terms used in the $F$-tests differ, and the data structure must account for repeated measures. These models are important in longitudinal and environmental time-series studies, but they're beyond our current scope.
 
