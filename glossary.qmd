@@ -1,0 +1,34 @@
+# Glossary {#sec-glossary .unnumbered}
+
+```{r, include = FALSE}
+source("global_stuff.R")
+```
+
+Each entry gives the definition the book uses and the chapter that defines it. The definitions match the chapter text word for word or nearly so, so a definition you learn here is the one the chapter uses.
+
+```{r}
+#| echo: false
+#| results: asis
+gl <- yaml::read_yaml("glossary.yml", fileEncoding = "UTF-8")
+chapter_files <- c("01-Data_Description.qmd", "02-Correlation.qmd", "03-SamplesPopulations.qmd",
+                   "04-Foundation_Inference.qmd", "05-Hypothesis_Testing.qmd", "06-ttests.qmd",
+                   "07-Nonparametric.qmd", "08-ANOVA.qmd", "09-Regression.qmd",
+                   "10-FactorialANOVA.qmd", "11-ANCOVA.qmd")
+sort_key <- function(x) tolower(gsub("[^A-Za-z0-9]", "", x))
+gl <- gl[order(sapply(gl, function(e) sort_key(e$term)))]
+first_letter <- function(e) toupper(substr(gsub("[^A-Za-z]", "", e$term), 1, 1))
+current <- ""
+for (e in gl) {
+  L <- first_letter(e)
+  if (L != current) {
+    cat("\n## ", L, " {.unnumbered}\n\n", sep = "")
+    current <- L
+  }
+  ch <- sprintf("[Chapter %d](%s)", e$chapter, chapter_files[e$chapter])
+  if (!is.null(e$see)) {
+    cat(e$term, "\n:   See *", e$see, "*.\n\n", sep = "")
+  } else {
+    cat(e$term, "\n:   ", e$definition, " (", ch, ")\n\n", sep = "")
+  }
+}
+```
