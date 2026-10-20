@@ -75,7 +75,7 @@ null_hist <- function(sim, exact, obs, stat, xlab) {
 
 Chapter 6 covered three forms of the $t$-test (one-sample, paired, and independent-samples, also called two-sample). All three need a continuous outcome that is roughly normal (for the paired test, the difference scores), and the pooled independent-samples test also assumes similar variance across the two groups. This chapter covers what to do when those assumptions aren't met. We'll also cover what to do if your data aren't continuous at all.
 
-So far, we've been looking at **parametric** tests, without calling them that. Every test needs a known null distribution for its test statistic, since that's the shape we compare our result against to get a $p$-value. A test is parametric when we can only know that shape by assuming something specific about the population the data came from.
+Every test needs a known null distribution for its test statistic (Chapter 4), because that is the shape we compare our result against to get a $p$-value. A **parametric** test is one whose null distribution we can know only by assuming something specific about the shape of the population the data came from. Every test so far in this book has been parametric.
 
 For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of your raw data. It's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the central limit theorem for a large enough sample.
 
@@ -83,15 +83,15 @@ When the distributional assumptions are met, parametric tests are generally the 
 
 A **nonparametric test** is a test whose null distribution does not depend on the population having a particular shape, such as normal. Nonparametric tests have a known null distribution for their test statistics, and they get it without assuming anything about the population's shape. They still make assumptions, and those assumptions are usually easier to meet than normality.
 
-Many nonparametric tests are run on the ranks of the data (first, second, third ... last), rather than on the raw data. The median is a familiar example. It is the middle value once the data are put in order.
+The **rank** of a value is its position when the data are put in order from smallest to largest (first, second, third, and so on). Many nonparametric tests are run on the ranks instead of the raw values. The median is a familiar statistic that depends only on this ordering. It is the middle value once the data are put in order.
 
 **Rank-based tests also work on ordinal data.** Because the Wilcoxon and Mann-Whitney-Wilcoxon tests only need a rank ordering, neither is limited to interval- or ratio-scale measurements the way a $t$-test is. A $t$-test needs a mean, which requires numbers where the *distance* between values means something. Plenty of environmental data doesn't work that way: a water-quality rating (poor, fair, good, excellent), a disturbance-severity class, a Likert-style survey response. You can put those in order, but "the average disturbance class was 2.4" isn't meaningful the way "the average pH was 6.8" is.
 
 This chapter covers two different kinds of tools:
 
--   **Nonparametric alternatives (to $t$-tests).** Your outcome is still continuous, but it's skewed, has outliers, or your sample is too small to trust normality. The **Wilcoxon signed-rank test** [@Wilcoxon1945] and **Mann-Whitney-Wilcoxon test** [@MannWhitney1947] answer the same questions as the one-sample/paired and independent-samples $t$-tests, respectively, without assuming normality.
+-   **Nonparametric alternatives (to $t$-tests).** Your outcome is still continuous, but it's skewed, has outliers, or your sample is too small to trust normality. The **Wilcoxon signed-rank test** [@Wilcoxon1945] answers the same question as the one-sample or paired $t$-test without assuming normality. The **Mann-Whitney-Wilcoxon test** [@MannWhitney1947] answers the same question as the independent-samples $t$-test without assuming normality.
 
--   **Categorical data.** Your outcome isn't a number at all: a site either has an invasive species or it doesn't, a sample either exceeds a threshold or it doesn't. None of the tests above apply here; you need the **chi-square ($\chi^2$) tests**.
+-   **Categorical data.** Your outcome isn't a number at all: a site either has an invasive species or it doesn't, a sample either exceeds a threshold or it doesn't. None of the tests above apply here. The **chi-square ($\chi^2$) tests** compare the counts observed in each category with the counts expected under $H_0$.
 
 We'll state the assumptions explicitly for each test as we go through them.
 
@@ -152,9 +152,9 @@ The Shapiro-Wilk test agrees with the picture ($p=0.039$). Three plots didn't ch
 
 **The question.** Did soil moisture systematically change after restoration, or is any change we see just plot-to-plot noise?
 
--   $H_0$: no systematic shift; the differences are symmetric around a median of 0 (positive and negative ranks are balanced).
+-   $H_0$: the median difference is 0, so positive and negative ranks balance.
 
--   $H_a$: there is a systematic shift; the median difference is not 0.
+-   $H_a$: the median difference is not 0.
 
 **How it works, conceptually.** Instead of using the actual sizes of the differences, the test ranks the *absolute* differences from smallest to largest, then checks whether the positive-signed ranks and negative-signed ranks are roughly balanced. Balanced ranks are the null case, meaning a plot's rank (how extreme its change was) has nothing to do with whether that change was an increase or a decrease. If soil moisture really increased at most plots, the larger ranks should belong mostly to positive differences instead. Because the test uses ranks, the plot that rose by 8 points gets the top rank, 9, and it would get the same rank if it had risen by 30. One extreme plot can't dominate the result the way it could dominate a mean.
 
@@ -233,7 +233,7 @@ The test does not need normality because nothing in this simulation assumed a sh
 
 **So far.** $t$-test $p=0.026$ (significant), Wilcoxon $p=0.057$ (not quite). The two tests reach different verdicts on the same 12 plots because the $t$-test's numerator and denominator both used the exact magnitudes the Wilcoxon test deliberately ignores.
 
-**The sign test.** There's an even simpler nonparametric option, the **sign test**, which looks only at whether each difference is positive or negative. It discards the magnitude entirely and asks whether pluses outnumber minuses more than chance would suggest. The sign test makes no assumption about the distribution of the differences, not even symmetry. Its only assumption is the one every test in this book shares, independent observations from a sound study design (see Chapter 6).
+**The sign test.** The **sign test** looks only at whether each difference is positive or negative. It is an even simpler nonparametric option than the signed-rank test. It discards the magnitude entirely and asks whether pluses outnumber minuses more than chance would suggest. The sign test makes no assumption about the distribution of the differences, not even symmetry. Its only assumption is the one every test in this book shares, independent observations from a sound study design (see Chapter 6).
 
 We already flagged the symmetry assumption as shaky for these data, so the sign test avoids the one assumption the Wilcoxon test still needed. That robustness comes at a big cost in power, though, so it's usually a last resort.
 
@@ -360,11 +360,11 @@ Both groups fail the Shapiro-Wilk test, the sodium group badly ($p=0.002$). The 
 
 **The question.** Does bat activity differ between sites under sodium and LED lights, or is the difference we see consistent with random site-to-site variation?
 
--   $H_0$: no difference in bat activity between sodium and LED sites; ranks are well-mixed between the groups.
+-   $H_0$: bat activity has the same distribution at sodium and LED sites, so ranks are well mixed between the groups.
 
--   $H_a$: bat activity tends to rank systematically higher in one group than the other.
+-   $H_a$: bat activity tends to rank higher at one type of site than the other.
 
-**How it works, conceptually.** Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups don't differ, their ranks should be well mixed. If one group tends to have higher values, its ranks should be higher too. The outlier site gets the highest rank, 16, whether it had 23 passes or 34. Its size enters the $t$-test through both the mean and the standard deviation, but the Mann-Whitney-Wilcoxon test uses only its rank.
+**How it works, conceptually.** The signed-rank test ranked the absolute differences within one set of paired differences. The Mann-Whitney-Wilcoxon test ranks the raw values from both groups together, because independent groups have no pairs to subtract. Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups don't differ, their ranks should be well mixed. If one group tends to have higher values, its ranks should be higher too. The outlier site gets the highest rank, 16, whether it had 23 passes or 34. Its size enters the $t$-test through both the mean and the standard deviation, but the Mann-Whitney-Wilcoxon test uses only its rank.
 
 **Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the same shape. It does not require normality. Distributions with the same shape also have equal variances, but equal variances alone do not meet the assumption, because two distributions can share a variance and differ in shape. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as "the medians differ" becomes murkier, since it could be a difference in location, shape, or both.
 
@@ -433,7 +433,7 @@ Our observed $U=50$ falls just short of the upper critical value of $50.5$, cons
 
 Every test so far (the $t$-tests in Chapter 6, and the Wilcoxon and Mann-Whitney-Wilcoxon tests above) needs a continuous outcome variable. But a lot of environmental data isn't continuous at all: a site either has an invasive species or it doesn't; a stream sample either exceeds a safety threshold or it doesn't; a plot falls into one land-cover category, not a number line. None of the tests above apply to categorical data. Counts in categories need a different test, the chi-square ($\chi^2$) test [@Pearson1900].
 
-The test compares its statistic with the **chi-square distribution**. Because $\chi^2$ adds up squared gaps between observed and expected counts, it can never be negative, and a mismatch in either direction makes it bigger. A $\chi^2$ near 0 means the counts match the expectation closely, so only the upper tail counts against $H_0$. Like $t$, the chi-square distribution is a family of curves, one for each number of degrees of freedom (@fig-7chisq-shapes). With few degrees of freedom it is sharply right-skewed, and as $df$ grows it shifts right and becomes more symmetric.
+The **chi-square distribution** is the family of curves that the $\chi^2$ statistic approximately follows when $H_0$ is true and expected counts are large enough. The test compares its statistic with this distribution. The symbol $\chi^2$ is used for both the statistic and the distribution, the way $t$ is. Because $\chi^2$ adds up squared gaps between observed and expected counts, it can never be negative, and a mismatch in either direction makes it bigger. A $\chi^2$ near 0 means the counts match the expectation closely, so only the upper tail counts against $H_0$. Like $t$, the chi-square distribution is a family of curves, one for each number of degrees of freedom (@fig-7chisq-shapes). With few degrees of freedom it is sharply right-skewed, and as $df$ grows it shifts right and becomes more symmetric.
 
 ```{r}
 #| label: fig-7chisq-shapes
@@ -476,11 +476,11 @@ ggplot(df3, aes(x, density)) +
 
 For the rank tests, the null distribution comes from every possible arrangement of the ranks under $H_0$, so it is exact. For the chi-square tests, the chi-square curve approximates the null distribution of the statistic, and the approximation is good only when expected counts are large enough. Each chi-square test below therefore comes with an expected-count rule.
 
-There are two versions of the chi-square test, depending on the question you're asking.
+There are two chi-square tests, and the question decides which one to use. The goodness-of-fit test asks whether the counts for one categorical variable match an expected pattern. The test of independence asks whether two categorical variables are related.
 
 ### The chi-square goodness-of-fit test
 
-The test checks how well ("goodness") your observed counts match ("fit") a pattern you'd expect. The expectation can come from a historical baseline, a theory, or an assumption that every category is equally likely. A small chi-square statistic means a good fit (observed counts close to expected); a large one means a poor fit (observed counts far from expected).
+The **chi-square goodness-of-fit test** checks how well (the "goodness") the observed counts for one categorical variable match (the "fit") the counts expected under a stated pattern. The expectation can come from a historical baseline, a theory, or an assumption that every category is equally likely. A small chi-square statistic means a good fit (observed counts close to expected); a large one means a poor fit (observed counts far from expected).
 
 A state wildlife agency has historically found fish evenly distributed across four zones of a lake, 25% in each. The counts in this example are invented. This year's survey of 200 fish found between 38 and 61 fish per zone. @fig-7gofdesign lays out the structure, which differs from every design so far in this book.
 
@@ -510,9 +510,9 @@ knitr::kable(
 
 **The question.** Does this year's distribution across zones differ from the historical 25%-each pattern, or is this the kind of unevenness you'd expect from random sampling alone?
 
--   $H_0$: fish are still distributed 25% per zone; the pattern matches the historical baseline.
+-   $H_0$: the proportions follow the stated pattern, 25% of fish in each zone, as in the historical baseline.
 
--   $H_a$: fish are not evenly distributed across zones; the pattern has changed.
+-   $H_a$: the proportions do not follow that pattern.
 
 ```{r}
 #| echo: true
@@ -534,7 +534,7 @@ knitr::kable(
 
 **Assumption.** The goodness-of-fit test makes no assumption about the shape of your data, since categories aren't numbers. It does require expected counts of about 5 or more in each category [@Cochran1954; @Larntz1978]. The 5 is a conventional rule of thumb, not a value computed from these data or compared to a critical value. It checks whether the chi-square curve is a trustworthy approximation, and you check it before running the test.
 
-Here, expected count per zone is $200 \times 0.25 = 50$ (total fish times the 25%-per-zone expectation under $H_0$), comfortably above that minimum. This is the expected-value idea from Chapter 3 applied to counts: the expected count in a category is the total times the probability $H_0$ gives that category. When expected counts are too small, the chi-square approximation breaks down and a different method (like Fisher's exact test) is more appropriate.
+Here, expected count per zone is $200 \times 0.25 = 50$ (total fish times the 25%-per-zone expectation under $H_0$), comfortably above that minimum. The **expected count** for a category is the total count times the probability $H_0$ gives that category. This is the expected-value idea from Chapter 3 applied to counts. When expected counts are too small, the chi-square approximation breaks down and a different method (like Fisher's exact test) is more appropriate.
 
 **$\chi^2$ adds one term per category.** For each category, take the squared difference between observed and expected, scaled by expected: $\chi^2 = \sum \frac{(O-E)^2}{E}$.
 
@@ -555,7 +555,7 @@ Summing the last column: $2.88+2.42+0.08+0.02 = 5.40$, matching R's statistic ab
 
 ### The chi-square test of independence
 
-Now suppose researchers classify 150 city blocks by land use and by whether each block's peak summer surface temperature, measured from satellite images, topped 40°C. The data in this example are invented. Every block falls into exactly one cell of @fig-7indepdesign.
+The **chi-square test of independence** asks whether two categorical variables measured on the same units are related. Suppose researchers classify 150 city blocks by land use and by whether each block's peak summer surface temperature, measured from satellite images, topped 40°C. The data in this example are invented. Every block falls into exactly one cell of @fig-7indepdesign.
 
 ```{r}
 #| label: fig-7indepdesign
@@ -591,9 +591,9 @@ knitr::kable(tab, caption = "City blocks by land use and whether summer surface 
 
 **The question.** Is topping 40°C independent of land use, or are the two related?
 
--   $H_0$: land use and topping 40°C are independent; knowing one tells you nothing about the other.
+-   $H_0$: land use and topping 40°C are independent, so every land use has the same rate of blocks topping 40°C.
 
--   $H_a$: land use and topping 40°C are related; they are not independent.
+-   $H_a$: land use and topping 40°C are related, so the rate differs between land uses.
 
 ```{r}
 #| echo: true
