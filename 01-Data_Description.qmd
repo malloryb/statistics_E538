@@ -33,7 +33,7 @@ You might ask why you need to learn this yourself instead of handing the analysi
 
 1.  **Design and analysis go together.** A good study starts long before you run a statistical test. If you want to study how fertilizer affects crop yields, the fields you choose to sample decide which comparisons your analysis can make. If the design is poor, like measuring only in unusually wet fields, no analysis can rescue it.
 
-2.  **You need statistics to read the science.** Scientific papers on climate change, biodiversity, or pollution report their findings as statistical results, such as a difference between means with a confidence interval or a $p$-value, and you need to know what those numbers mean to interpret the paper.
+2.  **You need statistics to read the science.** Scientific papers on climate change, biodiversity, or pollution report their findings as statistical results, such as a difference between means with a confidence interval or a $p$-value (later chapters define both), and you need to know what those numbers mean to interpret the paper.
 
 3.  **You cannot hire a specialist for every question.** A working knowledge of statistics makes you more self-sufficient, whether you end up working as a scientist, an environmental manager, or a decision-maker who has to evaluate someone else's analysis.
 
@@ -41,7 +41,7 @@ You might ask why you need to learn this yourself instead of handing the analysi
 >
 > John Naisbitt, *Megatrends* (1982)
 
-Statistics is useful outside research and outside environmental science. Weather forecasts, air quality alerts, and wildlife population trends are all communicated through numbers, and so are the statistical claims that turn up in news coverage and policy debates. Once you can tell a correlation from a cause, or spot a sample too small for the claim it carries, you can check whether the numbers back up what is being said.
+Statistics is useful outside research and outside environmental science. Weather forecasts, air quality alerts, and wildlife population trends are all communicated through numbers, and so are the statistical claims that turn up in news coverage and policy debates. Once you can tell a correlation (Chapter 2) from a cause, or spot a sample too small for the claim it carries, you can check whether the numbers back up what is being said.
 
 ## Measurement and operationalization
 
@@ -131,50 +131,58 @@ There is no single correct way to operationalize a concept. The best choice depe
 
 ## Scales of measurement
 
-The previous section called the outcome of a measurement a variable. Variables come in different types, and the type determines which statistical tools make sense. You can average daily temperatures, for example, but you cannot average land cover classes. A variable's **scale of measurement** says which comparisons its values support, such as putting them in order, subtracting them, or forming ratios. The four classic scales are nominal, ordinal, interval, and ratio [@Stevens1946].
+The previous section called the outcome of a measurement a variable. Variables come in different types, and the type determines which statistical tools make sense. You can average daily temperatures, for example, but you cannot average species. A variable's **scale of measurement** says which comparisons its values support, such as putting them in order, subtracting them, or forming ratios. The four classic scales are nominal, ordinal, interval, and ratio [@Stevens1946].
 
 ### Nominal scale
 
 A **nominal** variable, also called a **categorical** variable, has values that are names with no order. It makes no sense to average them.
 
-**Example.** Land cover class. A pixel on a satellite map might be classified as forest, grassland, wetland, or urban. None of those is "greater" than another, so they cannot be put in a meaningful order, and there is no such thing as an average land cover.
+**Example.** Species. A wildlife survey might record each animal it detects as a green frog, a brook trout, an American crow, or a river otter. None of those is "greater" than another, so they cannot be put in a meaningful order, and there is no such thing as an average species.
 
-A computer will still do the arithmetic, though. Map classes are drawn in colors, and colors have numeric codes, so the computer will average forest, grassland, wetland, and urban and return a result. @fig-1nominal-landcover shows what comes back.
+A computer will still do the arithmetic, though. Field datasheets often record species as numeric codes, such as 1 for green frog and 4 for river otter, so the computer will average the codes and return a result. @fig-1nominal-species shows what comes back.
 
 ```{r}
-#| label: fig-1nominal-landcover
-#| fig-cap: "Averaging the color codes of four land cover classes returns a color, but not a land cover class. Nothing on the map is that color."
-#| fig-alt: "Four colored map tiles labeled forest, grassland, wetland, and urban. An arrow points to a fifth, muddy sage-green tile labeled average, annotated as corresponding to no land cover class."
+#| label: fig-1nominal-species
+#| fig-cap: "Averaging the numeric codes of four species returns a number, but not a species. No species has the code 2.5. Icons from Font Awesome Free (CC BY 4.0)."
+#| fig-alt: "Four animal icons, each labeled with its species and numeric code: green frog 1, brook trout 2, American crow 3, river otter 4. An arrow points to the number 2.5, labeled average code and annotated no such species."
 #| out-width: "88%"
-#| fig-asp: 0.30
+#| fig-asp: 0.33
 
 library(ggplot2)
 
-lc  <- c("#2D6A4F", "#C9A227", "#4C9F9F", "#8B8B8B")
-m   <- rowMeans(col2rgb(lc))
-avg <- rgb(m[1], m[2], m[3], maxColorValue = 255)
+# Font Awesome icons drawn as rasters, so no image files are needed
+fa_icon <- function(name, col) {
+  svg <- as.character(fontawesome::fa(name, fill = col, height = "300px"))
+  as.raster(magick::image_read(charToRaw(svg), density = 300))
+}
 
-tiles <- data.frame(
-  x    = c(1, 2, 3, 4, 5.6),
-  fill = c(lc, avg),
-  lab  = c("Forest", "Grassland", "Wetland", "Urban", "Average")
+sp <- data.frame(
+  x    = 1:4,
+  lab  = c("Green frog\ncode 1", "Brook trout\ncode 2", "American crow\ncode 3", "River otter\ncode 4"),
+  icon = c("frog", "fish", "crow", "otter"),
+  col  = c("#2D6A4F", "#4C7FA8", "#333333", "#7A5230")
 )
 
-ggplot(tiles, aes(x = x, y = 0)) +
-  geom_tile(aes(fill = I(fill)), width = 0.78, height = 0.78,
-            color = "grey30", linewidth = 0.5) +
-  geom_text(aes(label = lab), y = -0.58, size = 3.7) +
-  annotate("text", x = 5.6, y = 0.62, label = "no such land cover",
-           size = 3.4, fontface = "italic") +
-  annotate("segment", x = 4.55, xend = 5.1, y = 0, yend = 0,
-           arrow = arrow(length = grid::unit(0.18, "cm")), color = "grey40") +
-  coord_cartesian(xlim = c(0.4, 6.3), ylim = c(-0.95, 0.95)) +
+p <- ggplot() +
+  coord_fixed(xlim = c(0.4, 6.3), ylim = c(-1.05, 0.95)) +
   theme_void()
+for (i in seq_len(nrow(sp))) {
+  r <- fa_icon(sp$icon[i], sp$col[i])
+  w <- min(0.62 * ncol(r) / nrow(r), 0.8); h <- w * nrow(r) / ncol(r)
+  p <- p + annotation_raster(r, sp$x[i] - w / 2, sp$x[i] + w / 2, 0.05 - h / 2, 0.05 + h / 2)
+}
+p +
+  annotate("text", x = sp$x, y = -0.6, label = sp$lab, size = 3.5, lineheight = 0.95) +
+  annotate("segment", x = 4.55, xend = 5.1, y = 0.05, yend = 0.05,
+           arrow = arrow(length = grid::unit(0.18, "cm")), color = "grey40") +
+  annotate("text", x = 5.65, y = 0.05, label = "2.5", size = 7, fontface = "bold", color = "grey30") +
+  annotate("text", x = 5.65, y = -0.6, label = "Average\ncode", size = 3.5, lineheight = 0.95) +
+  annotate("text", x = 5.65, y = 0.62, label = "no such species", size = 3.4, fontface = "italic")
 ```
 
-You get a color back, but nothing on the map is that color, and it does not stand for any class. Land cover classes have no order and no amount, so an average of them is not a land cover class. A variable is nominal when its values are labels, not quantities.
+You get a number back, but no species has that code, and it does not stand for any species. Species have no order and no amount, so an average of them is not a species. A variable is nominal when its values are labels, not quantities.
 
-Land cover is unusual in even having numbers attached that *could* be averaged, and only because someone chose colors for a map. Most nominal variables, like species identity or watershed name, have nothing there to average in the first place.
+The codes exist only because someone chose numbers for a datasheet. Letters would have worked just as well and left nothing to average. Most nominal variables, like watershed name or trap type, have no numbers attached in the first place.
 
 ### Ordinal scale
 
@@ -378,7 +386,7 @@ The table below summarizes which operations each scale supports.
 
 |          | can rank | can subtract/add |   can form ratios   | example          |
 |----------|:--------:|:----------------:|:-------------------:|------------------|
-| nominal  |          |                  |                     | land cover class |
+| nominal  |          |                  |                     | species          |
 | ordinal  |    x     |                  |                     | finishing place  |
 | interval |    x     |        x         |                     | temperature (°C) |
 | ratio    |    x     |        x         |          x          | age              |
@@ -389,7 +397,7 @@ Another useful distinction is whether a variable can take on values in between o
 
 -   A **continuous variable** can, in principle, take on any value within a range. For example, consider height. If you are 72 inches tall and your friend Cameron is 71 inches tall, Alan could be 71.4 inches and David 71.49 inches. Because we can always imagine a new value in between two others, height is continuous.
 
--   A **discrete variable** has separate, distinct values with nothing in between. Nominal variables are always discrete: there is no land cover class that falls "between" wetland and urban in the same way that 71.4 falls between 71 and 72. Ordinal variables are also discrete: although second place falls between first and third, nothing can logically fall between first and second.
+-   A **discrete variable** has separate, distinct values with nothing in between. Nominal variables are always discrete, because no species falls "between" a green frog and a brook trout the way 71.4 falls between 71 and 72. Ordinal variables are also discrete. Second place falls between first and third, but nothing can fall between first and second.
 
 Interval and ratio variables can be either. Among ratio variables, height is continuous, but the number of people living in a household is discrete, since you cannot have 4.2 people. Among interval variables, temperature in degrees Celsius is continuous, but the year you started college is discrete, since there is no year between 2022 and 2023.
 
@@ -412,11 +420,11 @@ In most studies we have many variables, but when we analyze them, we usually spl
 
 The **independent variable (IV)**, $X$, is the variable used to explain another, and the **dependent variable (DV)**, $Y$, is the variable being explained. When several variables do the explaining, we number them $X_1$, $X_2$, and so on. The logic is that if there's a relationship, $Y$ depends on $X$. These terms can be confusing for two reasons. IVs are rarely "independent of everything else." Fertilizer amount, for example, may track how much a farmer spends on irrigation. And if there's no relationship, the DV doesn't "depend" on the IV at all.
 
-Two alternative vocabularies are often clearer. In experiments, IVs are **manipulations** and DVs are **measurements**. When we are using $X$ to predict $Y$ rather than manipulating anything, the pair is **predictor** and **outcome**.
+Two alternative vocabularies are often clearer. In experiments, IVs are **manipulations** and DVs are **measured outcomes**. When we are using $X$ to predict $Y$ rather than manipulating anything, the pair is **predictor** and **outcome**.
 
 | role of the variable         | classical name            | in experiments | in prediction |
 |:-----------------------------|:--------------------------|:---------------|:--------------|
-| "to be explained" ($Y$)      | dependent variable (DV)   | measurement    | outcome       |
+| "to be explained" ($Y$)      | dependent variable (DV)   | measured outcome | outcome     |
 | "to do the explaining" ($X$) | independent variable (IV) | manipulation   | predictor     |
 
 ::: {.callout-note title="Note: Which terms this course uses"}
@@ -583,7 +591,7 @@ Variation is one feature of a distribution. The distribution is the whole patter
 
 ## Measures of central tendency (sameness)
 
-A measure of central tendency summarizes a dataset with a single number for where its values cluster, its "center." Plots and histograms show where values fall, but they do not give that number. The temperature histogram shows a peak somewhere around 80°F, but not one value you could report or compare with another dataset.
+A measure of central tendency summarizes a dataset with a single number for where its values cluster, its "center." The plot of every value and the histogram show where values fall, but they do not give that number. The temperature histogram shows a peak somewhere around 80°F, but not one value you could report or compare with another dataset.
 
 ### Mode
 
@@ -593,7 +601,7 @@ Ties are allowed. In `1 1 1 2 2 2 3 4 5 6` both 1 and 2 appear three times, so t
 
 **The mode can be far from the center.** In `1 1 2 3 4 5 6 7 8 9` the mode is 1, but eight of the ten values are larger.
 
-The mode is most useful when values in a dataset repeat, as they do in counts or in categories like land cover class.
+The mode is most useful when values in a dataset repeat, as they do in counts or in categories like species.
 
 ### Median
 
@@ -609,7 +617,7 @@ The median is 5, with three numbers on each side.
 
 With an even count there is no single middle value, so the median is the midpoint of the two central numbers. In `1 2 3 4 5 6` that is halfway between 3 and 4, or 3.5.
 
-**An extreme value moves the median far less than the mean.** Consider `1 2 3 4 4 4 5 6 6 6 7 7 1000`. Most values are modest and one is wildly out of line. The median is 5, in the middle of the bulk of the data. If that last value were 8 instead of 1000, the median would still be 5, while the mean would fall from 81.15 to 4.85. That value of 1000 is an outlier. An **outlier** is a value much farther from the bulk of the data than the rest of the values. Outliers can change the mean a great deal while changing the median very little, and how to handle them is a question we return to later in the course. @tbl-1mean-median-sensitivity, in the section comparing the three measures, sets these numbers beside the same comparison for the ozone data.
+**An extreme value moves the median far less than the mean.** The mean, defined in the next section, is the sum of the values divided by how many there are. Consider `1 2 3 4 4 4 5 6 6 6 7 7 1000`. Most values are modest and one is wildly out of line. The median is 5, in the middle of the bulk of the data. If that last value were 8 instead of 1000, the median would still be 5, while the mean would fall from 81.15 to 4.85. That value of 1000 is an outlier. An **outlier** is a value much farther from the bulk of the data than the rest of the values. Outliers can change the mean a great deal while changing the median very little, and how to handle them is a question we return to later in the course. @tbl-1mean-median-sensitivity, in the section comparing the three measures, sets these numbers beside the same comparison for the ozone data.
 
 ### Mean
 
@@ -796,7 +804,7 @@ The mean and the median both describe the ozone data correctly, and they answer 
 : Which measure of center best describes a typical value for each distribution shape. {#tbl-1center-shape}
 
 ::: {.callout-caution title="Warning: When the mode gets fragile"}
-Ozone is a continuous measurement, so exact repeats are largely an accident of rounding. The value `r as.numeric(names(sort(table(airquality$Ozone), decreasing = TRUE))[1])` ppb occurs `r max(table(airquality$Ozone))` times out of `r sum(!is.na(airquality$Ozone))` days, barely more often than several neighbors. Round differently and the mode moves. It is most useful for categorical variables, where "most common land cover class" is exactly the question, and for values that repeat exactly.
+Ozone is a continuous measurement, so exact repeats are largely an accident of rounding. The value `r as.numeric(names(sort(table(airquality$Ozone), decreasing = TRUE))[1])` ppb occurs `r max(table(airquality$Ozone))` times out of `r sum(!is.na(airquality$Ozone))` days, barely more often than several neighbors. Round differently and the mode moves. It is most useful for categorical variables, where "most common species" is exactly the question, and for values that repeat exactly.
 :::
 
 ## Measures of variation (differentness)
