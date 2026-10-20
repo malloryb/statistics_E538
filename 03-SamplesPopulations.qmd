@@ -187,15 +187,30 @@ For example, if you flip a fair coin 20 times ($n=20$, $\theta=0.5$), the binomi
 
 ```{r}
 #| label: fig-3binom
-#| fig-cap: "Binomial probabilities for $X \\sim \\text{Binomial}(n = 20, \\theta = 0.5)$. Bars show $P(X = x)$."
-#| fig-alt: "Bar chart of binomial probabilities for 20 trials with a 0.5 success probability, running from 0 to 20 successes. The bars form a symmetric bell shape peaking around 10, tapering off toward both 0 and 20."
+#| fig-cap: "Binomial probabilities for 20 trials, $X \\sim \\text{Binomial}(n = 20, \\theta)$, with $\\theta = 0.5$ (left) and $\\theta = 0.2$ (right). Bars show $P(X = x)$."
+#| fig-alt: "Two bar charts of binomial probabilities for 20 trials, running from 0 to 20 successes. Left panel, success probability 0.5: the bars form a symmetric bell shape peaking at 10. Right panel, success probability 0.2: the bars peak at 4 and trail off in a long tail toward higher counts, a right-skewed shape."
+#| fig-width: 8
+#| fig-height: 3.5
 library(ggplot2); library(tibble)
 x <- 0:20
-pmf <- tibble(x = x, p = dbinom(x, size = 20, prob = 0.5))
+pmf <- rbind(tibble(x = x, p = dbinom(x, size = 20, prob = 0.5), theta = "theta = 0.5"),
+             tibble(x = x, p = dbinom(x, size = 20, prob = 0.2), theta = "theta = 0.2"))
+pmf$theta <- factor(pmf$theta, levels = c("theta = 0.5", "theta = 0.2"))
 ggplot(pmf, aes(x, p)) +
   geom_col(width = 0.9) +
+  facet_wrap(~ theta) +
   labs(x = "Number of successes (x)", y = "P(X = x)")
 ```
+
+@tbl-3binom-skew shows how $\theta$ sets the shape of a binomial distribution. In @fig-3binom the left panel ($\theta = 0.5$) is symmetric and the right panel ($\theta = 0.2$) is right-skewed.
+
+| Success probability | Shape of $\text{Binomial}(n, \theta)$ |
+|---|---|
+| $\theta = 0.5$ | Symmetric |
+| $\theta < 0.5$ | Right-skewed |
+| $\theta > 0.5$ | Left-skewed |
+
+: How the success probability sets the shape of a binomial distribution. {#tbl-3binom-skew}
 
 **Two common queries**
 
@@ -310,6 +325,19 @@ For continuous distributions like the normal, probabilities belong to ranges of 
 This is why the $y$-axis of a normal curve is labeled **probability density**. The height of the curve at a point, $p(x)$, is not itself a probability. Instead, probabilities come from the area under the curve between two values. For example, about 68% of values from a standard normal fall between −1 and 1, because the area between −1 and 1 is 0.68.
 
 In R, functions like `dnorm()` return the density (the curve's height), while `pnorm()` and `qnorm()` work with cumulative probabilities and quantiles, which are usually more useful for applied problems.
+
+@tbl-3binom-normal sets the binomial and normal distributions side by side.
+
+|  | Binomial | Normal |
+|---|---|---|
+| Outcome | Discrete, a count | Continuous |
+| Describes | The number of successes in $n$ independent trials, each with two possible outcomes | A variable that can take a wide range of values, clustered around a central point |
+| Set by | $n$ and $\theta$ | $\mu$ and $\sigma$ |
+| Shape | Set by $	heta$ (@tbl-3binom-skew) | Always symmetric and bell-shaped |
+| Possible values | $0$ to $n$ | Any real number |
+| A probability is | The height of a bar | An area under the curve |
+
+: The binomial and normal distributions compared. {#tbl-3binom-normal}
 
 ## Samples, populations and sampling
 
@@ -668,7 +696,7 @@ The mean and median panels center on 100. The maximum panel centers well above 1
 
 ## The standard error
 
-The law of large numbers gives a direction. As $n$ grows, $\bar{x}$ heads toward $\mu$. The standard error, named below, gives a size. For one fixed $n$, it is the typical distance between a sample mean and $\mu$. @fig-3samplingmean shows both at once.
+The law of large numbers gives a direction. As $n$ grows, $\bar{x}$ heads toward $\mu$. The standard error, named below, gives a size. For one fixed $n$, it is the spread of the sample means, the standard deviation of the means of many samples of that size. @fig-3samplingmean shows both at once.
 
 The distribution of sample means is the sampling distribution of the sample mean, defined earlier in the chapter. It also goes by the shorter name sampling distribution of the mean.
 
@@ -1356,7 +1384,15 @@ ggplot(ci_df, aes(y = sample, colour = covers)) +
 ```
 
 ::: {.callout-caution title="Warning: Don't misread a confidence interval"}
-Do *not* say "there is a 95% probability that $\mu$ is in this interval." The population mean $\mu$ is fixed, and your one interval either contains it or it doesn't. The 95% is the long-run success rate of the procedure that built the interval.
+The population mean $\mu$ is fixed, and your one interval either contains it or it doesn't. The 95% is the long-run success rate of the procedure that built the interval. @tbl-3ci-readings sets each misreading beside the correct reading.
+
+| Not this | This |
+|---|---|
+| There is a 95% chance that $\mu$ is in [46.1, 53.9] | About 95% of intervals built this way contain $\mu$ |
+| 95% of individual values are between 46.1 and 53.9 | The CI is a range for the population mean $\mu$. Individual values spread much more widely. |
+| $50 \pm 3.92$ | 95% CI [46.1, 53.9] |
+
+: Misreadings of a confidence interval and the correct readings. {#tbl-3ci-readings}
 :::
 
 **When $\sigma$ is unknown**

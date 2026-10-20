@@ -437,6 +437,15 @@ The sign of $t$ matches $\bar d$ and your difference direction.
 
 **What to report.** $\bar d$ (the mean change), a 95% CI, $t(df)$, and $p$. Optionally add a standardized effect size, $\bar d / s_d$, the paired version of Cohen's $d$. The letter $d$ does two jobs here. The $d_i$ and $\bar d$ are difference scores, and Cohen's $d$ is the Chapter 5 effect size.
 
+@tbl-6two-ds separates the two uses of the letter.
+
+| Symbol | Meaning |
+|---|---|
+| $d_i$, $\bar d$, $s_d$ | Each plot's difference score (After minus Before), the mean of the difference scores, and their SD |
+| Cohen's $d$ | The effect size, always written out as "Cohen's $d$". For a paired design it is $\bar d / s_d$. |
+
+: The two uses of the letter $d$. {#tbl-6two-ds}
+
 ### Calculating $t$ from the differences
 
 To calculate $t$ for a paired-samples $t$-test, we use the one-sample $t$-test formula from the previous section, applied to the difference scores instead of raw scores. The paired-samples $t$-test is a one-sample $t$-test on a single group of numbers, the differences.
@@ -560,6 +569,17 @@ The pooled test has $df = n_A + n_B - 2$, one degree of freedom used for each gr
 
 The pooled test adds two test-specific assumptions: the outcome is approximately normal within each group, and the two groups have similar variances. When the spreads clearly differ, use Welch's version instead.
 
+@tbl-6pooled-welch compares the pooled test with Welch's version.
+
+| | Pooled | Welch's |
+|---|---|---|
+| Assumes similar spread in both groups? | Yes | No |
+| Standard error (denominator) | $s_p\sqrt{1/n_A + 1/n_B}$, from one combined $s_p$ | $\sqrt{SE_A^2 + SE_B^2}$, from each group's own SD |
+| $df$ | $n_A + n_B - 2$ | Estimated by software, usually not a whole number |
+| Where it appears | The formula in this chapter, and `t.test(a, b, var.equal = TRUE)` | R's `t.test()` default |
+
+: Pooled and Welch's independent-samples $t$-tests. {#tbl-6pooled-welch}
+
 The worked example compares bird species at ten field-edge sites. Five sites had their hedgerow removed (Group A), and five kept an intact hedgerow (Group B). At each site, one 10-minute point count recorded the number of bird species seen or heard. The counts are invented.
 
 -   $H_0$: $\mu_A = \mu_B$. Hedgerows make no difference to the mean number of bird species.
@@ -619,6 +639,15 @@ d_indep  <- mean_difference / sp
 
 Our hand-computed $t$ is $`r sprintf("%.2f", t)`$, and R's $t$ in the table matches it. R also reports $df = `r indep_out$parameter`$, $p `r fmt_p_eq(indep_out$p.value)`$, and the 95% confidence interval for the difference. The $p$-value is above 0.05, so we fail to reject $H_0$.
 
+@tbl-6sign-order shows that reversing the order of subtraction flips the sign of the difference and of $t$ and leaves $p$ unchanged.
+
+| Group 1 $-$ Group 2 | Difference in means | $t$ | Reads as |
+|---|---|---|---|
+| A $-$ B (removed minus intact) | $`r sprintf("%.1f", mean(a))` - `r sprintf("%.1f", mean(b))` = `r sprintf("%.1f", mean_difference)`$ | $`r sprintf("%.2f", t)`$ | Sites without a hedgerow averaged fewer species |
+| B $-$ A (intact minus removed) | $`r sprintf("%.1f", mean(b))` - `r sprintf("%.1f", mean(a))` = +`r sprintf("%.1f", -mean_difference)`$ | $+`r sprintf("%.2f", -t)`$ | Sites with a hedgerow averaged more species |
+
+: The bird species data subtracted in each order. {#tbl-6sign-order}
+
 **Confidence interval.** The recipe is the same as before, the estimate plus or minus $t_{crit}$ times its standard error. The estimate is $\bar{x}_A - \bar{x}_B$, and its standard error, $SE_\text{diff} = s_p\sqrt{1/n_A + 1/n_B}$, is the denominator of the $t$ just computed. With $t_{crit}$ from the $t$ distribution with $df = `r n_a + n_b - 2`$:
 
 $$(\bar{x}_A - \bar{x}_B) \pm t_{crit} \cdot SE_\text{diff} = `r sprintf("%.2f", mean_difference)` \pm `r sprintf("%.2f", tcrit_8)` \times `r sprintf("%.2f", se_diff)` = [`r sprintf("%.2f", indep_out$conf.int[1])`, `r sprintf("%.2f", indep_out$conf.int[2])`]$$
@@ -632,9 +661,10 @@ Cohen's $d$ for two independent groups divides the mean difference by the pooled
 | | One-sample | Paired | Independent-samples |
 |---|---|---|---|
 | Design | One sample against a reference value | The same units measured twice | Two separate groups |
-| Effect (numerator) | $\bar{x} - \mu_0$ | $\bar{d}$ | $\bar{x}_A - \bar{x}_B$ |
+| Effect (numerator, and center of the 95% CI) | $\bar{x} - \mu_0$ | $\bar{d}$ | $\bar{x}_A - \bar{x}_B$ |
 | Standard error (denominator) | $s/\sqrt{n}$ | $s_d/\sqrt{n}$ | $s_p\sqrt{1/n_A + 1/n_B}$ |
 | $df$ | $n - 1$ | $n - 1$ ($n$ = number of pairs) | $n_A + n_B - 2$ |
+| Rejects $H_0$ (two-tailed, $\alpha = 0.05$) when | $\mu_0$ is outside the 95% CI | 0 is outside the 95% CI | 0 is outside the 95% CI |
 | R call | `t.test(x, mu = 50)` | `t.test(after, before, paired = TRUE)` | `t.test(a, b, var.equal = TRUE)` |
 
 : The three $t$-tests compared. {#tbl-6three-tests}
