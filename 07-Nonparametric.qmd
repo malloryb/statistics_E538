@@ -81,7 +81,7 @@ For the $t$-test, that assumption is normality. The $t$-distribution isn't the s
 
 When the distributional assumptions are met, parametric tests are generally the most powerful available. However, when distributional assumptions are not met, a parametric test's $p$-value can be too small or too large, and without simulation it is hard to tell which. The worse the departure from the assumed distribution, the larger the possible error.
 
-A **nonparametric test** is a test whose null distribution does not depend on the population having a particular shape, such as normal. Nonparametric tests have a known null distribution for their test statistics, and they get it without assuming anything about the population's shape. They still make assumptions, and those assumptions are usually easier to meet than normality.
+A **nonparametric test** is a test whose null distribution does not depend on the population having a particular shape, such as normal. These tests still make assumptions, and those assumptions are usually easier to meet than normality.
 
 The **rank** of a value is its position when the data are put in order from smallest to largest (first, second, third, and so on). Many nonparametric tests are run on the ranks instead of the raw values. The median is a familiar statistic that depends only on this ordering. It is the middle value once the data are put in order.
 
@@ -178,7 +178,7 @@ knitr::kable(
 )
 ```
 
-The three plots with no change drop out of the test. A zero difference can't be ranked as positive or negative, so the Wilcoxon test runs on the remaining 9 plots instead of all 12. The rank test already ignores how large each change is, and dropping the zeros means it also works with less data than the $t$-test. The zeros and the tied differences (two plots at $+6$, three at $-1$) also keep R from using the exact null distribution, so it falls back to a normal approximation.
+The three plots with no change drop out of the test. A zero difference can't be ranked as positive or negative, so the Wilcoxon test runs on the remaining 9 plots instead of all 12. The rank test already ignores how large each change is, and dropping the zeros means it also works with less data than the $t$-test. The zeros and the tied differences (two plots at $+6$, three at $-1$) also keep R from using the exact null distribution, so R uses a normal approximation instead.
 
 **How $V$ is calculated.** Drop the zero differences, take the absolute value of what's left, rank those absolute values from smallest to largest (tied absolute values share the average of their ranks), then sum the ranks belonging to the *positive* differences. That sum is $V$.
 
@@ -218,7 +218,7 @@ The test does not need normality because nothing in this distribution assumed a 
 
 **So far.** $t$-test $p=0.026$ (significant), Wilcoxon $p=0.057$ (not quite). The two tests reach different verdicts on the same 12 plots because the $t$-test's numerator and denominator both used the exact magnitudes the Wilcoxon test deliberately ignores.
 
-**The sign test.** The **sign test** looks only at whether each difference is positive or negative. It is an even simpler nonparametric option than the signed-rank test. It discards the magnitude entirely and asks whether pluses outnumber minuses more than chance would suggest. The sign test makes no assumption about the distribution of the differences, not even symmetry. Its only assumption is the one every test in this book shares, independent observations from a sound study design (see Chapter 6).
+**The sign test.** The **sign test** looks only at whether each difference is positive or negative. It is an even simpler nonparametric option than the signed-rank test, and it asks whether pluses outnumber minuses more than chance would suggest. The sign test makes no assumption about the distribution of the differences, not even symmetry. Its only assumption is the one every test in this book shares, independent observations from a sound study design (see Chapter 6).
 
 We already flagged the symmetry assumption as shaky for these data, so the sign test avoids the one assumption the Wilcoxon test still needed. That robustness comes at a big cost in power, though, so it's usually a last resort.
 
@@ -385,44 +385,44 @@ knitr::kable(
 )
 ```
 
-R labels this statistic $W$; for two groups it is the Mann-Whitney $U$. R falls back to the normal approximation again, because the pooled counts include ties (three sites each at 11, 16 and 17, and two at 18).
+R labels this statistic $W$. For two groups it is the Mann-Whitney $U$. The pooled counts include ties (three sites each at 11, 16 and 17, and two at 18), so R again uses a normal approximation instead of the exact null distribution.
 
-**How the null distribution of $U$ is built.** The idea is the same as for the Wilcoxon signed-rank test, but the null distribution is built from group membership instead of signs. Under $H_0$, both groups are draws from the same population. Once you pool and rank all $N = n_A + n_B = 16$ values, chance alone decides which ranks end up in the sodium group, and each of the $\binom{16}{8}$ ways of splitting the 16 ranks into two groups of 8 is equally likely. Those splits make up the null distribution of $U$, and its mean and variance are known:
-
-$$E[U] = \frac{n_A n_B}{2}, \qquad \text{Var}(U) = \frac{n_A n_B (n_A+n_B+1)}{12}$$
-
-Plugging in our two groups of 8:
-
-$$E[U] = \frac{8 \times 8}{2} = 32, \qquad \text{Var}(U) = \frac{8 \times 8 \times 17}{12} \approx 90.7$$
-
-That's an SD of about 9.5. Our observed $U=50$ is about 1.9 SDs above that expectation ($\frac{50-32}{9.5} \approx 1.9$).
-
-R's $p=0.063$ comes from this normal approximation, with the same two corrections as in the Wilcoxon case. The step correction raises $p$ more than the tie adjustment lowers it, so $p$ ends up slightly above what a $z$ of 1.9 alone would give. For small samples without ties, R can instead read the exact null distribution directly, no approximation needed.
-
-We simulate this null distribution the same way as before. We pool the 16 ranks, then 20,000 times pick 8 of them at random to call sodium and compute $U$. Each shuffle gives one $U$, the value we would see if group labels had nothing to do with bat activity. The critical values marked on the figure come from listing all 12,870 splits, which is the exact null distribution the simulation approximates.
+**How $U$ is calculated.** Pool all 16 counts, rank them from smallest to largest (tied counts share the average of their ranks), then add up the ranks belonging to the sodium group. Subtract $n_A(n_A+1)/2$, the smallest rank sum 8 sites could have ($1+2+\cdots+8 = 36$). The result is $U$.
 
 ```{r}
-#| label: fig-7mww-null
-#| fig-cap: "Simulated null distribution of the Mann-Whitney U statistic, built from 20,000 random reshuffles of group membership among the pooled, ranked counts of bat passes. Shaded regions mark the two-tailed 5% rejection region; our observed U = 50 falls just short of the upper critical value, 50.5, outside the rejection region."
-#| fig-alt: "Histogram of 20,000 simulated values of U, roughly bell-shaped and centered near 32. Bars at or below 13.5 and at or above 50.5 are shaded red, with red vertical lines labeled lower crit and upper crit, each solid up to the top of the bars beside it and thin dashed above. A lime-green dotted line marks the observed U of 50, just to the left of the upper critical line."
-
 pooled       <- c(sodium, led)
 ranks_pooled <- rank(pooled)
 n_a <- length(sodium)
 N   <- length(pooled)
+ord <- order(pooled)
 
-sim_U <- replicate(20000, {
-  idx <- sample(N, n_a)
-  sum(ranks_pooled[idx]) - n_a * (n_a + 1) / 2
-})
+knitr::kable(
+  data.frame(Passes = pooled[ord], Group = rep(c("Sodium", "LED"), each = n_a)[ord],
+             Rank = ranks_pooled[ord]),
+  caption = "Ranking the pooled bat counts to calculate U."
+)
+```
+
+The sodium ranks sum to $14+7+15+7+10+7+10+16 = 86$, so $U = 86 - 36 = 50$, matching the table R gave us above.
+
+**How the null distribution of $U$ is built.** Under $H_0$, both groups are draws from the same population. Once you pool and rank all $N = n_A + n_B = 16$ values, chance alone decides which ranks end up in the sodium group, so each of the $\binom{16}{8} = 12{,}870$ ways of splitting the 16 ranks into two groups of 8 is equally likely. No new sites are measured. Each split gives one $U$, the value our data would have produced if group labels had nothing to do with bat activity. Listing the $U$ for all 12,870 splits gives the exact null distribution of $U$, shown in @fig-7mww-null.
+
+```{r}
+#| label: fig-7mww-null
+#| fig-cap: "Exact null distribution of the Mann-Whitney U statistic, from all 12,870 equally likely ways to split the 16 pooled, ranked counts of bat passes into two groups of 8. Shaded regions mark the two-tailed 5% rejection region. Our observed U = 50 falls just short of the upper critical value, 50.5, outside the rejection region."
+#| fig-alt: "Histogram of the 12,870 values of U from every possible split, roughly bell-shaped and centered at 32. Bars at or below 13.5 and at or above 50.5 are shaded red, with red vertical lines labeled lower crit and upper crit, each solid up to the top of the bars beside it and thin dashed above. A lime-green dotted line marks the observed U of 50, just to the left of the upper critical line."
 
 exact_U <- apply(combn(N, n_a), 2, function(i)
   sum(ranks_pooled[i]) - n_a * (n_a + 1) / 2)          # all choose(16, 8) splits
-obs_U <- as.numeric(wilcox.test(sodium, led)$statistic)
-null_hist(sim_U, exact_U, obs_U, "U", "U (Mann-Whitney statistic)")
+obs_U <- as.numeric(mww_out$statistic)
+p_exact_U <- 2 * mean(exact_U >= obs_U)
+null_hist(exact_U, exact_U, obs_U, "U", "U (Mann-Whitney statistic)",
+          ylab = "Number of splits (out of 12,870)")
 ```
 
-Our observed $U=50$ falls just short of the upper critical value of $50.5$, consistent with R's $p=0.063$: close to significant, but not quite.
+Our observed $U=50$ falls just short of the upper critical value, 50.5, so it is not in the 5% region. A $U$ of 50 or more comes from about 2.9% of the 12,870 splits, which puts the exact two-tailed $p$ at `r sprintf("%.3f", p_exact_U)`. The result is not significant, though it is close to the cutoff. With tied counts, R uses a normal approximation to this distribution instead of the exact one, so its $p$-value, `r sprintf("%.3f", mww_out$p.value)`, differs slightly from the exact figure.
+
+The test does not need normality because nothing in this distribution assumed a shape for bat activity. The only inputs were our 16 ranks and the rule from $H_0$ that every split is equally likely.
 
 **The full picture.** The $t$-test gave $p = 0.024$, a significant result. The Mann-Whitney-Wilcoxon test on the same 16 sites gave $p = 0.063$, not significant at $\alpha = 0.05$. The $t$-test's $p$-value depends on a normality assumption that both groups fail, so it can't be taken at face value. A violated assumption can push a $p$-value too low or too high, and the $t$-test alone gives no way to tell which. If the data had been roughly normal, the $t$-test would have been the better choice, because it has more power.
 
@@ -442,7 +442,7 @@ Our observed $U=50$ falls just short of the upper critical value of $50.5$, cons
 
 Every test so far (the $t$-tests in Chapter 6, and the Wilcoxon and Mann-Whitney-Wilcoxon tests above) needs a continuous outcome variable. But a lot of environmental data isn't continuous at all: a site either has an invasive species or it doesn't; a stream sample either exceeds a safety threshold or it doesn't; a plot falls into one land-cover category, not a number line. None of the tests above apply to categorical data. Counts in categories need a different test, the chi-square ($\chi^2$) test [@Pearson1900].
 
-The **chi-square distribution** is the family of curves that the $\chi^2$ statistic approximately follows when $H_0$ is true and expected counts are large enough. The test compares its statistic with this distribution. The symbol $\chi^2$ is used for both the statistic and the distribution, the way $t$ is. Because $\chi^2$ adds up squared gaps between observed and expected counts, it can never be negative, and a mismatch in either direction makes it bigger. A $\chi^2$ near 0 means the counts match the expectation closely, so only the upper tail counts against $H_0$. Like $t$, the chi-square distribution is a family of curves, one for each number of degrees of freedom (@fig-7chisq-shapes). With few degrees of freedom it is sharply right-skewed, and as $df$ grows it shifts right and becomes more symmetric.
+The **chi-square distribution** is the family of curves that the $\chi^2$ statistic approximately follows when $H_0$ is true and expected counts are large enough. The test compares its statistic with this distribution. The symbol $\chi^2$ is used for both the statistic and the distribution, the way $t$ is. Because $\chi^2$ adds up squared gaps between observed and expected counts, it can never be negative, and a mismatch in either direction makes it bigger. A $\chi^2$ near 0 means the counts match the expectation closely, so only the upper tail counts against $H_0$. Like $t$, the chi-square distribution has one curve for each number of degrees of freedom (@fig-7chisq-shapes). With few degrees of freedom it is sharply right-skewed, and as $df$ grows it shifts right and becomes more symmetric.
 
 ```{r}
 #| label: fig-7chisq-shapes
