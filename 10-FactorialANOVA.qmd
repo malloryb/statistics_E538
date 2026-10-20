@@ -84,11 +84,11 @@ Imagine investigating the growth rate of a plant species, with independent varia
 
 Now we have two IVs, soil pH and water availability, each with two levels. A **factorial** design has two or more IVs, and each of its conditions is a combination of one level from each IV.
 
+A **fully factorial** design includes every combination of the levels of its IVs, so each level of one IV occurs with each level of every other IV. A design with this property is also called fully crossed. A factorial design that leaves some combinations of levels unmeasured is only partly crossed. Every design in this chapter is fully factorial, so the rest of the chapter uses factorial to mean fully factorial.
+
 ### Factorial notation
 
 Each combination of soil type and water availability creates a unique environment for the plants, giving four distinct scenarios to measure growth rates: 2 IVs, each with 2 levels, for 2x2 = 4 conditions total. The notation directly tells you the number of conditions.
-
-A **fully factorial** design includes every combination of the levels of its IVs, so each level of one IV occurs with each level of every other IV. A design with this property is also called fully crossed. A factorial design that leaves some combinations of levels unmeasured is only partly crossed. Every design in this chapter is fully factorial, so the rest of the chapter uses factorial to mean fully factorial.
 
 The notation system indicates the structure of the factorial design. Each IV gets a number representing its levels. Here are a few examples:
 
@@ -149,7 +149,7 @@ knitr::kable(raw_tbl, align = "crrrr")
 
 ### Cell means and marginal means
 
-Each combination of conditions, such as no pollution with low flow, is a cell, the same word Chapter 7 used for one combination in a table of counts. A **cell mean** is the mean of the scores in one cell. Here, each cell mean averages the species counts of the five stream channels assigned to that combination. A **marginal mean** is the mean for one level of a factor, averaged across the levels of the other factor. For example, the no-pollution marginal mean averages the two no-pollution cells, one at each flow rate. @tbl-10means shows the means from the experiment this chapter analyzes.
+Each condition, such as no pollution with low flow, is a cell, the same word Chapter 7 used for one combination in a table of counts. A **cell mean** is the mean of the scores in one cell. Here, each cell mean averages the species counts of the five stream channels assigned to that condition. A **marginal mean** is the mean for one level of a factor, averaged across the levels of the other factor. For example, the no-pollution marginal mean averages the two no-pollution cells, one at each flow rate. @tbl-10means shows the means from the experiment this chapter analyzes.
 
 ```{r}
 #| label: tbl-10means
@@ -226,7 +226,7 @@ Equivalently, an interaction is a **difference between differences**, which is w
 
 | Term | Definition | Stream experiment |
 |:---|:---|:---|
-| Cell mean | The mean of the channels in one combination of conditions | No pollution with low flow: `r f1(mean(A))` species |
+| Cell mean | The mean of the channels in one condition | No pollution with low flow: `r f1(mean(A))` species |
 | Main effect | The difference between one factor's marginal means, averaged across the levels of the other factor | Pollution: $`r f1(nopoll_mean)` - `r f1(poll_mean)` = `r f1(nopoll_mean - poll_mean)`$ species |
 | Simple effect | The effect of one factor at a single level of the other | Pollution under low flow: `r f1(simple_low)` species. Under high flow: `r f1(simple_high)` species. |
 | Interaction | The effect of one factor depends on the level of the other. The simple effects differ, a difference between differences. | $`r f1(simple_low)` - `r f1(simple_high)` = `r f1(simple_low - simple_high)`$ species |
@@ -243,7 +243,7 @@ A two-way ANOVA tests three effects and therefore has three null hypotheses:
 2.  a main effect of flow, and
 3.  a pollution × flow interaction.
 
-The hypotheses are about the population mean species count for each combination of conditions, written $\mu$. The cell means computed from the 20 channels, written $\bar{Y}$ later in this chapter, estimate them. We can represent the four combinations of conditions and their mean species counts as:
+The hypotheses are about the population mean species count for each condition, written $\mu$. The cell means computed from the 20 channels, written $\bar{Y}$ later in this chapter, estimate them. We can represent the four conditions and their mean species counts as:
 
 | Pollution    | Flow      | Mean species count         |
 |--------------|-----------|----------------------------|
@@ -287,7 +287,7 @@ Those two numbers aren't the same, so the effect of pollution isn't constant acr
 
 ## Computing a factorial ANOVA by hand
 
-In our between-subjects 2x2 design, different stream channels appear in each condition: 5 stream channels assigned to each combination of conditions, 20 channels total, no repeats. The logic is the same as the one-way ANOVA in Chapter 8, which partitions the total variance into parts. For a 2x2 design, there's now one more part, the interaction:
+In our between-subjects 2x2 design, different stream channels appear in each condition: 5 stream channels assigned to each condition, 20 channels total, no repeats. The logic is the same as the one-way ANOVA in Chapter 8, which partitions the total variance into parts. For a 2x2 design, there's now one more part, the interaction:
 
 $$SS_\text{Total} = SS_\text{Pollution} + SS_\text{Flow} + SS_\text{Interaction} + SS_\text{Error}$$
 
@@ -466,7 +466,7 @@ anova_kable(aov_fit)
 
 The SS column matches the hand-calculated values above: `r round(ss_poll,2)` for Pollution, `r round(ss_flow,2)` for Flow, `r round(ss_int,2)` for the interaction, `r round(ss_error,2)` for Error. All three effects are significant here, including the interaction we previewed informally. The difference in the pollution effect between the two flow rates is larger than chance would produce.
 
-This example is balanced (Chapter 8), with five stream channels in every combination of conditions. With unequal numbers, two things change. The sums of squares depend on the order of terms in `aov()`, because R computes them sequentially, and the marginal means become model-based estimates (estimated marginal means) rather than simple averages of the scores. Balanced designs avoid both complications, so plan equal sample sizes when you can.
+This example is balanced (Chapter 8), with five stream channels in every condition. With unequal numbers, two things change. The sums of squares depend on the order of terms in `aov()`, because R computes them sequentially, and the marginal means become model-based estimates (estimated marginal means) rather than simple averages of the scores. Balanced designs avoid both complications, so plan equal sample sizes when you can.
 
 ### Checking the assumptions
 
@@ -490,7 +490,7 @@ $$
 \eta_p^2 = \frac{SS_\text{Effect}}{SS_\text{Effect} + SS_\text{Error}}
 $$
 
-It sets the other factors aside and measures the share of the remaining variation that this effect explains. Because each effect gets its own denominator, partial values do not sum to 1 and are always at least as large as the corresponding $\eta^2$.
+Because each effect gets its own denominator, partial values do not sum to 1 and are always at least as large as the corresponding $\eta^2$.
 
 The distinction never came up in Chapter 8, because a one-way ANOVA has only one effect, so there are no other factors to set aside, and $SS_\text{Effect} + SS_\text{Error}$ *is* $SS_\text{Total}$. The two formulas give the same number there. They only diverge once a design has more than one factor.
 
