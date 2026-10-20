@@ -48,9 +48,9 @@ The equation for a linear regression will be familiar, and it's one of the most 
 
 $$y = \beta_0 + \beta_1 x + \varepsilon$$
 
-Here $\beta_1$ is the slope and $\beta_0$ is the intercept. The intercept and slope are the **regression coefficients**. These subscripted $\beta$s have no connection to $\beta$, the Type II error rate from Chapter 5.
+Here $\beta_1$ is the slope, the change in $y$ for each one-unit increase in $x$. $\beta_0$ is the intercept, the value of $y$ when $x = 0$. The intercept and slope are the **regression coefficients**. These subscripted $\beta$s have no connection to $\beta$, the Type II error rate from Chapter 5.
 
-A linear equation, fit to real data, is a statistical **model**. We never observe $\beta_0$ or $\beta_1$ directly. Real data also do not fall exactly on a line, so the model needs one more term, the **error term** $\varepsilon$, the variability in the DV that the population line doesn't explain.
+A statistical **model** is an equation that describes how the DV changes with a predictor, plus a term for the variation the equation leaves out. A linear equation fit to data is one example. We never observe $\beta_0$ or $\beta_1$ directly. Real data also do not fall exactly on a line, so the model needs one more term. The **error term** $\varepsilon$ is the part of the DV that the population line does not explain.
 
 ### Computing the best-fit line by hand
 
@@ -134,7 +134,7 @@ ggplot(stream_df, aes(x = stream_temp, y = DO)) +
 
 The scatterplot in @fig-9regscatter shows a clear downward trend. Just from the graph, we can guess a couple of things:
 
--   Pearson's $r$ should be negative, since DO falls as temperature rises.
+-   Pearson's $r$ should be negative, since DO falls as temperature rises. Pearson's $r$ and the slope $b_1$ describe the same line in different ways. $r$ measures how closely the points follow a straight line, on a scale from $-1$ to $1$ with no units. $b_1$ measures how much $y$ changes for each one-unit change in $x$, in the units of the data (here mg/L per °C).
 
 -   It should be well short of $-1$, since the points scatter noticeably around the line.
 
@@ -280,7 +280,7 @@ Our observed $t = `r sprintf("%.2f", fit_tidy$statistic[2])`$ is far past the cr
 
 We reject $H_0$ and conclude that stream temperature is linearly related to dissolved oxygen.
 
-The 95% confidence interval for the slope, from `confint(fit)`, in the last two columns of the table above, is 95% CI [`r sprintf("%.2f", fit_tidy$conf.low[2])`, `r sprintf("%.2f", fit_tidy$conf.high[2])`] mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test, as it always will. The interval also contains $\beta_1 = -0.28$, the true slope we built into the data. A 95% interval catches the true value in about 95% of samples, and this sample is one of them.
+The 95% confidence interval for the slope, from `confint(fit)`, in the last two columns of the table above, is 95% CI [`r sprintf("%.2f", fit_tidy$conf.low[2])`, `r sprintf("%.2f", fit_tidy$conf.high[2])`] mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test. This is the same agreement you saw for $z$ in Chapter 4 and for $t$ in Chapter 6, with a different cutoff. Here the critical value is $t_{crit} = `r sprintf("%.2f", qt(.975, nrow(stream_df) - 2))`$ at $df = `r nrow(stream_df) - 2`$ instead of 1.96. The test rejects $H_0$ when the observed $b_1$ is more than $t_{crit}$ standard errors from 0, and the 95% interval contains every slope within $t_{crit}$ standard errors of $b_1$. So 0 falls outside the interval exactly when the two-tailed test rejects $H_0$ at $\alpha = 0.05$. The interval also contains $\beta_1 = -0.28$, the true slope we built into the data. A 95% interval catches the true value in about 95% of samples, and this sample is one of them.
 
 ## Partitioning variation: regression as ANOVA
 
@@ -329,7 +329,7 @@ ggplot(part_df, aes(stream_temp)) +
   theme(strip.text = element_text(size = 9))
 ```
 
-Squaring and summing each set of segments gives the partition:
+$SS_\text{Total}$ is the sum of the squared distances from each point to mean DO. $SS_\text{Regression}$ is the sum of the squared distances from the line to mean DO. $SS_\text{Residual}$ is the sum of the squared residuals, the distances from each point to the line. The first equals the other two added together:
 
 $$SS_\text{Total} = SS_\text{Regression} + SS_\text{Residual}, \qquad `r sprintf("%.2f", ss_total)` = `r sprintf("%.2f", ss_reg)` + `r sprintf("%.2f", ss_res)`$$
 
@@ -529,9 +529,9 @@ Fixes typically include:
 
 ### Checking normality
 
-For normality, we check the residuals two ways: visually, with a **Q-Q plot**, and formally, with the Shapiro-Wilk test.
+For normality, we check the residuals two ways: visually, with a Q-Q plot, and formally, with the Shapiro-Wilk test (Chapter 6).
 
-A Q-Q plot sorts the residuals and compares them to where a perfectly normal distribution would place values at the same percentiles. If the residuals are normal, the points fall close to the diagonal line. A systematic curve or S-shape means they don't.
+A **Q-Q plot** sorts the residuals and compares them to where a perfectly normal distribution would place values at the same percentiles. If the residuals are normal, the points fall close to the diagonal line. A systematic curve or S-shape means they don't.
 
 ```{r}
 #| label: fig-9regqq
@@ -615,9 +615,9 @@ knitr::kable(
 )
 ```
 
-At 20°C, the model predicts DO of `r sprintf("%.2f", pred_out[1])` mg/L, 95% CI [`r sprintf("%.2f", pred_out[2])`, `r sprintf("%.2f", pred_out[3])`]. Because 20°C falls inside the observed range of `r sprintf("%.1f", min(stream_df$stream_temp))` to `r sprintf("%.1f", max(stream_df$stream_temp))`°C, this prediction is interpolation, which is what regression is good for. This confidence interval is for the mean DO of all streams at 20°C. A single stream at 20°C will scatter around that mean by about as much as the points scatter around the line, so its DO can fall well outside this interval.
+At 20°C, the model predicts DO of `r sprintf("%.2f", pred_out[1])` mg/L, 95% CI [`r sprintf("%.2f", pred_out[2])`, `r sprintf("%.2f", pred_out[3])`]. Because 20°C falls inside the observed range of `r sprintf("%.1f", min(stream_df$stream_temp))` to `r sprintf("%.1f", max(stream_df$stream_temp))`°C, this prediction is interpolation, which is what regression is good for. **Interpolation** is predicting $y$ at an $x$ value inside the range of $x$ we observed. This confidence interval is for the mean DO of all streams at 20°C. It is a different interval from the ones in the coefficient table. Those give a range of plausible values for each parameter, $\beta_0$ and $\beta_1$. This one gives a range for the population mean DO at one temperature, the value the model predicts at $x = 20$, $\beta_0 + 20\beta_1$. A single stream at 20°C will scatter around that mean by about as much as the points scatter around the line, so its DO can fall well outside this interval.
 
-Predicting DO at, say, 35°C would be extrapolation. The fitted line gives `r sprintf("%.1f", predict(fit, data.frame(stream_temp = 35)))` mg/L at 35°C, a number with no data behind it. Nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. @fig-9regextrap shows both zones on the same line.
+**Extrapolation** is predicting $y$ at an $x$ value outside the range of $x$ we observed. Predicting DO at, say, 35°C would be extrapolation. The fitted line gives `r sprintf("%.1f", predict(fit, data.frame(stream_temp = 35)))` mg/L at 35°C, a number with no data behind it. Nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. @fig-9regextrap shows both zones on the same line.
 
 ```{r}
 #| label: fig-9regextrap
