@@ -558,16 +558,72 @@ knitr::kable(power_tab, format = "pipe", align = "rrrrr",
                            "Simulated power (1,000 runs)", "Exact power"))
 ```
 
-@tbl-5plan-changes shows which way each change moves $\alpha$, $\beta$ and power.
+@tbl-5plan-changes shows which way each change moves $\alpha$, $\beta$ and power, and @fig-5plan-changes draws each change on the design from @fig-5alpha-beta.
 
-| Change | $\alpha$ | $\beta$ | Power |
-|---|---|---|---|
-| Larger $n$ | Same | Down | Up |
-| Smaller $\alpha$ | Down | Up | Down |
-| Larger $\alpha$ | Up | Down | Up |
-| Larger effect | Same | Down | Up |
+| Change | $\alpha$ | $\beta$ | Power | In @fig-5plan-changes |
+|---|---|---|---|---|
+| Larger $n$ | Same | Down | Up | (a) |
+| Smaller $\alpha$ | Down | Up | Down | (b) |
+| Larger $\alpha$ | Up | Down | Up | (c) |
+| Larger effect | Same | Down | Up | (d) |
 
 : How each change moves $\alpha$, $\beta$ and power. {#tbl-5plan-changes}
+
+```{r}
+#| label: fig-5plan-changes
+#| fig-cap: 'Each change from @tbl-5plan-changes, drawn on the design in @fig-5alpha-beta ($\mu_a$ 2.5 standard errors above $\mu_0$, $\alpha = 0.05$). Red is $\alpha$, gray is $\beta$, and orange is power, as in @fig-5alpha-beta. Each panel title gives $\beta$ for the original design and after the change. (a) Twice the sample size narrows both curves. (b) A smaller $\alpha$ moves the critical values out. (c) A larger $\alpha$ moves them in. (d) A larger effect moves the orange curve farther from $\mu_0$.'
+#| fig-alt: "Four panels in a two-by-two grid, labeled a to d, each with a blue dot-dash curve centered on a magenta dashed line labeled mu sub 0, an orange dot-dash curve to its right, red critical-value lines with small red shaded tails, a gray area under the orange curve between the critical lines, and an orange area under the orange curve past the right critical line. Panel a, larger sample size: both curves are narrower and the gray area is smaller. Panel b, smaller alpha: the red lines sit farther out, the red tails are smaller, and the gray area is larger. Panel c, larger alpha: the red lines sit closer in, the red tails are larger, and the gray area is smaller. Panel d, larger effect: the orange curve sits farther right and the gray area is smaller. Each title gives beta before and after the change."
+#| fig-height: 6.4
+#| out-width: "100%"
+
+# Same colors, line types and shading as fig-5alpha-beta. Units are the original
+# design's standard errors, so each change can be compared with that design.
+plan_panel <- function(mua, se, crit, title) {
+  x <- seq(-4, 6.5, length.out = 3000)
+  d <- data.frame(x = x, null = dnorm(x, 0, se), alt = dnorm(x, mua, se))
+  cx <- crit * se
+  ggplot(d) +
+    geom_area(data = subset(d, x > -cx & x < cx), aes(x, alt), fill = "gray50", alpha = .35) +
+    geom_area(data = subset(d, x >= cx), aes(x, alt), fill = "orange", alpha = .30) +
+    geom_area(data = subset(d, x <= -cx), aes(x, null), fill = "red", alpha = .18) +
+    geom_area(data = subset(d, x >= cx), aes(x, null), fill = "red", alpha = .18) +
+    geom_line(aes(x, null, color = "null"), linetype = "dotdash", linewidth = .9) +
+    geom_line(aes(x, alt, color = "alt"), linetype = "dotdash", linewidth = .9) +
+    annotate("segment", x = c(-cx, cx), xend = c(-cx, cx), y = 0, yend = dnorm(cx, 0, se),
+             color = "red", linewidth = .6) +
+    annotate("segment", x = c(-cx, cx), xend = c(-cx, cx), y = dnorm(cx, 0, se), yend = .6,
+             color = "red", linetype = "dashed", linewidth = .5) +
+    annotate("segment", x = 0, xend = 0, y = 0, yend = .6,
+             linetype = "dashed", color = "magenta", linewidth = .7) +
+    annotate("text", x = 0, y = .64, label = "mu[0]", parse = TRUE, color = "magenta", size = 3.8) +
+    scale_color_manual(values = c(null = "blue", alt = "orange"), breaks = c("null", "alt"),
+                       labels = leg_ab) +
+    coord_cartesian(xlim = c(-4, 6.5), ylim = c(0, 0.66)) +
+    ggtitle(title) +
+    theme_classic() +
+    theme(legend.position = "bottom", axis.text = element_blank(), axis.title = element_blank(),
+          axis.ticks = element_blank(), plot.title = element_text(size = 10.5),
+          legend.text = element_text(size = 10)) +
+    guides(color = guide_legend(title = NULL, nrow = 2))
+}
+plan_beta <- function(mua, se, crit) pnorm(crit * se, mua, se) - pnorm(-crit * se, mua, se)
+b0 <- sprintf("%.2f", plan_beta(2.5, 1, 1.96))
+plan_specs <- list(
+  list(tag = "(a) Larger", what = "n", mua = 2.5, se = 1 / sqrt(2), crit = 1.96),
+  list(tag = "(b) Smaller", what = "alpha", mua = 2.5, se = 1, crit = qnorm(0.995)),
+  list(tag = "(c) Larger", what = "alpha", mua = 2.5, se = 1, crit = qnorm(0.95)),
+  list(tag = "(d) Larger", what = "effect", mua = 3, se = 1, crit = 1.96))
+plan_plots <- lapply(plan_specs, function(p) {
+  b1 <- sprintf("%.2f", plan_beta(p$mua, p$se, p$crit))
+  ttl <- switch(p$what,
+    n      = bquote(.(p$tag) ~ italic(n) * ":" ~ beta ~ .(b0) %->% .(b1)),
+    alpha  = bquote(.(p$tag) ~ alpha * ":" ~ beta ~ .(b0) %->% .(b1)),
+    effect = bquote(.(p$tag) ~ "effect:" ~ beta ~ .(b0) %->% .(b1)))
+  plan_panel(p$mua, p$se, p$crit, ttl)
+})
+patchwork::wrap_plots(plan_plots, ncol = 2, guides = "collect") &
+  theme(legend.position = "bottom")
+```
 
 ### Power curves
 
