@@ -369,7 +369,7 @@ window.Quarto = {
 <p class="chapter-pdf-link"><a class="btn btn-outline-primary btn-sm" href="pdf/08-ANOVA.pdf" download=""><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Download this chapter (PDF)</a></p>
 <section id="anova-is-analysis-of-variance" class="level2" data-number="8.1">
 <h2 data-number="8.1" class="anchored" data-anchor-id="anova-is-analysis-of-variance"><span class="header-section-number">8.1</span> ANOVA is analysis of variance</h2>
-<p>ANOVA stands for analysis of variance. It tests whether differences among several group means are larger than we’d expect from chance alone. Chapters 6 and 7 compared two groups. This chapter builds the one-way ANOVA by hand, runs the full workflow on one example through post-hoc comparisons and a rank-based alternative, and ends with repeated-measures ANOVA.</p>
+<p>ANOVA stands for analysis of variance. It tests whether differences among several group means are larger than we’d expect from chance alone. Chapters 6 and 7 compared two groups. This chapter builds the one-way ANOVA by hand, runs the full workflow on one example through post-hoc comparisons and a rank-based (nonparametric) alternative, and ends with repeated-measures ANOVA.</p>
 <p>With two groups, a <span class="math inline">\(t\)</span>-test already answers that question. ANOVA extends the same logic to three or more groups. Environmental studies often compare that many, such as several sites, treatments, or time periods.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Note: Where ANOVA came from">
 <div class="callout-header d-flex align-content-center">
@@ -386,7 +386,34 @@ window.Quarto = {
 </div>
 <section id="why-not-run-multiple-t-tests" class="level3" data-number="8.1.1">
 <h3 data-number="8.1.1" class="anchored" data-anchor-id="why-not-run-multiple-t-tests"><span class="header-section-number">8.1.1</span> Why not run multiple <span class="math inline">\(t\)</span>-tests?</h3>
-<p>Suppose we’re comparing classroom CO<sub>2</sub> concentrations (ppm) under three ventilation settings: windows open, mechanical ventilation, and no ventilation change. With three groups, there are three possible pairwise comparisons: windows open vs.&nbsp;mechanical ventilation, windows open vs.&nbsp;no change, and mechanical ventilation vs.&nbsp;no change.</p>
+<p>Suppose we want to know whether the means of three groups, A, B and C, differ significantly. With two groups, one <span class="math inline">\(t\)</span>-test compares the two means. With three groups, the <span class="math inline">\(t\)</span>-test approach needs one test for each pair of groups, three in all (<a href="#tbl-8pairs" class="quarto-xref">Table&nbsp;<span>8.1</span></a>).</p>
+<div id="tbl-8pairs" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-8pairs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;8.1: The three pairwise <span class="math inline">\(t\)</span>-tests for three groups.
+</figcaption>
+<div aria-describedby="tbl-8pairs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Pairwise <span class="math inline">\(t\)</span>-test</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Group A vs.&nbsp;Group B</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Group A vs.&nbsp;Group C</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Group B vs.&nbsp;Group C</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
 <p>We could run a separate <span class="math inline">\(t\)</span>-test for each. The problem is that every test carries its own 5% chance of a false positive (a Type I error, Chapter 5), and those chances accumulate across tests. This follows from the independence multiplication rule in Chapter 3. Each test has a <span class="math inline">\(1-\alpha = 0.95\)</span> chance of avoiding a false positive. If the <span class="math inline">\(m\)</span> tests are independent, the chance that all of them avoid one is 0.95 multiplied by itself <span class="math inline">\(m\)</span> times, or <span class="math inline">\((1-\alpha)^m\)</span>. The chance of at least one false positive is 1 minus that, so for <span class="math inline">\(m\)</span> independent tests at <span class="math inline">\(\alpha = 0.05\)</span>,</p>
 <p><span class="math display">\[P(\text{at least one false positive}) = 1-(1-\alpha)^m.\]</span></p>
 <p>With three groups, that’s three tests. The <strong>familywise error rate</strong> is the chance of at least one false positive across a set of tests. For three tests it is 14%, compared with 5% for a single test:</p>
@@ -446,11 +473,11 @@ Figure&nbsp;8.1: Familywise Type I error rate as the number of independent <span
 <section id="one-way-anova" class="level2" data-number="8.2">
 <h2 data-number="8.2" class="anchored" data-anchor-id="one-way-anova"><span class="header-section-number">8.2</span> One-way ANOVA</h2>
 <p>The one-way ANOVA (also called a between-subjects ANOVA) is the simplest version of the test. In ANOVA an independent variable is called a <strong>factor</strong>, and the groups it defines are its <strong>levels</strong>. A one-way ANOVA has one factor with two or more levels, and every unit is measured once. With two levels it gives the same result as the pooled <span class="math inline">\(t\)</span>-test, so in practice it is used for three or more.</p>
-<p><a href="#tbl-8types" class="quarto-xref">Table&nbsp;<span>8.1</span></a> sets the one-way ANOVA beside the two other kinds of ANOVA this book covers.</p>
+<p><a href="#tbl-8types" class="quarto-xref">Table&nbsp;<span>8.2</span></a> sets the one-way ANOVA beside the two other kinds of ANOVA this book covers.</p>
 <div id="tbl-8types" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-8types-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;8.1: Three kinds of ANOVA.
+Table&nbsp;8.2: Three kinds of ANOVA.
 </figcaption>
 <div aria-describedby="tbl-8types-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -827,11 +854,11 @@ Figure&nbsp;8.2: The same within-group noise with no real differences (left) and
 </section>
 <section id="the-anova-table" class="level3" data-number="8.2.8">
 <h3 data-number="8.2.8" class="anchored" data-anchor-id="the-anova-table"><span class="header-section-number">8.2.8</span> The ANOVA table</h3>
-<p>An <strong>ANOVA table</strong> lists the sums of squares, degrees of freedom, mean squares, and <span class="math inline">\(F\)</span> for each source of variation. <a href="#tbl-8anovaformulas" class="quarto-xref">Table&nbsp;<span>8.2</span></a> gives the formulas, and the table below fills them in for the toy data.</p>
+<p>An <strong>ANOVA table</strong> lists the sums of squares, degrees of freedom, mean squares, and <span class="math inline">\(F\)</span> for each source of variation. <a href="#tbl-8anovaformulas" class="quarto-xref">Table&nbsp;<span>8.3</span></a> gives the formulas, and the table below fills them in for the toy data.</p>
 <div id="tbl-8anovaformulas" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-8anovaformulas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;8.2: The one-way ANOVA table in formulas.
+Table&nbsp;8.3: The one-way ANOVA table in formulas.
 </figcaption>
 <div aria-describedby="tbl-8anovaformulas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -1099,11 +1126,11 @@ Figure&nbsp;8.7: Mean salamander abundance (individuals per plot) across three f
 <p>Levene’s test <span class="citation" data-cites="Levene1960 BrownForsythe1974">(<a href="references.html#ref-Levene1960" role="doc-biblioref">Levene 1960</a>; <a href="references.html#ref-BrownForsythe1974" role="doc-biblioref">Brown and Forsythe 1974</a>)</span> gives <span class="math inline">\(F(2, 21) = 0.52\)</span>, <span class="math inline">\(p = 0.599\)</span>, so there is no evidence of unequal variance across forest types. The Shapiro-Wilk test <span class="citation" data-cites="Shapiro1965">(<a href="references.html#ref-Shapiro1965" role="doc-biblioref">Shapiro and Wilk 1965</a>)</span> on the model’s residuals gives <span class="math inline">\(W = 0.93\)</span>, <span class="math inline">\(p = 0.078\)</span>, so there is no evidence against normality either. Both checks agree with the individual plots in <a href="#fig-8salamanderData" class="quarto-xref">Figure&nbsp;<span>8.7</span></a>, which show similar spread across groups and no outliers far from the rest.</p>
 <p><strong>Formal assumption tests are evidence, not a gate.</strong> Chapter 6 made this point about Shapiro-Wilk, and it holds for Levene’s test too. It’s tempting to treat Levene’s test as a strict gate, where significant means “stop” and not significant means “proceed.” With a small sample (exactly when a violated assumption matters most), these tests have low power and will often say “no problem” even when there is one. With a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as “significant.” Look at the data too, as in <a href="#fig-8salamanderData" class="quarto-xref">Figure&nbsp;<span>8.7</span></a>, and check whether the groups have similar spread and whether any points are far from the rest.</p>
 <p>In practice, one-way ANOVA’s <span class="math inline">\(p\)</span>-values stay close to correct under mild departures from these assumptions, especially when the design is <strong>balanced</strong>, with the same number of observations in every group, as here (8 plots per forest type). Be most cautious when small, unbalanced samples come with visibly skewed data or very different spreads. In that case, the nonparametric alternative below is the better choice.</p>
-<p><a href="#tbl-8assumptions" class="quarto-xref">Table&nbsp;<span>8.3</span></a> lists each assumption, how to check it, and what to use if it fails.</p>
+<p><a href="#tbl-8assumptions" class="quarto-xref">Table&nbsp;<span>8.4</span></a> lists each assumption, how to check it, and what to use if it fails.</p>
 <div id="tbl-8assumptions" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-8assumptions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;8.3: ANOVA’s assumptions, how to check them, and what to do if one fails.
+Table&nbsp;8.4: ANOVA’s assumptions, how to check them, and what to do if one fails.
 </figcaption>
 <div aria-describedby="tbl-8assumptions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -1143,7 +1170,7 @@ Table&nbsp;8.3: ANOVA’s assumptions, how to check them, and what to do if one 
 <div id="tbl-8salamanderANOVA" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-8salamanderANOVA-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;8.4: One-way ANOVA table for salamander abundance by forest type.
+Table&nbsp;8.5: One-way ANOVA table for salamander abundance by forest type.
 </figcaption>
 <div aria-describedby="tbl-8salamanderANOVA-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -1194,7 +1221,7 @@ Table&nbsp;8.4: One-way ANOVA table for salamander abundance by forest type.
 <div id="tbl-8etasq" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-8etasq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;8.5: Eta-squared for the effect of forest type on salamander abundance.
+Table&nbsp;8.6: Eta-squared for the effect of forest type on salamander abundance.
 </figcaption>
 <div aria-describedby="tbl-8etasq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -1236,7 +1263,7 @@ Table&nbsp;8.5: Eta-squared for the effect of forest type on salamander abundanc
 <div id="tbl-8tukey" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-8tukey-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;8.6: Tukey HSD post-hoc comparisons for salamander abundance by forest type.
+Table&nbsp;8.7: Tukey HSD post-hoc comparisons for salamander abundance by forest type.
 </figcaption>
 <div aria-describedby="tbl-8tukey-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -1327,11 +1354,11 @@ Figure&nbsp;8.8: Mean salamander abundance with Tukey letters. Old-growth carrie
 </blockquote>
 </div>
 </div>
-<p><a href="#tbl-8card-anova" class="quarto-xref">Table&nbsp;<span>8.7</span></a> collects the one-way ANOVA on one card.</p>
+<p><a href="#tbl-8card-anova" class="quarto-xref">Table&nbsp;<span>8.8</span></a> collects the one-way ANOVA on one card.</p>
 <div id="tbl-8card-anova" class="quarto-float quarto-figure quarto-figure-center anchored" data-tbl-colwidths="[20,80]">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-8card-anova-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;8.7: Test card: one-way ANOVA.
+Table&nbsp;8.8: Test card: one-way ANOVA.
 </figcaption>
 <div aria-describedby="tbl-8card-anova-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -1433,11 +1460,11 @@ Table&nbsp;8.7: Test card: one-way ANOVA.
 </div>
 </div>
 <p>The pattern matches Tukey HSD exactly. Old-growth differs significantly from both Secondary (<span class="math inline">\(p = 0.011\)</span>) and Managed (<span class="math inline">\(p = 0.004\)</span>), while Secondary and Managed do not differ from each other (<span class="math inline">\(p = 0.486\)</span>). The two approaches use different assumptions and different calculations, and they agree here because the parametric assumptions held.</p>
-<p><a href="#tbl-8card-kw" class="quarto-xref">Table&nbsp;<span>8.8</span></a> collects the Kruskal-Wallis test on one card.</p>
+<p><a href="#tbl-8card-kw" class="quarto-xref">Table&nbsp;<span>8.9</span></a> collects the Kruskal-Wallis test on one card.</p>
 <div id="tbl-8card-kw" class="quarto-float quarto-figure quarto-figure-center anchored" data-tbl-colwidths="[20,80]">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-8card-kw-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;8.8: Test card: Kruskal-Wallis test.
+Table&nbsp;8.9: Test card: Kruskal-Wallis test.
 </figcaption>
 <div aria-describedby="tbl-8card-kw-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -1479,12 +1506,12 @@ Table&nbsp;8.8: Test card: Kruskal-Wallis test.
 <p>This is ANOVA’s version of the paired <span class="math inline">\(t\)</span>-test from Chapter 6. The paired <span class="math inline">\(t\)</span>-test subtracted each plot’s before score from its own after score, so differences between plots dropped out and only the change was left. With three or more conditions there is no single difference to take, so repeated-measures ANOVA does the equivalent with sums of squares, measuring how much the units differ from one another and removing that variation from the error term.</p>
 <section id="fine-particulate-matter-at-four-monitoring-stations" class="level3" data-number="8.5.1">
 <h3 data-number="8.5.1" class="anchored" data-anchor-id="fine-particulate-matter-at-four-monitoring-stations"><span class="header-section-number">8.5.1</span> Fine particulate matter at four monitoring stations</h3>
-<p>An air quality agency has four PM2.5 monitors, ordered from the most rural (A) to the most urban (D). The concentrations in this example are invented. <a href="#tbl-8pmdata" class="quarto-xref">Table&nbsp;<span>8.9</span></a> gives each monitor’s mean PM2.5 concentration in winter, spring, and summer. The question is whether concentrations differ by season: <span class="math inline">\(H_0: \mu_\text{Winter}=\mu_\text{Spring}=\mu_\text{Summer}\)</span> vs.&nbsp;<span class="math inline">\(H_a\)</span>: at least one seasonal mean differs.</p>
+<p>An air quality agency has four PM2.5 monitors, ordered from the most rural (A) to the most urban (D). The concentrations in this example are invented. <a href="#tbl-8pmdata" class="quarto-xref">Table&nbsp;<span>8.10</span></a> gives each monitor’s mean PM2.5 concentration in winter, spring, and summer. The question is whether concentrations differ by season: <span class="math inline">\(H_0: \mu_\text{Winter}=\mu_\text{Spring}=\mu_\text{Summer}\)</span> vs.&nbsp;<span class="math inline">\(H_a\)</span>: at least one seasonal mean differs.</p>
 <div class="cell">
 <div id="tbl-8pmdata" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-8pmdata-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;8.9: Seasonal mean PM2.5 (µg/m³) at four monitoring stations, with each station’s mean and each season’s mean.
+Table&nbsp;8.10: Seasonal mean PM2.5 (µg/m³) at four monitoring stations, with each station’s mean and each season’s mean.
 </figcaption>
 <div aria-describedby="tbl-8pmdata-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
