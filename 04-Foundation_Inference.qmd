@@ -341,7 +341,7 @@ players <- data.frame(
            "The sample mean: the one value we observe",
            "Centered at $\\bar{x}$, with the sample's standard deviation as its spread: our best picture of the true population",
            "Our estimate of how sample means vary from sample to sample: centered at $\\bar{x}$ (our best guess for $\\mu$), spread = standard error",
-           "$\\bar{x} \\pm 1.96$ standard errors, built from the sampling distribution of the sample mean",
+           "$\\bar{x} \\pm 1.96$ standard errors, built from the sampling distribution of the sample mean from the sample",
            "The population the data actually came from. Never known. $H_a$ is a claim about where it is")
 )
 swatches <- c(
@@ -570,7 +570,7 @@ ggplot() +
 
 Four terms guide the decision in a hypothesis test. The first is the quantity every test computes.
 
-**Test statistic.** A test statistic is the effect you observed divided by how much it varies by chance. The observed effect is the distance between what you measured and what $H_0$ predicted. The error is how much that distance varies by chance alone (in later chapters, an estimate of it):
+**Test statistic.** A test statistic is the effect you observed divided by how much it varies by chance. The observed effect is the distance between what you measured and what $H_0$ predicted. It contains any true effect plus sampling error. The error is how much that distance varies by chance alone (in later chapters, an estimate of it):
 
 $$\text{statistic}=\frac{\text{effect}}{\text{error}}$$
 
@@ -692,13 +692,13 @@ ggplot(rr, aes(x, y)) +
 
 ### Route 2: confidence interval
 
-The confidence-interval route makes the same decision using the sampling distribution from the sample. The rejection region and the confidence interval both reach 1.96 standard errors from their centers, and their centers differ. The rejection region is centered at $\mu_0$ and asks whether $\bar{x}$ is too far from it. The confidence interval is centered at $\bar{x}$ and asks whether $\mu_0$ is too far from it. The distance between $\bar{x}$ and $\mu_0$ is the same from either end, so for a two-tailed test the two routes always reach the same decision. The confidence-interval route never uses the null population distribution, only the single value $\mu_0$.
+The confidence-interval route makes the same decision using the sampling distribution of the sample mean from the sample. The rejection region and the confidence interval both reach 1.96 standard errors from their centers, and their centers differ. The rejection region is centered at $\mu_0$ and asks whether $\bar{x}$ is too far from it. The confidence interval is centered at $\bar{x}$ and asks whether $\mu_0$ is too far from it. The distance between $\bar{x}$ and $\mu_0$ is the same from either end, so for a two-tailed test the two routes always reach the same decision. The confidence-interval route never uses the null population distribution, only the single value $\mu_0$.
 
-Start from the sampling distribution of the sample mean built in @fig-4key.sample_to_sampling: centered at $\bar{x}$, with the standard error as its spread. A sample mean falls within 1.96 standard errors of the true mean $\mu$ about 95% of the time, so the middle 95% of this curve, $\bar{x} \pm 1.96\,SE$, is the 95% confidence interval. It contains the values of $\mu$ that are consistent with our sample (@fig-4ci-lens-build). For the PM2.5 example the interval is 95% CI [`r sprintf("%.2f", ci_pm[1])`, `r sprintf("%.2f", ci_pm[2])`] µg/m³. Then ask where $\mu_0$ falls (@fig-4ci-lens-decision).
+Start from the sampling distribution of the sample mean from the sample, built in @fig-4key.sample_to_sampling: centered at $\bar{x}$, with the standard error as its spread. A sample mean falls within 1.96 standard errors of the true mean $\mu$ about 95% of the time, so the middle 95% of this curve, $\bar{x} \pm 1.96\,SE$, is the 95% confidence interval. It contains the values of $\mu$ that are consistent with our sample (@fig-4ci-lens-build). For the PM2.5 example the interval is 95% CI [`r sprintf("%.2f", ci_pm[1])`, `r sprintf("%.2f", ci_pm[2])`] µg/m³. Then ask where $\mu_0$ falls (@fig-4ci-lens-decision).
 
 ```{r}
 #| label: fig-4ci-lens-build
-#| fig-cap: 'The 95% confidence interval: the middle 95% of the sampling distribution of the sample mean, $\bar{x} \pm 1.96$ standard errors.'
+#| fig-cap: 'The 95% confidence interval: the middle 95% of the sampling distribution of the sample mean from the sample, $\bar{x} \pm 1.96$ standard errors.'
 #| fig-alt: "A narrow dark-green dot-dash bell curve centered on a lime-green dotted vertical line labeled x-bar, with a thick dark-green bar along the baseline under its middle, labeled 95% CI."
 #| fig-width: 4.5
 #| fig-height: 3.6
@@ -971,11 +971,11 @@ grid.arrange(
 - Two-tailed (default): You care whether $\mu$ differs from $\mu_0$ in either direction.
 - One-tailed (only if justified): Differences in the opposite direction are scientifically irrelevant and would not change your decision or action.
 
-Default to two-tailed unless your theory rules out the other direction. Chapter 5 turns the second bullet, whether a result in the other direction would change your action, into a question you can answer before collecting data.
+Default to two-tailed unless a difference in the other direction would not change your decision or action. Chapter 5 turns the second bullet, whether a result in the other direction would change your action, into a question you can answer before collecting data.
 
 At $\alpha = 0.05$, a one-tailed test's critical value is 1.645 instead of 1.96, so it *rejects on less evidence, but only in the direction you named in advance*. If the effect goes the other way, a one-tailed test cannot detect it at all, however large it is. Most studies should not give that up, because a result in the unexpected direction is often the most useful thing a study finds.
 
-Choose the direction before you see the data. Picking the tail afterward, because it gives the smaller $p$-value, makes your actual chance of a false positive higher than the $\alpha$ you report.
+Choose the direction before you see the data. Picking the tail afterward, because it gives the smaller $p$-value, makes your actual chance of a Type I error, rejecting a true $H_0$, higher than the $\alpha$ you report.
 
 ## Chapter Summary
 
@@ -987,6 +987,6 @@ Choose the direction before you see the data. Picking the tail afterward, becaus
 - **You can build the chance window.** The chance window is the distribution of results that chance alone produces when a study with no real effect is repeated many times. Simulating thousands of replications shows what chance can produce for a study with that design and sample size.
 - **Rarity is a judgment, and it needs a convention.** The 100-year flood uses the same reasoning outside statistics. A 1% annual chance is small, but over a 30-year mortgage it adds up to about a 26% chance. $\alpha = 0.05$ standardizes that judgment so researchers do not each draw their own line.
 - **A hypothesis test is the practical shortcut.** Once you can assume the sampling distribution of the sample mean under $H_0$ is normal, the simulated chance window becomes a curve and the decision becomes a calculation, with the same logic as the simulation.
-- **One pair of curves comes from the sample and one from $H_0$.** From the sample: the estimated population distribution and the sampling distribution of the sample mean, which gives the confidence interval. Under $H_0$: the null population distribution and the sampling distribution of the sample mean under $H_0$, which gives the critical values and $p$-value. The true population distribution is never known.
+- **One pair of curves comes from the sample and one from $H_0$.** From the sample: the estimated population distribution and the sampling distribution of the sample mean from the sample, which gives the confidence interval. Under $H_0$: the null population distribution and the sampling distribution of the sample mean under $H_0$, which gives the critical values and $p$-value. The true population distribution is never known.
 - **Three routes give the same decision.** A test statistic against a critical value, a confidence interval, and a $p$-value are three ways of asking the same question. For the two-tailed $z$ test at the same $\alpha$, they always agree.
 - **Commit to one- or two-tailed in advance.** Default to two-tailed. Choosing after seeing the data raises your actual error rate above the $\alpha$ you claimed.

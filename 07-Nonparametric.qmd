@@ -85,7 +85,7 @@ A **nonparametric test** is a test whose null distribution does not depend on th
 
 The **rank** of a value is its position when the data are put in order from smallest to largest (first, second, third, and so on). Many nonparametric tests are run on the ranks instead of the raw values. The median is a familiar statistic that depends only on this ordering. It is the middle value once the data are put in order.
 
-**Rank-based tests also work on ordinal data.** Because the Wilcoxon and Mann-Whitney-Wilcoxon tests only need a rank ordering, neither is limited to interval- or ratio-scale measurements the way a $t$-test is. A $t$-test needs a mean, which requires numbers where the *distance* between values means something. Plenty of environmental data doesn't work that way: a water-quality rating (poor, fair, good, excellent), a disturbance-severity class, a Likert-style survey response. You can put those in order, but "the average disturbance class was 2.4" isn't meaningful the way "the average pH was 6.8" is.
+**Rank-based tests also work on ordinal data.** Because the signed-rank and Mann-Whitney-Wilcoxon tests only need a rank ordering, neither is limited to interval- or ratio-scale measurements the way a $t$-test is. A $t$-test needs a mean, which requires numbers where the *distance* between values means something. Plenty of environmental data doesn't work that way: a water-quality rating (poor, fair, good, excellent), a disturbance-severity class, a Likert-style survey response. You can put those in order, but "the average disturbance class was 2.4" isn't meaningful the way "the average pH was 6.8" is.
 
 This chapter covers two different kinds of tools:
 
@@ -178,7 +178,7 @@ knitr::kable(
 )
 ```
 
-The three plots with no change drop out of the test. A zero difference can't be ranked as positive or negative, so the Wilcoxon test runs on the remaining 9 plots instead of all 12. The rank test already ignores the exact size of each change and keeps only its order, and dropping the zeros means it also works with less data than the $t$-test. The zeros and the tied differences (two plots at $+6$, three at $-1$) also keep R from using the exact null distribution, so R uses a normal approximation instead.
+The three plots with no change drop out of the test. A zero difference can't be ranked as positive or negative, so the signed-rank test runs on the remaining 9 plots instead of all 12. The rank test already ignores the exact size of each change and keeps only its order, and dropping the zeros means it also works with less data than the $t$-test. The zeros and the tied differences (two plots at $+6$, three at $-1$) also keep R from using the exact null distribution, so R uses a normal approximation instead.
 
 **How $V$ is calculated.** Drop the zero differences, take the absolute value of what's left, rank those absolute values from smallest to largest (tied absolute values share the average of their ranks), then sum the ranks belonging to the *positive* differences. For example, the three differences of $-1$ all have absolute value 1 and would take ranks 1, 2 and 3, so each gets rank 2. The two differences of $+6$ would take ranks 6 and 7, so each gets 6.5. That sum is $V$.
 
@@ -216,11 +216,11 @@ Our observed $V=39$ falls just short of the upper critical value, 40, so it is n
 
 The test does not need normality because nothing in this distribution assumed a shape for soil moisture. The only inputs were our 9 ranks and the 50/50 sign rule from $H_0$.
 
-**So far.** $t$-test $p=0.026$ (significant), Wilcoxon $p=0.057$ (not quite). The two tests reach different verdicts on the same 12 plots because the $t$-test's numerator and denominator both used the exact magnitudes the signed-rank test ignores. In the $t$-test, the increases of 3 to 8 points count at their full size.
+**So far.** $t$-test $p=0.026$ (significant), signed-rank test $p = 0.057$ (not significant). The two tests reach different verdicts on the same 12 plots because the $t$-test's numerator and denominator both used the exact magnitudes the signed-rank test ignores. In the $t$-test, the increases of 3 to 8 points count at their full size.
 
 **The sign test.** The **sign test** looks only at whether each difference is positive or negative. It is an even simpler nonparametric option than the signed-rank test, and it asks whether pluses outnumber minuses more than chance would suggest. The sign test makes no assumption about the distribution of the differences, not even symmetry. Its only assumption is the one every test in this book shares, independent observations from a sound study design (see Chapter 6).
 
-We already flagged the symmetry assumption as shaky for these data, so the sign test avoids the one assumption the Wilcoxon test still needed. Assuming less costs power, though, because the sign test throws away the size of every difference, so it is usually a last resort.
+We already flagged the symmetry assumption as shaky for these data, so the sign test avoids the one assumption the signed-rank test still needed. Assuming less costs power, though, because the sign test throws away the size of every difference, so it is usually a last resort.
 
 The sign test uses the binomial distribution from Chapter 3. `binom.test(6, 9, p = 0.5)` asks how often chance alone would give 6 or more increases out of 9, or 3 or fewer (the same distance from 4.5 in the other direction, because the test is two-tailed), if each plot were equally likely to go up or go down ($\theta = 0.5$, the binomial success probability from Chapter 3).
 
@@ -256,7 +256,7 @@ Six of the 9 nonzero plots increased, and $p = 0.508$ is far from significant.
 
 : Three tests on the same 12 restoration plots. {#tbl-7threetests}
 
-The $t$-test gave the smallest $p$-value here because it used the full size of every change, including the increases of 3 to 8 points. That $p$-value is trustworthy only if the differences are roughly normal, and these are not. Check the assumptions before you run the test, so the result cannot influence which test you choose.
+The $t$-test gave the smallest $p$-value here because it used the full size of every change, including the increases of 3 to 8 points. That $p$-value is trustworthy only if the differences are roughly normal, and these are not. Check the assumptions before you run the test, so the result cannot influence which test you choose. The examples in this chapter ran the $t$-test first only to show how far its $p$-value can move when an assumption fails.
 
 @tbl-7card-signedrank collects the Wilcoxon signed-rank test on one card.
 
@@ -385,7 +385,7 @@ knitr::kable(
 )
 ```
 
-R labels this statistic $W$. For two groups it is the Mann-Whitney $U$. The pooled counts include ties (three sites each at 11, 16 and 17, and two at 18), so R again uses a normal approximation instead of the exact null distribution.
+R labels this statistic $W$. It is the same number as the Mann-Whitney $U$, and this chapter calls it $U$. The pooled counts include ties (three sites each at 11, 16 and 17, and two at 18), so R again uses a normal approximation instead of the exact null distribution.
 
 **How $U$ is calculated.** Pool all 16 counts, rank them from smallest to largest (tied counts share the average of their ranks), then add up the ranks belonging to the sodium group. Subtract $n_A(n_A+1)/2$, the smallest rank sum 8 sites could have ($1+2+\cdots+8 = 36$). The result is $U$.
 
@@ -440,7 +440,7 @@ The test does not need normality because nothing in this distribution assumed a 
 
 ## Categorical data: the chi-square tests
 
-Every test so far (the $t$-tests in Chapter 6, and the Wilcoxon and Mann-Whitney-Wilcoxon tests above) needs a continuous outcome variable. But a lot of environmental data isn't continuous at all: a site either has an invasive species or it doesn't; a stream sample either exceeds a safety threshold or it doesn't; a plot falls into one land-cover category, not a number line. None of the tests above apply to categorical data. Counts in categories need a different test, the chi-square ($\chi^2$) test [@Pearson1900].
+Every test so far (the $t$-tests in Chapter 6, and the signed-rank and Mann-Whitney-Wilcoxon tests above) needs a continuous outcome variable. But a lot of environmental data isn't continuous at all: a site either has an invasive species or it doesn't; a stream sample either exceeds a safety threshold or it doesn't; a plot falls into one land-cover category, not a number line. None of the tests above apply to categorical data. Counts in categories need a different test, the chi-square ($\chi^2$) test [@Pearson1900].
 
 The **chi-square distribution** is the family of curves that the $\chi^2$ statistic approximately follows when $H_0$ is true and expected counts are large enough. The test compares its statistic with this distribution. The symbol $\chi^2$ is used for both the statistic and the distribution, the way $t$ is. Because $\chi^2$ adds up squared gaps between observed and expected counts, it can never be negative, and a mismatch in either direction makes it bigger. A $\chi^2$ near 0 means the counts match the expectation closely, so only the upper tail counts against $H_0$. Like $t$, the chi-square distribution has one curve for each number of degrees of freedom (@fig-7chisq-shapes). With few degrees of freedom it is sharply right-skewed, and as $df$ grows it shifts right and becomes more symmetric.
 
@@ -483,7 +483,7 @@ ggplot(df3, aes(x, density)) +
   labs(x = expression(chi^2*" (df = 3)"), y = "Density")
 ```
 
-For the rank tests, the null distribution comes from every possible arrangement of the ranks under $H_0$, so it is exact. For the chi-square tests, the chi-square curve approximates the null distribution of the statistic, and the approximation is good only when expected counts are large enough. Each chi-square test below therefore comes with an expected-count rule.
+For the rank tests, listing every possible arrangement of the ranks under $H_0$ gives the exact null distribution, though R used a normal approximation to it in both examples because of ties and zeros. For the chi-square tests, the chi-square curve approximates the null distribution of the statistic, and the approximation is good only when expected counts are large enough. Each chi-square test below therefore comes with an expected-count rule.
 
 There are two chi-square tests, and the question decides which one to use. The goodness-of-fit test asks whether the counts for one categorical variable match an expected pattern. The test of independence asks whether two categorical variables are related.
 
@@ -713,8 +713,8 @@ Report the number of nonzero differences for a signed-rank test, since dropped z
 **Core ideas**
 
 -   **Rank-based tests trade power for weaker assumptions.** The Wilcoxon signed-rank and Mann-Whitney-Wilcoxon tests ask the same questions as the one-sample or paired and the independent-samples $t$-tests, but work from ranks instead of raw magnitudes. That buys a milder distributional assumption at the cost of some power.
--   **The sign test uses even less of the data.** It looks only at the direction of each difference. On the same restoration data, the $t$-test, Wilcoxon, and sign test gave $p$-values of 0.026, 0.057 and 0.508, because each one uses less of the data than the last.
--   **Nonparametric tests have their own assumptions.** Wilcoxon assumes the differences are symmetric about their median. Mann-Whitney-Wilcoxon assumes the two distributions have the same *shape*, which is not the same as equal variance. State the assumption you are actually making.
--   **Check assumptions before you trust a $p$-value, not after.** Both worked examples in this chapter ran the parametric test first, then went back and found the violation.
+-   **The sign test uses even less of the data.** It looks only at the direction of each difference. On the same restoration data, the $t$-test, signed-rank test, and sign test gave $p$-values of 0.026, 0.057 and 0.508, because each one uses less of the data than the last.
+-   **Nonparametric tests have their own assumptions.** The signed-rank test assumes the differences are symmetric about their median. Mann-Whitney-Wilcoxon assumes the two distributions have the same *shape*, which is not the same as equal variance. State the assumption you are actually making.
+-   **Check assumptions before you run a test.** Choosing the test after seeing its result lets the result decide the test. Both worked examples ran the parametric test first only to show how its $p$-value can mislead when an assumption fails.
 -   **Categorical data needs a different tool entirely.** The chi-square tests handle counts: goodness-of-fit asks whether one variable's counts match an expected pattern, and the test of independence asks whether two categorical variables are related.
 -   **The testing logic never changes.** State $H_0$ and $H_a$, compute a statistic, and ask how surprising that statistic would be if $H_0$ were true. Only the statistic and its null distribution differ from test to test.

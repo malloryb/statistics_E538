@@ -147,7 +147,7 @@ pct_beyond2_n10  <- 100 * mean(abs(sim_t(10)) > 2)
 pct_beyond2_n101 <- 100 * mean(abs(sim_t(101)) > 2)
 ```
 
-In a simulation with $H_0$ true, `r sprintf("%.1f", pct_beyond2_n10)`% of $t$ values from samples of 10 fall beyond $\pm 2$, against `r sprintf("%.1f", pct_beyond2_n101)`% from samples of 101, close to the 5% a normal curve gives. Small samples produce more large $t$ values because $s$ is sometimes well below $\sigma$, which shrinks the denominator. That is why a test with few degrees of freedom needs a larger cutoff (2.26 at $df = 9$) to keep false alarms at 5%.
+In a simulation with $H_0$ true, `r sprintf("%.1f", pct_beyond2_n10)`% of $t$ values from samples of 10 fall beyond $\pm 2$, against `r sprintf("%.1f", pct_beyond2_n101)`% from samples of 101, close to the 5% a normal curve gives. Small samples produce more large $t$ values because $s$ is sometimes well below $\sigma$, which shrinks the denominator. A test with few degrees of freedom therefore needs a larger cutoff (2.26 at $df = 9$) to keep the Type I error rate at 5%.
 
 ### Critical values
 
@@ -261,7 +261,7 @@ t.test(sound_db, mu = 50)
 
 The highway noise $t$ of 1.94 can be placed among the $t$ values that chance alone produces. Under $H_0$, sample means far from $\mu_0$ are unlikely, so large values of $|t|$ are rare. The decision rule for a $t$-test follows from this. If the observed $t$ falls beyond the critical values, reject $H_0$.
 
-The **null distribution** of $t$ is the distribution of $t$ values across many samples when $H_0$ is true. For the highway noise example, it is the distribution of $t$ values from many samples of 10 sites if the true mean were exactly the 50 dB guideline. We are asking whether our $t$ could plausibly have come from that distribution. It is the $t$ version of Chapter 4's chance window and of the sampling distribution of the sample mean under $H_0$. It is a different curve from the null population distribution, which describes individual values. @fig-6tnull shows what that distribution looks like, at $df=9$.
+The **null distribution** of $t$ is the distribution of $t$ values across many samples when $H_0$ is true. For the highway noise example, it is the distribution of $t$ values from many samples of 10 sites if the true mean were exactly the 50 dB guideline. The 1,000 simulated $t$ values in @fig-6t-sim are draws from this distribution at $df = 9$. We are asking whether our $t$ could plausibly have come from that distribution. It is the $t$ version of Chapter 4's chance window and of the sampling distribution of the sample mean under $H_0$. It is a different curve from the null population distribution, which describes individual values. @fig-6tnull shows what that distribution looks like, at $df=9$.
 
 ```{r}
 #| label: fig-6tnull
@@ -314,10 +314,10 @@ ggplot(plot_df, aes(x = range, y = null_distribution)) +
 
 For example:
 
-1.  $t \leq -1.38$: $p = 10\%$
-2.  $-1.38 \leq t \leq -0.88$: $p = 10\%$
-3.  $-0.88 \leq t \leq -0.54$: $p = 10\%$
-4.  $t \geq 1.38$: $p = 10\%$
+1.  $t \leq -1.38$ contains 10% of the $t$ values.
+2.  $-1.38 \leq t \leq -0.88$ contains 10% of the $t$ values.
+3.  $-0.88 \leq t \leq -0.54$ contains 10% of the $t$ values.
+4.  $t \geq 1.38$ contains 10% of the $t$ values.
 
 Each range captures the same 10% of the distribution, even though the ranges themselves are different widths.
 
@@ -449,7 +449,7 @@ Here $n$ is the number of pairs, 20 plots in this study.
 
 $t$ has the same sign as $\bar d$. If you subtracted Before from After, a positive $t$ means moisture went up. Reversing the order flips the sign of every $d_i$, $\bar d$, and $t$, and leaves $p$ unchanged.
 
-**What to report.** $\bar d$ (the mean change), a 95% CI, $t(df)$, and $p$. Optionally add a standardized effect size, $\bar d / s_d$, the paired version of Cohen's $d$. The letter $d$ does two jobs here. The $d_i$ are difference scores and $\bar d$ is their mean. Cohen's $d$ is the Chapter 5 effect size.
+**What to report.** $\bar d$ (the mean difference score), a 95% CI, $t(df)$, and $p$. Optionally add a standardized effect size, $\bar d / s_d$, the paired version of Cohen's $d$. The letter $d$ does two jobs here. The $d_i$ are difference scores and $\bar d$ is their mean. Cohen's $d$ is the Chapter 5 effect size.
 
 @tbl-6two-ds separates the two uses of the letter.
 
@@ -496,7 +496,7 @@ paired_sample_df[6, 5] <- 0
 paired_sample_df[7, 5] <- 0
 knitr::kable(paired_sample_df,
              col.names = c("Plot", "Before", "After", "Difference",
-                           "Deviation from mean difference", "Squared deviation"),
+                           "Deviation from mean difference score", "Squared deviation"),
              caption = "Soil moisture (%) before and after restoration at five plots, with the steps for the paired t.")
 ```
 
@@ -511,12 +511,12 @@ paired5_tidy <- broom::tidy(paired5_out) |>
 
 knitr::kable(
   paired5_tidy[, c("estimate", "statistic", "parameter", "p.value")],
-  col.names = c("Mean difference", "t", "df", "p"),
+  col.names = c("Mean difference score", "t", "df", "p"),
   caption = "Paired t-test on 5 restoration plots."
 )
 ```
 
-The mean difference was $+2.8$ percentage points, so soil moisture increased on average. Getting a $p$-value from this $t$, and choosing one-tailed vs. two-tailed, works exactly like it did for the one-sample case (@sec-6onesample). Two-tailed, $t(4) = 1.83$, $p = 0.141$, which is not significant. With only five plots, a mean increase this large would not be unusual even if restoration had no effect on soil moisture.
+The mean difference score was $+2.8$ percentage points, so soil moisture increased on average. Getting a $p$-value from this $t$, and choosing one-tailed vs. two-tailed, works exactly like it did for the one-sample case (@sec-6onesample). Two-tailed, $t(4) = 1.83$, $p = 0.141$, which is not significant. With only five plots, a mean increase this large would not be unusual even if restoration had no effect on soil moisture.
 
 ### Scaling to the full sample
 
@@ -540,7 +540,7 @@ full20_tidy <- broom::tidy(full20_out) |>
 
 knitr::kable(
   full20_tidy[, c("estimate", "statistic", "parameter", "p.value", "conf.low", "conf.high")],
-  col.names = c("Mean difference", "t", "df", "p", "95% CI lower", "95% CI upper"),
+  col.names = c("Mean difference score", "t", "df", "p", "95% CI lower", "95% CI upper"),
   caption = "Paired t-test on all 20 restoration plots."
 )
 
@@ -554,7 +554,7 @@ tcrit_19 <- qt(0.975, df = n_full - 1)
 wrong_indep <- t.test(after_full, before_full, var.equal = TRUE)
 ```
 
-At $n=20$, $t(19) = `r sprintf("%.2f", full20_out$statistic)`$, $p `r fmt_p_eq(full20_out$p.value)`$, a significant result. The mean difference (`r sprintf("%.2f", full20_out$estimate)` percentage points) is smaller than the 5-plot subset's `r round(mean(differences), 1)`. The larger $t$ comes from the standard error, which fell from `r round(sd(differences)/sqrt(5), 2)` to `r round(sd(after_full - before_full)/sqrt(20), 2)` with four times as many plots. Four times as many plots doubles $\sqrt{n}$, from $\sqrt{5} = 2.24$ to $\sqrt{20} = 4.47$, which halves the standard error. The SD of the differences barely changed, from `r round(sd(differences), 2)` to `r round(sd(after_full - before_full), 2)`. A mean increase of `r round(full20_out$estimate, 1)` points would be unlikely if restoration had no effect, so the extra plots gave more power to detect a real effect.
+At $n=20$, $t(19) = `r sprintf("%.2f", full20_out$statistic)`$, $p `r fmt_p_eq(full20_out$p.value)`$, a significant result. The mean difference score (`r sprintf("%.2f", full20_out$estimate)` percentage points) is smaller than the 5-plot subset's `r round(mean(differences), 1)`. The larger $t$ comes from the standard error, which fell from `r round(sd(differences)/sqrt(5), 2)` to `r round(sd(after_full - before_full)/sqrt(20), 2)` with four times as many plots. Four times as many plots doubles $\sqrt{n}$, from $\sqrt{5} = 2.24$ to $\sqrt{20} = 4.47$, which halves the standard error. The SD of the differences barely changed, from `r round(sd(differences), 2)` to `r round(sd(after_full - before_full), 2)`. A mean increase of `r round(full20_out$estimate, 1)` points would be unlikely if restoration had no effect. With 20 plots, the test had more power to detect an effect of this size.
 
 Analyzed wrongly as two independent groups, the same 20 plots give $t(`r wrong_indep$parameter`) = `r sprintf("%.2f", wrong_indep$statistic)`$, $p `r fmt_p_eq(wrong_indep$p.value)`$, and the test fails to reject $H_0$. The pooled SD still contains the plot-to-plot differences that pairing removes.
 
@@ -562,7 +562,7 @@ Analyzed wrongly as two independent groups, the same 20 plots give $t(`r wrong_i
 
 $$\bar{d} \pm t_{crit} \cdot \frac{s_d}{\sqrt{n}} = `r sprintf("%.2f", mean(d_full))` \pm `r sprintf("%.2f", tcrit_19)` \times `r sprintf("%.2f", se_dfull)` = [`r sprintf("%.2f", full20_out$conf.int[1])`, `r sprintf("%.2f", full20_out$conf.int[2])`]$$
 
-This is the interval R reports in the table above. It is the 95% CI for the effect, the mean difference in soil moisture, in percentage points.
+This is the interval R reports in the table above. It is the 95% CI for the effect, the mean difference score for soil moisture, in percentage points.
 
 @tbl-6card-paired collects the paired $t$-test on one card.
 
@@ -713,7 +713,7 @@ Cohen's $d$ for two independent groups divides the mean difference by the pooled
 : The three $t$-tests compared. {#tbl-6three-tests}
 
 ::: {.callout-important title="Results reporting: t-tests"}
-All three forms report the same things in the same order: the effect and its direction in plain language, the test statistic with its df, $p$, and the 95% CI for the effect. For the paired and independent-samples tests, that is the CI for the mean difference. The three forms differ only in what counts as the effect.
+All three forms report the same things in the same order. Each write-up gives the effect and its direction in plain language, the test statistic with its df, $p$, and the 95% CI for the effect. A write-up can add Cohen's $d$, as the independent-samples example does. For the paired test, that is the CI for the mean difference score. For the independent-samples test, it is the CI for the mean difference. The three forms differ only in what counts as the effect.
 
 One-sample, where the effect is the sample mean against the reference value:
 

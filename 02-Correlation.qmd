@@ -133,7 +133,7 @@ Pairwise comparisons have two problems. The first is the count, which grows fast
 
 We have used the words variability, variation, and variance a lot, and all three refer to the same idea, that numbers differ. The word *variance* does double duty, though. Loosely it means that general idea. Precisely it names a specific statistic, the mean of the squared deviations from the mean, which we build step by step below.
 
-A score's **deviation score** is the score minus the mean, $x_i - \bar{x}$. To calculate the variance, find each score's deviation score, square those deviations, then average them. Squaring stops positive and negative deviations from canceling. In short:
+A score's **deviation score** is the score minus the mean, $x_i - \bar{x}$, where $x_i$ is one score and $\bar{x}$ is the mean (Chapter 1). To calculate the variance, find each score's deviation score, square those deviations, then average them. Squaring stops positive and negative deviations from canceling. In short:
 
 $\text{variance} = \frac{\text{Sum of squared deviation scores}}{\text{Number of Scores}}$
 
@@ -161,7 +161,7 @@ knitr::kable(the_df)
 
 ```
 
-The mean here is $\frac{1+6+4+2+6+8}{6} = \frac{27}{6} = 4.5$. The third column repeats the mean on every row. That shows the point from Chapter 1 that the mean spreads the total evenly, because six copies of 4.5 add back to the original total of 27. The fourth column is the deviation from the mean, $x_{i}-\bar{x}$, so the score of 1 is 3.5 below and the score of 6 is 1.5 above.
+The mean here is $\frac{1+6+4+2+6+8}{6} = \frac{27}{6} = 4.5$. The third column repeats the mean on every row. That shows the point from Chapter 1 that the mean spreads the total evenly, because six copies of 4.5 add back to the original total of 27. The fourth column is the deviation score, $x_{i}-\bar{x}$. The score of 1 is 3.5 below the mean and the score of 6 is 1.5 above it.
 
 **The deviations sum to zero.** In the table, the three negative deviations add to $-6.5$ and the three positive ones add to $6.5$, so the Sums row shows 0. A total of zero would suggest there is no variation at all, but the scores run from 1 to 8. Squaring will fix the cancellation, but first we look at *why* it happens.
 
@@ -169,7 +169,7 @@ The mean here is $\frac{1+6+4+2+6+8}{6} = \frac{27}{6} = 4.5$. The third column 
 
 The mean is the balancing point of the data. The values below it are, in total, exactly as far below it as the values above it are above it. For 1, 2, 6, 7 and 9, the mean is 5. The values below it are 4 and 3 away, 7 in total, and the values above it are 1, 2 and 4 away, also 7.
 
-The deviations always sum to zero because of how the mean is built. Adding up the deviations gives the sum of the scores minus $n$ copies of the mean, and $n$ copies of the mean add up to the sum of the scores: $\sum(x_i - \bar{x}) = \sum x_i - n\bar{x} = 0$. For the table above, $27 - 6 \times 4.5 = 0$.
+The deviations always sum to zero because of how the mean is built. Adding up the deviations gives the sum of the scores minus $N$ copies of the mean, and $N$ copies of the mean add up to the sum of the scores: $\sum(x_i - \bar{x}) = \sum x_i - N\bar{x} = 0$. For the table above, $27 - 6 \times 4.5 = 0$.
 
 @fig-2number-line plots the same five values, $X = (1,2,6,7,9)$, on a number line.
 
@@ -290,7 +290,7 @@ $(1-5)+(2-5)+(6-5)+(7-5)+(9-5)=0$
 
 The mean is the only value for which the sum of deviations equals zero:
 
-$\sum_{i=1}^{n}(x_{i}-a) = 0 \quad \Rightarrow \quad a = \bar{x}$
+$\sum_{i=1}^{N}(x_{i}-a) = 0 \quad \Rightarrow \quad a = \bar{x}$
 
 Because the deviations always cancel, their sum cannot summarize variation, so we need a way around the cancellation.
 
@@ -560,6 +560,8 @@ We often want a relationship measure that is directional, unitless, and bounded.
 -   $r=0$: no linear relationship
 -   $r=-1$: perfect negative linear relationship
 
+Here "linear" means following a straight line, and $r$ measures how closely the points follow one.
+
 Values closer to $\pm1$ indicate a stronger linear relationship. Values near $0$ indicate a weak linear relationship or none.
 
 One formula for Pearson's $r$ is
@@ -568,7 +570,7 @@ $$r = \frac{\text{cov}(X,Y)}{\sigma_X \sigma_Y}$$
 
 Here $\sigma_X$ and $\sigma_Y$ are the standard deviations computed by dividing by $N$, the same way the covariance was computed. The covariance is in chocolate units times happiness units, and $\sigma_X \sigma_Y$ is in the same units, so dividing cancels them. Dividing by the standard deviations also keeps $r$ between $-1$ and $1$, which makes correlation values comparable across variables measured in different units or on different scales.
 
-For the ten people in the covariance table, the covariance is `r sprintf('%.1f', cov_N)`. Dividing by $N$, the standard deviation of chocolate is `r sprintf('%.3f', sd_c)` and the standard deviation of happiness is `r sprintf('%.3f', sd_h)`. So $r = \frac{`r sprintf('%.1f', cov_N)`}{`r sprintf('%.3f', sd_c)` \times `r sprintf('%.3f', sd_h)`} = \frac{`r sprintf('%.1f', cov_N)`}{`r sprintf('%.3f', sd_c * sd_h)`} = `r sprintf('%.2f', r_10)`$. That is a moderate positive correlation. For all 100 people in @fig-2scatter1, R gives $r$ = `r sprintf('%.2f', cor(chocolate, happiness))`, which matches the upward pattern in the scatter plot.
+For the ten people in the covariance table, the covariance is `r sprintf('%.1f', cov_N)`. Dividing by $N$, the standard deviation of chocolate is `r sprintf('%.3f', sd_c)` and the standard deviation of happiness is `r sprintf('%.3f', sd_h)`. So $r = \frac{`r sprintf('%.1f', cov_N)`}{`r sprintf('%.3f', sd_c)` \times `r sprintf('%.3f', sd_h)`} = \frac{`r sprintf('%.1f', cov_N)`}{`r sprintf('%.3f', sd_c * sd_h)`} = `r sprintf('%.2f', r_10)`$. That is a positive correlation, a little more than halfway from 0 to 1. For all 100 people in @fig-2scatter1, R gives $r$ = `r sprintf('%.2f', cor(chocolate, happiness))`, which matches the upward pattern in the scatter plot.
 
 @tbl-2sum-chain sets the three steps that built the standard deviation beside the three steps that built Pearson's $r$.
 
@@ -606,7 +608,7 @@ ggplot(all_data,aes(x=chocolate_x,y=happiness_x))+
 
 ### The best-fit line
 
-Each panel now has a blue line, a best-fit line. The **best-fit line** is the straight line that summarizes the pattern of dots with the least error. The line slopes down in the negative panel, up in the positive panel, and is nearly flat in the no-correlation panel.
+Each panel now has a blue line. The **best-fit line** is the straight line that summarizes the pattern of dots with the least error. The chapter also calls it the fitted line or the regression line, and all three names refer to the same line. The line slopes down in the negative panel, up in the positive panel, and is nearly flat in the no-correlation panel.
 
 With one variable, we use the mean to describe central tendency in one dimension. With two variables plotted together, we need a two-dimensional equivalent. A line does that job. For each value of $x$, the line gives the average $y$ the pattern predicts, so it describes the average relationship across the cloud of points.
 
@@ -641,7 +643,7 @@ ggplot(d, aes(x = hp, y = mpg)) +
 
 We choose the regression line to make the residuals as small as possible in total, measured by the sum of squared residuals. Square each residual, then add them together, the same way we built the sum of squares for one variable earlier in this chapter. A deviation is measured from the mean, and a residual is measured from the fitted line. The blue line produces the smallest possible sum of squared residuals.
 
-@fig-2regressionGIF animates this directly, comparing the best-fit line (blue) to other possible lines (black) as the black line moves up and down. The red lines show the error between the black line and the data points at each position, and the gray band is narrowest exactly when the black line reaches the best-fit line, then widens again as it moves away.
+@fig-2regressionGIF animates this directly, comparing the best-fit line (blue) to other possible lines (black) as the black line moves up and down. The red lines show the error between the black line and the data points at each position. The width of the gray band shows the typical size of those errors. The band is narrowest exactly when the black line reaches the best-fit line, then widens again as it moves away.
 
 ::: {.content-visible when-format="html"}
 ```{r}
@@ -658,7 +660,7 @@ knitr::include_graphics(path="imgs/gifs/regression-1.gif")
 ![The black line moves through alternative positions while the blue best-fit line stays put. Red lines show each point's error. The gray band's width is the typical size of those errors, and the band is narrowest when the black line lies on the best-fit line. (Final frame. The animated version is in the web edition of this book.)](imgs/gifs/stills/regression-1.png){#fig-2regressionGIF fig-alt="Final frame of an animation. A scatter plot of about 30 points has a blue best-fit line sloping down from left to right. A black line with the same slope sits below the points. Red vertical segments join each point to the black line, and a wide gray band shows the typical size of those errors." width="75%"}
 :::
 
-In @fig-2minimizeSS, each dot is one position of the black line. The x-axis is the shift in the line's y-intercept, from $-6$ to $+6$, and 0 is the best-fit line. For each position we square the length of every red line from the animation above and add them up, giving the total sum of squared residuals. The dots start high on the left, fall to a minimum in the middle, and rise again on the right. The minimum is at 0, the best-fit regression line.
+In @fig-2minimizeSS, each dot is one position of the black line. The x-axis is the shift in the line's y-intercept (the height at which the line crosses $x = 0$), from $-6$ to $+6$, and 0 is the best-fit line. For each position we square the length of every red line from the animation above and add them up, giving the total sum of squared residuals. The dots start high on the left, fall to a minimum in the middle, and rise again on the right. The minimum is at 0, the best-fit regression line.
 
 ```{r}
 #| label: fig-2minimizeSS
@@ -695,7 +697,7 @@ ggplot(df,aes(x=move_line,y=total_error))+
 
 ### Computing the best-fit line
 
-In principle, you could find the line that minimizes the sum of squared residuals by trying many lines and comparing their errors, but that is slow. @fig-2minimizeSS tried 25 positions and only moved the line up and down, and a full search would also have to change its slope. In practice, we let software identify the line with the smallest total error. R's `lm()` function did this for every regression line drawn in this chapter's figures.
+In principle, you could find the line that minimizes the sum of squared residuals by trying many lines and comparing their errors, but that is slow. @fig-2minimizeSS tried 25 positions and only moved the line up and down, and a full search would also have to change its slope (how steeply it rises or falls). In practice, we let software identify the line with the smallest total error. R's `lm()` function did this for every regression line drawn in this chapter's figures.
 
 @fig-2corwithLine shows seven $x,y$ pairs with their fitted line. Chapter 9 returns to these seven points and computes the line's slope and intercept by hand.
 
@@ -723,7 +725,7 @@ A common warning is that correlation does not imply causation. Interpreting corr
 
 Two measures that have nothing to do with one another can still show a positive or negative correlation by random chance, and with small samples this happens often, as the lottery game below shows. A **spurious correlation** is a correlation that does not come from a link between the two variables. Chance correlations like these are one kind, and correlations caused by a confounding variable (the last section of this chapter) are the other.
 
-Imagine two independent participants, one at the North Pole and one at the South Pole. Each has a lottery machine containing balls numbered 1 through 10. With replacement, each participant randomly draws 10 balls and records the numbers. The draws are independent and half a world apart, so chance alone determines both sets of numbers.
+Imagine two independent participants, one at the North Pole and one at the South Pole. Each has a lottery machine containing balls numbered 1 through 10. Each participant randomly draws 10 balls, putting each ball back before the next draw, and records the numbers. The draws are independent, meaning one participant's numbers have no effect on the other's, so chance alone determines both sets of numbers.
 
 Here is what the numbers on each ball could look like for each participant:
 
@@ -869,7 +871,7 @@ Bigger $n$ narrows the chance window. If you expect a modest linear effect (e.g.
 
 **When there is a true correlation.**
 
-In @fig-2realcorFour, we built a true correlation of `r true_r` into the population, then drew a new sample in every frame at each of the same four sample sizes. The true correlation is the correlation in the whole population. Each sample gives its own $r$, which varies around the true value from sample to sample.
+In @fig-2realcorFour, we built a true correlation of `r true_r` into the population (the full set of values the samples are drawn from, Chapter 3), then drew a new sample in every frame at each of the same four sample sizes. The true correlation is the correlation in the whole population. Each sample gives its own $r$, which varies around the true value from sample to sample.
 
 ::: {.content-visible when-format="html"}
 ```{r}
@@ -886,7 +888,7 @@ knitr::include_graphics(path="imgs/gifs/corRealgif-1.gif")
 ![How the fitted line behaves at four sample sizes when X and Y have a true correlation of `r true_r`. Each frame is a new sample at each size. (Final frame. The animated version is in the web edition of this book.)](imgs/gifs/stills/corRealgif-1.png){#fig-2realcorFour fig-alt="Final frame of an animation. Four scatter plots labeled n = 10, n = 50, n = 100, and n = 1000, with X on the x-axis and Y on the y-axis, each with a blue fitted line. The line rises in all four panels, and at n = 1000 the points form a dense cloud that tilts upward." width="75%"}
 :::
 
-With $n=10$, the regression line jumps around and occasionally even points downward, despite the underlying positive relationship. As the sample size grows, the line becomes more stable and consistently reflects the true positive slope. Sampling error still moves the line from frame to frame, but with larger samples the true correlation of `r true_r` is much easier to detect.
+With $n=10$, the regression line jumps around and occasionally even points downward, despite the underlying positive relationship. As the sample size grows, the line becomes more stable and consistently reflects the true positive slope. Sampling variability, the chance differences from one sample to the next (Chapter 3), still moves the line from frame to frame, but with larger samples the true correlation of `r true_r` is much easier to detect.
 
 Because we usually only have one sample, we can never know for certain whether our sample's line is close to the true slope or is like one of the $n = 10$ frames where the line points downward. The best protection is to collect more data.
 
@@ -944,7 +946,7 @@ In @fig-2snakeplant, the first half of the data gives $r = `r sprintf("%.2f", r_
 Plot the data before computing $r$. If the scatter shows an upside-down U, correlation is probably not the right analysis for your data.
 
 ::: {.callout-tip title="Tip: A curved scatter needs a curved model"}
-If the scatter shows a U-shape or other curve, a single straight-line correlation will mislead. Fit a curved model (e.g., add a quadratic term) or transform variables instead of reporting $r$ alone.
+If the scatter shows a U-shape or other curve, a single straight-line correlation will mislead. Fit a curved model (for example, add a squared term, $x^2$, to the model) or transform a variable (for example, take its logarithm) instead of reporting $r$ alone.
 :::
 
 ### Anscombe's quartet
@@ -1089,4 +1091,4 @@ An experiment settles both problems at once. When you set $X$ yourself, $X$ came
 -   **Regression link.** The best-fit line summarizes the average relationship. Residuals are the vertical gaps between data and the line. The line is chosen to minimize the sum of squared residuals.
 -   **Chance alone can manufacture a correlation.** Small samples can produce large \|$r$\| by accident, and larger samples shrink the "chance window" toward 0. A large $r$ from a large sample is much harder to attribute to chance.
 -   **Nonlinearity hides real effects.** Curved relationships (e.g., too little or too much water harming plant growth) can yield $r$ ≈ 0 even when the underlying effect is strong.
--   **Confounding.** A third variable can create or inflate a correlation (e.g., sunlight affecting both watering patterns and plant growth). Without a design that rules out third variables, write "associated with," not "caused by."
+-   **Confounding.** A third variable can create or inflate a correlation (e.g., sunlight affecting both watering patterns and plant growth, or age affecting both shoe size and reading). An experiment, which sets $X$ and assigns units at random, settles both confounding and causal direction.
