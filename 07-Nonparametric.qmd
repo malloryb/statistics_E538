@@ -77,7 +77,7 @@ Chapter 6 covered three forms of the $t$-test (one-sample, paired, and independe
 
 Every test needs a known null distribution for its test statistic (Chapter 4), because that is the shape we compare our result against to get a $p$-value. A **parametric** test is one whose null distribution we can know only by assuming something specific about the shape of the population the data came from. Every test so far in this book has been parametric.
 
-For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of your raw data. It's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the central limit theorem for a large enough sample.
+For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of the raw data. It's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the central limit theorem for a large enough sample.
 
 When the distributional assumptions are met, parametric tests are generally the most powerful available. However, when distributional assumptions are not met, a parametric test's $p$-value can be too small or too large, and without simulation it is hard to tell which. The worse the departure from the assumed distribution, the larger the possible error.
 
@@ -130,7 +130,7 @@ $t(11) = 2.57$, $p = 0.026$, a significant result. Restoration looks like it inc
 
 ```{r}
 #| label: fig-7wilcoxon-hist
-#| fig-cap: "Change in soil moisture per plot. Three plots showed no change at all, and the positive changes stretch out much further than the negative ones: not the symmetric, bell-shaped pattern a paired t-test assumes."
+#| fig-cap: "Change in soil moisture per plot. Three plots showed no change, and the positive changes stretch much further than the negative ones. A paired t-test assumes a symmetric, bell-shaped pattern."
 #| fig-alt: "Histogram of the change in soil moisture for 12 plots. Three plots changed by minus 1 point and three by 0; the other six changed by 3, 4, 6, 6, 7 and 8 points, so the positive side stretches much further than the negative side."
 
 ggplot(tibble(differences = differences), aes(x = differences)) +
@@ -220,7 +220,7 @@ The test does not need normality because nothing in this distribution assumed a 
 
 **The sign test.** The **sign test** looks only at whether each difference is positive or negative. It is an even simpler nonparametric option than the signed-rank test, and it asks whether pluses outnumber minuses more than chance would suggest. The sign test makes no assumption about the distribution of the differences, not even symmetry. Its only assumption is the one every test in this book shares, independent observations from a sound study design (see Chapter 6).
 
-We already flagged the symmetry assumption as shaky for these data, so the sign test avoids the one assumption the Wilcoxon test still needed. That robustness comes at a big cost in power, though, so it's usually a last resort.
+We already flagged the symmetry assumption as shaky for these data, so the sign test avoids the one assumption the Wilcoxon test still needed. Assuming less costs power, though, because the sign test throws away the size of every difference, so it is usually a last resort.
 
 The sign test uses the binomial distribution from Chapter 3. `binom.test(6, 9, p = 0.5)` asks how often chance alone would give 6 or more increases out of 9, or 3 or fewer, if each plot were equally likely to go up or go down ($\theta = 0.5$, the binomial success probability from Chapter 3).
 
@@ -256,7 +256,7 @@ Six of the 9 nonzero plots increased, and $p = 0.508$ is far from significant.
 
 : Three tests on the same 12 restoration plots. {#tbl-7threetests}
 
-That's not an argument that nonparametric tests are worse. The $t$-test gave the smallest $p$-value here because it used the full size of every change, including the increases of 3 to 8 points. That $p$-value is trustworthy only if the differences are roughly normal, and these are not. Check the assumptions before you run the test, so the result cannot influence which test you choose.
+The $t$-test gave the smallest $p$-value here because it used the full size of every change, including the increases of 3 to 8 points. That $p$-value is trustworthy only if the differences are roughly normal, and these are not. Check the assumptions before you run the test, so the result cannot influence which test you choose.
 
 @tbl-7card-signedrank collects the Wilcoxon signed-rank test on one card.
 
@@ -353,7 +353,7 @@ knitr::kable(
 )
 ```
 
-Both groups fail the Shapiro-Wilk test, the sodium group badly ($p=0.002$). The $t$-test's "significant" result depends on an assumption the data don't meet. The Mann-Whitney-Wilcoxon test is designed for this situation.
+Both groups fail the Shapiro-Wilk test, sodium with $p = 0.002$ and LED with $p = 0.015$. The $t$-test's "significant" result depends on an assumption the data don't meet. The Mann-Whitney-Wilcoxon test is designed for this situation.
 
 **The question.** Does bat activity differ between sites under sodium and LED lights, or is the difference we see consistent with random site-to-site variation?
 
@@ -363,7 +363,7 @@ Both groups fail the Shapiro-Wilk test, the sodium group badly ($p=0.002$). The 
 
 **How it works, conceptually.** The signed-rank test ranked the absolute differences within one set of paired differences. The Mann-Whitney-Wilcoxon test ranks the raw values from both groups together, because independent groups have no pairs to subtract. Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups don't differ, their ranks should be well mixed. If one group tends to have higher values, its ranks should be higher too. The outlier site gets the highest rank, 16, whether it had 23 passes or 34. Its size enters the $t$-test through both the mean and the standard deviation, but the Mann-Whitney-Wilcoxon test uses only its rank.
 
-**Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the same shape. It does not require normality. Distributions with the same shape also have equal variances, but equal variances alone do not meet the assumption, because two distributions can share a variance and differ in shape. If the two groups have differently-shaped distributions (say, one skewed and one symmetric), the test still runs, but interpreting a significant result purely as "the medians differ" becomes murkier, since it could be a difference in location, shape, or both.
+**Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the same shape. It does not require normality. Distributions with the same shape also have equal variances, but equal variances alone do not meet the assumption, because two distributions can share a variance and differ in shape. If the two groups have differently shaped distributions (say, one skewed and one symmetric), the test still runs. A significant result could then come from a difference in center (location), in shape, or both, so it no longer tells you only that the medians differ.
 
 Our two groups don't quite share a shape. The sodium group is strongly right-skewed, mostly because of the one 34-pass site, while the LED group is only mildly skewed. So read a result from this test as "bat activity tends to be higher in one group," not strictly as a difference in medians.
 
@@ -489,13 +489,13 @@ There are two chi-square tests, and the question decides which one to use. The g
 
 ### The chi-square goodness-of-fit test
 
-The **chi-square goodness-of-fit test** checks how well (the "goodness") the observed counts for one categorical variable match (the "fit") the counts expected under a stated pattern. The expectation can come from a historical baseline, a theory, or an assumption that every category is equally likely. A small chi-square statistic means a good fit (observed counts close to expected); a large one means a poor fit (observed counts far from expected).
+The **chi-square goodness-of-fit test** checks how well (the "goodness") the observed counts for one categorical variable match (the "fit") the counts expected under a stated pattern. The expectation can come from a historical baseline, a theory, or an assumption that every category is equally likely. A small chi-square statistic means a good fit, with observed counts close to expected. A large one means a poor fit, with observed counts far from expected.
 
 A state wildlife agency has historically found fish evenly distributed across four zones of a lake, 25% in each. The counts in this example are invented. This year's survey of 200 fish found between 38 and 61 fish per zone. @fig-7gofdesign lays out the structure, which differs from every design so far in this book.
 
 ```{r}
 #| label: fig-7gofdesign
-#| fig-cap: "A goodness-of-fit design. There is no dependent variable measured on each unit: the counts themselves are the data, and they are compared against an expected pattern rather than against another group."
+#| fig-cap: "A goodness-of-fit design. The counts themselves are the data, with no dependent variable measured on each unit, and they are compared against an expected pattern rather than against another group."
 #| fig-alt: "Study design schematic. Variable: lake zone, four zones. A row of observed counts, 38, 61, 52 and 49, compared against a dashed row of expected counts of 50 each. What is counted: 200 fish sorted into zones."
 #| fig-asp: 0.40
 #| out-width: "100%"
@@ -541,7 +541,7 @@ knitr::kable(
 )
 ```
 
-**Assumption.** The goodness-of-fit test makes no assumption about the shape of your data, since categories aren't numbers. It does require expected counts of about 5 or more in each category [@Cochran1954; @Larntz1978]. The 5 is a conventional rule of thumb, not a value computed from these data or compared to a critical value. It checks whether the chi-square curve is a trustworthy approximation, and you check it before running the test.
+**Assumption.** The goodness-of-fit test makes no assumption about the shape of your data, since categories aren't numbers. It does require expected counts of about 5 or more in each category [@Cochran1954; @Larntz1978]. The 5 is a conventional rule of thumb, not a value computed from these data or compared to a critical value. The rule tells you whether the chi-square curve is a trustworthy approximation. Check it before you run the test.
 
 Here, expected count per zone is $200 \times 0.25 = 50$ (total fish times the 25%-per-zone expectation under $H_0$), comfortably above that minimum. The **expected count** for a category is the total count times the probability $H_0$ gives that category. This is the expected-value idea from Chapter 3 applied to counts. When expected counts are too small, the chi-square approximation breaks down and a different method (like Fisher's exact test) is more appropriate.
 
@@ -598,7 +598,7 @@ for (i in seq_along(p_indep$layers)) {
 p_indep
 ```
 
-In that table, nobody assigned anything. The blocks already had their land use and their summer temperatures before the researchers looked, and the cells simply count how many turned out each way. That makes this an observational design. Each block's temperature has been reduced to a yes or no, so the cells hold counts of blocks rather than temperatures.
+In that table, nobody assigned anything. The blocks already had their land use and their summer temperatures before the researchers looked, and the cells count how many turned out each way. That makes this an observational design. Each block's temperature has been reduced to a yes or no, so the cells hold counts of blocks rather than temperatures.
 
 ```{r}
 tab <- matrix(c(42, 8,
@@ -680,7 +680,7 @@ Dividing within a row matters because raw counts only compare fairly when the ro
 
 | Outcome              | Design                                              | Parametric test (Chapter 6)     | Test in this chapter |
 |:---------------------|:----------------------------------------------------|:--------------------------------|:---------------------|
-| Continuous           | One group vs. a reference, or paired (before/after) | One-sample or paired $t$-test   | Wilcoxon signed-rank test; sign test if the differences are still not symmetric |
+| Continuous           | One group vs. a reference, or paired (before/after) | One-sample or paired $t$-test   | Wilcoxon signed-rank test; sign test if the differences are not symmetric |
 | Continuous           | Two independent groups                              | Independent-samples $t$-test    | Mann-Whitney-Wilcoxon test |
 | Ordinal              | Either design above                                 | None                            | The same rank tests |
 | Categorical (counts) | One categorical variable against an expected pattern | None                           | Chi-square goodness-of-fit test |
@@ -708,7 +708,7 @@ Report the number of non-zero differences for a signed-rank test, since dropped 
 
 ## Chapter Summary
 
-**Why it matters.** Real environmental data often fails the assumptions a $t$-test needs: small samples, skewed distributions, or outcomes that are counts and categories rather than measurements. This chapter covers the tests for those cases and how to tell when you need one. Chapter 8 compares three or more groups, with the Kruskal-Wallis test as its rank-based option.
+**Why it matters.** Environmental data often fail the assumptions a $t$-test needs. Samples can be small, distributions can be skewed, and some outcomes are counts in categories instead of measurements. This chapter covers the tests for those cases and how to tell when you need one. Chapter 8 compares three or more groups, with the Kruskal-Wallis test as its rank-based option.
 
 **Core ideas**
 
