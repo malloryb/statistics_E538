@@ -113,7 +113,7 @@ The $t$-test puts a difference between two means over its standard error. $F$ us
 
 $$F = \frac{\text{Can explain}}{\text{Can't explain}}$$
 
-When the two are about the same size, $F \approx 1$, and group differences are no bigger than ordinary sampling noise. When explained variance is much larger than unexplained variance, $F$ climbs well above 1, which is evidence that the groups differ. When it's smaller, $F$ drops below 1. An $F$ of 5 means the group means vary five times as much as within-group noise alone would make them vary, measured in squared units. An $F$ of 0.6 means they vary less than that noise alone would typically produce.
+When the two are about the same size, $F \approx 1$, and group differences are no bigger than ordinary sampling noise. When explained variance is much larger than unexplained variance, $F$ climbs well above 1, which is evidence that the groups differ. When it's smaller, $F$ drops below 1. An $F$ of 5 means the group means vary five times as much as within-group noise alone would make them vary. Both parts of $F$ are variances, so "five times as much" compares squared distances, not raw distances. An $F$ of 0.6 means they vary less than that noise alone would typically produce.
 
 @fig-8betweenwithin shows both situations with the same noise. On the left, the group means differ by no more than the scatter within each group would produce. On the right, the means are separated by much more than that scatter. $F$ measures that separation relative to the within-group scatter.
 
@@ -161,6 +161,8 @@ To make that precise we need an actual measure of variation. As in Chapter 2, th
 
 $$SS_\text{Total} = SS_\text{Between} + SS_\text{Within}$$
 
+The next sections compute each piece for a small example with nine scores. We find $SS_\text{Total}$ and $SS_\text{Between}$, get $SS_\text{Within}$ by subtraction, and check it directly. Then we divide each sum of squares by its degrees of freedom and take the ratio to get $F$.
+
 ### SS Total
 
 $SS_\text{Total}$ is the sum of the squared differences between each score and the grand mean. It captures all of the variation in a dataset. Writing $Y_{ij}$ for score $i$ in group $j$ and $\bar{Y}_\text{grand}$ for the grand mean,
@@ -181,7 +183,7 @@ knitr::kable(tab, col.names = c("Group", "Score", "Deviation from grand mean", "
              digits = 2, caption = "Deviations from the grand mean.")
 ```
 
-The data are in long format, so each row is a single score. The mean of all of the scores is the **grand mean**, calculated in the table as 7.
+The data are in long format, which means each row is a single score. The mean of all of the scores is the **grand mean**, calculated in the table as 7.
 
 The deviation column holds every score's distance from the grand mean, and the last column squares those distances. Squaring matters because the raw deviations always sum to zero (the mean is the balancing point of the data), so their sum can't measure spread. Squaring turns every deviation positive and, as a side effect, weights larger deviations more heavily.
 
@@ -219,7 +221,7 @@ Within a group every value is now identical, so this column throws away the indi
 
 Finding the differences between each of those group-mean values and the grand mean, squaring them, and summing gives $SS_\text{Between} = 72$, the variation we can explain by group membership.
 
-$SS_\text{Between}$ can never be larger than $SS_\text{Total}$, and indeed 72 is smaller than 302.
+$SS_\text{Within}$ is a sum of squares, so it cannot be negative. That means $SS_\text{Between}$ can never be larger than $SS_\text{Total}$, and here 72 is smaller than 302.
 
 ### SS Within
 
@@ -253,13 +255,13 @@ Degrees of freedom work the same way here as for the $t$-test. Every time we est
 
 $df_\text{Between} = k-1$, where $k$ is the number of groups. With $k=3$, $df_\text{Between}=3-1=2$. Once we fix the grand mean, two of the three group means are free to be anything, but the third is determined by the other two.
 
-$df_\text{Within} = N-k$, where $N$ is the total number of scores. With $N=9$ and $k=3$, $df_\text{Within}=9-3=6$. Estimating each of the 3 group means uses up 3 degrees of freedom, so only 6 of the 9 individual deviations are free to vary.
+$df_\text{Within} = N-k$, where $N$ is the total number of scores. With $N=9$ and $k=3$, $df_\text{Within}=9-3=6$. Estimating the 3 group means uses up 3 degrees of freedom, one per group. Within each group, the deviations from the group mean must sum to zero, so only 2 of a group's 3 deviations are free to vary. Three groups with 2 free deviations each give $df_\text{Within} = 6$.
 
 $df_\text{Total} = N-1$, and it splits the same way the sums of squares do: $df_\text{Total} = df_\text{Between} + df_\text{Within}$, here $8 = 2 + 6$.
 
 ### Mean squares
 
-We're building toward $F=\dfrac{\text{measure of effect}}{\text{measure of error}}$, and it's tempting to just divide $SS_\text{Between}$ by $SS_\text{Within}$ directly. The problem is that each sum of squares grows with the number of independent pieces that go into it. $SS_\text{Between}$ is built from 3 group means and $SS_\text{Within}$ from 9 individual deviations, so their raw ratio has no fixed scale to compare against the way $t$ or $z$ does.
+We're building toward $F=\dfrac{\text{measure of effect}}{\text{measure of error}}$, and the first idea is to divide $SS_\text{Between}$ by $SS_\text{Within}$ directly. The problem is that each sum of squares grows with the number of pieces that go into it. $SS_\text{Within}$ adds up 9 squared deviations and $SS_\text{Between}$ is built from only 3 group means, so $SS_\text{Within}$ tends to be larger because it has more terms. Dividing each one by its degrees of freedom turns it into an average, and two averages can be compared directly.
 
 A **mean square** is a sum of squares divided by its degrees of freedom. It turns each sum of squares into an average. We divide by degrees of freedom rather than by $n$, because each group mean we estimate uses up a degree of freedom, as the previous section showed.
 
@@ -279,11 +281,11 @@ $$F = \frac{MS_\text{Between}}{MS_\text{Within}} = \frac{36}{38.33} = 0.94$$
 
 An **ANOVA table** lists the sums of squares, degrees of freedom, mean squares, and $F$ for each source of variation. @tbl-8anovaformulas gives the formulas, and the table below fills them in for the toy data.
 
-| Source         | SS                                                 | df      | MS                                     | F                                        |
-|:---------------|:---------------------------------------------------|:--------|:---------------------------------------|:-----------------------------------------|
-| Between groups | $\sum_j n_j(\bar{Y}_j - \bar{Y}_\text{grand})^2$ | $k-1$   | $SS_\text{Between}/df_\text{Between}$ | $MS_\text{Between}/MS_\text{Within}$   |
-| Within groups  | $\sum (Y_{ij} - \bar{Y}_j)^2$                      | $N-k$   | $SS_\text{Within}/df_\text{Within}$   |                                          |
-| Total          | $\sum (Y_{ij} - \bar{Y}_\text{grand})^2$          | $N-1$   |                                        |                                          |
+| Source | df | SS | MS | F |
+|:---------------|:--------|:---------------------------------------------------|:---------------------------------------|:-----------------------------------------|
+| Between groups | $k-1$   | $\sum_j n_j(\bar{Y}_j - \bar{Y}_\text{grand})^2$ | $SS_\text{Between}/df_\text{Between}$ | $MS_\text{Between}/MS_\text{Within}$   |
+| Within groups  | $N-k$   | $\sum (Y_{ij} - \bar{Y}_j)^2$                      | $SS_\text{Within}/df_\text{Within}$   |                                          |
+| Total          | $N-1$   | $\sum (Y_{ij} - \bar{Y}_\text{grand})^2$          |                                        |                                          |
 
 : The one-way ANOVA table in formulas. {#tbl-8anovaformulas}
 
@@ -295,7 +297,7 @@ toy_df <- data.frame(
 anova_kable(aov(scores ~ groups, data = toy_df), caption = "R's ANOVA table for the toy data.")
 ```
 
-R labels the two rows `groups` (the between-groups row: what the means can explain) and `Residuals` (the within-groups row: what they can't). Other software uses slightly different labels for the same two rows. The table adds no new information beyond what we already computed. It organizes the numbers, and $MS_\text{Between}$ (36) divided by $MS_\text{Within}$ (38.33) gives the $F$-value. With $F = 0.94$, the group means vary no more than the noise within groups would make them vary, so these nine scores give no evidence that the groups differ.
+R labels the two rows `groups` (the between-groups row: what the means can explain) and `Residuals` (the within-groups row: what they can't). Other software uses slightly different labels for the same two rows. Apart from the $p$-value in the last column, the table contains only numbers we already computed. R leaves out the Total row. It organizes the numbers, and $MS_\text{Between}$ (36) divided by $MS_\text{Within}$ (38.33) gives the $F$-value. With $F = 0.94$, the group means vary no more than the noise within groups would make them vary, so these nine scores give no evidence that the groups differ.
 
 ## What does $F$ mean?
 
@@ -388,7 +390,7 @@ ggplot(plot_df, aes(x = save_F)) +
 
 ```
 
-Only 5% of the $F$ distribution lies at or beyond 3.35. The $F$-test has one critical value, in the upper tail. Differences among the means in any direction make $MS_\text{Between}$ larger, so they all push $F$ up. A small $F$ is consistent with $H_0$. The simulation agrees, with `r round(100 * mean(save_F >= crit_F), 1)`% of the 10,000 simulated $F$-values at or beyond it. That gives us a decision rule. If we ran the same design for real (30 plots, 10 per site type), we could treat $F\geq3.35$ as evidence that the differences between site types are larger than chance would produce. An observed $F$ of 3.4, for instance, would occur less than 5% of the time under the null, so seeing it would lead us to reject the null and conclude that site type mattered. The critical value and the $p$-value give the same decision. $F$ is at or beyond the critical value exactly when its $p$-value is at or below $\alpha$.
+Only 5% of the $F$ distribution lies at or beyond 3.35. The $F$-test has one critical value, in the upper tail. Differences among the means in any direction make $MS_\text{Between}$ larger, so they all push $F$ up. A small $F$ is consistent with $H_0$. The simulation agrees, with `r round(100 * mean(save_F >= crit_F), 1)`% of the 10,000 simulated $F$-values at or beyond it. That gives us a decision rule. If we ran the same design for real (30 plots, 10 per site type), we could treat $F\geq3.35$ as evidence that the differences between site types are larger than chance would produce. An observed $F$ of 3.4 or larger, for instance, would occur less than 5% of the time under the null, so seeing it would lead us to reject the null and conclude that site type mattered. The critical value and the $p$-value give the same decision. $F$ is at or beyond the critical value exactly when its $p$-value is at or below $\alpha$.
 
 ### F and the means
 
@@ -400,14 +402,14 @@ An **omnibus test** is a single test that covers several comparisons at once, an
 
 With three groups A, B, and C, there are three possible pairwise differences: A vs. B, B vs. C, and A vs. C. We could test each with a separate $t$-test, or ask the more general omnibus question with a single ANOVA:
 
-Hypothesis of no differences anywhere: $A=B=C$
+Hypothesis of no differences anywhere: $\mu_A=\mu_B=\mu_C$
 
 Any differences anywhere:
 
-a.  $A\neq B=C$ (A differs)
-b.  $B\neq A=C$ (B differs)
-c.  $C\neq A=B$ (C differs)
-d.  $A\neq B$, $B\neq C$, and $A\neq C$ (all three differ)
+a.  $\mu_A\neq \mu_B=\mu_C$ (A differs)
+b.  $\mu_B\neq \mu_A=\mu_C$ (B differs)
+c.  $\mu_C\neq \mu_A=\mu_B$ (C differs)
+d.  $\mu_A\neq \mu_B$, $\mu_B\neq \mu_C$, and $\mu_A\neq \mu_C$ (all three differ)
 
 A small $F$ with a large $p$-value means we don't reject the hypothesis of no differences. We have no evidence the three group means differ, and whatever gaps exist could easily be chance. A large $F$ with a small $p$-value (below $\alpha$) means we reject that hypothesis and conclude at least one group mean differs from the others. The omnibus test tells us *whether* the means differ, and a separate step tells us *which* ones.
 
@@ -531,7 +533,7 @@ The bar graph shows a gradient. Old-growth plots have the highest mean abundance
 
 ### Checking ANOVA's assumptions
 
-Before running the ANOVA, check whether its assumptions hold. (Recall from Chapter 6 that independence is the universal assumption that applies to every test we cover and won't be re-listed here; what follows are ANOVA's *test-specific* assumptions.)
+Before running the ANOVA, check whether its assumptions hold. Chapter 6 introduced independence as the assumption every test in this book shares, so we do not list it again here. ANOVA adds two assumptions of its own.
 
 The first is **homogeneity of variance**, which means the groups have roughly equal spread around their own means. The second is approximately normal residuals. In ANOVA the model predicts each score with its group mean, so a residual is the score minus its group mean, the same idea as the residuals in Chapter 2. Here each residual is a plot's count minus its forest type's mean, the same deviations that make up $SS_\text{Within}$, and the residuals should be roughly bell-shaped. Both matter because the $F$-test pools the within-group spread of every group into one error variance, $MS_\text{Within}$, and then compares $F$ to a null distribution that assumes normal residuals. Pooling only makes sense when the groups have similar spread.
 
@@ -615,7 +617,7 @@ ANOVA's effect size is **eta-squared** ($\eta^2$), and we already computed both 
 
 $$\eta^2 = \frac{SS_\text{Between}}{SS_\text{Total}} = \frac{SS_\text{Between}}{SS_\text{Between} + SS_\text{Within}}$$
 
-$SS_\text{Between}$ is the variation the group means explain and $SS_\text{Total}$ is all the variation there is. So $\eta^2$ is the proportion of the total variation in the response that the grouping variable explains. It runs from 0 to 1.
+$SS_\text{Between}$ is the variation the group means explain and $SS_\text{Total}$ is all the variation there is. So $\eta^2$ is the proportion of the total variation in the response that the factor explains. It runs from 0 to 1.
 
 ```{r}
 #| label: tbl-8etasq
@@ -642,7 +644,7 @@ Here $\eta^2 = `r round(eta_sq, 2)`$, so forest type explains about `r round(eta
 
 $\eta^2$ is the same quantity as $R^2$ in regression (Chapter 9), computed the same way. Both divide the total variation into a part the model explains and a part it leaves over, and report the explained part as a proportion of the total.
 
-**Interpreting the number.** Cohen's conventional benchmarks are $\eta^2 = 0.01$ (small), $0.06$ (medium), and $0.14$ (large), so `r sprintf("%.2f", eta_sq)` is a substantial effect. Treat those cutoffs as rough orientation. What counts as a large effect depends on the system you are studying. An $\eta^2$ of 0.10 would be unremarkable in a controlled greenhouse experiment and notable in a field survey where dozens of uncontrolled factors also drive the response.
+**Interpreting the number.** Cohen's conventional benchmarks are $\eta^2 = 0.01$ (small), $0.06$ (medium), and $0.14$ (large), so `r sprintf("%.2f", eta_sq)` is a large effect by these benchmarks. Treat those cutoffs as rough orientation. What counts as a large effect depends on the system you are studying. An $\eta^2$ of 0.10 would be unremarkable in a controlled greenhouse experiment and notable in a field survey where dozens of uncontrolled factors also drive the response.
 
 **$p$ depends on sample size, and $\eta^2$ does not.** Survey enough plots and a difference of half a salamander per plot will clear $p < 0.05$ while explaining almost none of the variation. Reporting both keeps a statistically detectable result from being mistaken for an ecologically meaningful one.
 
@@ -670,7 +672,7 @@ knitr::kable(data.frame(Comparison = rownames(tk), diff = round(tk$diff, 2), lwr
 
 -   `diff` is the difference in group means, computed as *the first group in the row label minus the second*: `Secondary-Old-growth` is secondary minus old-growth.
 -   `lwr` and `upr` are the lower and upper bounds of the 95% confidence interval for that difference.
--   `p adj` is the $p$-value *after* adjusting for the fact that you are making three comparisons at once. Because of this adjustment, running the three comparisons here does not carry the 14% familywise error rate we computed at the start of the chapter.
+-   `p adj` is the $p$-value *after* adjusting for the fact that you are making three comparisons at once. Because of this adjustment, the chance of at least one false positive across all three comparisons stays at 5%, compared with the 14% we computed at the start of the chapter for three unadjusted tests.
 
 **Watch the sign.** The row `Secondary-Old-growth` has a diff of $`r sprintf("%.2f", tk["Secondary-Old-growth", "diff"])`$, and that negative sign does *not* mean secondary forest has more salamanders. It means secondary *minus* old-growth is negative, so old-growth is the higher of the two, by `r sprintf("%.2f", -tk["Secondary-Old-growth", "diff"])` individuals per plot. Always translate the sign back into a sentence naming which group is larger before you write anything down.
 
@@ -706,7 +708,7 @@ ggplot(letters_df, aes(x = forest_type, y = means)) +
   xlab("Forest type")
 ```
 
-Old-growth gets its own letter because it differs from both of the others. Secondary and managed share a letter because the test could not separate them. A group can carry *two* letters, written "ab", when it differs from neither of two groups that do differ from each other. Such a group is in the middle, close enough to both ends that neither of its comparisons reached significance, while the two ends are far enough apart that theirs did.
+Old-growth gets its own letter because it differs from both of the others. Secondary and managed share a letter because the test could not separate them. Sometimes a group carries *two* letters, written "ab". Suppose group 1 is labeled "a" and group 3 is labeled "b" because those two differ significantly. Group 2 has a mean between them. If group 2 does not differ significantly from group 1 or from group 3, it shares a letter with each, so it is labeled "ab".
 
 In these invented counts, old-growth plots had the highest salamander abundance. Secondary forest and managed plantation could not be told apart with 8 plots of each type, even though we built in a difference of about 2 salamanders per plot between them.
 
@@ -739,7 +741,7 @@ kw_ranks <- tapply(rank(salamander_df$abundance), salamander_df$forest_type, mea
 
 **How it works, conceptually.** Rank every observation across all groups together, from smallest to largest, ignoring group membership. Then check whether the average rank differs more across groups than chance alone would produce. If forest type truly matters, one group's observations should occupy systematically higher or lower ranks than the others. In the salamander data, the old-growth plots have a mean rank of `r sprintf("%.1f", kw_ranks["Old-growth"])` out of 24, against `r sprintf("%.1f", kw_ranks["Secondary"])` for secondary and `r sprintf("%.1f", kw_ranks["Managed"])` for managed. If forest type had no effect, all three mean ranks would be close to 12.5, the middle of 1 to 24.
 
-**Its assumption.** Kruskal-Wallis does not require normality. Like the Mann-Whitney-Wilcoxon test, it is easiest to interpret as a test of differences in location (median) when the groups' distributions have similar shape. If the shapes differ a lot, a significant result tells you the groups differ, but not whether that difference is in location, spread, or shape.
+**Its assumption.** Kruskal-Wallis assumes the groups' distributions have roughly the same shape, and it does not require normality. When the shapes match, a significant result means the groups differ in location, meaning where the center of each distribution is, measured by the median, as with the Mann-Whitney-Wilcoxon test. If the shapes differ a lot, a significant result tells you the groups differ, but not whether that difference is in location, spread, or shape.
 
 ```{r}
 #| echo: true
@@ -848,9 +850,9 @@ ggplot(pm_df, aes(x = season, y = pm25, group = site)) +
 
 ### Splitting off the stations
 
-A one-way ANOVA on these 12 numbers would split the variation into two pieces, as before: $SS_\text{Total} = 230$, $SS_\text{Between} = 56$ for seasons, and $SS_\text{Within} = 174$ left over. It would also break the independence assumption, because each station contributes three of the 12 numbers.
+A one-way ANOVA on these 12 numbers would split the variation into two pieces, as before: $SS_\text{Total} = 230$, $SS_\text{Between} = 56$ for seasons, and $SS_\text{Within} = 174$ left over. It would also break the independence assumption, because each station contributes three of the 12 numbers, and readings from the same station tend to be alike.
 
-Repeated-measures ANOVA splits $SS_\text{Within}$ one more time. Part of it is station-to-station variation, $SS_\text{Subjects}$, computed exactly like $SS_\text{Between}$ but from the station means instead of the season means. Each station mean counts once per season, so
+Repeated-measures ANOVA splits $SS_\text{Within}$ one more time. Part of it is station-to-station variation. The units measured repeatedly are called subjects, even when they are stations, so this piece is $SS_\text{Subjects}$, computed exactly like $SS_\text{Between}$ but from the station means instead of the season means. Each station mean counts once per season, so
 
 $$SS_\text{Subjects} = 3\left[(5-10)^2 + (8-10)^2 + (13-10)^2 + (14-10)^2\right] = 3(54) = 162.$$
 
@@ -878,9 +880,9 @@ The repeated-measures test finds a significant seasonal effect, $F(2, 6) = 14.00
 
 -   **Many $t$-tests inflate the false-positive rate.** Each comparison carries its own chance of a false positive, and they accumulate. With $m$ comparisons the familywise error rate is $1-(1-\alpha)^m$, which is already 14% for three groups.
 -   **Partition the variation.** Total variation splits into a piece explained by group membership ($SS_\text{Between}$) and unexplained residual variation ($SS_\text{Within}$).
--   **$F$ is a ratio of the two.** After adjusting each sum of squares for its degrees of freedom, $F = MS_\text{Between} / MS_\text{Within}$. A large $F$ means between-group differences are large relative to within-group noise.
+-   **$F$ is a ratio of the two.** After dividing each sum of squares by its degrees of freedom to get a mean square, $F = MS_\text{Between} / MS_\text{Within}$. A large $F$ means between-group differences are large relative to within-group noise.
 -   **Run the omnibus test first, then post-hoc comparisons.** The omnibus test asks whether *any* group means differ. If it is significant, run post-hoc comparisons (Tukey HSD) to find out *which* pairs differ.
--   **$\eta^2$ is the effect size.** $SS_\text{Between}/SS_\text{Total}$ is the proportion of variation explained by the grouping variable. It is the same quantity as regression's $R^2$, and it does not depend on sample size the way $p$ does, so report it alongside $F$.
+-   **$\eta^2$ is the effect size.** $SS_\text{Between}/SS_\text{Total}$ is the proportion of variation explained by the factor. It is the same quantity as regression's $R^2$, and it does not depend on sample size the way $p$ does, so report it alongside $F$.
 -   **Check the assumptions.** ANOVA needs approximately equal variances across groups (Levene's test) and roughly normal residuals. Treat formal tests as evidence rather than a gate, since they have least power exactly when small samples make violations matter most.
 -   **When assumptions fail.** Welch's ANOVA handles unequal spread. The Kruskal-Wallis test is the rank-based alternative for skewed residuals in small samples, with `pairwise.wilcox.test()` as its post-hoc counterpart.
 -   **Repeated measures.** When the same units are measured under every condition, repeated-measures ANOVA splits $SS_\text{Within}$ into $SS_\text{Subjects}$ and a smaller $SS_\text{Error}$. The smaller error term is why it has more power, the same reason the paired $t$-test does.

@@ -36,7 +36,7 @@ anova_kable <- function(fit, caption = NULL) {
 }
 ```
 
-We've now covered both regression and ANOVA. This chapter merges them:
+We've now covered regression (Chapter 9) and ANOVA (Chapters 8 and 10). This chapter merges them:
 
 $$\text{Regression} + \text{ANOVA} = \text{ANCOVA}$$
 
@@ -56,7 +56,7 @@ $$y = \beta_0 + \beta_1 x + \varepsilon$$
 
 Here $\beta_0$ is the intercept, $\beta_1$ is the slope, and $\varepsilon$ is the error. The model describes a single line.
 
-ANCOVA adds a categorical factor to that equation, and the chapter asks whether every group follows that same line or each group needs its own slope and intercept.
+ANCOVA adds a categorical factor to that equation. The chapter asks whether every group follows the same line, whether the groups share a slope but need different intercepts, or whether each group needs its own slope.
 
 We answer it in order: first check that the model explains anything at all, then test whether the groups have different slopes, and only if the slopes are parallel, test whether the groups differ in adjusted means.
 
@@ -75,9 +75,9 @@ We answer it in order: first check that the model explains anything at all, then
 
 The cleanest illustration is a result called **Simpson's paradox**, where a pattern in combined data reverses once you split the data into meaningful groups.
 
-During the COVID-19 pandemic, early data showed that Italy's overall case fatality rate was higher than China's. But once researchers split the cases by age group, the trend flipped. In every age group except the youngest, where neither country recorded a death, the fatality rate was higher in China. The apparent contradiction was explained by differences in the age distribution of cases [@vonkugelgen2021].
+The case fatality rate (CFR) is the percentage of confirmed cases that ended in death. During the COVID-19 pandemic, early data showed that Italy's overall case fatality rate was higher than China's. But once researchers split the cases by age group, the trend flipped. In every age group except the youngest, where neither country recorded a death, the fatality rate was higher in China. The apparent contradiction was explained by differences in the age distribution of cases [@vonkugelgen2021].
 
-The numbers below are the ones that study compared. China's cases and deaths by age are as reported on February 17, 2020, and Italy's are as reported on March 9, 2020. The case fatality rate (CFR) is the percentage of confirmed cases that ended in death.
+The numbers below are the ones that study compared. China's cases and deaths by age are as reported on February 17, 2020, and Italy's are as reported on March 9, 2020.
 
 ```{r}
 #| label: fig-11simpson-overall
@@ -154,7 +154,7 @@ rate_tbl <- tidyr::pivot_wider(dat[, c("Age", "Country", "CFR_band_pct")],
 knitr::kable(rate_tbl[, c("Age", "Italy", "China")], col.names = c("Age band", "Italy", "China"))
 ```
 
-@tbl-11simpsonrates lists the rates themselves. The reversal happens because Italy's cases skew older while China's skew younger. Italy therefore had a greater proportion of older people getting sick, which pulls Italy's overall average up. Similarly, China's average is pulled down because a greater proportion of younger people are getting sick. Aggregating without adjusting for age hid the within-group pattern entirely. Age is what Chapter 2 called a confounding variable, related both to which country a case came from and to whether the case was fatal.
+@tbl-11simpsonrates lists the rates themselves. The reversal happens because Italy's cases were older on average and China's were younger (@fig-11age-distributions). Italy therefore had a greater proportion of older people getting sick, which pulls Italy's overall average up. Similarly, China's average is pulled down because a greater proportion of younger people are getting sick. Aggregating without adjusting for age hid the within-group pattern entirely. Age is what Chapter 2 called a confounding variable, related both to which country a case came from and to whether the case was fatal.
 
 ```{r}
 #| label: fig-11age-distributions
@@ -218,7 +218,7 @@ In R, `lm(y ~ x + Group)` creates these indicators for you automatically.
 
 Consider two predictors: a continuous variable $x$ and an indicator $G$ (0 or 1). The numbers below are arbitrary, chosen to make the arithmetic clean. The worked example later in this chapter plugs in fitted coefficients for air pollution and area type. Use this model:
 
-$$y = 2x + 1(x G) - 7G + 3$$
+$$y = 3 + 2x - 7G + 1(xG)$$
 
 When $G = 0$ (indicator off), only the baseline terms are active:
 
@@ -298,7 +298,7 @@ ggplot(lines_df, aes(x, y, color = g)) +
         panel.spacing = unit(1.5, "lines"))
 ```
 
-ANCOVA works right to left across that figure. It first asks whether the rightmost panel is what we have (do the slopes differ?), and only if the answer is no does it ask whether we have the middle panel or the leftmost (do the intercepts differ?).
+ANCOVA works right to left across that figure. It first asks whether the rightmost panel is what we have (do the slopes differ?), and only if the answer is no does it ask whether we have the middle panel or the leftmost (are the parallel lines at different heights?).
 
 **Step 0: Does the model explain anything?** Before looking at any single term, check the whole-model $F$-test, which asks whether the covariate, the group, and their interaction together explain more of $y$ than chance would: $H_0:\beta_1=\beta_2=\beta_3=0$. R reports it on the last line of `summary(lm(...))`. If it is not significant, stop. The data give no evidence that the covariate, the group, or their interaction explains $y$, so no single term is worth interpreting.
 
@@ -320,7 +320,7 @@ With parallel lines, $\beta_2$ is the vertical gap between the two lines, and it
 
 In the parallel-lines model, $\beta_1$ is the common slope.
 
-**Intercepts and centering.** Intercepts are evaluated at $x=0$. In the model with an interaction, the lines are not parallel, so $\beta_2$ compares the groups at $x=0$ only, which may be far outside the data. **Centering** the covariate means subtracting its mean from every value, $\tilde x = x - \bar x$. That moves the comparison to the average covariate value. In the parallel-lines model the gap is the same everywhere, so centering changes the intercept but not $\beta_2$.
+**Intercepts and centering.** Intercepts are evaluated at $x=0$. In the model with an interaction, the lines can have different slopes, so $\beta_2$ compares the groups at $x=0$ only, which may be far outside the data. **Centering** the covariate means subtracting its mean from every value, $\tilde x = x - \bar x$. That moves the comparison to the average covariate value. In the parallel-lines model the gap is the same everywhere, so centering changes the intercept but not $\beta_2$.
 
 **What to report.**
 
@@ -329,10 +329,9 @@ In the parallel-lines model, $\beta_1$ is the common slope.
 
 As always, statistical significance doesn't guarantee ecological or practical importance. Interpret a rejected null in light of the study's design, measurement precision, and the actual size of the effect, not just its $p$-value.
 
-::: {.callout-caution title="Warning: Three ways to misread an ANCOVA"}
--   Interpreting the group term (the intercept shift) when the interaction is significant.
--   Comparing raw intercepts when $x$ is not centered.
--   Treating adjusted means as meaningful when slopes are not parallel.
+::: {.callout-caution title="Warning: Two ways to misread an ANCOVA"}
+-   Interpreting the group term when the interaction is significant. With different slopes, the gap between the groups changes along the covariate, so no single group difference or adjusted mean describes it.
+-   Comparing intercepts when $x$ is not centered. The intercepts then compare the groups at $x = 0$, which may be outside the data.
 :::
 
 ### Checking ANCOVA's assumptions
@@ -342,10 +341,10 @@ Most of these are ones ANOVA already needed. Three are new because a covariate h
 | Assumption | New with ANCOVA? | How to check |
 |:-----------|:-----------------|:-------------|
 | Independent observations | No (universal, Chapter 6) | The study design |
-| Normal residuals and similar variances across groups | No | Q-Q plot, residuals-versus-fitted plot, Levene's test |
+| Normal residuals and similar variances across groups | No (Chapters 8 and 9) | Q-Q plot, residuals-versus-fitted plot, Levene's test |
 | Linearity within each group | Yes | A scatter plot with a fitted line for each group |
 | Homogeneity of slopes | Yes | The interaction test (Step 1), not a check run beforehand |
-| The covariate is measured with little error and is not affected by the treatment | Yes | The study design |
+| The covariate is measured with little error and is not affected by the group factor (the treatment) | Yes | The study design |
 
 : Assumptions of ANCOVA and how to check them. {#tbl-11assumptions}
 
@@ -391,7 +390,9 @@ design_mixed("Air pollution (continuous) × Area type (categorical)",
              note = "full pollution range measured in BOTH groups")
 ```
 
-This design has the same structure as the factorial design in Chapter 10. Both cross two predictors and ask whether one changes the effect of the other. The only difference is that factorial's second predictor has levels, while ANCOVA's is a continuous range. Both groups span the full pollution range, so rural sites are not simply the clean ones. An adjusted comparison compares the groups at the same pollution level, and that only works where both groups have sites at that level. Without the overlap, each group's line would have to be extended past its own data, the extrapolation problem from Chapter 9.
+This design has the same structure as the factorial design in Chapter 10. Both cross two predictors and ask whether one changes the effect of the other. The only difference is that factorial's second predictor has levels, while ANCOVA's is a continuous range.
+
+Both groups span the full pollution range, so rural sites are not simply the clean ones. An adjusted comparison compares the groups at the same pollution level, and that only works where both groups have sites at that level. Without the overlap, each group's line would have to be extended past its own data, the extrapolation problem from Chapter 9.
 
 We might expect pollution to have a stronger negative effect in urban areas. Urban habitat is already fragmented and offers birds fewer clean patches to retreat to, while rural areas have more intact habitat nearby.
 
@@ -459,7 +460,7 @@ ggplot(data, aes(AreaType, BirdDensity)) +
 
 Bird density is higher at rural sites, with a median of `r median(data$BirdDensity[data$AreaType == "Rural"])` birds against `r median(data$BirdDensity[data$AreaType == "Urban"])` at urban sites, consistent with what we might expect ecologically.
 
-Next, check the covariate, air pollution. If the covariate differs sharply between groups, ANCOVA adjusts for that difference. If it doesn't, group comparisons will look more like a simple ANOVA.
+Next, check the covariate, air pollution. If the covariate differs sharply between groups, ANCOVA adjusts for that difference. If it doesn't, the adjusted group difference will be close to the raw difference in group means.
 
 ```{r}
 #| label: fig-11airpollution
@@ -495,7 +496,7 @@ whole_p <- pf(fstat[1], fstat[2], fstat[3], lower.tail = FALSE)
 int_row <- broom::tidy(ancova) |> filter(term == "AirPollution:AreaType")
 ```
 
-**Step 0: the whole model.** `summary(lm())` reports $F(`r fstat[2]`, `r fstat[3]`) = `r sprintf("%.2f", fstat[1])`$, $p `r fmt_p_eq(whole_p)`$, with $R^2 = `r sprintf("%.2f", summary(ancova_lm)$r.squared)`$. The model explains bird density, so we continue.
+**Step 0: the whole model.** `summary(lm())` reports $F(`r fstat[2]`, `r fstat[3]`) = `r sprintf("%.2f", fstat[1])`$, $p `r fmt_p_eq(whole_p)`$, with $R^2 = `r sprintf("%.2f", summary(ancova_lm)$r.squared)`$. The model explains more of the variation in bird density than chance would, so we continue.
 
 **Step 1: the interaction.** The `AirPollution:AreaType` row tests $H_{0,\text{int}}$: $F(1, `r fstat[3]`) = `r sprintf("%.2f", int_row$statistic)`$, $p `r fmt_p_eq(int_row$p.value)`$. We reject $H_{0,\text{int}}$, so the slopes are not parallel. Air pollution's relationship with bird density depends on area type, so we stop here and do not test adjusted means.
 
@@ -529,7 +530,7 @@ These coefficients give the *direction* and *magnitude* of each effect:
 
 -   **`(Intercept)`.** Estimated mean bird density for rural sites (the reference group) when air pollution is zero.
 -   **`AirPollution`.** Slope of the relationship between pollution and bird density in rural sites. This is not the same quantity as the `AirPollution` row of the ANOVA table above, which was one average slope for both groups.
--   **`AreaTypeUrban`.** Difference in intercept between urban and rural areas.
+-   **`AreaTypeUrban`.** Difference in intercept between urban and rural areas, which compares the groups at air pollution = 0.
 -   **`AirPollution:AreaTypeUrban`.** Difference in slope between urban and rural areas (the interaction).
 
 **Visualize the interaction.**
@@ -587,7 +588,7 @@ The points scatter around each line. The model's $R^2$ is `r sprintf("%.2f", sum
 
 Interpreting intercepts at $x = 0$ can be misleading when "zero pollution" isn't meaningful.
 
-By centering the covariate (subtracting its mean), we make the intercept represent average bird density at mean air pollution instead.
+By centering the covariate (subtracting its mean), we make the intercept the predicted bird density for rural sites at mean air pollution instead.
 
 ```{r}
 data <- data |> mutate(AirPollution_c = AirPollution - mean(AirPollution))
@@ -630,7 +631,7 @@ If the interaction had *not* been significant, we would instead drop the interac
 
 ## Second example: when the covariate is a nuisance
 
-The bird example used ANCOVA the way this chapter leads with it. The covariate relationship was the question, and the interaction was the finding. The other way you'll see ANCOVA reverses those roles. A **nuisance covariate** is a covariate you adjust for so that a group comparison is fair, when the group comparison is the question. This is also the continuous version of the Simpson's paradox problem the chapter opened with.
+In the bird example, the covariate relationship was the question, and the interaction was the finding. The other way you'll see ANCOVA reverses those roles. A **nuisance covariate** is a covariate you adjust for so that a group comparison is fair, when the group comparison is the question. This is also the continuous version of the Simpson's paradox problem the chapter opened with.
 
 @tbl-11tworoles compares the two ways this chapter uses ANCOVA.
 
@@ -706,7 +707,7 @@ adj_std  <- coef(energy_par)[1] + b1 * occ_bar
 adj_retr <- adj_std + b2
 ```
 
-**Step 0: the whole model.** $F(`r e_f[2]`, `r e_f[3]`) = `r sprintf("%.2f", e_f[1])`$, $p `r fmt_p_eq(e_fp)`$. The model explains electricity use, so we continue.
+**Step 0: the whole model.** $F(`r e_f[2]`, `r e_f[3]`) = `r sprintf("%.2f", e_f[1])`$, $p `r fmt_p_eq(e_fp)`$. The model explains more of the variation in electricity use than chance would, so we continue.
 
 **Step 1: the interaction.** The `Occupancy:Type` row gives $F(1, `r e_f[3]`) = `r sprintf("%.2f", e_int$statistic)`$, $p `r fmt_p_eq(e_int$p.value)`$. We fail to reject $H_{0,\text{int}}$, so we treat the slopes as parallel. Each additional occupant adds about the same amount of electricity in either kind of building. We drop the interaction and refit.
 
@@ -730,7 +731,7 @@ knitr::kable(
 )
 ```
 
-The `Occupancy` coefficient is the common slope, about `r sprintf("%.2f", b1)` kWh per day for each additional occupant. The `TypeRetrofitted` coefficient is $b_2$, the estimate of $\beta_2$, the adjusted difference. At the same occupancy, retrofitted buildings use `r sprintf("%.1f", abs(b2))` kWh per day less than standard ones, $t(57) = `r sprintf("%.2f", b2r$statistic)`$, $p `r fmt_p_eq(b2r$p.value)`$. We reject $H_{0,\text{group}}$.
+The `Occupancy` coefficient is the common slope, about `r sprintf("%.2f", b1)` kWh per day for each additional occupant. The `TypeRetrofitted` coefficient is $b_2$, the estimate of $\beta_2$, the adjusted difference. At the same occupancy, retrofitted buildings use `r sprintf("%.1f", abs(b2))` kWh per day less than standard ones, $t(57) = `r sprintf("%.2f", b2r$statistic)`$, $p `r fmt_p_eq(b2r$p.value)`$. The $t$ has 57 degrees of freedom, 60 buildings minus the 3 coefficients the model estimates. We reject $H_{0,\text{group}}$.
 
 @fig-11energyadj shows what that coefficient measures. The adjusted means express the same comparison as one value for each building type. Evaluating each line at the overall mean occupancy, `r round(occ_bar, 1)` people, gives `r sprintf("%.1f", adj_std)` kWh per day for standard buildings and `r sprintf("%.1f", adj_retr)` for retrofitted ones. Their difference is $b_2$.
 

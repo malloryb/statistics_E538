@@ -353,7 +353,7 @@ window.Quarto = {
 
 
 <p class="chapter-pdf-link"><a class="btn btn-outline-primary btn-sm" href="pdf/11-ANCOVA.pdf" download=""><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Download this chapter (PDF)</a></p>
-<p>We’ve now covered both regression and ANOVA. This chapter merges them:</p>
+<p>We’ve now covered regression (Chapter 9) and ANOVA (Chapters 8 and 10). This chapter merges them:</p>
 <p><span class="math display">\[\text{Regression} + \text{ANOVA} = \text{ANCOVA}\]</span></p>
 <p>The last chapter compared macroinvertebrate species count across two discrete Pollution categories, present or absent, and two Flow categories, low or high. But suppose you measured each channel’s pollution concentration instead of labeling it present or absent.</p>
 <ul>
@@ -365,7 +365,7 @@ window.Quarto = {
 <p><strong>Analysis of covariance (ANCOVA)</strong> is a linear model with a continuous outcome, at least one continuous predictor (the covariate), and at least one categorical predictor (the factor). It asks whether the covariate’s relationship with the outcome is the same in every group and, if it is, whether the groups differ at the same covariate value. ANCOVA is built directly on regression’s own equation. A simple linear model is</p>
 <p><span class="math display">\[y = \beta_0 + \beta_1 x + \varepsilon\]</span></p>
 <p>Here <span class="math inline">\(\beta_0\)</span> is the intercept, <span class="math inline">\(\beta_1\)</span> is the slope, and <span class="math inline">\(\varepsilon\)</span> is the error. The model describes a single line.</p>
-<p>ANCOVA adds a categorical factor to that equation, and the chapter asks whether every group follows that same line or each group needs its own slope and intercept.</p>
+<p>ANCOVA adds a categorical factor to that equation. The chapter asks whether every group follows the same line, whether the groups share a slope but need different intercepts, or whether each group needs its own slope.</p>
 <p>We answer it in order: first check that the model explains anything at all, then test whether the groups have different slopes, and only if the slopes are parallel, test whether the groups differ in adjusted means.</p>
 <p><a href="#tbl-11designs" class="quarto-xref">Table&nbsp;<span>11.1</span></a> places ANCOVA beside regression and the two kinds of ANOVA from Chapters 8 to 10, each written as a model.</p>
 <div id="tbl-11designs" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -422,8 +422,8 @@ Table&nbsp;11.1: Four designs as linear models.
 <section id="why-adjust-for-anything" class="level2" data-number="11.1">
 <h2 data-number="11.1" class="anchored" data-anchor-id="why-adjust-for-anything"><span class="header-section-number">11.1</span> Why adjust for anything?</h2>
 <p>The cleanest illustration is a result called <strong>Simpson’s paradox</strong>, where a pattern in combined data reverses once you split the data into meaningful groups.</p>
-<p>During the COVID-19 pandemic, early data showed that Italy’s overall case fatality rate was higher than China’s. But once researchers split the cases by age group, the trend flipped. In every age group except the youngest, where neither country recorded a death, the fatality rate was higher in China. The apparent contradiction was explained by differences in the age distribution of cases <span class="citation" data-cites="vonkugelgen2021">(<a href="references.html#ref-vonkugelgen2021" role="doc-biblioref"><span class="nocase">von Kügelgen et al.</span> 2021</a>)</span>.</p>
-<p>The numbers below are the ones that study compared. China’s cases and deaths by age are as reported on February 17, 2020, and Italy’s are as reported on March 9, 2020. The case fatality rate (CFR) is the percentage of confirmed cases that ended in death.</p>
+<p>The case fatality rate (CFR) is the percentage of confirmed cases that ended in death. During the COVID-19 pandemic, early data showed that Italy’s overall case fatality rate was higher than China’s. But once researchers split the cases by age group, the trend flipped. In every age group except the youngest, where neither country recorded a death, the fatality rate was higher in China. The apparent contradiction was explained by differences in the age distribution of cases <span class="citation" data-cites="vonkugelgen2021">(<a href="references.html#ref-vonkugelgen2021" role="doc-biblioref"><span class="nocase">von Kügelgen et al.</span> 2021</a>)</span>.</p>
+<p>The numbers below are the ones that study compared. China’s cases and deaths by age are as reported on February 17, 2020, and Italy’s are as reported on March 9, 2020.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-11simpson-overall" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Bar chart of the crude case fatality rate with all ages combined. Italy's bar, labeled 4.4 percent, is nearly twice as tall as China's, labeled 2.3 percent.">
@@ -522,7 +522,7 @@ Table&nbsp;11.2: Fatality rate (%) by age band. China’s rate is higher in ever
 </figure>
 </div>
 </div>
-<p><a href="#tbl-11simpsonrates" class="quarto-xref">Table&nbsp;<span>11.2</span></a> lists the rates themselves. The reversal happens because Italy’s cases skew older while China’s skew younger. Italy therefore had a greater proportion of older people getting sick, which pulls Italy’s overall average up. Similarly, China’s average is pulled down because a greater proportion of younger people are getting sick. Aggregating without adjusting for age hid the within-group pattern entirely. Age is what Chapter 2 called a confounding variable, related both to which country a case came from and to whether the case was fatal.</p>
+<p><a href="#tbl-11simpsonrates" class="quarto-xref">Table&nbsp;<span>11.2</span></a> lists the rates themselves. The reversal happens because Italy’s cases were older on average and China’s were younger (<a href="#fig-11age-distributions" class="quarto-xref">Figure&nbsp;<span>11.3</span></a>). Italy therefore had a greater proportion of older people getting sick, which pulls Italy’s overall average up. Similarly, China’s average is pulled down because a greater proportion of younger people are getting sick. Aggregating without adjusting for age hid the within-group pattern entirely. Age is what Chapter 2 called a confounding variable, related both to which country a case came from and to whether the case was fatal.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-11age-distributions" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Two bar charts side by side showing each country's share of cases in each 10-year age band. China's cases are concentrated between 30 and 69, peaking at 50 to 59, while Italy's are concentrated from 50 upward, peaking at 70 to 79, with almost one in five cases at 80 and over.">
@@ -577,7 +577,7 @@ Figure&nbsp;11.3: Case age distribution by country. Italy’s cases are older on
 <p>In R, <code>lm(y ~ x + Group)</code> creates these indicators for you automatically.</p>
 <p><strong>An indicator can change the intercept, the slope, or both.</strong> When an indicator variable is turned on (set to 1), it activates the terms multiplied by that variable. Where the indicator appears in the model decides which of these changes.</p>
 <p>Consider two predictors: a continuous variable <span class="math inline">\(x\)</span> and an indicator <span class="math inline">\(G\)</span> (0 or 1). The numbers below are arbitrary, chosen to make the arithmetic clean. The worked example later in this chapter plugs in fitted coefficients for air pollution and area type. Use this model:</p>
-<p><span class="math display">\[y = 2x + 1(x G) - 7G + 3\]</span></p>
+<p><span class="math display">\[y = 3 + 2x - 7G + 1(xG)\]</span></p>
 <p>When <span class="math inline">\(G = 0\)</span> (indicator off), only the baseline terms are active:</p>
 <p><span class="math display">\[y = 2x + 3 \qquad \text{slope} = 2, \ \text{intercept} = 3\]</span></p>
 <p>When <span class="math inline">\(G = 1\)</span> (indicator on), the new terms activate:</p>
@@ -625,7 +625,7 @@ Figure&nbsp;11.4: The question ANCOVA answers. Left: one line describes both gro
 </div>
 </div>
 </div>
-<p>ANCOVA works right to left across that figure. It first asks whether the rightmost panel is what we have (do the slopes differ?), and only if the answer is no does it ask whether we have the middle panel or the leftmost (do the intercepts differ?).</p>
+<p>ANCOVA works right to left across that figure. It first asks whether the rightmost panel is what we have (do the slopes differ?), and only if the answer is no does it ask whether we have the middle panel or the leftmost (are the parallel lines at different heights?).</p>
 <p><strong>Step 0: Does the model explain anything?</strong> Before looking at any single term, check the whole-model <span class="math inline">\(F\)</span>-test, which asks whether the covariate, the group, and their interaction together explain more of <span class="math inline">\(y\)</span> than chance would: <span class="math inline">\(H_0:\beta_1=\beta_2=\beta_3=0\)</span>. R reports it on the last line of <code>summary(lm(...))</code>. If it is not significant, stop. The data give no evidence that the covariate, the group, or their interaction explains <span class="math inline">\(y\)</span>, so no single term is worth interpreting.</p>
 <p><strong>Step 1: Are slopes equal across groups?</strong> This tests whether the covariate effect is the same in each group.</p>
 <ul>
@@ -641,27 +641,26 @@ Figure&nbsp;11.4: The question ANCOVA answers. Left: one line describes both gro
 </ul>
 <p>With parallel lines, <span class="math inline">\(\beta_2\)</span> is the vertical gap between the two lines, and it is the same at every value of <span class="math inline">\(x\)</span>. The <strong>adjusted difference</strong> is how much the groups differ when they are compared at the same covariate value, so with parallel lines it equals <span class="math inline">\(\beta_2\)</span>. The <strong>adjusted means</strong> are the group means you would expect if both groups had the same average covariate value. To get them, evaluate each group’s line at the overall mean of <span class="math inline">\(x\)</span>. Raw group means compare the groups at whatever covariate values each group happens to have. Adjusted means compare them at one shared covariate value, the overall mean of <span class="math inline">\(x\)</span>. So if one group happens to have higher covariate values, that difference does not enter the comparison. The second example at the end of this chapter works through one.</p>
 <p>In the parallel-lines model, <span class="math inline">\(\beta_1\)</span> is the common slope.</p>
-<p><strong>Intercepts and centering.</strong> Intercepts are evaluated at <span class="math inline">\(x=0\)</span>. In the model with an interaction, the lines are not parallel, so <span class="math inline">\(\beta_2\)</span> compares the groups at <span class="math inline">\(x=0\)</span> only, which may be far outside the data. <strong>Centering</strong> the covariate means subtracting its mean from every value, <span class="math inline">\(\tilde x = x - \bar x\)</span>. That moves the comparison to the average covariate value. In the parallel-lines model the gap is the same everywhere, so centering changes the intercept but not <span class="math inline">\(\beta_2\)</span>.</p>
+<p><strong>Intercepts and centering.</strong> Intercepts are evaluated at <span class="math inline">\(x=0\)</span>. In the model with an interaction, the lines can have different slopes, so <span class="math inline">\(\beta_2\)</span> compares the groups at <span class="math inline">\(x=0\)</span> only, which may be far outside the data. <strong>Centering</strong> the covariate means subtracting its mean from every value, <span class="math inline">\(\tilde x = x - \bar x\)</span>. That moves the comparison to the average covariate value. In the parallel-lines model the gap is the same everywhere, so centering changes the intercept but not <span class="math inline">\(\beta_2\)</span>.</p>
 <p><strong>What to report.</strong></p>
 <ul>
 <li>If <span class="math inline">\(x\times G\)</span> is significant: “The effect of <span class="math inline">\(x\)</span> differs by group,” then each group’s line with its own slope test, and a figure with separate fitted lines.</li>
 <li>If <span class="math inline">\(x\times G\)</span> is not significant: the common slope <span class="math inline">\(\beta_1\)</span> and the adjusted group difference <span class="math inline">\(\beta_2\)</span> (or the adjusted means), with a figure showing parallel lines.</li>
 </ul>
 <p>As always, statistical significance doesn’t guarantee ecological or practical importance. Interpret a rejected null in light of the study’s design, measurement precision, and the actual size of the effect, not just its <span class="math inline">\(p\)</span>-value.</p>
-<div class="callout callout-style-default callout-caution callout-titled" title="Warning: Three ways to misread an ANCOVA">
+<div class="callout callout-style-default callout-caution callout-titled" title="Warning: Two ways to misread an ANCOVA">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Caution</span>Warning: Three ways to misread an ANCOVA
+<span class="screen-reader-only">Caution</span>Warning: Two ways to misread an ANCOVA
 </div>
 </div>
 <div class="callout-body-container callout-body">
 <ul>
-<li>Interpreting the group term (the intercept shift) when the interaction is significant.</li>
-<li>Comparing raw intercepts when <span class="math inline">\(x\)</span> is not centered.</li>
-<li>Treating adjusted means as meaningful when slopes are not parallel.</li>
+<li>Interpreting the group term when the interaction is significant. With different slopes, the gap between the groups changes along the covariate, so no single group difference or adjusted mean describes it.</li>
+<li>Comparing intercepts when <span class="math inline">\(x\)</span> is not centered. The intercepts then compare the groups at <span class="math inline">\(x = 0\)</span>, which may be outside the data.</li>
 </ul>
 </div>
 </div>
@@ -696,7 +695,7 @@ Table&nbsp;11.3: Assumptions of ANCOVA and how to check them.
 </tr>
 <tr class="even">
 <td style="text-align: left;">Normal residuals and similar variances across groups</td>
-<td style="text-align: left;">No</td>
+<td style="text-align: left;">No (Chapters 8 and 9)</td>
 <td style="text-align: left;">Q-Q plot, residuals-versus-fitted plot, Levene’s test</td>
 </tr>
 <tr class="odd">
@@ -710,7 +709,7 @@ Table&nbsp;11.3: Assumptions of ANCOVA and how to check them.
 <td style="text-align: left;">The interaction test (Step 1), not a check run beforehand</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">The covariate is measured with little error and is not affected by the treatment</td>
+<td style="text-align: left;">The covariate is measured with little error and is not affected by the group factor (the treatment)</td>
 <td style="text-align: left;">Yes</td>
 <td style="text-align: left;">The study design</td>
 </tr>
@@ -781,7 +780,8 @@ Figure&nbsp;11.5: An ANCOVA design: one continuous predictor and one categorical
 </div>
 </div>
 </div>
-<p>This design has the same structure as the factorial design in Chapter 10. Both cross two predictors and ask whether one changes the effect of the other. The only difference is that factorial’s second predictor has levels, while ANCOVA’s is a continuous range. Both groups span the full pollution range, so rural sites are not simply the clean ones. An adjusted comparison compares the groups at the same pollution level, and that only works where both groups have sites at that level. Without the overlap, each group’s line would have to be extended past its own data, the extrapolation problem from Chapter 9.</p>
+<p>This design has the same structure as the factorial design in Chapter 10. Both cross two predictors and ask whether one changes the effect of the other. The only difference is that factorial’s second predictor has levels, while ANCOVA’s is a continuous range.</p>
+<p>Both groups span the full pollution range, so rural sites are not simply the clean ones. An adjusted comparison compares the groups at the same pollution level, and that only works where both groups have sites at that level. Without the overlap, each group’s line would have to be extended past its own data, the extrapolation problem from Chapter 9.</p>
 <p>We might expect pollution to have a stronger negative effect in urban areas. Urban habitat is already fragmented and offers birds fewer clean patches to retreat to, while rural areas have more intact habitat nearby.</p>
 <p>We’ll fit an ANCOVA model to test whether air pollution’s relationship with bird density differs between urban and rural sites. Area type enters as an indicator variable, and air pollution enters as the covariate.</p>
 </section>
@@ -819,7 +819,7 @@ Figure&nbsp;11.6: Bird density by area type. Rural sites have higher bird densit
 </div>
 </div>
 <p>Bird density is higher at rural sites, with a median of 35 birds against 25 at urban sites, consistent with what we might expect ecologically.</p>
-<p>Next, check the covariate, air pollution. If the covariate differs sharply between groups, ANCOVA adjusts for that difference. If it doesn’t, group comparisons will look more like a simple ANOVA.</p>
+<p>Next, check the covariate, air pollution. If the covariate differs sharply between groups, ANCOVA adjusts for that difference. If it doesn’t, the adjusted group difference will be close to the raw difference in group means.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-11airpollution" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Boxplot of air pollution for rural and urban area types. The two boxes overlap substantially with similar centers.">
@@ -893,7 +893,7 @@ Figure&nbsp;11.7: Air pollution by area type. The two groups look broadly simila
 </table>
 </div>
 </div>
-<p><strong>Step 0: the whole model.</strong> <code>summary(lm())</code> reports <span class="math inline">\(F(3, 196) = 120.36\)</span>, <span class="math inline">\(p &lt; 0.001\)</span>, with <span class="math inline">\(R^2 = 0.65\)</span>. The model explains bird density, so we continue.</p>
+<p><strong>Step 0: the whole model.</strong> <code>summary(lm())</code> reports <span class="math inline">\(F(3, 196) = 120.36\)</span>, <span class="math inline">\(p &lt; 0.001\)</span>, with <span class="math inline">\(R^2 = 0.65\)</span>. The model explains more of the variation in bird density than chance would, so we continue.</p>
 <p><strong>Step 1: the interaction.</strong> The <code>AirPollution:AreaType</code> row tests <span class="math inline">\(H_{0,\text{int}}\)</span>: <span class="math inline">\(F(1, 196) = 10.91\)</span>, <span class="math inline">\(p = 0.001\)</span>. We reject <span class="math inline">\(H_{0,\text{int}}\)</span>, so the slopes are not parallel. Air pollution’s relationship with bird density depends on area type, so we stop here and do not test adjusted means.</p>
 <p><strong>What the other two rows are.</strong> The table still has rows for <code>AirPollution</code> and <code>AreaType</code>, both with tiny <span class="math inline">\(p\)</span>-values, so it is tempting to read them, but they don’t answer this chapter’s question. R builds these rows in sequence. <code>AirPollution</code> tests one average slope for all 200 sites, ignoring area type, and <code>AreaType</code> tests a group difference after that single slope is fitted. Once the interaction says the slopes differ, neither row describes the data. There is no single slope, and the group difference depends on where along the pollution gradient you look. Because the rows are built in sequence and the groups are unequal in size (97 rural, 103 urban), listing the terms in a different order would also change their sums of squares.</p>
 <p><strong>Reading the coefficients.</strong></p>
@@ -952,7 +952,7 @@ Figure&nbsp;11.7: Air pollution by area type. The two groups look broadly simila
 <ul>
 <li><strong><code>(Intercept)</code>.</strong> Estimated mean bird density for rural sites (the reference group) when air pollution is zero.</li>
 <li><strong><code>AirPollution</code>.</strong> Slope of the relationship between pollution and bird density in rural sites. This is not the same quantity as the <code>AirPollution</code> row of the ANOVA table above, which was one average slope for both groups.</li>
-<li><strong><code>AreaTypeUrban</code>.</strong> Difference in intercept between urban and rural areas.</li>
+<li><strong><code>AreaTypeUrban</code>.</strong> Difference in intercept between urban and rural areas, which compares the groups at air pollution = 0.</li>
 <li><strong><code>AirPollution:AreaTypeUrban</code>.</strong> Difference in slope between urban and rural areas (the interaction).</li>
 </ul>
 <p><strong>Visualize the interaction.</strong></p>
@@ -1024,7 +1024,7 @@ Table&nbsp;11.5: Separate regressions of bird density on air pollution within ea
 <p>The points scatter around each line. The model’s <span class="math inline">\(R^2\)</span> is 0.65, so air pollution, area type, and their interaction explain about 65% of the variation in bird density. The remaining 35% reflects other factors, measurement noise, or natural ecological variability not captured by this simple model. That is a strong fit by the standards of field data, and it is strong here partly because this is a synthetic dataset built to illustrate the method. Field data from actual sites are usually messier.</p>
 <p><strong>Centering the covariate.</strong></p>
 <p>Interpreting intercepts at <span class="math inline">\(x = 0\)</span> can be misleading when “zero pollution” isn’t meaningful.</p>
-<p>By centering the covariate (subtracting its mean), we make the intercept represent average bird density at mean air pollution instead.</p>
+<p>By centering the covariate (subtracting its mean), we make the intercept the predicted bird density for rural sites at mean air pollution instead.</p>
 <div class="cell">
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -1092,7 +1092,7 @@ Table&nbsp;11.5: Separate regressions of bird density on air pollution within ea
 </section>
 <section id="second-example-when-the-covariate-is-a-nuisance" class="level2" data-number="11.5">
 <h2 data-number="11.5" class="anchored" data-anchor-id="second-example-when-the-covariate-is-a-nuisance"><span class="header-section-number">11.5</span> Second example: when the covariate is a nuisance</h2>
-<p>The bird example used ANCOVA the way this chapter leads with it. The covariate relationship was the question, and the interaction was the finding. The other way you’ll see ANCOVA reverses those roles. A <strong>nuisance covariate</strong> is a covariate you adjust for so that a group comparison is fair, when the group comparison is the question. This is also the continuous version of the Simpson’s paradox problem the chapter opened with.</p>
+<p>In the bird example, the covariate relationship was the question, and the interaction was the finding. The other way you’ll see ANCOVA reverses those roles. A <strong>nuisance covariate</strong> is a covariate you adjust for so that a group comparison is fair, when the group comparison is the question. This is also the continuous version of the Simpson’s paradox problem the chapter opened with.</p>
 <p><a href="#tbl-11tworoles" class="quarto-xref">Table&nbsp;<span>11.6</span></a> compares the two ways this chapter uses ANCOVA.</p>
 <div id="tbl-11tworoles" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -1158,7 +1158,7 @@ Figure&nbsp;11.9: Daily electricity use by building type, ignoring occupancy. Di
 </section>
 <section id="the-ancova" class="level3" data-number="11.5.3">
 <h3 data-number="11.5.3" class="anchored" data-anchor-id="the-ancova"><span class="header-section-number">11.5.3</span> The ANCOVA</h3>
-<p><strong>Step 0: the whole model.</strong> <span class="math inline">\(F(3, 56) = 56.61\)</span>, <span class="math inline">\(p &lt; 0.001\)</span>. The model explains electricity use, so we continue.</p>
+<p><strong>Step 0: the whole model.</strong> <span class="math inline">\(F(3, 56) = 56.61\)</span>, <span class="math inline">\(p &lt; 0.001\)</span>. The model explains more of the variation in electricity use than chance would, so we continue.</p>
 <p><strong>Step 1: the interaction.</strong> The <code>Occupancy:Type</code> row gives <span class="math inline">\(F(1, 56) = 0.01\)</span>, <span class="math inline">\(p = 0.927\)</span>. We fail to reject <span class="math inline">\(H_{0,\text{int}}\)</span>, so we treat the slopes as parallel. Each additional occupant adds about the same amount of electricity in either kind of building. We drop the interaction and refit.</p>
 <p><strong>Step 2: the adjusted difference.</strong> <a href="#tbl-11energypar" class="quarto-xref">Table&nbsp;<span>11.7</span></a> shows the parallel-lines model.</p>
 <div class="cell">
@@ -1211,7 +1211,7 @@ Table&nbsp;11.7: Parallel-lines model: electricity use on occupancy and building
 </figure>
 </div>
 </div>
-<p>The <code>Occupancy</code> coefficient is the common slope, about 1.95 kWh per day for each additional occupant. The <code>TypeRetrofitted</code> coefficient is <span class="math inline">\(b_2\)</span>, the estimate of <span class="math inline">\(\beta_2\)</span>, the adjusted difference. At the same occupancy, retrofitted buildings use 42.5 kWh per day less than standard ones, <span class="math inline">\(t(57) = -5.38\)</span>, <span class="math inline">\(p &lt; 0.001\)</span>. We reject <span class="math inline">\(H_{0,\text{group}}\)</span>.</p>
+<p>The <code>Occupancy</code> coefficient is the common slope, about 1.95 kWh per day for each additional occupant. The <code>TypeRetrofitted</code> coefficient is <span class="math inline">\(b_2\)</span>, the estimate of <span class="math inline">\(\beta_2\)</span>, the adjusted difference. At the same occupancy, retrofitted buildings use 42.5 kWh per day less than standard ones, <span class="math inline">\(t(57) = -5.38\)</span>, <span class="math inline">\(p &lt; 0.001\)</span>. The <span class="math inline">\(t\)</span> has 57 degrees of freedom, 60 buildings minus the 3 coefficients the model estimates. We reject <span class="math inline">\(H_{0,\text{group}}\)</span>.</p>
 <p><a href="#fig-11energyadj" class="quarto-xref">Figure&nbsp;<span>11.10</span></a> shows what that coefficient measures. The adjusted means express the same comparison as one value for each building type. Evaluating each line at the overall mean occupancy, 76.4 people, gives 351.3 kWh per day for standard buildings and 308.8 for retrofitted ones. Their difference is <span class="math inline">\(b_2\)</span>.</p>
 <div class="cell">
 <div class="cell-output-display">
