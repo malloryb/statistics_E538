@@ -135,6 +135,8 @@ format:
     colorlinks: true
     include-in-header:
       text: |
+        % Strikethroughs in math (Ch2 shows a factor cancelling in Pearson's r).
+        \\usepackage{{cancel}}
         % The text font has no glyph for these; a missing glyph fails PDF/UA-2.
         \\usepackage{{newunicodechar}}
         \\newunicodechar{{≈}}{{\\ensuremath{{\\approx}}}}

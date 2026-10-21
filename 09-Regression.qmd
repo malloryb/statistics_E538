@@ -48,13 +48,13 @@ The equation for a linear regression is one of the most heavily used equations i
 
 $$y = \beta_0 + \beta_1 x + \varepsilon$$
 
-Here $\beta_1$ is the slope, the change in $y$ for each one-unit increase in $x$. $\beta_0$ is the intercept, the value of $y$ when $x = 0$. The intercept and slope are the **regression coefficients**. These subscripted $\beta$s have no connection to $\beta$, the Type II error rate from Chapter 5.
+Here $y$ is the dependent variable (DV) and $x$ is the predictor, the independent variable (IV) (Chapter 1). $\beta_1$ is the slope, the change in $y$ for each one-unit increase in $x$. $\beta_0$ is the intercept, the value of $y$ when $x = 0$. The intercept and slope are the **regression coefficients**. These subscripted $\beta$s have no connection to $\beta$, the Type II error rate from Chapter 5.
 
 A statistical **model** is an equation that describes how the DV changes with a predictor, plus a term for the variation the equation leaves out. A linear equation fit to data is one example. Real data do not fall exactly on a line, and the **error term** $\varepsilon$ is the part of the DV that the population line does not explain. We never observe $\beta_0$, $\beta_1$, or $\varepsilon$ directly, because they describe the population, and we have only a sample.
 
 ### Computing the best-fit line by hand
 
-In practice, we let software find the line with the smallest sum of squared residuals (the least-squares line from Chapter 2), but working through one example by hand shows where that line comes from. Here are the formulas for the slope and intercept, calculated straight from the data:
+In practice, we let software find the line with the smallest sum of squared residuals (the least-squares line from Chapter 2), but working through one example by hand shows where that line comes from. We write the intercept and slope calculated from a sample as $b_0$ and $b_1$, to keep them apart from the population values $\beta_0$ and $\beta_1$. Here are the formulas for $b_0$ and $b_1$, calculated straight from the data:
 
 $$\text{intercept} = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2}$$
 
@@ -73,11 +73,11 @@ knitr::kable(tab, col.names = c("Pair", "x", "y", "x²", "xy"),
 
 ```
 
-The table has 7 pairs of $x$ and $y$ scores, plus columns for $x^2$ and $xy$ (each $x$ score times its matching $y$ score), with column sums at the bottom. These sums are everything the formulas need:
+The table has 7 pairs of $x$ and $y$ scores, plus columns for $x^2$ and $xy$ (each $x$ score times its matching $y$ score), with column sums at the bottom. These sums are everything the formulas need. From the table, $n = 7$, $\sum x = 34$, $\sum y = 39$, $\sum x^2 = 200$, and $\sum xy = 231$. Substituting:
 
-$$\text{intercept} = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2} = \frac{39 \times 200 - 34 \times 231}{7 \times 200-34^2} = -0.221$$
+$$\text{intercept} = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2} = \frac{39 \times 200 - 34 \times 231}{7 \times 200-34^2} = \frac{7800 - 7854}{1400 - 1156} = \frac{-54}{244} = -0.221$$
 
-$$\text{slope} = b_1 = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2} = \frac{7 \times 231-34 \times 39}{7 \times 200-34^2} = 1.19$$
+$$\text{slope} = b_1 = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2} = \frac{7 \times 231-34 \times 39}{7 \times 200-34^2} = \frac{1617 - 1326}{1400 - 1156} = \frac{291}{244} = 1.19$$
 
 With $b_0$ and $b_1$ in hand, we can compute a residual for any observed point. A residual, as in Chapter 2, is the difference between what we observed and what the line predicts, $e = y - \hat y$. The symbol $\hat y$ (read "y-hat") is the value the line predicts, $\hat y = b_0 + b_1x$. For the first row above ($x=1, y=2$): $\hat y = -0.221 + 1.19(1) = 0.969$, so $e = 2 - 0.969 = 1.031$. The residual is positive, so that point is above the line. Repeating this for every point, then squaring and summing the residuals, gives the sum of squared residuals, the quantity that $b_0$ and $b_1$ were chosen to make as small as possible.
 
@@ -108,7 +108,7 @@ design_continuous("Stream temperature (continuous)", "10 \u00b0C", "24 \u00b0C",
                   "Does DO change as temperature rises?")
 ```
 
-Up to now every design put units into groups and asked whether the groups differed. Now, with a continuous predictor, every temperature value is treated as its own group. Each of the 30 sites falls somewhere along the range, and the line describes how mean DO changes from one temperature to the next. The question becomes how much DO changes per degree rather than whether two groups differ.
+Up to now every design put units into groups and asked whether the groups differed. Now, with a continuous predictor, every temperature value is treated as its own group. Each of the 30 sites falls somewhere along the range, usually alone at its temperature, and the line gives a predicted mean DO at every temperature, the way a group mean did in earlier chapters. The question becomes how much DO changes per degree rather than whether two groups differ.
 
 The 30 sites in this example are invented. We built them from a population line with $\beta_0 = 13.5$ mg/L and $\beta_1 = -0.28$ mg/L per °C, plus random scatter, so here, unlike in a real study, we know the true slope that $b_1$ estimates.
 
@@ -240,7 +240,7 @@ Here "error" means the standard error of $b_1$, the standard deviation of its sa
 
 R reports the $t$-test for the slope in the coefficient table from `summary(fit)`, so there is no separate test to run. You get the `Std. Error`, $t$, and $p$ for each coefficient at once.
 
-The test statistic divides the estimated slope by its standard error, the SE column in the coefficient table above. The standard error measures how much $b_1$ would vary from sample to sample if we repeated this study many times:
+The test statistic divides the estimated slope by its standard error, the SE column in the coefficient table above. R computes the standard error of the slope from the residuals and the spread of temperatures, $SE(b_1) = \sqrt{\dfrac{\sum e^2/(n-2)}{\sum (x - \bar x)^2}}$. More scatter around the line makes it larger, and a wider spread of temperatures makes it smaller. The standard error measures how much $b_1$ would vary from sample to sample if we repeated this study many times:
 
 $$t = \frac{b_1}{SE(b_1)} = \frac{`r sprintf("%.3f", coef(fit)[2])`}{`r sprintf("%.3f", fit_tidy$std.error[2])`} = `r sprintf("%.2f", fit_tidy$statistic[2])`$$
 
@@ -335,7 +335,7 @@ ggplot(part_df, aes(stream_temp)) +
   theme(strip.text = element_text(size = 9))
 ```
 
-$SS_\text{Total}$ is the sum of the squared distances from each point to mean DO. $SS_\text{Regression}$ is the sum of the squared distances from the line to mean DO. $SS_\text{Residual}$ is the sum of the squared residuals, the distances from each point to the line. The first equals the other two added together:
+$SS_\text{Total}$ is the sum of the squared distances from each point to mean DO. $SS_\text{Regression}$ is the sum of the squared distances from the line to mean DO. $SS_\text{Residual}$ is the sum of the squared residuals, the distances from each point to the line. For each site, the two shorter segments add up to the long one. After squaring each segment and summing over all 30 sites, the totals still add up, as they did in Chapter 8:
 
 $$SS_\text{Total} = SS_\text{Regression} + SS_\text{Residual}, \qquad `r sprintf("%.2f", ss_total)` = `r sprintf("%.2f", ss_reg)` + `r sprintf("%.2f", ss_res)`$$
 
@@ -436,7 +436,7 @@ Simple linear regression has three test-specific assumptions, plus the universal
 > You can do linear regression without thinking about whether the phenomenon you're modeling is actually close to linear. But you shouldn't.\
 > Jordan Ellenberg, *How Not to Be Wrong*
 
-A straight line may be the wrong shape for your data. A residuals-versus-fitted plot checks two of the assumptions above at once. A curve means linearity is violated, and a funnel shape means constant variance is violated.
+A straight line may be the wrong shape for your data. A residuals-versus-fitted plot puts each point's fitted value $\hat y$, the value the line predicts for it, on the $x$-axis and its residual on the $y$-axis. It checks two of the assumptions above at once. A curve means linearity is violated, and a funnel shape means constant variance is violated.
 
 ```{r}
 #| label: fig-9regresid
@@ -529,7 +529,7 @@ If a residual plot curves instead of scattering randomly, a straight line is the
 
 Fixes typically include:
 
--   a different model (often adding a polynomial term)
+-   a different model (often adding an $x^2$ term, which lets the fitted line bend)
 -   a transformation, re-expressing a variable on a different scale so a straight line fits it (log-transforming a variable that grows multiplicatively, like the outbreak data above, is the most common case)
 -   or a nonlinear model entirely, beyond what this course covers
 

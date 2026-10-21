@@ -46,11 +46,11 @@ The last chapter compared macroinvertebrate species count across two discrete Po
 
 -   Is the relationship between PFAS exposure and lifetime cancer incidence the same in low-income and high-income American populations? *(covariate: PFAS exposure; factor: income level)*
 
-In each question, a continuous variable is related to the outcome, and a categorical variable splits the observations into groups. That pairing, one continuous variable and one categorical factor, is what makes a design an ANCOVA rather than a plain regression or a plain ANOVA.
+In each question, a continuous variable is related to the outcome, and a categorical variable splits the observations into groups. That pairing, one continuous variable (the covariate) and one categorical variable (the factor), is what makes a design an ANCOVA rather than a plain regression or a plain ANOVA.
 
 The first question points to a limitation of the last chapter. "Pollution: present or absent" simplifies a continuous measurement, a concentration in parts per billion. Sorting continuous measurements into "high" and "low" buckets throws away the information a covariate needs, which is how much more polluted a channel is, not just whether it is polluted. Whenever you have the measured values, analyze them as a continuous covariate instead of forcing them into groups first. With a categorical factor still in the design, that analysis is ANCOVA. With no categorical factor left, it is plain regression.
 
-**Analysis of covariance (ANCOVA)** is a linear model with a continuous outcome, at least one continuous predictor (the covariate), and at least one categorical predictor (the factor). It asks whether the covariate's relationship with the outcome is the same in every group and, if it is, whether the groups differ at the same covariate value. ANCOVA is built directly on regression's own equation. A simple linear model is
+**Analysis of covariance (ANCOVA)** is a linear model with a continuous outcome, at least one continuous predictor (the covariate), and at least one categorical predictor (the factor). It asks whether the covariate's relationship with the outcome is the same in every group and, if it is, whether the groups differ at the same covariate value. ANCOVA is built directly on the regression equation from Chapter 9. A simple linear model is
 
 $$y = \beta_0 + \beta_1 x + \varepsilon$$
 
@@ -58,7 +58,7 @@ Here $\beta_0$ is the intercept, $\beta_1$ is the slope, and $\varepsilon$ is th
 
 ANCOVA adds a categorical factor to that equation. The chapter asks whether every group follows the same line, whether the groups share a slope but need different intercepts, or whether each group needs its own slope.
 
-We answer it in order: first check that the model explains anything at all, then test whether the groups have different slopes, and only if the slopes are parallel, test whether the groups differ in adjusted means.
+We answer it in order: first check that the model explains anything at all, then test whether the groups have different slopes, and only if the slopes are parallel, test whether the groups differ in adjusted means. Adjusted means are group means compared at the same covariate value, and Step 2 below defines them.
 
 @tbl-11designs places ANCOVA beside regression and the two kinds of ANOVA from Chapters 8 to 10, each written as a model.
 
@@ -129,7 +129,7 @@ ggplot(fig1_df, aes(x = Country, y = CFR_crude_pct, fill = Country)) +
   theme(legend.position = "none")
 ```
 
-At face value, Italy looks worse. Older people are much more likely to die from COVID than younger people. In these numbers, `r dat$CFR_band_pct[dat$Country == "Italy" & dat$Age == "80+"]`% of Italy's cases aged 80 and over died, against none of the `r dat$Cases[dat$Country == "Italy" & dat$Age == "0–9"]` cases under 10. So we split cases into 10-year age bands. Within every band where anyone died, China's fatality rate is higher.
+At face value, Italy looks worse. But the two countries' cases might differ in age, and age matters because older people are much more likely to die from COVID than younger people. In these numbers, `r dat$CFR_band_pct[dat$Country == "Italy" & dat$Age == "80+"]`% of Italy's cases aged 80 and over died, against none of the `r dat$Cases[dat$Country == "Italy" & dat$Age == "0–9"]` cases under 10. So we split cases into 10-year age bands. Within every band where anyone died, China's fatality rate is higher.
 
 ```{r}
 #| label: fig-11simpson-by-age
@@ -154,7 +154,7 @@ rate_tbl <- tidyr::pivot_wider(dat[, c("Age", "Country", "CFR_band_pct")],
 knitr::kable(rate_tbl[, c("Age", "Italy", "China")], col.names = c("Age band", "Italy", "China"))
 ```
 
-@tbl-11simpsonrates lists the rates themselves. The reversal happens because Italy's cases were older on average and China's were younger (@fig-11age-distributions). Italy therefore had a greater proportion of older people getting sick, which pulls Italy's overall average up. Similarly, China's average is pulled down because a greater proportion of younger people are getting sick. Aggregating without adjusting for age hid the within-group pattern entirely. Age is what Chapter 2 called a confounding variable, related both to which country a case came from and to whether the case was fatal.
+@tbl-11simpsonrates lists the rates themselves. The reversal happens because Italy's cases were older on average and China's were younger (@fig-11age-distributions). A country's overall fatality rate is an average of its age-band rates, weighted by the share of that country's cases in each band. Italy had a larger share of its cases in the oldest bands, where fatality rates are highest, so its overall rate is pulled up. China had a larger share of its cases in the younger bands, where fatality rates are low, so its overall rate is pulled down. Aggregating without adjusting for age hid the within-group pattern entirely. Age is what Chapter 2 called a confounding variable, related both to which country a case came from and to whether the case was fatal.
 
 ```{r}
 #| label: fig-11age-distributions
@@ -176,7 +176,7 @@ ggplot(fig3_df, aes(x = Age, y = Prop, fill = Country, group=Country)) +
   theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-This kind of reversal comes from a difference between the groups in the *composition* of a third variable, and the combined number averages over that difference. Once you condition on the third variable, the within-group pattern shows up again.
+This kind of reversal happens when the groups differ in their mix of a third variable, here age. The combined rate mixes the age bands together in different proportions for each country. Once you compare within each level of the third variable, here within each age band, the within-group pattern shows up again.
 
 ANCOVA handles this situation when the third variable is continuous, instead of grouped into categories like the age bands above. It compares groups at the same covariate value, so a difference between the groups on that covariate does not distort the comparison.
 
@@ -210,7 +210,7 @@ For ANCOVA, you need:
 
 Before reading coefficients off an ANCOVA table, it helps to see how one equation can represent two groups at once.
 
-An **indicator variable** is a variable that equals 1 for observations in one group and 0 for all other observations. Categorical predictors get into a linear model as indicator variables (you'll also see them called dummy variables). For a factor with $k$ groups you include $k-1$ indicators. The omitted group becomes the **reference**, and every coefficient is interpreted relative to it. With two groups, one indicator does the whole job:
+An **indicator variable** is a variable that equals 1 for observations in one group and 0 for all other observations. Categorical predictors get into a linear model as indicator variables (you'll also see them called dummy variables). For a factor with $k$ groups you include $k-1$ indicators. The group left out needs no indicator of its own, because an observation with 0 on every indicator must belong to it. That group is the **reference group**, and every coefficient involving the factor is interpreted relative to it. With two groups, one indicator does the whole job:
 
 $$G = \begin{cases} 0 & \text{group 1 (the reference group)} \\ 1 & \text{group 2} \end{cases}$$
 
@@ -226,7 +226,9 @@ When $G = 0$ (indicator off), only the baseline terms are active:
 
 $$y = 2x + 3 \qquad \text{slope} = 2, \ \text{intercept} = 3$$
 
-When $G = 1$ (indicator on), the new terms activate:
+When $G = 1$ (indicator on), the term $1(xG)$ becomes $1x$ and the term $-7G$ becomes $-7$. Adding them to the baseline terms and collecting the $x$ terms and the constants gives
+
+$$y = (2x + 3) + (1x - 7) = (2 + 1)x + (3 - 7) = 3x - 4 \qquad \text{slope} = 3, \ \text{intercept} = -4$$
 
 $$y = (2x + 3) + (1x - 7) = 3x - 4 \qquad \text{slope} = 3, \ \text{intercept} = -4$$
 
@@ -302,7 +304,7 @@ ggplot(lines_df, aes(x, y, color = g)) +
 
 ANCOVA works right to left across that figure. It first asks whether the rightmost panel is what we have (do the slopes differ?), and only if the answer is no does it ask whether we have the middle panel or the leftmost (are the parallel lines at different heights?).
 
-**Step 0: Does the model explain anything?** Before looking at any single term, check the whole-model $F$-test, which asks whether the covariate, the group, and their interaction together explain more of $y$ than chance would: $H_0:\beta_1=\beta_2=\beta_3=0$. R reports it on the last line of `summary(lm(...))`. If it is not significant, stop. The data give no evidence that the covariate, the group, or their interaction explains $y$, so no single term is worth interpreting.
+**Step 0: Does the model explain anything?** Before looking at any single term, check the whole-model $F$-test, the regression $F$ from Chapter 9 applied to all the terms at once, which asks whether the covariate, the group, and their interaction together explain more of $y$ than chance would: $H_0:\beta_1=\beta_2=\beta_3=0$. R reports it on the last line of `summary(lm(...))`. If it is not significant, stop. The data give no evidence that the covariate, the group, or their interaction explains $y$, so no single term is worth interpreting.
 
 **Step 1: Are slopes equal across groups?** This tests whether the covariate effect is the same in each group.
 
@@ -322,7 +324,7 @@ With parallel lines, $\beta_2$ is the vertical gap between the two lines, and it
 
 In the parallel-lines model, $\beta_1$ is the common slope.
 
-**Intercepts and centering.** Intercepts are evaluated at $x=0$. In the model with an interaction, the lines can have different slopes, so $\beta_2$ compares the groups at $x=0$ only, which may be far outside the data. **Centering** the covariate means subtracting its mean from every value, $\tilde x = x - \bar x$. That moves the comparison to the average covariate value. In the parallel-lines model the gap is the same everywhere, so centering changes the intercept but not $\beta_2$.
+**Intercepts and centering.** Intercepts are evaluated at $x=0$. In the model with an interaction, the lines can have different slopes, so $\beta_2$ compares the groups at $x=0$ only, which may be far outside the data. **Centering** the covariate means subtracting its mean from every value, $\tilde x = x - \bar x$. After centering, $\tilde x = 0$ where $x = \bar x$, so the intercept and $\beta_2$ now describe the lines at the average covariate value. In the parallel-lines model the gap is the same everywhere, so centering changes the intercept but not $\beta_2$.
 
 **What to report.**
 
@@ -350,7 +352,7 @@ Most of these are ones ANOVA already needed. Three are new because a covariate h
 
 : Assumptions of ANCOVA and how to check them. {#tbl-11assumptions}
 
-If the covariate is measured with error, ANCOVA only partly adjusts for group differences in the covariate, and the leftover difference can look like a treatment effect.
+If the covariate is measured with error, ANCOVA only partly adjusts for group differences in the covariate, and the leftover difference can look like a treatment effect. If the treatment changes the covariate, adjusting for the covariate removes part of the treatment's own effect, and the adjusted difference understates it.
 
 @tbl-11card-ancova collects the three steps of an ANCOVA on one card.
 
@@ -502,7 +504,7 @@ int_row <- broom::tidy(ancova) |> filter(term == "AirPollution:AreaType")
 
 **Step 1: the interaction.** The `AirPollution:AreaType` row tests $H_{0,\text{int}}$: $F(1, `r fstat[3]`) = `r sprintf("%.2f", int_row$statistic)`$, $p `r fmt_p_eq(int_row$p.value)`$. We reject $H_{0,\text{int}}$, so the slopes are not parallel. Air pollution's relationship with bird density depends on area type, so we stop here and do not test adjusted means.
 
-**What the other two rows are.** The table still has rows for `AirPollution` and `AreaType`, both with tiny $p$-values, so it is tempting to read them, but they don't answer this chapter's question. R builds these rows in sequence. `AirPollution` tests one average slope for all 200 sites, ignoring area type, and `AreaType` tests a group difference after that single slope is fitted. Once the interaction says the slopes differ, neither row describes the data. There is no single slope, and the group difference depends on where along the pollution gradient you look. Because the rows are built in sequence and the groups are unequal in size (`r sum(data$AreaType == "Rural")` rural, `r sum(data$AreaType == "Urban")` urban), listing the terms in a different order would also change their sums of squares.
+**What the other two rows are.** The table still has rows for `AirPollution` and `AreaType`, both with $p < 0.001$, so it is tempting to read them, but they don't answer this chapter's question. R builds these rows in sequence, which means each row tests its term after the terms listed above it have been fitted. `AirPollution` tests one average slope for all 200 sites, ignoring area type, and `AreaType` tests a group difference after that single slope is fitted. Once the interaction says the slopes differ, neither row describes the data. There is no single slope, and the group difference depends on where along the pollution gradient you look. Because the rows are built in sequence and the groups are unequal in size (`r sum(data$AreaType == "Rural")` rural, `r sum(data$AreaType == "Urban")` urban), listing the terms in a different order would also change their sums of squares.
 
 **Reading the coefficients.**
 

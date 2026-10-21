@@ -237,7 +237,7 @@ The number of possible interactions scales with the number of IVs. A 2x2 design 
 
 ## What a 2x2 actually tests
 
-A two-way ANOVA tests three effects and therefore has three null hypotheses:
+A factorial ANOVA with two factors is also called a two-way ANOVA. It tests three effects and therefore has three null hypotheses:
 
 1.  a main effect of pollution,
 2.  a main effect of flow, and
@@ -256,13 +256,13 @@ The hypotheses are about the population mean species count for each condition, w
 
 **Main effect of pollution**
 
--   **Null ($H_0$):** There is no effect of pollution on mean species count.
--   **Alternative ($H_a$):** Pollution affects mean species count.
+-   **Null ($H_0$):** Averaged across flow rates, mean species count is the same with and without pollution ($\mu_{\text{NoPoll}} = \mu_{\text{Poll}}$).
+-   **Alternative ($H_a$):** Averaged across flow rates, mean species count differs with and without pollution ($\mu_{\text{NoPoll}} \neq \mu_{\text{Poll}}$).
 
 **Main effect of flow**
 
--   **Null ($H_0$):** There is no effect of flow rate on mean species count.
--   **Alternative ($H_a$):** Flow rate affects mean species count.
+-   **Null ($H_0$):** Averaged across pollution conditions, mean species count is the same at low and high flow ($\mu_{\text{Low}} = \mu_{\text{High}}$).
+-   **Alternative ($H_a$):** Averaged across pollution conditions, mean species count differs between low and high flow ($\mu_{\text{Low}} \neq \mu_{\text{High}}$).
 
 **Pollution × flow interaction**
 
@@ -349,7 +349,7 @@ knitr::kable(df_poll, row.names = FALSE,
              caption = "Pollution marginal means replace the scores")
 ```
 
-Every no-pollution channel is replaced by the no-pollution marginal mean, `r round(nopoll_mean,2)`, and every pollution channel by the pollution marginal mean, `r round(poll_mean,2)`. Squaring and summing those means' distances from the grand mean gives $SS_\text{Pollution} = `r round(sum(diff_sq),2)`$, the variation explained by pollution condition alone.
+Every no-pollution channel is replaced by the no-pollution marginal mean, `r round(nopoll_mean,2)`, and every pollution channel by the pollution marginal mean, `r round(poll_mean,2)`. After that replacement, the only differences left among the 20 scores are the differences between the two pollution conditions, so their spread around the grand mean is the variation pollution explains. Every distance is either `r round(nopoll_mean - gm, 2)` or `r round(poll_mean - gm, 2)`, so every squared distance is the same, and $SS_\text{Pollution} = 20 \times `r round(nopoll_mean - gm, 2)`^2 = `r round(sum(diff_sq),2)`$.
 
 ### SS Flow
 
@@ -380,7 +380,7 @@ The interaction is the one new piece a factorial ANOVA adds. It asks whether the
 
 If the main effects told the whole story, each cell mean would be the grand mean, shifted by that cell's pollution effect and its flow effect. Take the no-pollution, low-flow cell. The no-pollution marginal mean is $`r round(nopoll_mean,2)` - `r round(gm,2)` = `r round(nopoll_mean - gm,2)`$ above the grand mean. The low-flow marginal mean is $`r round(gm,2)` - `r round(low_mean,2)` = `r round(gm - low_mean,2)`$ below it. Together, the two main effects predict $`r round(gm,2)` + `r round(nopoll_mean - gm,2)` - `r round(gm - low_mean,2)` = `r round(nopoll_mean + low_mean - gm,2)`$ for this cell. The observed cell mean is `r f1(mean(A))`. The leftover, `r round(mean(A) - (nopoll_mean + low_mean - gm),2)`, is the part of that cell the two main effects can't explain. Those leftovers, one per cell, are what the interaction captures.
 
-To compute it, replace each score with its own cell mean, then subtract that channel's pollution marginal mean and flow marginal mean, and add back the grand mean once (to avoid subtracting it twice):
+To compute it, subtract each cell's predicted mean from its observed cell mean. The predicted mean is the grand mean plus the pollution shift plus the flow shift, $\bar{Y}_\text{grand} + (\bar{Y}_\text{Pollution marginal} - \bar{Y}_\text{grand}) + (\bar{Y}_\text{Flow marginal} - \bar{Y}_\text{grand})$, which simplifies to $\bar{Y}_\text{Pollution marginal} + \bar{Y}_\text{Flow marginal} - \bar{Y}_\text{grand}$. Subtracting that from the cell mean gives each channel's leftover:
 
 $$\bar{Y}_\text{cell} - \bar{Y}_\text{Pollution marginal} - \bar{Y}_\text{Flow marginal} + \bar{Y}_\text{grand}$$
 
@@ -400,7 +400,7 @@ knitr::kable(df_int, row.names = FALSE,
              caption = "What is left of each cell mean after both main effects")
 ```
 
-Squaring and summing gives $SS_\text{Interaction} = `r round(sum(diff_sq),2)`$.
+In a balanced 2x2, the four leftovers are the same size, two positive and two negative, so every channel's squared leftover is $`r round(mean(A) - (nopoll_mean + low_mean - gm),2)`^2$. Squaring and summing gives $SS_\text{Interaction} = 20 \times `r round(mean(A) - (nopoll_mean + low_mean - gm),2)`^2 = `r round(sum(diff_sq),2)`$.
 
 ### SS Error
 
@@ -418,7 +418,7 @@ ss_error <- ss_total - ss_poll - ss_flow - ss_int
 
 $$SS_\text{Error} = `r round(ss_total,2)` - `r round(ss_poll,2)` - `r round(ss_flow,2)` - `r round(ss_int,2)` = `r round(ss_error,2)`$$
 
-$SS_\text{Error}$ is the same quantity Chapter 8 called $SS_\text{Within}$ in the one-way ANOVA, the spread of channels around their own cell mean. It is the variation none of the three effects can explain.
+$SS_\text{Error}$ is the same quantity Chapter 8 called $SS_\text{Within}$ in the one-way ANOVA, the spread of channels around their own cell mean. We can check it directly. The squared distances of the channels from their own cell mean sum to 5.2 in each of the first three cells and 10.0 in the pollution, high-flow cell, and $5.2 + 5.2 + 5.2 + 10.0 = 25.6$. It is the variation none of the three effects can explain.
 
 ### Degrees of freedom, mean squares, and $F$
 
@@ -434,7 +434,7 @@ Each effect gets its own $F$, and all three share the same denominator:
 
 $$F_\text{Pollution} = \frac{MS_\text{Pollution}}{MS_\text{Error}}, \qquad F_\text{Flow} = \frac{MS_\text{Flow}}{MS_\text{Error}}, \qquad F_\text{Interaction} = \frac{MS_\text{Interaction}}{MS_\text{Error}}$$
 
-Here $MS_\text{Error} = `r sprintf('%.2f', ss_error)`/16 = `r sprintf('%.2f', ss_error/16)`$. Every effect has 1 degree of freedom, so each effect's $MS$ equals its $SS$, and for pollution $F = `r sprintf('%.2f', ss_poll)`/`r sprintf('%.2f', ss_error/16)` = `r sprintf('%.2f', ss_poll/(ss_error/16))`$.
+Here $MS_\text{Error} = `r sprintf('%.2f', ss_error)`/16 = `r sprintf('%.2f', ss_error/16)`$. Every effect has 1 degree of freedom, so each effect's $MS$ equals its $SS$. For pollution, $F = `r sprintf('%.2f', ss_poll)`/`r sprintf('%.2f', ss_error/16)` = `r sprintf('%.2f', ss_poll/(ss_error/16))`$. For flow, $F = `r sprintf('%.2f', ss_flow)`/`r sprintf('%.2f', ss_error/16)` = `r sprintf('%.2f', ss_flow/(ss_error/16))`$, and for the interaction, $F = `r sprintf('%.2f', ss_int)`/`r sprintf('%.2f', ss_error/16)` = `r sprintf('%.2f', ss_int/(ss_error/16))`$. Each $F$ is compared with the critical value for 1 and 16 degrees of freedom, $F_{crit}(1, 16) = `r sprintf('%.2f', qf(0.95, 1, 16))`$ at $\alpha = 0.05$, and all three are larger.
 
 ### Check your work
 
@@ -634,13 +634,13 @@ $$\Delta_\text{Pollution|Low} = `r f1(mean(A))` - `r f1(mean(B))` = `r f1(simple
 
 Those two numbers describe the interaction. Pollution costs `r f1(simple_low)` species under low flow and `r f1(simple_high)` under high flow. But saying "pollution reduced species count under low flow" is still a claim, and like any claim in this book, it needs its own test, not just a look at the plot.
 
-Testing a simple effect asks whether pollution's effect holds at one specific level of flow, so it looks like a two-sample comparison: no pollution vs. pollution, at low flow only. One option is to pull out the 10 low-flow channels and run a two-sample $t$-test on them alone. That test estimates the error variance from those 10 channels, with 8 degrees of freedom, and ignores the 10 high-flow channels. You already have a better estimate of that error variance, from all 20 channels: the $SS_\text{Error}$ you computed for the omnibus ANOVA above.
+Testing a simple effect asks whether pollution's effect holds at one specific level of flow, so it looks like a two-sample comparison: no pollution vs. pollution, at low flow only. One option is to pull out the 10 low-flow channels and run a two-sample $t$-test on them alone. That test estimates the error variance from those 10 channels, with 8 degrees of freedom, and ignores the 10 high-flow channels. The omnibus ANOVA above (Chapter 8) already gives a better estimate of that error variance, $MS_\text{Error}$, from all 20 channels.
 
 The fix is to reuse that pooled estimate. $MS_\text{Error}$ and its 16 degrees of freedom already describe the noise in this design better than any subset could, so the simple-effects test uses them in a two-sample $t$:
 
 $$t = \frac{\bar{Y}_\text{NoPoll} - \bar{Y}_\text{Poll}}{\sqrt{MS_\text{Error}\left(\dfrac{1}{n_\text{NoPoll}}+\dfrac{1}{n_\text{Poll}}\right)}}, \qquad df = df_\text{Error}$$
 
-Here the two means are the no-pollution and pollution cell means at one flow rate. Using $MS_\text{Error}=`r sprintf('%.2f', ss_error/16)`$ and $df=16$ from the omnibus table computed earlier:
+Here the two means are the no-pollution and pollution cell means at one flow rate. Using $MS_\text{Error}=`r sprintf('%.2f', ss_error/16)`$ and $df=16$ from the omnibus table computed earlier, the denominator is the same at both flow rates, $\sqrt{`r sprintf('%.2f', ss_error/16)`(1/5 + 1/5)} = `r sprintf('%.2f', sqrt(ss_error/16*0.4))`$. Under low flow, $t = `r f1(simple_low)`/`r sprintf('%.2f', sqrt(ss_error/16*0.4))` = `r sprintf('%.2f', simple_low/sqrt(ss_error/16*0.4))`$. @tbl-10simpleeffects gives both tests.
 
 ```{r}
 #| label: tbl-10simpleeffects
@@ -669,7 +669,7 @@ knitr::kable(
 
 Both comparisons clear the critical value, $t_{crit}(16) = 2.12$ at $\alpha=0.05$, two-tailed, with $t = `r sprintf("%.2f", ts[1])`$ under low flow and $t = `r sprintf("%.2f", ts[2])`$ under high flow. So the interaction here does not mean "pollution matters at low flow but not at all at high flow." That pattern would show up as one significant row and one not. The interaction means "pollution matters at both flow rates, but far more at low flow."
 
-When a factor has only two levels, as Pollution does here, the simple-effects test is the full answer. There is nothing left to compare.
+When a factor has only two levels, as Pollution does here, each simple-effects test compares those two levels, so it is the full answer. When a factor has three or more levels, a significant simple effect says only that some levels differ at that level of the other factor, and pairwise comparisons are needed to say which.
 
 ### Order of interpretation
 
