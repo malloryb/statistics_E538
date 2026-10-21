@@ -79,7 +79,7 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
 
 An experiment asks whether a manipulation causes a change in what we measure. Some manipulations are so overwhelming that no statistics are required to see them. Flip a light switch up and the light comes on; flip it down and it goes off, every time. You don't need a statistical test to tell you that flipping the light switch is the cause of the change in brightness.
 
-Few effects in environmental science behave like this. An effect is the difference a study is about, such as the change a manipulation causes in the outcome. In measurements that also contain noise, the effect is the signal. Flipping the switch changes the outcome *on average*, but not in every instance and not by the same amount every time.
+Few effects in environmental science behave like this. An effect is the difference a study is about, such as the change a manipulation causes in the outcome. In measurements that also contain noise, the effect is the signal. In most environmental studies, the manipulation changes the outcome *on average*, but not in every instance and not by the same amount every time.
 
 Random chance can produce apparent differences between groups even when no real difference exists. Chapter 3 showed this with sampling. Two samples from the same distribution come out differently. The same principle applies when we compare group means. So a difference between group means is not, by itself, evidence of a real effect.
 
@@ -269,7 +269,7 @@ Where the gold zone ends is a judgment call. A stricter line means fewer false a
 
 The chance window described a world where nothing but chance is at work. A formal test gives that world a name. In the bat example, "nothing but chance" meant no real difference between groups.
 
-From here on we compare a single sample against a specific value, such as a regulatory limit or a historical average. Later in this chapter, for example, a county compares its average daily PM2.5 with its target of 12 µg/m³.
+Comparing two groups needs the tests in Chapter 6. From here on we compare a single sample against a specific value, such as a regulatory limit or a historical average. Later in this chapter, for example, a county compares its average daily PM2.5 with its target of 12 µg/m³.
 
 **The null hypothesis, $H_0$,** is the claim of no effect or no difference. In this chapter's tests, it says the population mean equals a reference value, written $\mu_0$, such as a target or the value with no manipulation. $H_0$ is a statement about the population mean $\mu$, and it never mentions the sample mean $\bar{x}$. If $H_0$ is true, any gap between $\bar{x}$ and $\mu_0$ is sampling error.
 
@@ -277,13 +277,15 @@ From here on we compare a single sample against a specific value, such as a regu
 
 $$H_0:\ \mu = \mu_0 \qquad H_a:\ \mu \neq \mu_0$$
 
+In the bat example, $H_0$ would say the two groups of caves have the same population mean, $\mu_A = \mu_B$.
+
 **Null value notation.** In this chapter, hypotheses are about the population mean $\mu$, compared with the constant $\mu_0$. The sample mean $\bar{x}$ is never part of $H_0$ or $H_a$. It is the evidence we bring to test them.
 
 ### From simulation to a formal test
 
 Everything so far was built by simulation: 10,000 replications, plotted as a histogram, with hypothetical results compared against it. Chapter 3 already supplies a shortcut that saves rebuilding a chance window for every question. Sample means have a predictable distribution of their own. At every sample size it is centered on the population mean, with spread $\sigma/\sqrt{n}$. The central limit theorem adds that it is close to normal once the sample is large enough. That lets us replace the simulated chance window with a curve whose shape we already know.
 
-We can check the shortcut on the bat histogram. The blue dot-dash curve drawn over it in @fig-4histdiffbat is a normal curve with mean 0 and standard deviation `r round(sd_diff, 2)`, worked out from the 40% infection rate and the 5 caves per group. One cave's count, 20 bats at a 40% infection rate, has standard deviation 2.19, so a 5-cave group mean has standard error $2.19/\sqrt{5} = 0.98$. The histogram shows a difference between two such means, and its spread is $\sqrt{0.98^2 + 0.98^2} = 1.39$. Chapter 6 gives the general formula for the spread of a difference between two means. The curve follows the 10,000 simulated differences closely, so it could have replaced the simulation.
+We can check the shortcut on the bat histogram. The blue dot-dash curve drawn over it in @fig-4histdiffbat is a normal curve with mean 0 and standard deviation `r round(sd_diff, 2)`, worked out from the 40% infection rate and the 5 caves per group. One cave's count, 20 bats at a 40% infection rate, has standard deviation $\sqrt{20 \times 0.4 \times 0.6} = \sqrt{4.8} = 2.19$, from the formula for the standard deviation of a binomial count, which this chapter uses only here. A 5-cave group mean then has standard error $2.19/\sqrt{5} = 0.98$. The histogram shows a difference between two such means, and its spread is $\sqrt{0.98^2 + 0.98^2} = 1.39$. Chapter 6 gives the general formula for the spread of a difference between two means. The curve follows the 10,000 simulated differences closely, so it could have replaced the simulation.
 
 @tbl-4sim-formal lines up each piece of the simulation with the piece of the formal test that replaces it.
 
@@ -598,7 +600,7 @@ A large statistic means the effect is big compared to the noise, and a small one
 
 **Significance level ($\alpha$).** $\alpha$ is the probability of rejecting $H_0$ given that $H_0$ is true, and we choose it *before* the test. It is a conditional probability, $P(\text{reject } H_0 \mid H_0 \text{ true})$. Rejecting a true $H_0$ is called a Type I error, and Chapter 5 covers error types. A common choice is $\alpha = 0.05$. Smaller $\alpha$ means a test needs a larger test statistic before it rejects $H_0$. It also produces wider confidence intervals, because the confidence level is $1 - \alpha$ (defined below). At $\alpha = 0.01$, for example, the two-tailed critical value is 2.58 instead of 1.96, and the 99% interval is $\bar{x} \pm 2.58$ standard errors.
 
-**$p$-value.** A $p$-value is the probability, assuming $H_0$ is true, of obtaining a test statistic at least as extreme as the one we observed. Small $p$ means our data look unusual under $H_0$.
+**$p$-value.** A $p$-value is the probability, assuming $H_0$ is true, of obtaining a test statistic at least as extreme as the one we observed. At least as extreme means at least as many standard errors from $\mu_0$, counting both directions in a two-tailed test. Small $p$ means our data look unusual under $H_0$.
 
 **Confidence level.** Confidence level is the proportion of confidence intervals that would contain the true parameter if we repeated the study many times, collecting new data and building a new interval each time.
 
@@ -714,7 +716,7 @@ ggplot(rr, aes(x, y)) +
 
 The confidence-interval route makes the same decision using the sampling distribution of the sample mean from the sample. The rejection region and the confidence interval both reach 1.96 standard errors from their centers, and their centers differ. The rejection region is centered at $\mu_0$ and asks whether $\bar{x}$ is too far from it. The confidence interval is centered at $\bar{x}$ and asks whether $\mu_0$ is too far from it. The distance between $\bar{x}$ and $\mu_0$ is the same from either end, so for a two-tailed test the two routes always reach the same decision. The confidence-interval route never uses the null population distribution, only the single value $\mu_0$.
 
-Start from the sampling distribution of the sample mean from the sample, built in @fig-4key.sample_to_sampling: centered at $\bar{x}$, with the standard error as its spread. A sample mean falls within 1.96 standard errors of the true mean $\mu$ about 95% of the time, so the middle 95% of this curve, $\bar{x} \pm 1.96\,SE$, is the 95% confidence interval. It contains the values of $\mu$ that are consistent with our sample (@fig-4ci-lens-build). For the PM2.5 example the interval is 95% CI [`r sprintf("%.2f", ci_pm[1])`, `r sprintf("%.2f", ci_pm[2])`] µg/m³. Then ask where $\mu_0$ falls (@fig-4ci-lens-decision).
+Start from the sampling distribution of the sample mean from the sample, built in @fig-4key.sample_to_sampling: centered at $\bar{x}$, with the standard error as its spread. A sample mean falls within 1.96 standard errors of the true mean $\mu$ about 95% of the time. Whenever $\bar{x}$ is within 1.96 standard errors of $\mu$, $\mu$ is also within 1.96 standard errors of $\bar{x}$. So the interval $\bar{x} \pm 1.96\,SE$, the middle 95% of this curve, captures $\mu$ in about 95% of samples. This interval is the 95% confidence interval. It contains the values of $\mu$ that are consistent with our sample (@fig-4ci-lens-build). For the PM2.5 example the interval is 95% CI [`r sprintf("%.2f", ci_pm[1])`, `r sprintf("%.2f", ci_pm[2])`] µg/m³. Then ask where $\mu_0$ falls (@fig-4ci-lens-decision).
 
 ```{r}
 #| label: fig-4ci-lens-build

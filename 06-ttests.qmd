@@ -70,7 +70,24 @@ $t$ still measures the distance from $\mu_0$ in standard errors. The difference 
 
 ### Why $t$ has heavier tails than $z$
 
-Because $s$ varies from sample to sample, the $t$ distribution has heavier tails than the standard normal. As $n$ grows, $s$ stabilizes and $t$ converges to $z$.
+Because $s$ varies from sample to sample, the $t$ distribution has heavier tails than the standard normal. Heavier tails means more of the curve's area is far from zero, so large values happen more often for $t$ than for $z$. This happens because some samples have an $s$ well below $\sigma$, which shrinks the denominator and makes $t$ larger. @fig-6s-varies shows how much $s$ varies at two sample sizes. As $n$ grows, $s$ stabilizes and $t$ converges to $z$.
+
+```{r}
+#| label: fig-6s-varies
+#| fig-cap: "Simulated sample SDs from 10,000 samples of each size, all drawn from one normal population with $\\sigma = 10$ (orange dashed line). With $n = 3$, $s$ is often far below or above 10. With $n = 30$, it stays close to 10."
+#| fig-alt: "Two histograms of sample SDs on the same axis from 0 to 30, with an orange dashed line at sigma = 10. The n = 3 histogram is wide and right-skewed, spread from near 0 to past 20. The n = 30 histogram is narrow and centered close to 10."
+#| fig-height: 3.5
+
+set.seed(538)
+sims <- rbind(data.frame(s = replicate(10000, sd(rnorm(3, 0, 10))), size = "n = 3"),
+              data.frame(s = replicate(10000, sd(rnorm(30, 0, 10))), size = "n = 30"))
+ggplot(sims, aes(s)) +
+  geom_histogram(binwidth = 0.5, boundary = 0, fill = "gray60", color = "white") +
+  geom_vline(xintercept = 10, linetype = "dashed", linewidth = 0.8, color = "orange") +
+  facet_wrap(~ size, ncol = 1, scales = "free_y") +
+  coord_cartesian(xlim = c(0, 30)) +
+  labs(x = "Sample SD, s", y = "Count")
+```
 
 ```{r}
 #| label: fig-6-z-vs-t-linear-log
@@ -132,7 +149,7 @@ If the population SD $\sigma$ is known *and* the sampling distribution of the sa
 
 For one-sample and paired $t$-tests, $df = n-1$. A sample of 10 has $df=9$.
 
-Consider three numbers with a mean of 2: pick the first two freely, say 51 and $-3$, and the third number is no longer free. It has to be $-42$ for the mean to come out to 2. Two of the three numbers had freedom; the third didn't. That's $df=n-1=2$ for three numbers.
+Consider three numbers with a mean of 2. Three numbers with a mean of 2 must add up to $3 \times 2 = 6$. Pick the first two freely, say 51 and $-3$. They add up to 48, so the third number has to be $6 - 48 = -42$. Two of the three numbers were free to vary, and the third was not. That's $df=n-1=2$ for three numbers.
 
 In a $t$-test, the mean is the thing estimated, and the $df$ tells you how much information is left for estimating the spread, $s$. With few degrees of freedom, $s$ can be well above or below $\sigma$. When $s$ is well below $\sigma$, the denominator of $t$ is small and $t$ is large, so large $t$ values turn up more often and the $t$ curve has heavier tails. As $df$ grows, $s$ settles close to $\sigma$ and the $t$ curve approaches the normal. Each $df$ therefore gets its own $t$ curve.
 
@@ -235,7 +252,7 @@ ci_lo <- round(tt$conf.int[[1]], 2)
 ci_hi <- round(tt$conf.int[[2]], 2)
 ```
 
-By hand, the standard error of the mean is the sample SD divided by the square root of $n$:
+By hand, the mean of the ten sound levels is $610/10 = 61$ dB. The squared deviations from 61 add up to 2,890, so $s^2 = 2890/9 = 321.1$ and $s = \sqrt{321.1} = 17.92$ dB. The standard error of the mean is the sample SD divided by the square root of $n$:
 
 $$SE_{\bar{x}} = \frac{s}{\sqrt{n}} = \frac{`r round(s,2)`}{\sqrt{`r n`}} = `r round(SE,2)`$$
 
@@ -253,7 +270,7 @@ t.test(sound_db, mu = 50)
 
 **Results:** $t(9) = `r sprintf("%.2f", tt$statistic)`$, $p `r fmt_p_eq(tt$p.value)`$, mean $= `r sprintf("%.1f", tt$estimate)`$ dB, 95% CI [`r ci_lo`, `r ci_hi`].
 
-**Confidence interval.** The 95% CI in that output is $\bar{x} \pm t_{crit} \cdot SE_{\bar{x}}$, with $t_{crit}$ taken from the $t$ distribution with $n-1$ degrees of freedom. Here that is $`r round(x,2)` \pm `r round(qt(.975, n-1),3)`(`r round(SE,2)`)$, or \[`r ci_lo`, `r ci_hi`\]. The interval contains 50, so the test does not reject $H_0$. For a two-tailed test at $\alpha$, the $100(1-\alpha)\%$ CI and the critical value always reach the same decision, the same equivalence Chapter 4 showed for $z$. The critical value is a cutoff on the $t$ scale, and we compare the observed $t$ to it. The confidence interval is a range on the scale of the data (dB here), built around $\bar{x}$, and we check whether it contains $\mu_0$. Both use the same $t_{crit}$ and the same standard error, so they agree.
+**Confidence interval.** The 95% CI in that output is $\bar{x} \pm t_{crit} \cdot SE_{\bar{x}}$, with $t_{crit}$ taken from the $t$ distribution with $n-1$ degrees of freedom. Here $t_{crit} = `r round(qt(.975, n-1),3)`$, the same two-tailed cutoff for $df = 9$ as in the critical values section, so the interval is $`r round(x,2)` \pm `r round(qt(.975, n-1),3)`(`r round(SE,2)`)$, or \[`r ci_lo`, `r ci_hi`\]. The interval contains 50, so the test does not reject $H_0$. For a two-tailed test at $\alpha$, the $100(1-\alpha)\%$ CI and the critical value always reach the same decision, the same equivalence Chapter 4 showed for $z$. The critical value is a cutoff on the $t$ scale, and we compare the observed $t$ to it. The confidence interval is a range on the scale of the data (dB here), built around $\bar{x}$, and we check whether it contains $\mu_0$. Both use the same $t_{crit}$ and the same standard error, so they agree.
 
 **Interpretation.** The mean (`r round(x,0)` dB) is above the 50 dB guideline, but the difference is not statistically significant at $\alpha=0.05$.
 
@@ -333,7 +350,7 @@ Software needs two things from you to compute a $p$-value: the degrees of freedo
 
 ### One-tailed vs. two-tailed, applied
 
-Chapters 4 and 5 covered when each is justified. For a $t$-test, the choice changes the critical value, and therefore the $p$-value, for the exact same data.
+Chapters 4 and 5 covered when each is justified. For a $t$-test, the tail choice changes both the critical value and the $p$-value for the exact same data.
 
 For the highway noise example ($df=9$), a one-tailed test puts the whole 5% rejection region in one tail, so its critical value is 1.83. A two-tailed test splits the 5% into 2.5% in each tail, which pushes the critical values farther out, to $\pm 2.26$.
 
@@ -383,7 +400,7 @@ ggplot(plot_df, aes(x = range, y = null_distribution)) +
   labs(x = "t", y = "Density")
 ```
 
-For our result, $t(9) = 1.94$, the one-tailed $p$ is 0.042 and the two-tailed $p$ is 0.084, exactly double, because a two-tailed test counts the matching region in both tails. The choice changes the decision here. One-tailed, the result is significant at $\alpha = 0.05$. Two-tailed, it is not significant.
+For our result, $t(9) = 1.94$. A one-tailed test with $H_a$: $\mu > 50$ gives $p = 0.042$. The two-tailed test with $H_a$: $\mu \neq 50$ gives $p = 0.084$, exactly double, because a two-tailed test counts the matching region in both tails. The choice changes the decision here. One-tailed, the result is significant at $\alpha = 0.05$. Two-tailed, it is not significant.
 
 ### Assumptions, and what to do when they don't hold {#sec-6assumptions}
 
@@ -395,7 +412,7 @@ Every test in this book has assumptions. Assumptions are conditions that need to
 
 **Whether non-normality matters depends on $n$.** With a large sample, the sampling distribution of the sample mean tends toward normal even when individual observations are skewed (the central limit theorem), so once $n$ is reasonably large, the $t$-test's $p$-values stay close to correct even when the data are not normal. Much environmental field data comes from small samples that are also skewed. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit in a season. A $t$-test's answer becomes questionable when the sample is small and the data are also non-normal.
 
-**What to do about it.** First, look at your data. A histogram or a Q-Q plot (Chapter 9 shows how to read one) will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. Treat it as one more piece of evidence, though, rather than a strict gate. With a small sample, exactly when a violation matters most, it has low power and will often say "no problem" even when there is one. If your data look far from normal and your sample is small, you can use a nonparametric test instead, which does not assume normality (Chapter 7). You'll meet these nonparametric alternatives in the next chapter, once we've covered all three $t$-test forms below.
+**What to do about it.** First, look at your data. A histogram or a Q-Q plot (Chapter 9 shows how to read one) will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. A small Shapiro-Wilk $p$-value is evidence that the data did not come from a normal distribution. A large $p$-value means the test found no such evidence, which is weaker than showing the data are normal. Treat the result as one more piece of evidence alongside the plot. With a small sample, which is when a violation matters most, the test has low power and often fails to reject $H_0$ even when the data are far from normal. With a small sample, exactly when a violation matters most, it has low power and will often say "no problem" even when there is one. If your data look far from normal and your sample is small, you can use a nonparametric test instead, which does not assume normality (Chapter 7). You'll meet these nonparametric alternatives in the next chapter, once we've covered all three $t$-test forms below.
 
 @tbl-6card-onesample collects the one-sample $t$-test on one card.
 
@@ -436,7 +453,7 @@ The dashed boxes mark what makes this design paired. In the design figures in ea
 -   $d_i>0$: plot had more soil moisture after restoration (increase)
 -   $d_i<0$: plot had less soil moisture after restoration (decrease)
 
-This subtraction cancels between-plot variability (some plots are naturally wetter than others) and focuses on within-plot change. Because it removes those plot-to-plot differences, the paired test's standard error is smaller, so it has more power than an independent-samples test on the same data.
+This subtraction cancels between-plot variability (some plots are naturally wetter than others) and focuses on within-plot change. Because the subtraction removes those plot-to-plot differences, the difference scores vary less than the raw soil moisture values do. A smaller $s_d$ gives a smaller standard error, so the paired test has more power than an independent-samples test (the third test in this chapter) on the same data.
 
 -   $H_0$: $\mu_d = 0$, where $\mu_d$ is the mean difference score in the population of plots. Restoration did not change soil moisture.
 -   $H_a$: $\mu_d \neq 0$.
@@ -502,7 +519,7 @@ knitr::kable(paired_sample_df,
              caption = "Soil moisture (%) before and after restoration at five plots, with the steps for the paired t.")
 ```
 
-The five differences average 2.8 percentage points, with $s_d = 3.42$, so $SE_{\bar{d}} = 3.42/\sqrt{5} = 1.53$ and $t = 2.8/1.53 = 1.83$.
+The five differences are 3, 4, 6, 4, and $-3$. They add up to 14, so $\bar d = 14/5 = 2.8$ percentage points. The squared deviations from 2.8 add up to 46.8, so $s_d = \sqrt{46.8/4} = 3.42$. Then $SE_{\bar{d}} = 3.42/\sqrt{5} = 1.53$ and $t = 2.8/1.53 = 1.83$.
 
 R gives almost the same numbers. The table rounds at each step, so its values differ slightly from R's.
 
@@ -590,7 +607,7 @@ A natural first guess is to average the two groups' standard errors. Here $SE_A 
 
 $$t = \frac{\bar{x}_A-\bar{x}_B}{\left(\dfrac{SE_A+SE_B}{2}\right)}$$
 
-That average understates how much a difference between two means varies. The standard error of a difference between two independent means is $\sqrt{SE_A^2 + SE_B^2}$, which is always larger than the average of the two SEs. Instead of averaging, the independent-samples $t$-test assumes the two populations share one variance. Both samples estimate that shared variance, so the test combines them, which gives a better estimate, with more degrees of freedom, than either group alone. The **pooled variance**, $s_p^2$, is that combined estimate, a weighted average of the two sample variances, $s_A^2$ and $s_B^2$, with each weighted by its degrees of freedom (Chapter 1's weighted mean). The **pooled standard deviation**, $s_p$, is its square root, and the standard error of the difference is built from it:
+That average understates how much a difference between two means varies. The standard error of a difference between two independent means is $\sqrt{SE_A^2 + SE_B^2}$, because variances add when two independent quantities are subtracted. This is always larger than the average of the two SEs. The pooled independent-samples $t$-test also assumes the two populations share one variance. Both samples estimate that shared variance, so the test combines them, which gives a better estimate, with more degrees of freedom, than either group alone. The **pooled variance**, $s_p^2$, is that combined estimate, a weighted average of the two sample variances, $s_A^2$ and $s_B^2$, with each weighted by its degrees of freedom (Chapter 1's weighted mean). The **pooled standard deviation**, $s_p$, is its square root. Putting $s_p^2$ in place of each group's variance in $\sqrt{SE_A^2 + SE_B^2}$ gives $\sqrt{s_p^2/n_A + s_p^2/n_B} = s_p\sqrt{1/n_A + 1/n_B}$, the denominator below:
 
 $$t = \frac{\bar{x}_A-\bar{x}_B}{s_p\sqrt{\dfrac{1}{n_A}+\dfrac{1}{n_B}}}$$
 
@@ -645,6 +662,8 @@ sp <- sqrt(sp_numerator/sp_denominator) # compute sp
 
 t <- mean_difference / (sp * sqrt(1/n_a + 1/n_b))
 ```
+
+Group A's counts (1, 2, 3, 4, 5) have mean 3.0 and variance 2.5. Group B's counts (3, 5, 4, 7, 9) have mean 5.6 and variance 5.8. The pooled variance is $(4 \times 2.5 + 4 \times 5.8)/8 = 4.15$, so $s_p = \sqrt{4.15} = 2.04$. The standard error of the difference is $2.04\sqrt{1/5 + 1/5} = 1.29$, and $t = (3.0 - 5.6)/1.29 = -2.02$.
 
 ```{r}
 #| echo: true
@@ -768,7 +787,7 @@ for (i in 1:1000) {
 hist_p(save_ps)
 ```
 
-The $p$-values in @fig-6flatp are flat, as they should be when $H_0$ is true. This means you have the same chance of getting a $t$ with a p-value between 0 and 0.05 as you would of getting one between 0.90 and 0.95. Those ranges are both ranges of 5%, so they hold an equal share of the $t$ values by definition.
+The $p$-values in @fig-6flatp are flat, as they should be when $H_0$ is true. Under $H_0$, the critical values are set so that the test rejects at $\alpha = 0.05$ in 5% of samples, at $\alpha = 0.10$ in 10% of samples, and so on for any $\alpha$. A $p$-value falls below 0.05 in 5% of tests and below 0.10 in 10% of tests, so every range of $p$-values 0.05 wide, such as 0 to 0.05 or 0.90 to 0.95, holds about 5% of the tests.
 
 The first bar holds the `r sum(save_ps < 0.05)` $p$-values below 0.05. Each one is a test that rejected a true $H_0$, a Type I error. Together they make up about 5% of the 1,000, which is the $\alpha$ we chose.
 

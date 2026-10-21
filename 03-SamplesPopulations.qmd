@@ -136,7 +136,7 @@ A **conditional probability** is the probability of one thing *given that* somet
 
 We write the second one as $P(\text{exceed} \mid \text{heavy rain}) = 0.60$, read "the probability of exceeding the threshold given heavy rain." The event you are asking about goes to the left of the bar, and the condition you already know goes to the right.
 
-The order matters. Suppose heavy rain comes before 10% of days. Then 6% of all days are rainy days that exceed the threshold (60% of 10%). This 6% is the probability that both things happen on a day, counted among all days. The conditional probabilities count among a smaller group of days. Among the 20% of days that exceed it, those 6% give $P(\text{heavy rain} \mid \text{exceed}) = 0.06/0.20 = 0.30$. Flipping the two sides of the bar turned 0.60 into 0.30, because each version counts within a different group of days.
+The order matters. Suppose heavy rain comes before 10% of days. Then 6% of all days are rainy days that exceed the threshold (60% of 10%). This 6% is the probability that both things happen on a day, counted among all days. The conditional probabilities count among a smaller group of days. Among the 20% of days that exceed it, those 6% give $P(\text{heavy rain} \mid \text{exceed}) = 0.06/0.20 = 0.30$. The division follows the general rule for a conditional probability, $P(A \mid B) = P(A \text{ and } B)/P(B)$, which keeps only the days where the condition holds. Flipping the two sides of the bar turned 0.60 into 0.30, because each version counts within a different group of days.
 
 The step from 60% of 10% to 6% is the **multiplication rule**. The probability that two events both happen is the probability of the first times the conditional probability of the second given the first:
 
@@ -310,7 +310,7 @@ pnorm(q = 1.64, mean = 0, sd = 1)
 
 In a normal distribution with a mean of 0 and standard deviation of 1, the probability the value is less than or equal to 1.64 is about 95%.
 
-"Less than or equal to" and "less than" give the same answer here. In general, $P(X \ge a) = P(X > a) + P(X = a)$, and for a continuous variable that last term is zero. So `pnorm(q = 1.64, mean = 0, sd = 1, lower.tail = FALSE)` gives both $P(X > 1.64)$ and $P(X \ge 1.64)$, and R never has to decide whether the cutoff itself is included. For a discrete variable like the binomial, $P(X = a)$ is a bar with nonzero height, so the two are different. With 20 fair coin flips, $P(X \le 4)$ is about 0.6%, but $P(X < 4) = P(X \le 3)$ is about 0.1%.
+"Less than or equal to" and "less than" give the same answer here. In general, $P(X \ge a) = P(X > a) + P(X = a)$, and for a continuous variable that last term is zero. Setting `lower.tail = FALSE` tells `pnorm()` to return the area above the cutoff instead of below it. So `pnorm(q = 1.64, mean = 0, sd = 1, lower.tail = FALSE)` gives both $P(X > 1.64)$ and $P(X \ge 1.64)$, and R never has to decide whether the cutoff itself is included. For a discrete variable like the binomial, $P(X = a)$ is a bar with nonzero height, so the two are different. With 20 fair coin flips, $P(X \le 4)$ is about 0.6%, but $P(X < 4) = P(X \le 3)$ is about 0.1%.
 
 2.  Value for a percentile, e.g. the 97.5th percentile:
 
@@ -441,7 +441,7 @@ Random samples are the ideal, and in many areas of environmental science they ar
 
 ### How much does it matter if you don't have a random sample?
 
-A non-random sample matters when the way you sampled could plausibly distort the conclusions. Stratified sampling that deliberately oversamples small strata over-represents those groups, but weighting each stratum in the analysis corrects for it. Opportunistic samples can be acceptable if the bias is unlikely to affect the phenomenon being studied. For example, if you want to study tree growth rates, sampling only trees on one side of a valley may or may not be problematic, depending on whether the valley side influences growth. If the north-facing side gets less sun and its trees grow more slowly, a sample from that side alone would underestimate growth for the whole valley.
+A non-random sample matters when the way you sampled could plausibly distort the conclusions. Stratified sampling that deliberately oversamples small strata over-represents those groups. The analysis corrects for this by weighting each stratum, the same idea as the weighted mean in Chapter 1, so that each stratum counts in proportion to its share of the population. Opportunistic samples can be acceptable if the bias is unlikely to affect the phenomenon being studied. For example, if you want to study tree growth rates, sampling only trees on one side of a valley may or may not be problematic, depending on whether the valley side influences growth. If the north-facing side gets less sun and its trees grow more slowly, a sample from that side alone would underestimate growth for the whole valley.
 
 When designing your own studies, choose a sampling method that reaches the whole population you want to draw conclusions about. And when critiquing others, be specific about how a sampling choice might bias results. Noting that a sample is not random does not say which way the results would be off.
 
@@ -759,7 +759,7 @@ Neither fact needs the central limit theorem. Both come from how averages of ind
 
 The law of large numbers follows from the standard error. Because $\sigma/\sqrt{n}$ shrinks toward zero as $n$ grows, a single sample's $\bar{x}$ becomes very likely to be close to $\mu$, and that is the law of large numbers. The formal argument uses [Chebyshev's inequality](https://en.wikipedia.org/wiki/Law_of_large_numbers#Proof_using_Chebyshev%27s_inequality_assuming_finite_variance), but this is the idea we need.
 
-The second fact also gives the width of @fig-3unifmany. The numbers 1 to 10 have $\sigma = 2.87$, so with $n = 20$ the formula gives $\sigma/\sqrt{n} = 2.87/\sqrt{20} = 0.64$. The standard deviation of the 10,000 sample means in @fig-3unifmany is `r sprintf("%.2f", sd(unif_means))`, matching the formula.
+The second fact also gives the width of @fig-3unifmany. The numbers 1 to 10 have mean 5.5. Their population variance is the average squared distance from 5.5, $\frac{1}{10}\sum_{x=1}^{10}(x - 5.5)^2 = 82.5/10 = 8.25$, so $\sigma = \sqrt{8.25} = 2.87$. With $n = 20$ the formula gives $\sigma/\sqrt{n} = 2.87/\sqrt{20} = 2.87/4.47 = 0.64$. The standard deviation of the 10,000 sample means in @fig-3unifmany is `r sprintf("%.2f", sd(unif_means))`, matching the formula.
 
 ## The central limit theorem
 
@@ -903,7 +903,7 @@ Together, these figures show the central limit theorem at work. The sampling dis
 
 $$SE_{\bar{x}} = \frac{\sigma}{\sqrt{n}}.$$
 
-This formula shows how sample size controls the precision of $\bar{x}$, meaning how little $\bar{x}$ varies from sample to sample. As $n$ increases, the denominator grows and the SE falls. The SE falls with the square root of $n$, so doubling $n$ cuts the SE by only about 30%, and each further increase in sample size gives a smaller gain in precision. In @fig-3samplingmean, going from $n = 2$ to $n = 8$, six more observations, cuts the SE from 0.71 to 0.35. Going from $n = 32$ to $n = 128$, 96 more observations, cuts it from 0.18 to 0.09. Larger samples still produce more stable estimates of $\mu$.
+This formula shows how sample size controls the precision of $\bar{x}$, meaning how little $\bar{x}$ varies from sample to sample. As $n$ increases, the denominator grows and the SE falls. The SE falls with the square root of $n$. Doubling $n$ divides the SE by $\sqrt{2} = 1.41$, which multiplies it by $1/1.41 = 0.71$, a cut of about 30%. Each further increase in sample size gives a smaller gain in precision. In @fig-3samplingmean, going from $n = 2$ to $n = 8$, six more observations, cuts the SE from 0.71 to 0.35. Going from $n = 32$ to $n = 128$, 96 more observations, cuts it from 0.18 to 0.09. Larger samples still produce more stable estimates of $\mu$.
 
 The facts about sample means in this chapter fall into two groups: three facts about the pile of sample means, and the law of large numbers, which is about a single sample.
 
@@ -1232,7 +1232,7 @@ gridExtra::grid.arrange(
 
 Measured from $\bar{x}$, the sum of squared distances is 14. Measured from the true mean, it is 17. The distances from $\bar{x}$ come out smaller because $\bar{x}$ was calculated from these same three values. This happens in every sample. The sum of squared distances is smallest around the sample's own mean, so it is never larger than the sum around $\mu$.
 
-The gap between the two sums has an exact size, and that size is where the $n - 1$ comes from. In this sample it is 17 − 14 = 3, which equals $n(\bar{x} - \mu)^2 = 3 \times (5 - 6)^2$. The same holds in every sample. The sum around $\mu$ always equals the sum around $\bar{x}$ plus $n(\bar{x} - \mu)^2$. On average, $(\bar{x} - \mu)^2$ is the squared standard error, $\sigma^2/n$, so the gap averages $n \times \sigma^2/n = \sigma^2$. The sum around $\mu$ averages $n\sigma^2$, so the sum around $\bar{x}$ averages $(n-1)\sigma^2$, and dividing it by $n - 1$ gives $\sigma^2$ on average.
+The gap between the two sums has an exact size, and that size is where the $n - 1$ comes from. In this sample it is 17 − 14 = 3, which equals $n(\bar{x} - \mu)^2 = 3 \times (5 - 6)^2$. The same holds in every sample. The sum around $\mu$ always equals the sum around $\bar{x}$ plus $n(\bar{x} - \mu)^2$. The standard error is the standard deviation of the sampling distribution of $\bar{x}$, which is centered at $\mu$, so the average of $(\bar{x} - \mu)^2$ is the squared standard error, $\sigma^2/n$. The gap therefore averages $n \times \sigma^2/n = \sigma^2$. Each $(x_i - \mu)^2$ averages $\sigma^2$, because that is the definition of the population variance, so the sum of $n$ of them around $\mu$ averages $n\sigma^2$. The sum around $\bar{x}$ is the sum around $\mu$ minus the gap, so it averages $n\sigma^2 - \sigma^2 = (n-1)\sigma^2$. Dividing it by $n - 1$ gives $\sigma^2$ on average.
 
 Variance and SD are built from these squared distances, so they come out too small as well. Dividing the sum around $\bar{x}$ by $n$ gives a variance that underestimates $\sigma^2$, and the sample SD inherits that bias. Dividing by $n-1$ instead corrects it.
 
@@ -1358,7 +1358,7 @@ $$SE_{\bar{x}} = \frac{\sigma}{\sqrt{n}}$$
 **The switch from probability to statistics.** Until now, every simulation in this chapter started from a population we chose and asked what samples it produces. That is probability, model → data. Here we start from one observed $\bar{x}$ and reason back to $\mu$, which we don't know. That is statistics, data → model, and it is the direction the rest of the book runs.
 :::
 
-In practice we want the reverse: given an observed $\bar x$, what can we say about $\mu$? The statement "$\bar x$ is within 1.96 standard errors of $\mu$" is the inequality $|\bar{x} - \mu| \le 1.96\,\sigma/\sqrt{n}$. Rearranging it gives
+In practice we want the reverse: given an observed $\bar x$, what can we say about $\mu$? The statement "$\bar x$ is within 1.96 standard errors of $\mu$" is the inequality $|\bar{x} - \mu| \le 1.96\,\sigma/\sqrt{n}$. Without the absolute value, it says $-1.96\,\sigma/\sqrt{n} \le \bar{x} - \mu \le 1.96\,\sigma/\sqrt{n}$. Subtracting $\bar{x}$ from each part and multiplying by $-1$, which reverses the inequality signs, gives
 
 $$\bar{x} - 1.96\,\frac{\sigma}{\sqrt{n}} \le \mu \le \bar{x} + 1.96\,\frac{\sigma}{\sqrt{n}}$$
 

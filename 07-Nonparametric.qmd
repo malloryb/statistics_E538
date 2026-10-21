@@ -148,7 +148,7 @@ knitr::kable(
 )
 ```
 
-The Shapiro-Wilk test agrees with the picture ($p=0.039$). Three plots didn't change at all, three dropped slightly, and the rest rose by 3 to 8 points. That is not symmetric, let alone normal. The $t$-test's "significant" result depends on an assumption the data don't meet, so we turn to the Wilcoxon signed-rank test.
+The Shapiro-Wilk test (Chapter 6) has the null hypothesis that the data came from a normal distribution. Here $p = 0.039$, below 0.05, so the test rejects normality for the differences and agrees with the picture. Three plots didn't change at all, three dropped slightly, and the rest rose by 3 to 8 points. That is not symmetric, let alone normal. The $t$-test's "significant" result depends on an assumption the data don't meet, so we turn to the Wilcoxon signed-rank test.
 
 **The question.** Did soil moisture systematically change after restoration, or is any change we see just plot-to-plot noise?
 
@@ -156,9 +156,9 @@ The Shapiro-Wilk test agrees with the picture ($p=0.039$). Three plots didn't ch
 
 -   $H_a$: the median difference is not 0.
 
-**How it works, conceptually.** Instead of using the actual sizes of the differences, the test ranks the *absolute* differences from smallest to largest, then checks whether the positive-signed ranks and negative-signed ranks are roughly balanced. Balanced ranks are the null case, meaning a plot's rank (how extreme its change was) has nothing to do with whether that change was an increase or a decrease. If soil moisture really increased at most plots, the larger ranks should belong mostly to positive differences instead. Because the test uses ranks, the plot that rose by 8 points gets the top rank, 9, and it would get the same rank if it had risen by 30. One extreme plot can't dominate the result the way it could dominate a mean.
+**How it works, conceptually.** Instead of using the actual sizes of the differences, the test ranks the *absolute* differences from smallest to largest, then checks whether the positive-signed ranks and negative-signed ranks are roughly balanced. Balanced ranks are the null case, meaning a plot's rank (how extreme its change was) has nothing to do with whether that change was an increase or a decrease. If soil moisture really increased at most plots, the larger ranks should belong mostly to positive differences instead. Because the test uses ranks, the plot that rose by 8 points gets the top rank, 9, and it would get the same rank if it had risen by 30. The top rank is 9 instead of 12 because the three plots with no change drop out of the test, as explained below. One extreme plot can't dominate the result the way it could dominate a mean.
 
-**Its assumption.** The Wilcoxon signed-rank test does not require normality, but it assumes the differences come from a symmetric distribution around their median. That's a milder assumption than normality (symmetric-but-not-normal distributions are common), but our histogram above strains it: the positive side stretches to 8, the negative side barely reaches -1. We'll run the test anyway, since it's still the better-justified choice here, and note the problem when we interpret the result.
+**Its assumption.** The Wilcoxon signed-rank test does not require normality, but it assumes the differences come from a symmetric distribution around their median. That's a milder assumption than normality (symmetric-but-not-normal distributions are common), but our histogram above strains it: the positive side stretches to 8, the negative side barely reaches -1. We'll run the test anyway, because its symmetry assumption is still milder than the $t$-test's normality assumption and the 8-point plot counts only as the top rank. We will note the problem when we interpret the result.
 
 ```{r}
 #| echo: true
@@ -558,7 +558,7 @@ knitr::kable(
 )
 ```
 
-Summing the last column: $2.88+2.42+0.08+0.02 = 5.40$, matching R's statistic above. For goodness-of-fit, $df = k-1$, where $k$ is the number of categories: $4-1=3$. With $df = 3$, the critical value at $\alpha = 0.05$ is 7.81 (the same one marked in @fig-7chisq-crit). Our 5.40 falls well short of it.
+Summing the last column: $2.88+2.42+0.08+0.02 = 5.40$, matching R's statistic above. For goodness-of-fit, $df = k - 1$, where $k$ is the number of categories. Once three zone counts are known, the fourth is fixed because all four must add to 200, so $df = 4 - 1 = 3$. With $df = 3$, the critical value at $\alpha = 0.05$ is 7.81 (the same one marked in @fig-7chisq-crit). Our 5.40 falls well short of it.
 
 **Interpretation.** $\chi^2(3) = 5.40$, $p = 0.145$, so the result is not significant. This year's zone counts are consistent with the historical 25%-each pattern. The unevenness we see is within the range chance alone would produce.
 
@@ -634,7 +634,7 @@ knitr::kable(
 )
 ```
 
-**Assumption.** Same rule as goodness-of-fit: expected counts should generally be 5 or more in every cell of the table. Unlike the goodness-of-fit test, where expected counts came from a stated proportion (25% per zone), here they come from the table's own row and column totals: the expected count for a cell is $\frac{\text{row total} \times \text{column total}}{\text{grand total}}$. In both chi-square tests, the expected count is the count $H_0$ predicts. In this test $H_0$ is independence, so the prediction comes from the row and column totals. For Parkland/No, that's $\frac{50 \times 87}{150} = 29$ (50 parkland blocks total, 87 blocks total that did not top 40°C, 150 blocks overall).
+**Assumption.** Same rule as goodness-of-fit: expected counts should generally be 5 or more in every cell of the table. Unlike the goodness-of-fit test, where expected counts came from a stated proportion (25% per zone), the expected counts here come from the table's own row and column totals. In both chi-square tests, the expected count is the count $H_0$ predicts. In this test $H_0$ is independence. If land use and temperature are unrelated, parkland blocks should make up the same share of the 87 blocks that did not top 40°C as they do of all 150 blocks, which is $\frac{50}{150}$, or one third. That gives an expected count of $87 \times \frac{50}{150} = 29$ for Parkland/No. In general, the expected count for a cell is $\frac{\text{row total} \times \text{column total}}{\text{grand total}}$.
 
 ```{r}
 knitr::kable(round(indep_test$expected, 1), caption = "Expected counts under H0 (independence).")
@@ -650,7 +650,7 @@ contrib_tab <- (tab - indep_test$expected)^2 / indep_test$expected
 knitr::kable(round(contrib_tab, 2), caption = "Chi-square contribution by cell.")
 ```
 
-Summing all six cells: $5.83+8.05+0.55+0.76+2.79+3.86 = 21.84$, matching R's statistic above. For a test of independence, $df = (\text{rows} - 1)(\text{columns} - 1)$: $(3-1)(2-1)=2$. The number of blocks never enters. With $df=2$, the critical value at $\alpha=0.05$ is `r round(qchisq(.95, 2), 2)`; our $21.84$ is more than three times that, which is where $p<0.001$ comes from.
+Summing all six cells: $5.83+8.05+0.55+0.76+2.79+3.86 = 21.84$, matching R's statistic above. For a test of independence, $df = (\text{rows} - 1)(\text{columns} - 1)$, here $(3 - 1)(2 - 1) = 2$. With the row and column totals fixed, filling in two cells of the No column determines every other cell. The number of blocks never enters. With $df=2$, the critical value at $\alpha = 0.05$ is `r round(qchisq(.95, 2), 2)`, and our 21.84 is far beyond it. The critical value at $\alpha = 0.001$ is `r round(qchisq(.999, 2), 2)`, and 21.84 is beyond that too, so $p < 0.001$.
 
 **Interpretation.** $\chi^2(2) = 21.84$, $p < 0.001$, so the result is significant. Topping 40°C is not independent of land use. To see how the two variables are related, look at the table. Divide within each row to get the share of blocks that topped 40°C for each land use (@tbl-7heatshare).
 
@@ -662,7 +662,7 @@ Summing all six cells: $5.83+8.05+0.55+0.76+2.79+3.86 = 21.84$, matching R's sta
 
 : Share of city blocks that topped 40°C, by land use. {#tbl-7heatshare}
 
-Dividing within a row matters because raw counts only compare fairly when the row totals match. Residential and commercial blocks topped 40°C three to four times as often as parkland blocks. The test says the two variables are related, but, like correlation, it does not by itself establish that land use *causes* the heat.
+Here every land use has 50 blocks, so the raw counts already compare fairly. With unequal row totals they would not, which is why we divide within each row. Residential and commercial blocks topped 40°C three to four times as often as parkland blocks. The test says the two variables are related, but, like correlation, it does not by itself establish that land use *causes* the heat.
 
 @tbl-7card-indep collects the chi-square test of independence on one card.
 

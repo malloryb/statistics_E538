@@ -288,9 +288,7 @@ Formally, this means the signed distances from the mean always cancel out:
 
 $(1-5)+(2-5)+(6-5)+(7-5)+(9-5)=0$
 
-The mean is the only value for which the sum of deviations equals zero:
-
-$\sum_{i=1}^{N}(x_{i}-a) = 0 \quad \Rightarrow \quad a = \bar{x}$
+The mean is the only value for which the sum of deviations equals zero. Write $a$ for any candidate balancing point. The sum of deviations from $a$ is $\sum(x_i - a) = \sum x_i - Na$. That sum is zero only when $Na = \sum x_i$, so $a = \sum x_i / N$, which is the mean.
 
 Because the deviations always cancel, their sum cannot summarize variation, so we need a way around the cancellation.
 
@@ -316,7 +314,7 @@ knitr::kable(the_df)
 
 ```
 
-The first score of 1 is 4 below the mean, so its deviation is $-4$ and its squared deviation is $(-4)^2 = 16$. Now that nothing is negative, we can add them up. The **sum of squares (SS)** is the total of the squared deviations from the mean. For these five scores it is 46:
+The first score of 1 is 4 below the mean, so its deviation is $-4$ and its squared deviation is $(-4)^2 = 16$. Now that nothing is negative, we can add them up. The **sum of squares (SS)** is the total of the squared deviations from the mean. For these five scores it is $16 + 9 + 1 + 4 + 16 = 46$. The formula is
 
 $$SS = \sum_{i=1}^{N}(x_{i}-\bar{x})^2$$
 
@@ -548,7 +546,10 @@ ggplot(quad_df, aes(x = chocolate, y = happiness)) +
   theme(legend.position = "bottom")
 ```
 
-The formula above divides by $N$, which is the population version, and that is what the table computes. R's `cov()` and `sd()` divide by $n-1$ instead, for a reason Chapter 3 explains. The two differ only by a factor of $n/(n-1)$, and that factor cancels completely in Pearson's $r$ below, so $r$ comes out identical either way. If you compute the covariance itself in R, though, expect a number 10/9 times the one in this table, about 11% larger, because the table has $n = 10$.
+The formula above divides by $N$, which is the population version, and that is what the table computes. R's `cov()` and `sd()` divide by $n-1$ instead, for a reason Chapter 3 explains. Dividing by $n-1$ makes the covariance $n/(n-1)$ times larger. It makes each standard deviation $\sqrt{n/(n-1)}$ times larger, so the product of the two standard deviations is also $n/(n-1)$ times larger. Pearson's $r$, defined below, divides the covariance by that product, so the factor cancels and $r$ comes out identical either way:
+
+$$\frac{\frac{n}{n-1}\,\text{cov}(X,Y)}{\sqrt{\frac{n}{n-1}}\,\sigma_X \cdot \sqrt{\frac{n}{n-1}}\,\sigma_Y} = \frac{\cancel{\frac{n}{n-1}}\,\text{cov}(X,Y)}{\cancel{\frac{n}{n-1}}\,\sigma_X \sigma_Y} = \frac{\text{cov}(X,Y)}{\sigma_X \sigma_Y}$$
+ If you compute the covariance itself in R, though, expect a number 10/9 times the one in this table, about 11% larger, because the table has $n = 10$.
 
 The size of a covariance is hard to interpret. Just as variance is tied to squared units, covariance is tied to the scales of both variables. If happiness were scored from 0 to 10 instead of 0 to 100, every happiness deviation would be one-tenth as large, and so would the covariance, even though the relationship between chocolate and happiness would be the same. A covariance of `r sprintf('%.1f', cov_N)` therefore isn't inherently "large" or "small" the way a correlation is. All we can read directly from it is the sign, not the strength. To compare strength across variables with different units or scales, we rescale the covariance, and the rescaled value is Pearson's $r$.
 
@@ -614,30 +615,27 @@ With one variable, we use the mean to describe central tendency in one dimension
 
 We could draw many lines through a scatter of points, but most would miss the pattern. The best-fit line is the one with the least error, defined precisely below.
 
-Most dots do not fall exactly on the line, so some error is inevitable. @fig-2regressionResiduals shows what that error looks like. A blue line runs through the black dots, and a short red vertical line drops from each dot to the line. The white circles on the line are the line's predicted values. The red lines are residuals. A **residual** is the vertical distance from a data point to the fitted line, the observed $y$ minus the $y$ the line predicts.
+Most dots do not fall exactly on the line, so some error is inevitable. @fig-2regressionResiduals shows what that error looks like for the first 20 people in the chocolate and happiness data. A blue line runs through the black dots, and a short red vertical line drops from each dot to the line. The white circles on the line are the line's predicted values. The red lines are residuals. A **residual** is the vertical distance from a data point to the fitted line, the observed $y$ minus the $y$ the line predicts.
 
 ```{r}
 #| label: fig-2regressionResiduals
 #| fig-cap: "Black dots are the data, white dots are the values the regression line predicts, and the red lines are the residuals between them."
-#| fig-alt: "Scatter of black points around a downward blue regression line, with red vertical segments from each point to a hollow predicted point on the line."
+#| fig-alt: "Scatter of 20 black points around an upward blue regression line, chocolate supply on the x-axis and happiness on the y-axis, with red vertical segments from each point to a hollow predicted point on the line."
 
 # Residual plot adapted from Simon Jackson, https://drsimonj.svbtle.com/visualising-residuals
-d <- mtcars
-fit <- lm(mpg ~ hp, data = d)
+# The first 20 people from the chocolate and happiness data, so the residuals stay readable
+d <- data.frame(chocolate = chocolate[1:20], happiness = happiness[1:20])
+fit <- lm(happiness ~ chocolate, data = d)
 d$predicted <- predict(fit)   # Save the predicted values
 d$residuals <- residuals(fit) # Save the residual values
 
-ggplot(d, aes(x = hp, y = mpg)) +
+ggplot(d, aes(x = chocolate, y = happiness)) +
   geom_smooth(method = "lm", se = FALSE, color = "#008cff", linewidth = 1.2) +  # Plot regression slope
-  geom_segment(aes(xend = hp, yend = predicted), color = "#b22222", alpha = .5) +  # alpha to fade lines
+  geom_segment(aes(xend = chocolate, yend = predicted), color = "#b22222", alpha = .5) +  # alpha to fade lines
   geom_point(color = "black") +
   geom_point(aes(y = predicted), shape = 21, fill = "white", color = "black", size = 2.2) +
   theme(legend.position="none")+
-  xlab("Horsepower")+ylab("Miles per gallon")
-
-# Quick look at the actual, predicted, and residual values
-#library(dplyr)
-#d %>% select(mpg, predicted, residuals) %>% head()
+  xlab("Chocolate supply")+ylab("Happiness")
 
 ```
 
@@ -657,34 +655,28 @@ knitr::include_graphics(path="imgs/gifs/regression-1.gif")
 :::
 
 ::: {.content-visible when-format="pdf"}
-![The black line moves through alternative positions while the blue best-fit line stays put. Red lines show each point's error. The gray band's width is the typical size of those errors, and the band is narrowest when the black line lies on the best-fit line. (Final frame. The animated version is in the web edition of this book.)](imgs/gifs/stills/regression-1.png){#fig-2regressionGIF fig-alt="Final frame of an animation. A scatter plot of about 30 points has a blue best-fit line sloping down from left to right. A black line with the same slope sits below the points. Red vertical segments join each point to the black line, and a wide gray band shows the typical size of those errors." width="75%"}
+![The black line moves through alternative positions while the blue best-fit line stays put. Red lines show each point's error. The gray band's width is the typical size of those errors, and the band is narrowest when the black line lies on the best-fit line. (Final frame. The animated version is in the web edition of this book.)](imgs/gifs/stills/regression-1.png){#fig-2regressionGIF fig-alt="Final frame of an animation. A scatter plot of 20 people, chocolate supply against happiness, has a blue best-fit line sloping up from left to right. A black line with the same slope sits below most of the points. Red vertical segments join each point to the black line, and a wide gray band shows the typical size of those errors." width="75%"}
 :::
 
-In @fig-2minimizeSS, each dot is one position of the black line. The x-axis is the shift in the line's y-intercept (the height at which the line crosses $x = 0$), from $-6$ to $+6$, and 0 is the best-fit line. For each position we square the length of every red line from the animation above and add them up, giving the total sum of squared residuals. The dots start high on the left, fall to a minimum in the middle, and rise again on the right. The minimum is at 0, the best-fit regression line.
+In @fig-2minimizeSS, each dot is one position of the black line. The x-axis is the shift in the line's y-intercept (the height at which the line crosses $x = 0$), from $-30$ to $+30$, and 0 is the best-fit line. For each position we square the length of every red line from the animation above and add them up, giving the total sum of squared residuals. The dots start high on the left, fall to a minimum in the middle, and rise again on the right. The minimum is at 0, the best-fit regression line.
 
 ```{r}
 #| label: fig-2minimizeSS
 #| fig-cap: "A plot of the sum of squared residuals for lines moved up and down through the best-fit line. The best-fit line is at the position with the smallest sum of squared residuals."
-#| fig-alt: "U-shaped set of dots for the sum of squared residuals against change to the y-intercept from -6 to 6, lowest at 0."
+#| fig-alt: "U-shaped set of dots for the sum of squared residuals against change to the y-intercept from -30 to 30, lowest at 0."
 #| out-width: "75%"
 
-d <- mtcars
-fit <- lm(mpg ~ hp, data = d)
-d$predicted <- predict(fit)   # Save the predicted values
-d$residuals <- residuals(fit) # Save the residual values
+d <- data.frame(chocolate = chocolate[1:20], happiness = happiness[1:20])
+coefs <- coef(lm(happiness ~ chocolate, data = d))
 
-coefs<-coef(lm(mpg ~ hp, data = mtcars))
-#coefs[1]
-#coefs[2]
-
-x<-d$hp
-move_line<-seq(-6,6,.5)
+x<-d$chocolate
+move_line<-seq(-30,30,2.5)
 total_error<-c(length(move_line))
 cnt<-0
 for(i in move_line){
   cnt<-cnt+1
   predicted_y <- coefs[2]*x + coefs[1]+i
-  error_y <- (predicted_y-d$mpg)^2
+  error_y <- (predicted_y-d$happiness)^2
   total_error[cnt]<-sum(error_y)
 }
 df<-data.frame(move_line,total_error)
@@ -803,7 +795,7 @@ Each of the 1,000 values in @fig-2histrandcor is the $r$ from one run of the lot
 
 The **chance window** is the distribution of results that chance alone produces when a study with no real effect is repeated many times. @fig-2histrandcor is the chance window for the lottery game. When we compute a correlation in real data, we compare it with this window to judge whether chance alone could plausibly have produced it.
 
-For example, if you observed $r=0.1$, the histogram shows that such values are common in random data, so chance could easily explain it. An observed $r=0.5$ is less common but still possible by chance. An observed $r=0.95$, however, falls outside what chance typically produces, suggesting that something more systematic than chance produced the relationship.
+For example, with 10 pairs of values, if you observed $r=0.1$, the histogram shows that such values are common in random data, so chance could easily explain it. An observed $r=0.5$ is less common but still possible by chance. An observed $r=0.95$, however, falls outside what chance typically produces, suggesting that something more systematic than chance produced the relationship.
 
 ### Sample size and stability
 
@@ -939,7 +931,7 @@ ggplot(snake_df, aes(x=water,y=growth))+
 
 Growth rises and then falls as water increases, so the relationship does not run in one direction. When we compute Pearson's $r$ for these 1,000 plants, we get `r sprintf("%.3f", cor(growth, water))`, very close to zero.
 
-This means no *single straight line* describes the relationship. A **nonlinear relationship** is one that a straight line does not describe. The snake plant is an extreme case because the direction reverses: growth rises with water and then falls.
+Pearson's $r$ measures how well a single straight line describes a relationship. An $r$ near zero, when water does affect growth, means no *single straight line* describes this relationship. A **nonlinear relationship** is one that a straight line does not describe. The snake plant is an extreme case because the direction reverses: growth rises with water and then falls.
 
 In @fig-2snakeplant, the first half of the data gives $r = `r sprintf("%.2f", r_first)`$, the second half gives $r = `r sprintf("%.2f", r_second)`$, and the full dataset gives $r = `r sprintf("%.3f", r_all)`$, even though water causes the growth.
 
