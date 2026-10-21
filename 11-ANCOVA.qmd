@@ -376,7 +376,7 @@ If the covariate is measured with error, ANCOVA only partly adjusts for group di
 
 ### Birds, air pollution and area type
 
-Suppose we are studying the effect of air pollution on bird species density, and we want to know whether that relationship differs between urban and rural areas. @fig-11design lays out the design.
+Suppose we are studying the effect of air pollution, measured as PM2.5 (fine particulate matter, in µg/m³), on bird density, in birds per hectare, and we want to know whether that relationship differs between urban and rural areas. @fig-11design lays out the design.
 
 ```{r}
 #| label: fig-11design
@@ -385,9 +385,9 @@ Suppose we are studying the effect of air pollution on bird species density, and
 #| fig-asp: 0.36
 #| out-width: "100%"
 
-design_mixed("Air pollution (continuous) × Area type (categorical)",
+design_mixed("PM2.5 (continuous) × Area type (categorical)",
              "low", "high", "200 observations", c("Rural", "Urban"),
-             "Bird species density",
+             "Bird density (birds per hectare)",
              "Does the pollution–density relationship differ between rural and urban?",
              note = "full pollution range measured in BOTH groups")
 ```
@@ -424,7 +424,7 @@ First, we state the hypotheses for each step:
 
 ### The data
 
-The data in this example are invented. There are 200 sites, about half urban and half rural, with air pollution between 25 and 150. The true slope is $-0.05$ birds per unit of pollution at rural sites and $-0.15$ at urban sites, plus random scatter, so the fitted slopes below come out near these values but not on them. In this draw the fitted urban slope is about twice the rural slope, though the true urban slope is three times as steep.
+The data in this example are invented. There are 200 sites, about half urban and half rural, with PM2.5 between 5 and 30 µg/m³. The true slope is $-0.25$ birds per hectare for each 1 µg/m³ of PM2.5 at rural sites and $-0.75$ at urban sites, plus random scatter, so the fitted slopes below come out near these values but not on them. In this draw the fitted urban slope is about twice the rural slope, though the true urban slope is three times as steep.
 
 ```{r}
 # Fixed seed: the invented bird data, and every description of them below, depend on this draw
@@ -432,15 +432,15 @@ set.seed(123)
 
 n <- 200                                                     # number of sites
 area_type <- sample(c("Urban", "Rural"), n, replace = TRUE)  # randomly assign area type
-air_pollution <- round(runif(n, min = 25, max = 150), 1)     # continuous covariate
+air_pollution <- round(runif(n, min = 5, max = 30), 1)       # continuous covariate, PM2.5 in µg/m³
 urban <- ifelse(area_type == "Urban", 1, 0)                  # 0/1 indicator
 
 # Bird density declines with pollution everywhere, but more steeply in urban
 # sites. That difference in slopes is the interaction we want the model to find.
 bird_density <- 40 -
-  0.05 * air_pollution -                # rural slope
+  0.25 * air_pollution -                # rural slope
   3    * urban -                        # urban intercept offset
-  0.10 * air_pollution * urban +        # extra urban steepness (the interaction)
+  0.50 * air_pollution * urban +        # extra urban steepness (the interaction)
   rnorm(n, mean = 0, sd = 5)            # noise
 
 bird_density <- round(pmax(bird_density, 0), 0)
@@ -457,7 +457,7 @@ Before fitting the model, look at the data. @fig-11birddensity shows the outcome
 
 ggplot(data, aes(AreaType, BirdDensity)) +
   geom_boxplot(aes(fill = AreaType), show.legend = FALSE) +
-  labs(x = "Area type", y = "Bird density")
+  labs(x = "Area type", y = "Bird density (birds per hectare)")
 ```
 
 Bird density is higher at rural sites, with a median of `r median(data$BirdDensity[data$AreaType == "Rural"])` birds against `r median(data$BirdDensity[data$AreaType == "Urban"])` at urban sites, consistent with what we might expect ecologically.
@@ -471,10 +471,10 @@ Next, check the covariate, air pollution. If the covariate differs sharply betwe
 
 ggplot(data, aes(AreaType, AirPollution)) +
   geom_boxplot(aes(fill = AreaType), show.legend = FALSE) +
-  labs(x = "Area type", y = "Air pollution")
+  labs(x = "Area type", y = "PM2.5 (µg/m³)")
 ```
 
-Air pollution is similar at urban and rural sites. The medians are `r median(data$AirPollution[data$AreaType == "Rural"])` at rural sites and `r median(data$AirPollution[data$AreaType == "Urban"])` at urban sites, a small gap compared with the range of about 25 to 150. This plot doesn't test anything, but it tells us what to expect. Because pollution is similar in the two groups, a group difference in bird density is unlikely to come from a difference in pollution.
+Air pollution is similar at urban and rural sites. The medians are `r median(data$AirPollution[data$AreaType == "Rural"])` at rural sites and `r median(data$AirPollution[data$AreaType == "Urban"])` at urban sites, a small gap compared with the range of about 5 to 30 µg/m³. This plot doesn't test anything, but it tells us what to expect. Because pollution is similar in the two groups, a group difference in bird density is unlikely to come from a difference in pollution.
 
 ### Results of the ANCOVA model
 
@@ -547,7 +547,7 @@ A scatter plot with fitted regression lines (@fig-11ancovalines) lets us see how
 ggplot(data, aes(AirPollution, BirdDensity, color = AreaType)) +
   geom_point(alpha = 0.6) +
   geom_smooth(method = "lm", se = FALSE) +
-  labs(x = "Air pollution", y = "Bird density", color = "Area type")
+  labs(x = "PM2.5 (µg/m³)", y = "Bird density (birds per hectare)", color = "Area type")
 ```
 
 The two fitted lines have different slopes, which is the interaction the test detected. Both lines slope downward, so pollution is associated with fewer birds in both settings, but the urban line drops roughly twice as fast. The lines are about `r sprintf("%.1f", abs(coef(ancova_lm)[3] + coef(ancova_lm)[4]*min(data$AirPollution)))` birds apart at the lowest pollution levels and about `r sprintf("%.1f", abs(coef(ancova_lm)[3] + coef(ancova_lm)[4]*max(data$AirPollution)))` apart at the highest.
@@ -615,7 +615,7 @@ Centering doesn't change the slopes, the interaction, or their $p$-values. It mo
 
 -   **`AreaTypeUrban` ($`r sprintf("%.1f", cc["AreaTypeUrban"])`$).** At the mean pollution level, urban sites have about `r round(abs(cc["AreaTypeUrban"]))` fewer birds than rural sites.
 
--   **`AirPollution_c` ($`r sprintf("%.3f", cc["AirPollution_c"])`$).** Slope for rural sites: bird density falls by about `r sprintf("%.2f", abs(cc["AirPollution_c"]))` birds for each additional unit of pollution.
+-   **`AirPollution_c` ($`r sprintf("%.3f", cc["AirPollution_c"])`$).** Slope for rural sites: bird density falls by about `r sprintf("%.2f", abs(cc["AirPollution_c"]))` birds per hectare for each additional 1 µg/m³ of PM2.5.
 
 -   **Interaction ($`r sprintf("%.3f", cc["AirPollution_c:AreaTypeUrban"])`$).** Difference in slopes between groups. The urban slope = $`r sprintf("%.3f", cc["AirPollution_c"])` + (`r sprintf("%.3f", cc["AirPollution_c:AreaTypeUrban"])`) \approx `r sprintf("%.2f", cc["AirPollution_c"] + cc["AirPollution_c:AreaTypeUrban"])`$, roughly twice as steep a decline as in rural sites.
 
