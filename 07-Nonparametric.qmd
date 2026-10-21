@@ -85,7 +85,7 @@ A **nonparametric test** is a test whose null distribution does not depend on th
 
 The **rank** of a value is its position when the data are put in order from smallest to largest (first, second, third, and so on). Many nonparametric tests are run on the ranks instead of the raw values. The median is a familiar statistic that depends only on this ordering. It is the middle value once the data are put in order.
 
-**Rank-based tests also work on ordinal data.** Because the signed-rank and Mann-Whitney-Wilcoxon tests only need a rank ordering, neither is limited to interval- or ratio-scale measurements the way a $t$-test is. A $t$-test needs a mean, which requires numbers where the *distance* between values means something. Plenty of environmental data doesn't work that way: a water-quality rating (poor, fair, good, excellent), a disturbance-severity class, a Likert-style survey response. You can put those in order, but "the average disturbance class was 2.4" isn't meaningful the way "the average pH was 6.8" is.
+**Rank-based tests also work on ordinal data.** Because the rank-based tests in this chapter only need a rank ordering, they are not limited to interval- or ratio-scale measurements (Chapter 1) the way a $t$-test is. A $t$-test needs a mean, which requires numbers where the *distance* between values means something. Plenty of environmental data doesn't work that way: a water-quality rating (poor, fair, good, excellent), a disturbance-severity class, a Likert-style survey response. You can put those in order, but "the average disturbance class was 2.4" isn't meaningful the way "the average pH was 6.8" is.
 
 This chapter covers two different kinds of tools:
 
@@ -178,7 +178,7 @@ knitr::kable(
 )
 ```
 
-The three plots with no change drop out of the test. A zero difference can't be ranked as positive or negative, so the signed-rank test runs on the remaining 9 plots instead of all 12. The rank test already ignores the exact size of each change and keeps only its order, and dropping the zeros means it also works with less data than the $t$-test. The zeros and the tied differences (two plots at $+6$, three at $-1$) also keep R from using the exact null distribution, so R uses a normal approximation instead.
+The three plots with no change drop out of the test. A zero difference can't be ranked as positive or negative, so the signed-rank test runs on the remaining 9 plots instead of all 12. The rank test already ignores the exact size of each change and keeps only its order, and dropping the zeros means it also works with less data than the $t$-test. The zeros and the tied differences (two plots at $+6$, three at $-1$) also keep R from using the exact null distribution, so R uses a normal approximation instead. The exact null distribution is built below, after we calculate $V$. The normal approximation replaces it with a normal curve that has the same mean and SD.
 
 **How $V$ is calculated.** Drop the zero differences, take the absolute value of what's left, rank those absolute values from smallest to largest (tied absolute values share the average of their ranks), then sum the ranks belonging to the *positive* differences. For example, the three differences of $-1$ all have absolute value 1 and would take ranks 1, 2 and 3, so each gets rank 2. The two differences of $+6$ would take ranks 6 and 7, so each gets 6.5. That sum is $V$.
 
@@ -405,7 +405,7 @@ knitr::kable(
 
 The sodium ranks sum to $14+7+15+7+10+7+10+16 = 86$, so $U = 86 - 36 = 50$, matching the table R gave us above.
 
-**How the null distribution of $U$ is built.** Under $H_0$, both groups are draws from the same population. Once you pool and rank all $N = n_A + n_B = 16$ values, chance alone decides which ranks end up in the sodium group, so each of the $\binom{16}{8} = 12{,}870$ ways of splitting the 16 ranks into two groups of 8 is equally likely. No new sites are measured. Each split gives one $U$, the value our data would have produced if group labels had nothing to do with bat activity. Listing the $U$ for all 12,870 splits gives the exact null distribution of $U$, shown in @fig-7mww-null.
+**How the null distribution of $U$ is built.** Under $H_0$, both groups are draws from the same population. Once you pool and rank all $N = n_A + n_B = 16$ values, chance alone decides which ranks end up in the sodium group, so each of the $\binom{16}{8} = 12{,}870$ ways of splitting the 16 ranks into two groups of 8 is equally likely. ($\binom{16}{8}$, read "16 choose 8", counts the ways to pick 8 items out of 16.) No new sites are measured. Each split gives one $U$, the value our data would have produced if group labels had nothing to do with bat activity. Listing the $U$ for all 12,870 splits gives the exact null distribution of $U$, shown in @fig-7mww-null.
 
 ```{r}
 #| label: fig-7mww-null
@@ -442,7 +442,7 @@ The test does not need normality because nothing in this distribution assumed a 
 
 Every test so far (the $t$-tests in Chapter 6, and the signed-rank and Mann-Whitney-Wilcoxon tests above) needs a continuous outcome variable. But a lot of environmental data isn't continuous at all: a site either has an invasive species or it doesn't; a stream sample either exceeds a safety threshold or it doesn't; a plot falls into one land-cover category, not a number line. None of the tests above apply to categorical data. Counts in categories need a different test, the chi-square ($\chi^2$) test [@Pearson1900].
 
-The **chi-square distribution** is the family of curves that the $\chi^2$ statistic approximately follows when $H_0$ is true and expected counts are large enough. The test compares its statistic with this distribution. The symbol $\chi^2$ is used for both the statistic and the distribution, the way $t$ is. Because $\chi^2$ adds up squared gaps between observed and expected counts, it can never be negative, and a mismatch in either direction makes it bigger. A $\chi^2$ near 0 means the counts match the expectation closely, so only the upper tail counts against $H_0$. Like $t$, the chi-square distribution has one curve for each number of degrees of freedom (@fig-7chisq-shapes). With few degrees of freedom it is sharply right-skewed, and as $df$ grows it shifts right and becomes more symmetric.
+The **chi-square distribution** is the family of curves that the $\chi^2$ statistic approximately follows when $H_0$ is true and the expected counts (the counts $H_0$ predicts for each category, defined below) are large enough. The test compares its statistic with this distribution. The symbol $\chi^2$ is used for both the statistic and the distribution, the way $t$ is. Because $\chi^2$ adds up squared gaps between observed and expected counts, it can never be negative, and a mismatch in either direction makes it bigger. A $\chi^2$ near 0 means the counts match the expectation closely, so only the upper tail counts against $H_0$. Like $t$, the chi-square distribution has one curve for each number of degrees of freedom (@fig-7chisq-shapes). With few degrees of freedom it is sharply right-skewed, and as $df$ grows it shifts right and becomes more symmetric.
 
 ```{r}
 #| label: fig-7chisq-shapes
@@ -580,7 +580,7 @@ The **chi-square test of independence** asks whether two categorical variables m
 
 ```{r}
 #| label: fig-7indepdesign
-#| fig-cap: "A test-of-independence design. Two categorical variables are crossed, but unlike a factorial experiment the cells hold counts of units that landed there, not conditions units were assigned to."
+#| fig-cap: "A test-of-independence design. Two categorical variables are crossed, and each cell holds the count of blocks that fell into that combination. Nobody assigned the blocks to cells."
 #| fig-alt: "Study design schematic. Variables: land use with three levels crossed with whether the block topped 40°C. A three by two table of counts totaling 150 city blocks."
 #| fig-asp: 0.42
 #| out-width: "100%"

@@ -107,7 +107,7 @@ Which error costs more depends on the study. @tbl-5which-worse gives the cost of
 
 : The cost of each error in three tests. {#tbl-5which-worse}
 
-@fig-5recap-gif recaps the test from Chapter 4. The distance between the two sampling distributions, in standard errors, decides whether we reject $H_0$. As in Chapter 4, the figures treat $\sigma$ as known, so their standard error is $\sigma/\sqrt{n}$. The simulations later in the chapter run $t$-tests, which estimate it with $s/\sqrt{n}$ (Chapter 6).
+@fig-5recap-gif recaps the test from Chapter 4. It shows two sampling distributions of the sample mean. The blue one is centered on $\mu_0$ and shows the sample means we would expect if $H_0$ were true. The green one is centered on our sample's $\bar{x}$. The distance between their centers, in standard errors, decides whether we reject $H_0$. As in Chapter 4, the figures treat $\sigma$ as known, so their standard error is $\sigma/\sqrt{n}$. The simulations later in the chapter run $t$-tests, which estimate it with $s/\sqrt{n}$ (Chapter 6).
 
 ::: {.content-visible when-format="html"}
 ```{r}
@@ -150,9 +150,9 @@ error_panel(xbar = t2_xbar_se * err_se, mu = t2_mu_se * err_se, verdict = "Fail 
 
 Those two figures show what a wrong conclusion looks like for one unlucky sample. They do not show how *often* it happens. The green curve in them is built from that one sample, centered on its $\bar{x}$. To see how often an error happens, center the sampling distribution on a possible value of the true mean instead. That curve shows how far from $\mu_0$ the sample mean would be across all the samples we could have drawn if that value were the true mean.
 
-@fig-5alpha-beta does that. The blue curve is the sampling distribution of the sample mean under $H_0$, the one that sets the critical values. The orange curve is the sampling distribution of the sample mean if $\mu = \mu_a$. Because it shows sample means, it has the same width as the blue curve, and it is half as wide as the orange population curve in the last two figures.
+Chapter 4 drew the possible true populations under $H_a$ as a family of curves on either side of $\mu_0$, and $\mu_a$ is the center of one of them. In Chapter 4's terms, the curve centered on $\mu_a$ is one possible true population distribution, picked by us. The estimated population distribution is a different curve, built from the sample. $\mu_a$ is a value we choose, usually the smallest change that would alter what we do. Because we never know the true $\mu$, we ask how the test would perform if $\mu_a$ were true. The curve centered on $\mu_a$ is hypothetical, and $\mu_a$ is not the sample mean or a critical value. The farther $\mu_a$ is from $\mu_0$, the less likely the test is to miss the difference.
 
-Chapter 4 drew the possible true populations under $H_a$ as a family of curves on either side of $\mu_0$, and $\mu_a$ is the center of one of them. In Chapter 4's terms, the curve centered on $\mu_a$ is one possible true population distribution, picked by us. The estimated population distribution is a different curve, built from the sample. It is a value we choose, usually the smallest change that would alter what we do. Because we never know the true $\mu$, we ask how the test would perform if $\mu_a$ were true. The curve centered on $\mu_a$ is hypothetical, and $\mu_a$ is not the sample mean or a critical value. The farther $\mu_a$ is from $\mu_0$, the less likely the test is to miss the difference.
+@fig-5alpha-beta centers the sampling distribution on $\mu_a$. The blue curve is the sampling distribution of the sample mean under $H_0$, the one that sets the critical values. The orange curve is the sampling distribution of the sample mean if $\mu = \mu_a$. Because it shows sample means, it has the same width as the blue curve, and it is half as wide as the orange population curve in the last two figures.
 
 -   $\alpha$ is the red area in the tails of the blue curve, past the critical values. If $H_0$ is true, the blue curve is the sampling distribution of the sample mean, and $\alpha$ is how often the sample mean falls in the rejection region by chance. Computing $\alpha$ needs only the blue curve, so the top panel has no orange curve. The orange curve appears in the bottom panel, for $\beta$.
 -   $\beta$ is the gray area under the orange curve *between* the critical values. If $\mu = \mu_a$, that is how often the sample mean fails to reach the rejection region and a real difference goes undetected.
@@ -244,7 +244,7 @@ In @fig-5alpha-beta, $\mu_a$ is `r mua_ab / se_ab` standard errors above $\mu_0$
 
 **Sample size mainly affects Type II error.** With small $n$, the sampling distribution is wide, true effects are harder to detect, and $\beta$ increases (power decreases). As $n$ grows, the sampling distribution narrows, $\beta$ falls, and power rises. With a fixed $\alpha$ and correct assumptions, the long-run Type I error rate stays at $\alpha$ for any $n$, because the critical values are placed so that the area past them under the $H_0$ curve is $\alpha$ at every sample size.
 
-The actual Type I rate can differ from $\alpha$ in two cases. At small $n$, it can drift from $\alpha$ when an assumption fails, for example when the population is strongly skewed. Testing the data again each time new observations arrive also raises the Type I rate, at any $n$.
+The actual Type I rate can differ from $\alpha$ in two cases. At small $n$, it can drift from $\alpha$ when the sampling distribution of the mean is not close to normal (Chapter 3), for example when the population is strongly skewed. Testing the data again each time new observations arrive also raises the Type I rate, at any $n$.
 
 @fig-5type2-samplesize shows the effect of $n$ on Type II error with the same $\mu_0$, the same true $\mu$, and the same unlucky sample, in which $\bar{x}$ is 2.5 standard errors below $\mu$. With the smaller sample, the confidence interval still catches $\mu_0$ and we fail to reject. With four times the sample, the standard error halves, the interval clears $\mu_0$, and we reject $H_0$.
 
@@ -725,7 +725,7 @@ This sequence is a **formal power analysis**. A formal power analysis finds the 
 
 @fig-5effectsizeType1 shows the second point in the list above, that a significant result from a small study overstates the effect. Each dot in @fig-5effectsizeType1 is one simulated study in which the true mean is exactly $\mu_0$. We ran 1,000 studies at each of four sample sizes (10, 50, 100, and 1,000) and kept only the ones that gave $p < 0.05$, about 50 at each size.
 
-When the null hypothesis is true, 5% of tests still give $p < 0.05$. In small samples, those false positives come with large estimated effect sizes, even though the true effect is zero. A one-sample test at $n = 10$ reaches $p < 0.05$ only when $|t| > `r sprintf("%.2f", qt(0.975, 9))`$, which means $|\text{Cohen's } d| = |t|/\sqrt{10}$ must be at least `r sprintf("%.2f", qt(0.975, 9) / sqrt(10))`. At $n = 1{,}000$ the threshold is `r sprintf("%.2f", qt(0.975, 999) / sqrt(1000))`. Every significant result at $n = 10$ therefore reports an effect of at least `r sprintf("%.2f", qt(0.975, 9) / sqrt(10))`.
+When the null hypothesis is true, 5% of tests still give $p < 0.05$. In small samples, those false positives come with large estimated effect sizes, even though the true effect is zero. A one-sample $t$-test (Chapter 6) at $n = 10$ reaches $p < 0.05$ only when $|t| > `r sprintf("%.2f", qt(0.975, 9))`$, the $t$ critical value for this sample size. Because $t = (\text{Cohen's } d)\sqrt{n}$ as well (the effect size section), that means $|\text{Cohen's } d| = |t|/\sqrt{10}$ must be at least `r sprintf("%.2f", qt(0.975, 9) / sqrt(10))`. At $n = 1{,}000$ the threshold is `r sprintf("%.2f", qt(0.975, 999) / sqrt(1000))`. Every significant result at $n = 10$ therefore reports an effect of at least `r sprintf("%.2f", qt(0.975, 9) / sqrt(10))`.
 
 ```{r}
 #| label: fig-5effectsizeType1
@@ -765,7 +765,7 @@ ggplot(type_I_error, aes(x = p_value, y = abs(effect_size),
 
 A results statement is one sentence that states the finding in plain language and follows it with the supporting statistics, separated by commas.
 
-**Template:** *Plain-language finding*, statistic with df or $n$, $p$-value, effect size and CI.
+**Template:** *Plain-language finding*, statistic with degrees of freedom (df, Chapter 6) or $n$, $p$-value, effect size and CI.
 
 **What to include (in order):**
 

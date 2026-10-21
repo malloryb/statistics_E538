@@ -48,7 +48,7 @@ We often compare a sample mean to a reference (drinking-water standard, historic
 
 1.  **One-sample $t$-test.** Compare a sample mean to a target ($\mu_0$).
 2.  **Paired $t$-test.** Compare before/after (or matched) measurements on the same units by running a one-sample $t$-test on the *differences*.
-3.  **Independent-samples $t$-test (also called two-sample $t$-test).** Compare means from two groups measured on different units. The pooled version assumes the two groups have similar spread; Welch's version [@Welch1947] does not, and it is what R's `t.test()` runs unless you set `var.equal = TRUE`.
+3.  **Independent-samples $t$-test (also called two-sample $t$-test).** Compare means from two groups measured on different units. The pooled version, explained later in this chapter, assumes the two groups have similar spread. Welch's version [@Welch1947] does not assume this. R's `t.test()` runs Welch's version unless you set `var.equal = TRUE`.
 
 ## From $z$ to $t$
 
@@ -74,7 +74,7 @@ Because $s$ varies from sample to sample, the $t$ distribution has heavier tails
 
 ```{r}
 #| label: fig-6-z-vs-t-linear-log
-#| fig-cap: 'Normal ($z$) vs. $t$ distributions: on a linear scale (top), tail differences look small; on a log scale (bottom), the heavy tails of small-$n$ $t$ are clear.'
+#| fig-cap: 'Normal ($z$) and $t$ distributions. On a linear scale (top), the tail differences look small. On a log scale (bottom), the heavier tails of $t$ with few degrees of freedom are visible.'
 #| fig-alt: "Two stacked panels showing the same three overlaid curves: the standard normal, t with 10 degrees of freedom, and t with 2 degrees of freedom. On the linear-scale top panel, all three curves look almost identical, bell-shaped and close together. On the log-scale bottom panel, the same three curves separate clearly in the tails, with the t distribution at 2 degrees of freedom sitting well above the other two far from the center, revealing much heavier tails than the linear panel suggested."
 #| out-width: "100%"
 
@@ -119,6 +119,8 @@ p_log <- ggplot(plot_df, aes(x, density, color = dist)) +
 p_lin / p_log
 
 ```
+
+@fig-6-z-vs-t-linear-log plots the normal curve with the $t$ curves for 2 and 10 degrees of freedom. In the top panel the curves look almost the same. The bottom panel puts the vertical axis on a log scale, which makes the small tail probabilities easier to see, and there the $t$ curve for 2 degrees of freedom sits well above the normal curve in both tails.
 
 ::: {.callout-tip title="Tip: When is $z$ appropriate?"}
 If the population SD $\sigma$ is known *and* the sampling distribution of the sample mean is (approximately) normal, use $z$. In practice, $\sigma$ is rarely known, so we use $t$ with $s$ and $df=n-1$ (degrees of freedom, defined in the next section).
@@ -436,7 +438,7 @@ The dashed boxes mark what makes this design paired. In the design figures in ea
 
 This subtraction cancels between-plot variability (some plots are naturally wetter than others) and focuses on within-plot change. Because it removes those plot-to-plot differences, the paired test's standard error is smaller, so it has more power than an independent-samples test on the same data.
 
--   $H_0$: $\mu_d = 0$. Restoration did not change soil moisture.
+-   $H_0$: $\mu_d = 0$, where $\mu_d$ is the mean difference score in the population of plots. Restoration did not change soil moisture.
 -   $H_a$: $\mu_d \neq 0$.
 
 **Test on differences (paired $t$).** Compute one difference per plot, then run a one-sample $t$ against 0:
