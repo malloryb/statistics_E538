@@ -73,7 +73,7 @@ We answer it in order: first check that the model explains anything at all, then
 
 ## Why adjust for anything?
 
-The cleanest illustration is a result called **Simpson's paradox**, where a pattern in combined data reverses once you split the data into meaningful groups.
+Adjusting for a variable means comparing groups at the same value of that variable. **Simpson's paradox**, where a pattern in combined data reverses once you split the data into meaningful groups, shows what can go wrong without adjusting.
 
 The case fatality rate (CFR) is the percentage of confirmed cases that ended in death. During the COVID-19 pandemic, early data showed that Italy's overall case fatality rate was higher than China's. But once researchers split the cases by age group, the trend flipped. In every age group except the youngest, where neither country recorded a death, the fatality rate was higher in China. The apparent contradiction was explained by differences in the age distribution of cases [@vonkugelgen2021].
 
@@ -178,22 +178,24 @@ ggplot(fig3_df, aes(x = Age, y = Prop, fill = Country, group=Country)) +
 
 This kind of reversal comes from a difference between the groups in the *composition* of a third variable, and the combined number averages over that difference. Once you condition on the third variable, the within-group pattern shows up again.
 
-ANCOVA handles this situation when the third variable is continuous, instead of grouped into categories like the age bands above. It compares groups while holding a covariate fixed, so a difference between the groups on that covariate does not distort the comparison.
+ANCOVA handles this situation when the third variable is continuous, instead of grouped into categories like the age bands above. It compares groups at the same covariate value, so a difference between the groups on that covariate does not distort the comparison.
 
 ## Covariates and fixed factors
 
-A **covariate** is a continuous predictor that is related to the outcome and helps explain part of its variation. In environmental studies, common covariates include temperature, rainfall, soil moisture, or pollution concentration, which may influence the outcome but aren't the main treatment of interest. Including one lets us remove the variation it explains, so the test of the group difference is clearer.
+A **covariate** is a continuous predictor that is related to the outcome and helps explain part of its variation. In environmental studies, common covariates include temperature, rainfall, soil moisture, and pollution concentration. Sometimes the covariate's relationship with the outcome is the question, as in this chapter's bird example. Other times the covariate is a background variable you adjust for so the group comparison is fair, as in the building example at the end of the chapter. Including one lets us remove the variation it explains, so the test of the group difference is clearer.
 
-A **fixed factor** is a categorical predictor whose levels the researcher chose on purpose, such as urban vs. rural or shaded vs. open canopy. Every categorical predictor in this chapter is a fixed factor. That distinction matters more once you're building mixed-effects models, which mix fixed and random factors and are beyond where this course goes. Mixed-effects models are a different idea from Chapter 10's mixed design, which mixes between-subjects and within-subjects factors. A **random factor** is a categorical predictor whose levels are a sample from a larger population of possible levels. For example, the counties your streams are in could be a random factor. You aren't interested in those ten counties for their own sake. They represent a larger population of counties, and you want your conclusions to apply beyond the ones you sampled.
+A **fixed factor** is a categorical predictor whose levels the researcher chose on purpose, such as urban vs. rural or shaded vs. open canopy. A **random factor** is a categorical predictor whose levels are a sample from a larger population of possible levels. For example, the counties your streams are in could be a random factor. You aren't interested in those ten counties for their own sake. They represent a larger population of counties, and you want your conclusions to apply beyond the ones you sampled.
+
+Every categorical predictor in this chapter is a fixed factor. The distinction between fixed and random factors matters once you build mixed-effects models, which contain both kinds of factor. This course does not cover them. Mixed-effects models are a different idea from Chapter 10's mixed design, which mixes between-subjects and within-subjects factors.
 
 ## What ANCOVA is
 
 ANCOVA asks whether a *relationship* holds up across groups. That framing fits environmental work particularly well, because you usually can't experimentally strip out a covariate like temperature, rainfall, or season anyway. Often you wouldn't want to. It may be the reason you designed the study in the first place. In this chapter's main example, the covariate's relationship with the outcome is the question, and the interaction is the result you are testing for.
 
 ::: {.callout-note title="Note: ANCOVA with a nuisance covariate"}
-Elsewhere the covariate is a nuisance instead, something you control for so a group comparison is fair (the second example at the end of this chapter). In that version, you test the interaction to check whether the slopes can be treated as parallel before comparing the groups.
+Elsewhere the covariate is a nuisance instead, a variable you adjust for so a group comparison is fair (the second example at the end of this chapter). In that version, you test the interaction to check whether the slopes can be treated as parallel before comparing the groups.
 
-A classic version from psychology compares anxiety scores across two therapy groups after treatment, controlling for pre-treatment scores.
+A classic version from psychology compares anxiety scores across two therapy groups after treatment, adjusting for pre-treatment scores.
 
 Both versions use the same test and the same math. They differ only in which term you came to interpret, so decide that before you fit anything. The second example at the end of this chapter works through this version.
 :::
@@ -343,7 +345,7 @@ Most of these are ones ANOVA already needed. Three are new because a covariate h
 | Independent observations | No (universal, Chapter 6) | The study design |
 | Normal residuals and similar variances across groups | No (Chapters 8 and 9) | Q-Q plot, residuals-versus-fitted plot, Levene's test |
 | Linearity within each group | Yes | A scatter plot with a fitted line for each group |
-| Homogeneity of slopes | Yes | The interaction test (Step 1), not a check run beforehand |
+| Homogeneity of slopes (the groups' lines are parallel) | Yes | The interaction test (Step 1), not a check run beforehand |
 | The covariate is measured with little error and is not affected by the group factor (the treatment) | Yes | The study design |
 
 : Assumptions of ANCOVA and how to check them. {#tbl-11assumptions}
@@ -422,7 +424,7 @@ First, we state the hypotheses for each step:
 
 ### The data
 
-The data in this example are invented. There are 200 sites, each assigned at random to urban or rural, with air pollution between 25 and 150. The true slope is $-0.05$ birds per unit of pollution at rural sites and $-0.15$ at urban sites, plus random scatter, so the fitted slopes below come out near these values but not on them.
+The data in this example are invented. There are 200 sites, about half urban and half rural, with air pollution between 25 and 150. The true slope is $-0.05$ birds per unit of pollution at rural sites and $-0.15$ at urban sites, plus random scatter, so the fitted slopes below come out near these values but not on them. In this draw the fitted urban slope is about twice the rural slope, though the true urban slope is three times as steep.
 
 ```{r}
 # Fixed seed: the invented bird data, and every description of them below, depend on this draw
@@ -582,7 +584,7 @@ knitr::kable(slopes_tbl)
 
 Both slopes are significant. Bird density falls with pollution at rural sites and falls about twice as steeply at urban sites. The slope estimates match the ANCOVA's, $`r sprintf('%.3f', coef(ancova_lm)[2])`$ for rural and $`r sprintf('%.3f', coef(ancova_lm)[2])` + (`r sprintf('%.3f', coef(ancova_lm)[4])`) \approx `r sprintf('%.3f', coef(ancova_lm)[2] + coef(ancova_lm)[4])`$ for urban, because a model with an interaction fits each group its own line. Only the tests are new, and their standard errors differ slightly because each regression estimates its own error variance.
 
-The points scatter around each line. The model's $R^2$ is `r sprintf("%.2f", summary(ancova_lm)$r.squared)`, so air pollution, area type, and their interaction explain about `r round(100*summary(ancova_lm)$r.squared)`% of the variation in bird density. The remaining `r 100 - round(100*summary(ancova_lm)$r.squared)`% reflects other factors, measurement noise, or natural ecological variability not captured by this simple model. That is a strong fit by the standards of field data, and it is strong here partly because this is a synthetic dataset built to illustrate the method. Field data from actual sites are usually messier.
+The points scatter around each line. The model's $R^2$ is `r sprintf("%.2f", summary(ancova_lm)$r.squared)`, so air pollution, area type, and their interaction explain about `r round(100*summary(ancova_lm)$r.squared)`% of the variation in bird density. The remaining `r 100 - round(100*summary(ancova_lm)$r.squared)`% is the random scatter built into these invented data. In field data, that remainder would include other factors, measurement noise, and natural variability. An $R^2$ this large is strong by the standards of field data, and it is large here partly because the data were invented to illustrate the method.
 
 **Centering the covariate.**
 
@@ -672,7 +674,7 @@ raw_t     <- t.test(Energy ~ Type, data = energy, var.equal = TRUE)
 
 ### The raw comparison
 
-Average daily occupancy is `r round(occ_means["Retrofitted"], 1)` people in the retrofitted buildings and `r round(occ_means["Standard"], 1)` in the standard ones. @fig-11energyraw compares electricity use without taking that into account. Retrofitted buildings use more, `r sprintf("%.1f", raw_means["Retrofitted"])` vs. `r sprintf("%.1f", raw_means["Standard"])` kWh per day, and a two-sample $t$-test calls that difference significant, $t(58) = `r sprintf("%.2f", abs(raw_t$statistic))`$, $p `r fmt_p_eq(raw_t$p.value)`$. Taken at face value, the retrofits made things worse.
+Average daily occupancy is `r round(occ_means["Retrofitted"], 1)` people in the retrofitted buildings and `r round(occ_means["Standard"], 1)` in the standard ones. @fig-11energyraw compares electricity use without adjusting for occupancy. Retrofitted buildings use more, `r sprintf("%.1f", raw_means["Retrofitted"])` vs. `r sprintf("%.1f", raw_means["Standard"])` kWh per day, and a two-sample $t$-test calls that difference significant, $t(58) = `r sprintf("%.2f", abs(raw_t$statistic))`$, $p `r fmt_p_eq(raw_t$p.value)`$. Taken at face value, the retrofits made things worse.
 
 ```{r}
 #| label: fig-11energyraw

@@ -54,7 +54,7 @@ A statistical **model** is an equation that describes how the DV changes with a 
 
 ### Computing the best-fit line by hand
 
-In practice, we let software identify the line with the smallest total squared error, but working through one example by hand shows where that line actually comes from. Here are the formulas for the slope and intercept, calculated straight from the data:
+In practice, we let software find the line with the smallest sum of squared residuals (the least-squares line from Chapter 2), but working through one example by hand shows where that line comes from. Here are the formulas for the slope and intercept, calculated straight from the data:
 
 $$\text{intercept} = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2}$$
 
@@ -235,6 +235,8 @@ The slope $b_1$ is a sample estimate. The hypothesis test for the slope asks whe
 Like any other statistic, $b_1$ varies from sample to sample. If we drew a new sample of streams and fit a new line, we'd get a slightly different $b_1$, just by chance. The test asks whether our $b_1$ is large relative to that sampling variability, the same signal-over-noise pattern as every test so far:
 
 $$\text{statistic}=\frac{\text{effect}}{\text{error}}.$$
+
+Here "error" means the standard error of $b_1$, the standard deviation of its sampling distribution. It is a different quantity from the error term $\varepsilon$ in the model.
 
 R reports the $t$-test for the slope in the coefficient table from `summary(fit)`, so there is no separate test to run. You get the `Std. Error`, $t$, and $p$ for each coefficient at once.
 
@@ -459,7 +461,7 @@ ggplot(stream_df, aes(x = fitted, y = resid)) +
 
 @fig-9regresid, for our stream temperature data, shows residuals scattered evenly above and below zero, with no curve (which would suggest the true relationship isn't linear) and no funnel shape (which would suggest variance changes systematically across the range of $X$).
 
-The stream residuals pass both checks. To see what a violation looks like, we fit a straight line to a second data set, 14 days of invented avian influenza case counts. We built the counts from an exponential curve, $6e^{0.28 \times \text{day}}$, which grows by about 32% each day, plus random scatter, so we know the true shape that a straight line will miss. The design is the same shape as the stream example, with time as the continuous predictor.
+The stream residuals pass both checks. To see what a violation looks like, we fit a straight line to a second data set, 14 days of invented avian influenza case counts. We built the counts from an exponential curve, $6e^{0.28 \times \text{day}}$, which grows by about 32% each day, plus random scatter, so we know the true shape that a straight line will miss. The design has the same structure as the stream example, with time as the continuous predictor.
 
 ```{r}
 #| label: fig-9outbreakdesign
@@ -566,7 +568,7 @@ knitr::kable(
 )
 ```
 
-The residuals don't depart from normality here ($p `r fmt_p_eq(sh_out$p.value)`$). As with any formal normality test, treat this as one piece of evidence alongside the Q-Q plot and residual plot, and do not decide on the test result alone. Shapiro-Wilk has the least power to detect real departures when the sample is small, which is also when the visual checks matter most.
+Shapiro-Wilk does not reject normality here ($p `r fmt_p_eq(sh_out$p.value)`$). As with any formal normality test, treat this as one piece of evidence alongside the Q-Q plot and residual plot, and do not decide on the test result alone. Shapiro-Wilk has the least power to detect real departures when the sample is small, which is also when the visual checks matter most.
 
 Now apply the same two normality checks to the avian influenza model, the one we already know is badly nonlinear.
 
@@ -758,6 +760,6 @@ This problem calls for a different model. More data or a better-fitting straight
 
 -   **The slope can be tested.** Chapter 2 compared $r$ to a simulated chance window but gave no formal test with a $p$-value. Fitting a line turns that relationship into a model whose slope we can test: $H_0: \beta_1 = 0$ says there is no linear relationship. The test statistic is the slope divided by its standard error, $t = b_1 / SE(b_1)$, with $df = n-2$.
 -   **Regression partitions variation the way ANOVA does.** $SS_\text{Total}$ splits into $SS_\text{Regression}$ (Chapter 8's between) and $SS_\text{Residual}$ (Chapter 8's within), and $F = MS_\text{Regression}/MS_\text{Residual}$, which equals $t^2$ with one predictor. $R^2$, the proportion of variation explained by the line, is the effect size. A relationship can be real ($p$ small) and still explain very little, which is why you report both.
--   **Look at your data, then look at your residuals.** The test-specific assumptions are linearity, constant variance, and roughly normal residuals, on top of independence. A residuals-versus-fitted plot catches violations a formal test can miss entirely, as the outbreak example showed.
+-   **Look at your data, then look at your residuals.** The test-specific assumptions are linearity, constant variance, and roughly normal residuals, on top of independence. A residuals-versus-fitted plot can show a violation that $R^2$, the slope test, and Shapiro-Wilk all miss, as the outbreak example showed.
 -   **Predict inside the observed range, and extrapolate beyond it only with good reason.** Interpolating within the observed range of $x$ is what regression is for. Extrapolating beyond it is sometimes justified, but only when you have good reason to believe the relationship stays the same shape past the range you observed.
 -   **A good $R^2$ can still be the wrong model.** The outbreak example fit a straight line to exponential growth and got $R^2=`r sprintf("%.2f", outbreak_tidy$r.squared)`$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast about 26,000 cases short of the exponential curve the data came from. The residual plot catches this. A normality check on the same residuals gives only a borderline signal, because it tests a different assumption.

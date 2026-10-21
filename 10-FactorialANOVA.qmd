@@ -68,7 +68,7 @@ f1 <- function(x) formatC(x, format = "f", digits = 1)  # one decimal, keeps 6.0
 
 In science, outcomes rarely depend on just one thing. Climate, soil type, and water availability all act together to influence ecosystems in ways a single-factor design can't capture. *Factorial designs* let us study several factors, and how they interact with each other, at once.
 
-Chapter 8's one-way ANOVA tested a single factor. This chapter covers how to compute a factorial ANOVA, including a full by-hand walkthrough of the sums-of-squares arithmetic, and how to interpret the result. With more than one factor, interpretation is harder, because an *interaction* changes what every other number in the results table means.
+Chapter 8's one-way ANOVA tested a single factor, the ANOVA name for an independent variable (IV). This chapter uses both words. This chapter covers how to compute a factorial ANOVA, including a full by-hand walkthrough of the sums-of-squares arithmetic, and how to interpret the result. With more than one factor, interpretation is harder, because an *interaction* changes what every other number in the results table means.
 
 ## Factorial basics
 
@@ -233,7 +233,7 @@ Equivalently, an interaction is a **difference between differences**. Each simpl
 
 : Cell mean, main effect, simple effect and interaction in the stream experiment. {#tbl-10terms}
 
-The number of possible interactions scales with the number of IVs. A 2x2 design has exactly one interaction, the combined effect of the two IVs. A design with three IVs (A, B, C) has three two-way interactions, each between two of the IVs (A×B, A×C, B×C), and one three-way interaction among all three (A×B×C).
+The number of possible interactions scales with the number of IVs. A 2x2 design has exactly one interaction, Pollution × Flow. A design with three IVs (A, B, C) has three two-way interactions, each between two of the IVs (A×B, A×C, B×C), and one three-way interaction among all three (A×B×C).
 
 ## What a 2x2 actually tests
 
@@ -520,7 +520,7 @@ Flow explains `r round(100*ss_flow/ss_total)`% of the total variation, pollution
 
 With the ANOVA table computed, the next step is to interpret it.
 
-It's convenient to think of a main effect as one manipulation's consistent influence. An interaction means the effect of one IV depends on the level of another. So when there is an interaction, at least one main effect is not consistent across conditions.
+A main effect is a factor's effect averaged across the levels of the other factor. An interaction means the effect of one IV depends on the level of another. So when there is an interaction, the main effect of at least one factor is an average of effects that differ across conditions.
 
 ### Reading patterns in a 2x2
 
@@ -638,9 +638,9 @@ Testing a simple effect asks whether pollution's effect holds at one specific le
 
 The fix is to reuse that pooled estimate. $MS_\text{Error}$ and its 16 degrees of freedom already describe the noise in this design better than any subset could, so the simple-effects test uses them in a two-sample $t$:
 
-$$t = \frac{\bar{Y}_A - \bar{Y}_B}{\sqrt{MS_\text{Error}\left(\dfrac{1}{n_A}+\dfrac{1}{n_B}\right)}}, \qquad df = df_\text{Error}$$
+$$t = \frac{\bar{Y}_\text{NoPoll} - \bar{Y}_\text{Poll}}{\sqrt{MS_\text{Error}\left(\dfrac{1}{n_\text{NoPoll}}+\dfrac{1}{n_\text{Poll}}\right)}}, \qquad df = df_\text{Error}$$
 
-Here $A$ and $B$ are the two pollution conditions being compared at one flow rate. Using $MS_\text{Error}=`r sprintf('%.2f', ss_error/16)`$ and $df=16$ from the omnibus table computed earlier:
+Here the two means are the no-pollution and pollution cell means at one flow rate. Using $MS_\text{Error}=`r sprintf('%.2f', ss_error/16)`$ and $df=16$ from the omnibus table computed earlier:
 
 ```{r}
 #| label: tbl-10simpleeffects
@@ -794,7 +794,7 @@ This is the case the "read the interaction first" rule exists for. A non-signifi
 
 ### Reporting the stream result
 
-Back to the stream experiment. @fig-10workedint plots its four cell means. Pollution lowers species count at both flow rates, so the lines never cross. They converge, because the gap under high flow is smaller. That is the first case of the rule, so we report the simple effects and the main effect of pollution with its qualification attached.
+Back to the stream experiment. @fig-10workedint plots its four cell means. Pollution lowers species count at both flow rates, so the lines never cross. They converge, because the gap under high flow is smaller. This matches the first case in @tbl-10cases, a consistent main effect and an interaction, so we report the simple effects and the main effect of pollution with its qualification attached.
 
 ```{r}
 #| label: fig-10workedint
@@ -1009,6 +1009,6 @@ Factorial ANOVA can handle many experimental structures, but each added factor m
 -   **The partition extends the one-way logic.** $SS_\text{Total}$ now splits into each main effect, the interaction, and error ($SS_\text{Error}$, Chapter 8's $SS_\text{Within}$ in the one-way ANOVA). Each effect gets its own $F$, all sharing $MS_\text{Error}$ as the denominator. Working one table through by hand shows that the interaction term is the only new piece.
 -   **Three tests, three effect sizes.** $\eta^2$ divides each effect's $SS$ by $SS_\text{Total}$, and $\eta_p^2$ divides it by that effect plus error. Partial values are at least as large and do not sum to 1, so label which one you are reporting. A significant effect can still be a small one, which is exactly the case for this chapter's interaction.
 -   **Read the interaction first.** If it's significant, lead with simple effects: what factor A does at each level of B, as $\Delta$ values from the cell means, tested with the pooled $MS_\text{Error}$. A main effect can still be reported, qualified, when the simple effects all point the same way. When one is near zero or they reverse, the main effect describes no actual condition. When the interaction is not significant, interpret each main effect as an overall difference, with Tukey HSD for a factor with three or more levels.
--   **Learn to read the picture.** In a line plot, parallel lines mean no interaction, and lines that cross, inside the plot or if extended, mean an interaction. The average gap between the lines is one main effect, and the lines' average rise or fall is the other. There are eight possible patterns in a 2x2, and recognizing them by eye is faster than parsing the table.
+-   **Learn to read the picture.** In a line plot, parallel lines mean no interaction, and lines that cross, inside the plot or if extended, mean an interaction. The average gap between the lines is one main effect, and the lines' average rise or fall is the other. There are eight possible patterns in a 2x2. The plot shows which pattern the cell means follow, and the interaction $F$ test says whether the lines differ from parallel by more than chance would produce.
 -   **An averaged main effect can be an artifact.** A factor that matters a lot in one condition and not at all in another can still produce a "significant main effect" once you average across conditions. That number is correct arithmetic, but it matches the pollution effect at neither flow rate.
 -   **Bigger designs, same tests, harder reading.** A 3x2 has the same three tests as a 2x2, but three points per line are harder to read than two. Beyond that, a three-factor design brings three main effects, three two-way interactions, and a three-way interaction, and interpretability falls off fast. Use only as many factors as your question actually needs.

@@ -48,7 +48,7 @@ Sir Ronald Fisher invented the ANOVA [@salsburg2001lady] and wanted to publish i
 
 Suppose we're comparing classroom CO~2~ concentrations (ppm) under three ventilation settings: windows open, mechanical ventilation, and no ventilation change. With three groups, there are three possible pairwise comparisons: windows open vs. mechanical ventilation, windows open vs. no change, and mechanical ventilation vs. no change.
 
-We could run a separate $t$-test for each. The problem is that every test carries its own 5% chance of a false positive, and those chances accumulate across tests. This follows from the independence multiplication rule in Chapter 3: if we run $m$ independent tests at $\alpha=0.05$, the probability of at least one false positive across all of them is
+We could run a separate $t$-test for each. The problem is that every test carries its own 5% chance of a false positive (a Type I error, Chapter 5), and those chances accumulate across tests. This follows from the independence multiplication rule in Chapter 3: if we run $m$ independent tests at $\alpha=0.05$, the probability of at least one false positive across all of them is
 
 $$P(\text{at least one false positive}) = 1-(1-\alpha)^m.$$
 
@@ -247,7 +247,7 @@ knitr::kable(tab, col.names = c("Group", "Score", "Group mean", "Score minus gro
 
 This time, for each score we found the group mean first, then the leftover error. The fourth column is the difference between each score and its own group mean, and the last column squares it. Summing the last column gives $SS_\text{Within}$, the variation the group means can't explain.
 
-$SS_\text{Within}$ has several other names. It is also called the **error sum of squares**, since it is the variation left over after group membership has explained what it can. R labels its row `Residuals`, and some articles report $MS_\text{Within}$ as $MSE$ (mean squared error). All of these name the same quantity.
+$SS_\text{Within}$ has several other names. It is also called the **error sum of squares**, since it is the variation left over after group membership has explained what it can. R labels its row `Residuals`. In the next sections we divide it by its degrees of freedom to get $MS_\text{Within}$, which some articles report as $MSE$ (mean squared error).
 
 ### Degrees of freedom
 
@@ -345,7 +345,7 @@ ggplot(plot_df, aes(x = save_F)) +
 
 ```
 
-This $F$ distribution has two properties. First, it never goes below 0, because $F$ is a ratio of two variances and variances can't be negative. Second, it is right-skewed, and its exact shape depends on the numerator and denominator degrees of freedom.
+The simulated null distribution of $F$ has two properties. First, it never goes below 0, because $F$ is a ratio of two variances and variances can't be negative. Second, it is right-skewed, and its exact shape depends on the numerator and denominator degrees of freedom.
 
 Most simulated $F$-values here fall near or below 1, because under the null the two mean squares estimate the same thing. All 30 plots come from one null population distribution with $\sigma = 10$. $MS_\text{Within}$ estimates $\sigma^2$ from the spread of scores inside each group. $MS_\text{Between}$ estimates the same $\sigma^2$ from how far the group means stray from the grand mean, since with no real effect, sampling variation is the only thing moving them. Two estimates of one variance give a ratio near 1. When the population means really differ, $MS_\text{Between}$ picks up those differences on top of $\sigma^2$, and $F$ grows. Values of 5 or more occur in about `r round(100 * mean(save_F >= 5))`% of the simulations.
 
@@ -684,7 +684,7 @@ So the three comparisons give:
 -   **Old-growth vs. Managed.** Old-growth is higher by `r sprintf("%.2f", -tk["Managed-Old-growth", "diff"])` individuals/plot, $p `r fmt_p_eq(tk["Managed-Old-growth", "p adj"])`$, a significant difference.
 -   **Secondary vs. Managed.** They differ by `r sprintf("%.2f", abs(tk["Managed-Secondary", "diff"]))` individuals/plot, $p `r fmt_p_eq(tk["Managed-Secondary", "p adj"])`$, not a significant difference.
 
-**A non-significant difference is one the test could not detect.** Secondary and managed plantation differ by `r sprintf("%.2f", abs(tk["Managed-Secondary", "diff"]))` salamanders per plot in this sample. That difference is real in the data. The test says that with eight plots per group, we cannot distinguish it from sampling noise. A larger study might well separate them. Report it as "we did not detect a difference," never as "there is no difference."
+**A non-significant difference is one the test could not detect.** Secondary and managed plantation differ by `r sprintf("%.2f", abs(tk["Managed-Secondary", "diff"]))` salamanders per plot in this sample. That difference is present in the sample. The test says that with eight plots per group, we cannot distinguish it from sampling noise. A larger study might well separate them. Report it as "we did not detect a difference," never as "there is no difference."
 
 **Compact letter display.** A compact letter display summarizes post-hoc results with a letter above each group. With more than three groups, a list of pairwise sentences gets long, so this is the usual summary. Groups that share a letter were not significantly different, and groups that share no letter were. @fig-8tukeyletters puts the salamander results in that form.
 
