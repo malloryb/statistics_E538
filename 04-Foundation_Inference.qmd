@@ -77,11 +77,11 @@ plot_distributions <- function(null_mean, null_sd, sample_mean, sample_sd, infer
 
 ## What chance alone can produce
 
-An experiment asks whether a manipulation causes a change in what we measure. Some manipulations are so overwhelming that no statistics are required to see them. Flip a light switch up and the light comes on; flip it down and it goes off, every time. You don't need a $t$-test to tell you that flipping the light switch is the cause of the change in brightness.
+An experiment asks whether a manipulation causes a change in what we measure. Some manipulations are so overwhelming that no statistics are required to see them. Flip a light switch up and the light comes on; flip it down and it goes off, every time. You don't need a statistical test to tell you that flipping the light switch is the cause of the change in brightness.
 
 Few effects in environmental science behave like this. An effect is the difference a study is about, such as the change a manipulation causes in the outcome. In measurements that also contain noise, the effect is the signal. Flipping the switch changes the outcome *on average*, but not in every instance and not by the same amount every time.
 
-Random chance can produce apparent differences between groups even when no real difference exists. We have already seen this with sampling: two samples from the same distribution come out differently. The same principle applies when we compare group means. So a difference between group means is not, by itself, evidence of a real effect.
+Random chance can produce apparent differences between groups even when no real difference exists. Chapter 3 showed this with sampling. Two samples from the same distribution come out differently. The same principle applies when we compare group means. So a difference between group means is not, by itself, evidence of a real effect.
 
 @tbl-4three-explanations lists the three possible explanations whenever two group means differ.
 
@@ -133,7 +133,7 @@ Group A and Group B have different mean counts, `r sprintf("%.1f", mean_df$infec
 
 Differences appear even when nothing real caused them, so we need a way to tell whether an observed difference is real or the result of chance.
 
-Chapter 2 built a chance window for correlations by repeating a random draw 1,000 times. We can build one for group means the same way, by running the same arbitrary split many times and recording each result. The **mean difference** is the mean count for Group A minus the mean count for Group B. We summarize each run with this one number. @fig-4batdiffs shows the mean differences for 10 replications of the survey, each one sampling all 10 caves from the same population, splitting them 5 and 5, and computing the means.
+Chapter 2 built a chance window for correlations by repeating a random draw 1,000 times. We can build one for group means the same way, by running the same arbitrary split many times and recording each result. The **mean difference** is the mean count for Group A minus the mean count for Group B. We summarize each run with this one number. One replication is one complete rerun of the survey. It samples all 10 caves from the same population, splits them 5 and 5, and computes the two group means. @fig-4batdiffs shows the mean differences for 10 replications.
 
 ```{r}
 #| label: fig-4batdiffs
@@ -191,7 +191,7 @@ ggplot(data.frame(differences), aes(x = differences)) +
 
 Most replications produced a difference near zero, so the tallest bar is the one at zero. Larger differences in either direction occur less and less frequently, and differences beyond about $\pm 3$ are possible, but only `r round(100 * mean(round(abs(differences), 1) > 3), 1)`% of the 10,000 replications produced one. The chance window for a study design is the distribution of results that chance alone produces when the study is repeated many times with no real effect (Chapter 2). This histogram is the chance window for this study design.
 
-We can use this window to evaluate any observed difference. If a study found a difference of 1 infected bat between two groups, that falls well inside the chance window, because `r round(100 * mean(round(abs(differences), 1) >= 1))`% of the 10,000 replications produced a difference at least that large. If the study found a difference of 6 bats, that would fall outside the window. Chance never produced a difference that large in 10,000 replications. When an observed result almost never happens by chance, we have grounds to conclude that *something other than chance* produced it.
+We can use this window to evaluate any observed difference. If a study found a difference of 1 infected bat between two groups, that falls well inside the range of differences chance produced, because `r round(100 * mean(round(abs(differences), 1) >= 1))`% of the 10,000 replications produced a difference at least that large. If the study found a difference of 6 bats, that would fall outside the window. Chance never produced a difference that large in 10,000 replications. When an observed result almost never happens by chance, we have grounds to conclude that *something other than chance* produced it.
 
 ::: {.callout-note title="Note: Which direction?"}
 **Still probability, model → data.** The chance window starts from a world we chose, every cave at the same infection rate, and shows the differences that world produces. The 1-bat and 6-bat results above are hypothetical, used to show what the window can tell us. No real study's data have entered yet.
@@ -239,7 +239,7 @@ Across the 10,000 replications, chance produced differences from about `r round(
 
 - **Chance (gray).** Chance produced differences like this routinely, so there is no reason for suspicion.
 - **Ambiguous (gold).** The gold zones are the edges of what chance produced. Chance *can* produce differences this large, but rarely, so chance is unlikely here but not ruled out.
-- **Not chance (red).** Chance never produced a difference this large in 10,000 tries, which gives grounds to suspect something beyond sampling error.
+- **Not chance (red).** Chance never produced a difference this large in 10,000 replications, which gives grounds to suspect something beyond sampling error.
 
 ### How rare is rare enough?
 
@@ -261,7 +261,7 @@ A 1% annual chance adds up to roughly a 26% chance of at least one such flood ov
 
 Rare events still happen, as the 26% chance over a 30-year mortgage shows. A difference in the gold zone of @fig-4simdecision can also occur by chance, and how rare it is changes what we are willing to conclude from it.
 
-Where the gold zone ends is a judgment call. A stricter line means fewer false alarms and more missed real effects. A looser line means the reverse. Researchers standardize that call with a convention, $\alpha = 0.05$, defined later in this chapter. It is 1 in 20, so the most extreme 500 of the 10,000 replications would count as rare enough, far looser than the red zone, which chance never reached.
+Where the gold zone ends is a judgment call. A stricter line means fewer false alarms, where we conclude there is an effect when there is none, and more missed real effects. A looser line means the reverse. Researchers standardize that call with a convention, $\alpha = 0.05$, defined later in this chapter. It is 1 in 20. Because 5% of 10,000 is 500, the most extreme 500 of the 10,000 replications would count as rare enough. That line is far looser than the red zone, which contains only differences chance never produced.
 
 ## Hypothesis tests
 
@@ -296,7 +296,9 @@ We can check the shortcut on the bat histogram. The blue dot-dash curve drawn ov
 
 : The simulated chance window and the formal test it turns into. {#tbl-4sim-formal}
 
-Tests read their answers off the sampling distribution of the sample mean, not off the population. That distribution is close to normal once the sample is large enough, whatever the population's shape (the central limit theorem). With a small sample, it is normal only if the population is roughly normal. The first check is the sample's histogram, which should show no strong skew and no extreme outliers, and Chapter 6 adds more. When the checks fail, the nonparametric tests in Chapter 7 take over.
+The bat histogram shows differences between two group means, and the formal test in this chapter uses a single sample mean. In both, an observed result is compared with what chance alone produces under $H_0$.
+
+The normal-curve shortcut works only when the sampling distribution of the sample mean is close to normal. A test uses that sampling distribution, and the population itself does not have to be normal. That distribution is close to normal once the sample is large enough, whatever the population's shape (the central limit theorem). With a small sample, it is normal only if the population is roughly normal. The first check is the sample's histogram, which should show no strong skew and no extreme outliers, and Chapter 6 adds more. When the checks fail, the nonparametric tests in Chapter 7 take over.
 
 ### The players
 
@@ -393,7 +395,7 @@ The population curves in these figures are drawn as normal for clarity. As expla
 
 **1. The null population distribution.**
 
-The **null population distribution** is the population we would have if $H_0$ were true. Its center, $\mu_0$, comes from $H_0$ itself, and @fig-4key.null_alone draws it as a blue curve centered on the magenta line at $\mu_0$. Its spread is the population standard deviation, $\sigma$. In practice $\sigma$ is almost never known, so we use the sample's standard deviation, $s$, in its place. This chapter treats $\sigma$ as known as a simplification. A known $\sigma$ with an unknown $\mu$ does happen, for example when years of daily readings from one air monitor show how much its readings vary and the question is whether this year's mean has shifted. Chapter 6's $t$-tests adjust for using $s$ instead of $\sigma$, and they are what analyses use in practice.
+The **null population distribution** is the population we would have if $H_0$ were true. Its center, $\mu_0$, comes from $H_0$ itself, and @fig-4key.null_alone draws it as a blue curve centered on the magenta line at $\mu_0$. Its spread is the population standard deviation, $\sigma$. In practice $\sigma$ is almost never known, and analyses use the sample's standard deviation, $s$, in its place. This chapter treats $\sigma$ as known to keep the first test simple. A known $\sigma$ with an unknown $\mu$ does happen, for example when years of daily readings from one air monitor show how much its readings vary and the question is whether this year's mean has shifted. Chapter 6's $t$-tests adjust for using $s$ instead of $\sigma$, and they are what analyses use in practice.
 
 ```{r}
 #| label: fig-4key.null_alone
@@ -581,7 +583,7 @@ Put together, this chapter's test statistic is $z$:
 
 $$z = \frac{\bar{x} - \mu_0}{\sigma/\sqrt{n}}$$
 
-Whether a difference of 2 units is large depends on how much difference chance produces for a study of this size, which is what the chance window measured earlier in this chapter. The test statistic writes that comparison as a single number, the number of standard errors the effect spans. The $t$ and $F$ tests later in the book are versions of the same ratio.
+Whether a sample mean 2 units from $\mu_0$ is far from it depends on how much difference chance produces for a study with that sample size. The chance window measured exactly that earlier in this chapter. The test statistic writes that comparison as a single number, the number of standard errors the effect spans. The $t$ and $F$ tests later in the book are versions of the same ratio.
 
 **How the $z$ statistic relates to Chapter 3's $z$-score.**
 
@@ -594,7 +596,7 @@ Both divide a distance by a spread, but the spread comes from a different distri
 
 A large statistic means the effect is big compared to the noise, and a small one means it is not. The rest of this section sets where to draw the line between a large statistic and a small one.
 
-**Significance level ($\alpha$).** $\alpha$ is the probability of rejecting $H_0$ given that $H_0$ is true, and we choose it *before* the test. It is a conditional probability, $P(\text{reject } H_0 \mid H_0 \text{ true})$. Rejecting a true $H_0$ is called a Type I error, and Chapter 5 covers error types. A common choice is $\alpha = 0.05$. Smaller $\alpha$ makes tests more cautious and produces wider confidence intervals. At $\alpha = 0.01$, for example, the two-tailed critical value is 2.58 instead of 1.96, and the 99% interval is $\bar{x} \pm 2.58$ standard errors.
+**Significance level ($\alpha$).** $\alpha$ is the probability of rejecting $H_0$ given that $H_0$ is true, and we choose it *before* the test. It is a conditional probability, $P(\text{reject } H_0 \mid H_0 \text{ true})$. Rejecting a true $H_0$ is called a Type I error, and Chapter 5 covers error types. A common choice is $\alpha = 0.05$. Smaller $\alpha$ means a test needs a larger test statistic before it rejects $H_0$. It also produces wider confidence intervals, because the confidence level is $1 - \alpha$ (defined below). At $\alpha = 0.01$, for example, the two-tailed critical value is 2.58 instead of 1.96, and the 99% interval is $\bar{x} \pm 2.58$ standard errors.
 
 **$p$-value.** A $p$-value is the probability, assuming $H_0$ is true, of obtaining a test statistic at least as extreme as the one we observed. Small $p$ means our data look unusual under $H_0$.
 
@@ -643,11 +645,11 @@ The critical-value route gives only a decision at $\alpha$, reject. The confiden
 
 Critical values come from the sampling distribution of the sample mean under $H_0$, built in @fig-4key.null_to_sampling.
 
-@fig-4rejection-region draws it for the PM2.5 example, a two-tailed test at $\alpha = 0.05$, marked off in standard errors from $\mu_0$. The red lines are the critical values, 1.96 standard errors on either side of $\mu_0$. They cut off the most extreme 5% of the curve, 2.5% in each tail, and those shaded tails are the rejection regions. The county's $\bar{x} = 14.1$ is `r sprintf("%.2f", z_pm)` standard errors above $\mu_0 = 12$, inside the right-hand rejection region. Counting that distance in standard errors is exactly the test statistic from @tbl-4routes, $z = (\bar{x} - \mu_0)/SE = `r sprintf("%.2f", z_pm)`$.
+@fig-4rejection-region draws it for the PM2.5 example, a two-tailed test at $\alpha = 0.05$, marked off in standard errors from $\mu_0$. The red lines are the critical values, 1.96 standard errors on either side of $\mu_0$. The value 1.96 is `qnorm(0.975)`, the 97.5th percentile of the standard normal, which leaves 2.5% in the upper tail (Chapter 3). They cut off the most extreme 5% of the curve, 2.5% in each tail, and those shaded tails are the rejection regions. The county's $\bar{x} = 14.1$ is `r sprintf("%.2f", z_pm)` standard errors above $\mu_0 = 12$, inside the right-hand rejection region. Counting that distance in standard errors is exactly the test statistic from @tbl-4routes, $z = (\bar{x} - \mu_0)/SE = `r sprintf("%.2f", z_pm)`$.
 
 Decision rule:
 
-- If the observed test statistic falls inside the central region, we fail to reject $H_0$ because the result is consistent with chance variation.
+- If the observed test statistic falls in the non-rejection region, between the critical values, we fail to reject $H_0$ because the result is consistent with chance variation.
 - If it falls in either rejection region, we reject $H_0$ because the result is too extreme to attribute to chance alone at the 5% level.
 
 $\alpha$ is the red area in @fig-4rejection-region. The $p$-value (Route 3) is the area beyond the observed statistic, in both tails. Because $\bar{x}$ is inside a red tail, the area beyond it is smaller than the red area. Here $p = `r sprintf("%.3f", p_pm)`$, below $\alpha = 0.05$.
@@ -756,7 +758,7 @@ grid.arrange(mu0_panel(xbar - (xbar_pm - 13) / se_pm * SE), mu0_panel(xbar - z_p
 
 In the right panel, the target of 12 µg/m³ is only `r sprintf("%.1f", xbar_pm - mu0_pm)` µg/m³ from $\bar{x}$, about `r sprintf("%.2f", (xbar_pm - mu0_pm) / sigma_pm)` population standard deviations, so a single day at 12 µg/m³ would be unremarkable. It is not a plausible value for the *mean*, because sample means vary less than individual readings do. Measured in standard errors, the same distance is `r sprintf("%.2f", z_pm)`, beyond the 1.96 that bounds the 95% interval.
 
-For common models, a two-tailed level-$\alpha$ test of $H_0:\ \mu=\mu_0$ is equivalent to checking whether $\mu_0$ lies inside the $100(1-\alpha)\%$ confidence interval. The CI shows both the decision (reject or not) *and* the range of parameter values still consistent with the data.
+For the $z$ test in this chapter, a two-tailed test of $H_0:\ \mu=\mu_0$ at level $\alpha$ reaches the same decision as checking whether $\mu_0$ lies inside the $100(1-\alpha)\%$ confidence interval. At $\alpha = 0.05$, that is the 95% interval. The CI shows both the decision (reject or not) *and* the range of parameter values still consistent with the data.
 
 ### Route 3: $p$-value
 
@@ -811,7 +813,7 @@ ggplot(x, aes(x, y)) +
 
 $$p = P(\text{a statistic at least this extreme} \mid H_0 \text{ is true})$$
 
-To the right of the bar is what you have assumed, that $H_0$ is true. To the left are the data. The $p$-value is the probability of data like yours if $H_0$ is true.
+To the right of the bar is what you have assumed, that $H_0$ is true. To the left are the data. The $p$-value is the probability of data at least as extreme as yours if $H_0$ is true.
 
 **Flipping the bar gives a different probability.** In Chapter 3's stream example, flipping the two sides of the bar turned $P(\text{exceed} \mid \text{heavy rain}) = 0.60$ into $P(\text{heavy rain} \mid \text{exceed}) = 0.30$. Here, it is tempting to read $p = `r sprintf("%.3f", p_pm)`$ as "a `r sprintf("%.1f", 100 * p_pm)`% chance the null is true." That is a different conditional probability, and a test cannot give it to you:
 
@@ -828,7 +830,7 @@ Test outcomes are binary: we either reject $H_0$ or fail to reject $H_0$. Failin
 
 Report the exact $p$ and the confidence interval. For the PM2.5 example, that is $p = `r sprintf("%.3f", p_pm)`$ and 95% CI [`r sprintf("%.2f", ci_pm[1])`, `r sprintf("%.2f", ci_pm[2])`] µg/m³. Chapter 5 adds effect size to this list.
 
-A two-tailed test has two possible outcomes.
+A two-tailed test has two possible outcomes. The two figures below use invented samples, one far from $\mu_0$ and one close to it, to show each outcome.
 
 1.  **Reject the null hypothesis (two-tailed test).** The sample mean falls beyond the critical values, in the rejection region. The confidence interval also excludes the null mean. In @fig-4key.reject_2_two_tailed, $\bar{x}$ is 3.75 standard errors from $\mu_0$ ($z = -3.75$), well past the critical values of $\pm 1.96$, and the two-tailed $p$-value is below 0.001, far below $\alpha = 0.05$. All three routes say reject.
 
@@ -885,7 +887,7 @@ Rejecting chance as the explanation tells you that *something* is going on, but 
 
 ## One- and two-tailed tests {#sec-tails}
 
-$H_a$ is a claim about where the true population mean could be. A two-tailed alternative says it might be below $\mu_0$ or above it. A one-tailed alternative says it can only be on one side (@fig-4tails-claims).
+$H_a$ says where the true population mean could be if it does not equal $\mu_0$. A two-tailed alternative says it might be below $\mu_0$ or above it. A one-tailed alternative says it can only be on one side (@fig-4tails-claims).
 
 ```{r}
 #| label: fig-4tails-claims
@@ -984,7 +986,7 @@ Choose the direction before you see the data. Picking the tail afterward, becaus
 - **Chance produces differences on its own.** Split one population into two arbitrary groups and their means will differ anyway, from sampling error alone. The question to ask is whether the difference is bigger than chance can account for.
 - **You can build the chance window.** The chance window is the distribution of results that chance alone produces when a study with no real effect is repeated many times. Simulating thousands of replications shows what chance can produce for a study with that design and sample size.
 - **Rarity is a judgment, and it needs a convention.** The 100-year flood uses the same reasoning outside statistics. A 1% annual chance is small, but over a 30-year mortgage it adds up to about a 26% chance. $\alpha = 0.05$ standardizes that judgment so researchers do not each draw their own line.
-- **A hypothesis test is the practical shortcut.** Once you can assume a known reference distribution, the simulated chance window becomes a curve and the decision becomes a calculation, with the same logic as the simulation.
+- **A hypothesis test is the practical shortcut.** Once you can assume the sampling distribution of the sample mean under $H_0$ is normal, the simulated chance window becomes a curve and the decision becomes a calculation, with the same logic as the simulation.
 - **One pair of curves comes from the sample and one from $H_0$.** From the sample: the estimated population distribution and the sampling distribution of the sample mean, which gives the confidence interval. Under $H_0$: the null population distribution and the sampling distribution of the sample mean under $H_0$, which gives the critical values and $p$-value. The true population distribution is never known.
-- **Three routes give the same decision.** A test statistic against a critical value, a confidence interval, and a $p$-value are three ways of asking the same question. For a two-tailed test at the same $\alpha$, they always agree.
+- **Three routes give the same decision.** A test statistic against a critical value, a confidence interval, and a $p$-value are three ways of asking the same question. For the two-tailed $z$ test at the same $\alpha$, they always agree.
 - **Commit to one- or two-tailed in advance.** Default to two-tailed. Choosing after seeing the data raises your actual error rate above the $\alpha$ you claimed.

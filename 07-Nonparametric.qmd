@@ -77,9 +77,9 @@ Chapter 6 covered three forms of the $t$-test (one-sample, paired, and independe
 
 Every test needs a known null distribution for its test statistic (Chapter 4), because that is the shape we compare our result against to get a $p$-value. A **parametric** test is one whose null distribution we can know only by assuming something specific about the shape of the population the data came from. Every test so far in this book has been parametric.
 
-For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of the raw data. It's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the central limit theorem for a large enough sample.
+For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of the raw data. It's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the central limit theorem (Chapter 3) for a large enough sample.
 
-When the distributional assumptions are met, parametric tests are generally the most powerful available. However, when distributional assumptions are not met, a parametric test's $p$-value can be too small or too large, and without simulation it is hard to tell which. The worse the departure from the assumed distribution, the larger the possible error.
+When the distributional assumptions are met, parametric tests generally have the most power (Chapter 5) of any test available. However, when distributional assumptions are not met, a parametric test's $p$-value can be too small or too large, and without simulation it is hard to tell which. The worse the departure from the assumed distribution, the larger the possible error.
 
 A **nonparametric test** is a test whose null distribution does not depend on the population having a particular shape, such as normal. These tests still make assumptions, and those assumptions are usually easier to meet than normality.
 
@@ -91,13 +91,13 @@ This chapter covers two different kinds of tools:
 
 -   **Nonparametric alternatives (to $t$-tests).** Your outcome is still continuous, but it's skewed, has outliers, or your sample is too small to trust normality. The **Wilcoxon signed-rank test** [@Wilcoxon1945] answers the same question as the one-sample or paired $t$-test without assuming normality. The **Mann-Whitney-Wilcoxon test** [@MannWhitney1947] answers the same question as the independent-samples $t$-test without assuming normality.
 
--   **Categorical data.** Your outcome isn't a number at all: a site either has an invasive species or it doesn't, a sample either exceeds a threshold or it doesn't. None of the tests above apply here. The **chi-square ($\chi^2$) tests** compare the counts observed in each category with the counts expected under $H_0$.
+-   **Categorical data.** Your outcome is a category (Chapter 1) instead of a number. A site either has an invasive species or it doesn't, and a sample either exceeds a threshold or it doesn't. None of the tests above apply here. The **chi-square ($\chi^2$) tests** compare the counts observed in each category with the counts expected under $H_0$.
 
 We'll state the assumptions explicitly for each test as we go through them.
 
 ## The Wilcoxon signed-rank test
 
-Chapter 6 built the paired $t$-test around this same example, wetland restoration and soil moisture, with a full 20-plot dataset, and drew the design in @fig-6paireddesign. The same plots are measured before and after, so each plot contributes one difference. Let's run the same design on a separate, smaller study of 12 plots, and this time check whether we should trust the result before reporting it. The data in this example are invented.
+Chapter 6 built the paired $t$-test around this same example, wetland restoration and soil moisture, with a full 20-plot dataset, and drew the design in @fig-6paireddesign. The same plots are measured before and after, so each plot contributes one difference. Let's run the same design on a separate, smaller study of 12 plots, and this time check whether we should trust the result before reporting it. The data in this example are invented. The section runs the paired $t$-test, checks its assumption, and then runs two nonparametric tests on the same plots, the Wilcoxon signed-rank test and the sign test.
 
 ```{r}
 before <- c(20, 15, 22, 18, 16, 24, 19, 14, 21, 17, 25, 20)
@@ -178,9 +178,9 @@ knitr::kable(
 )
 ```
 
-The three plots with no change drop out of the test. A zero difference can't be ranked as positive or negative, so the Wilcoxon test runs on the remaining 9 plots instead of all 12. The rank test already ignores how large each change is, and dropping the zeros means it also works with less data than the $t$-test. The zeros and the tied differences (two plots at $+6$, three at $-1$) also keep R from using the exact null distribution, so R uses a normal approximation instead.
+The three plots with no change drop out of the test. A zero difference can't be ranked as positive or negative, so the Wilcoxon test runs on the remaining 9 plots instead of all 12. The rank test already ignores the exact size of each change and keeps only its order, and dropping the zeros means it also works with less data than the $t$-test. The zeros and the tied differences (two plots at $+6$, three at $-1$) also keep R from using the exact null distribution, so R uses a normal approximation instead.
 
-**How $V$ is calculated.** Drop the zero differences, take the absolute value of what's left, rank those absolute values from smallest to largest (tied absolute values share the average of their ranks), then sum the ranks belonging to the *positive* differences. That sum is $V$.
+**How $V$ is calculated.** Drop the zero differences, take the absolute value of what's left, rank those absolute values from smallest to largest (tied absolute values share the average of their ranks), then sum the ranks belonging to the *positive* differences. For example, the three differences of $-1$ all have absolute value 1 and would take ranks 1, 2 and 3, so each gets rank 2. The two differences of $+6$ would take ranks 6 and 7, so each gets 6.5. That sum is $V$.
 
 ```{r}
 nonzero_diffs <- differences[differences != 0]
@@ -216,13 +216,13 @@ Our observed $V=39$ falls just short of the upper critical value, 40, so it is n
 
 The test does not need normality because nothing in this distribution assumed a shape for soil moisture. The only inputs were our 9 ranks and the 50/50 sign rule from $H_0$.
 
-**So far.** $t$-test $p=0.026$ (significant), Wilcoxon $p=0.057$ (not quite). The two tests reach different verdicts on the same 12 plots because the $t$-test's numerator and denominator both used the exact magnitudes the Wilcoxon test deliberately ignores.
+**So far.** $t$-test $p=0.026$ (significant), Wilcoxon $p=0.057$ (not quite). The two tests reach different verdicts on the same 12 plots because the $t$-test's numerator and denominator both used the exact magnitudes the signed-rank test ignores. In the $t$-test, the increases of 3 to 8 points count at their full size.
 
 **The sign test.** The **sign test** looks only at whether each difference is positive or negative. It is an even simpler nonparametric option than the signed-rank test, and it asks whether pluses outnumber minuses more than chance would suggest. The sign test makes no assumption about the distribution of the differences, not even symmetry. Its only assumption is the one every test in this book shares, independent observations from a sound study design (see Chapter 6).
 
 We already flagged the symmetry assumption as shaky for these data, so the sign test avoids the one assumption the Wilcoxon test still needed. Assuming less costs power, though, because the sign test throws away the size of every difference, so it is usually a last resort.
 
-The sign test uses the binomial distribution from Chapter 3. `binom.test(6, 9, p = 0.5)` asks how often chance alone would give 6 or more increases out of 9, or 3 or fewer, if each plot were equally likely to go up or go down ($\theta = 0.5$, the binomial success probability from Chapter 3).
+The sign test uses the binomial distribution from Chapter 3. `binom.test(6, 9, p = 0.5)` asks how often chance alone would give 6 or more increases out of 9, or 3 or fewer (the same distance from 4.5 in the other direction, because the test is two-tailed), if each plot were equally likely to go up or go down ($\theta = 0.5$, the binomial success probability from Chapter 3).
 
 ```{r}
 #| echo: true
@@ -363,7 +363,7 @@ Both groups fail the Shapiro-Wilk test, sodium with $p = 0.002$ and LED with $p 
 
 **How it works, conceptually.** The signed-rank test ranked the absolute differences within one set of paired differences. The Mann-Whitney-Wilcoxon test ranks the raw values from both groups together, because independent groups have no pairs to subtract. Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups don't differ, their ranks should be well mixed. If one group tends to have higher values, its ranks should be higher too. The outlier site gets the highest rank, 16, whether it had 23 passes or 34. Its size enters the $t$-test through both the mean and the standard deviation, but the Mann-Whitney-Wilcoxon test uses only its rank.
 
-**Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' parent distributions have the same shape. It does not require normality. Distributions with the same shape also have equal variances, but equal variances alone do not meet the assumption, because two distributions can share a variance and differ in shape. If the two groups have differently shaped distributions (say, one skewed and one symmetric), the test still runs. A significant result could then come from a difference in center (location), in shape, or both, so it no longer tells you only that the medians differ.
+**Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' population distributions have the same shape. It does not require normality. Distributions with the same shape also have equal variances, but equal variances alone do not meet the assumption, because two distributions can share a variance and differ in shape. If the two groups have differently shaped distributions (say, one skewed and one symmetric), the test still runs. A significant result could then come from a difference in center (location), in shape, or both, so it no longer tells you only that the medians differ.
 
 Our two groups don't quite share a shape. The sodium group is strongly right-skewed, mostly because of the one 34-pass site, while the LED group is only mildly skewed. So read a result from this test as "bat activity tends to be higher in one group," not strictly as a difference in medians.
 
@@ -460,7 +460,7 @@ ggplot(chisq_shapes, aes(x, density, color = df)) +
   labs(x = expression(chi^2), y = "Density", color = NULL)
 ```
 
-@fig-7chisq-crit shows what the rejection region looks like in practice, using the goodness-of-fit example we'll run below, which has $df = 3$. The critical value at $\alpha = 0.05$ is `r round(qchisq(.95, 3), 2)`, and any statistic beyond that point (the shaded region) occurs less than 5% of the time by chance.
+@fig-7chisq-crit shows what the rejection region looks like in practice, using the goodness-of-fit example we'll run below, which has $df = 3$. The critical value at $\alpha = 0.05$ is `r round(qchisq(.95, 3), 2)`, and When $H_0$ is true, a statistic falls beyond that point (the shaded region) 5% of the time.
 
 ```{r}
 #| label: fig-7chisq-crit
@@ -545,7 +545,7 @@ knitr::kable(
 
 Here, expected count per zone is $200 \times 0.25 = 50$ (total fish times the 25%-per-zone expectation under $H_0$), comfortably above that minimum. The **expected count** for a category is the total count times the probability $H_0$ gives that category. This is the expected-value idea from Chapter 3 applied to counts. When expected counts are too small, the chi-square approximation breaks down and a different method (like Fisher's exact test) is more appropriate.
 
-**$\chi^2$ adds one term per category.** For each category, take the squared difference between observed and expected, scaled by expected: $\chi^2 = \sum \frac{(O-E)^2}{E}$.
+**$\chi^2$ adds one term per category.** For each category, subtract the expected count from the observed count, square the difference, and divide by the expected count. Then add these terms across categories: $\chi^2 = \sum \frac{(O-E)^2}{E}$.
 
 ```{r}
 expected_gof <- rep(200 * 0.25, 4)
@@ -558,7 +558,7 @@ knitr::kable(
 )
 ```
 
-Summing the last column: $2.88+2.42+0.08+0.02 = 5.40$, matching R's statistic above. For goodness-of-fit, $df = k-1$, where $k$ is the number of categories: $4-1=3$. With $df=3$, the critical value at $\alpha=0.05$ is 7.81 (the same one marked on the distribution figure earlier in this chapter); our $5.40$ falls well short of it.
+Summing the last column: $2.88+2.42+0.08+0.02 = 5.40$, matching R's statistic above. For goodness-of-fit, $df = k-1$, where $k$ is the number of categories: $4-1=3$. With $df = 3$, the critical value at $\alpha = 0.05$ is 7.81 (the same one marked in @fig-7chisq-crit). Our 5.40 falls well short of it.
 
 **Interpretation.** $\chi^2(3) = 5.40$, $p = 0.145$, so the result is not significant. This year's zone counts are consistent with the historical 25%-each pattern. The unevenness we see is within the range chance alone would produce.
 
@@ -634,7 +634,7 @@ knitr::kable(
 )
 ```
 
-**Assumption.** Same rule as goodness-of-fit: expected counts should generally be 5 or more in every cell of the table. Unlike the goodness-of-fit test, where expected counts came from a stated proportion (25% per zone), here they come from the table's own row and column totals: the expected count for a cell is $\frac{\text{row total} \times \text{column total}}{\text{grand total}}$, the count you'd see in that cell if land use and temperature really were unrelated. For Parkland/No, that's $\frac{50 \times 87}{150} = 29$ (50 parkland blocks total, 87 blocks total that did not top 40°C, 150 blocks overall).
+**Assumption.** Same rule as goodness-of-fit: expected counts should generally be 5 or more in every cell of the table. Unlike the goodness-of-fit test, where expected counts came from a stated proportion (25% per zone), here they come from the table's own row and column totals: the expected count for a cell is $\frac{\text{row total} \times \text{column total}}{\text{grand total}}$. In both chi-square tests, the expected count is the count $H_0$ predicts. In this test $H_0$ is independence, so the prediction comes from the row and column totals. For Parkland/No, that's $\frac{50 \times 87}{150} = 29$ (50 parkland blocks total, 87 blocks total that did not top 40°C, 150 blocks overall).
 
 ```{r}
 knitr::kable(round(indep_test$expected, 1), caption = "Expected counts under H0 (independence).")
@@ -693,7 +693,7 @@ These tests report differently from a $t$-test. There is no mean difference to q
 
 Wilcoxon signed-rank, on the restoration differences:
 
-> Soil moisture did not change significantly after restoration, Wilcoxon signed-rank $V = `r sprintf("%g", wilcox_out$statistic)`$, $p `r fmt_p_eq(wilcox_out$p.value)`$ (median change +`r median(differences)` percentage points across all `r length(differences)` plots; `r n_nonzero` non-zero differences).
+> Soil moisture did not change significantly after restoration, Wilcoxon signed-rank $V = `r sprintf("%g", wilcox_out$statistic)`$, $p `r fmt_p_eq(wilcox_out$p.value)`$ (median change +`r median(differences)` percentage points across all `r length(differences)` plots; `r n_nonzero` nonzero differences).
 
 Mann-Whitney-Wilcoxon, on the bat activity comparison:
 
@@ -703,7 +703,7 @@ Chi-square, where the counts themselves are the result:
 
 > Whether a city block topped 40°C was not independent of land use, $\chi^2(`r indep_test$parameter`) = `r sprintf("%.2f", indep_test$statistic)`$, $p `r fmt_p_eq(indep_test$p.value)`$. Parkland blocks topped 40°C in `r tab["Parkland", "Yes"]` of `r sum(tab["Parkland", ])` cases, compared with `r tab["Residential", "Yes"]` of `r sum(tab["Residential", ])` residential and `r tab["Commercial", "Yes"]` of `r sum(tab["Commercial", ])` commercial blocks.
 
-Report the number of non-zero differences for a signed-rank test, since dropped zeros change the effective sample size. For chi-square, give the counts as well as the statistic, because the counts are what a reader can interpret.
+Report the number of nonzero differences for a signed-rank test, since dropped zeros change the effective sample size. For chi-square, give the counts as well as the statistic, because the counts are what a reader can interpret.
 :::
 
 ## Chapter Summary
@@ -712,7 +712,7 @@ Report the number of non-zero differences for a signed-rank test, since dropped 
 
 **Core ideas**
 
--   **Rank-based tests trade power for weaker assumptions.** The Wilcoxon signed-rank and Mann-Whitney-Wilcoxon tests ask the same questions as the paired and independent-samples $t$-tests, but work from ranks instead of raw magnitudes. That buys a milder distributional assumption at the cost of some sensitivity.
+-   **Rank-based tests trade power for weaker assumptions.** The Wilcoxon signed-rank and Mann-Whitney-Wilcoxon tests ask the same questions as the one-sample or paired and the independent-samples $t$-tests, but work from ranks instead of raw magnitudes. That buys a milder distributional assumption at the cost of some power.
 -   **The sign test uses even less of the data.** It looks only at the direction of each difference. On the same restoration data, the $t$-test, Wilcoxon, and sign test gave $p$-values of 0.026, 0.057 and 0.508, because each one uses less of the data than the last.
 -   **Nonparametric tests have their own assumptions.** Wilcoxon assumes the differences are symmetric about their median. Mann-Whitney-Wilcoxon assumes the two distributions have the same *shape*, which is not the same as equal variance. State the assumption you are actually making.
 -   **Check assumptions before you trust a $p$-value, not after.** Both worked examples in this chapter ran the parametric test first, then went back and found the violation.

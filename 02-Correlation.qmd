@@ -131,7 +131,7 @@ Pairwise comparisons have two problems. The first is the count, which grows fast
 
 ### The variance
 
-We have used the words variability, variation, and variance a lot, and all three refer to the same idea, that numbers differ. The word *variance* does double duty, though. Loosely it means that general idea. Precisely it names a specific statistic, the mean of the squared deviations from the mean.
+We have used the words variability, variation, and variance a lot, and all three refer to the same idea, that numbers differ. The word *variance* does double duty, though. Loosely it means that general idea. Precisely it names a specific statistic, the mean of the squared deviations from the mean, which we build step by step below.
 
 A score's **deviation score** is the score minus the mean, $x_i - \bar{x}$. To calculate the variance, find each score's deviation score, square those deviations, then average them. Squaring stops positive and negative deviations from canceling. In short:
 
@@ -141,7 +141,7 @@ Chapter 3 explains when to divide by $N$ (when you have the entire population) a
 
 **Deviations from the mean.**
 
-Find the mean, then subtract it from every score. The result tells us both how well the mean represents the data and how much spread there is around it.
+The next few steps build the variance formula above one piece at a time. First, find the mean and subtract it from every score. The result tells us both how well the mean represents the data and how much spread there is around it.
 
 ```{r}
 #| label: tbl-2deviations
@@ -344,7 +344,7 @@ The SD describes the typical spread around the mean. Told only that a dataset ha
 
 So far we've handled the "differences cancel out" problem by squaring deviations. Another way around the problem is to take the absolute value of each deviation from the mean, so a deviation of $-3.5$ becomes 3.5. That way, every difference becomes positive, and when we add them up we don't end up at zero.
 
-The table adds a column of absolute deviations for the same six scores.
+@tbl-2absDeviations adds a column of absolute deviations for the same six scores.
 
 ```{r}
 #| label: tbl-2absDeviations
@@ -403,7 +403,7 @@ Picture two people walking side by side. If they step forward and back in step, 
 
 ### Turning the numbers into a measure of covariance
 
-To turn "chocolate and happiness vary together" into a number, we start from the chocolate and happiness scores of the first 10 subjects.
+Covariance multiplies deviations from the mean, but the idea is easier to see with raw scores first. This subsection multiplies the raw chocolate and happiness scores of the first 10 subjects, and the next subsection replaces them with deviations.
 
 ```{r}
 #| label: tbl-2chocProducts
@@ -420,7 +420,7 @@ knitr::kable(the_df_short)
 
 ```
 
-We've added a new column called `Chocolate_X_Happiness`, which is each person's chocolate score multiplied by their happiness score. The products show how the two values move together.
+We've added a new column called `Chocolate_X_Happiness`, which is each person's chocolate score multiplied by their happiness score. Summed across people, these products show how the two variables move together.
 
 -   Small × small → small product
 -   Large × large → large product
@@ -460,9 +460,9 @@ knitr::kable(df_ab,caption = "Reversed: sum = 220.", table.attr = 'style="margin
 :::
 :::
 
-$X$ and $Y$ are perfectly aligned: $1$ with $1$, $2$ with $2$, up to $10$ with $10$. Their products add up to 385, the *largest* possible sum.
+$X$ and $Y$ are perfectly aligned: $1$ with $1$, $2$ with $2$, up to $10$ with $10$. Their products add up to 385. Pairing the largest values with each other gives the largest products, so no other pairing of these numbers gives a larger sum.
 
-$A$ and $B$ are perfectly reversed: $1$ with $10$, $2$ with $9$, and so on. Their products add up to 220, the *smallest* possible sum.
+$A$ and $B$ are perfectly reversed: $1$ with $10$, $2$ with $9$, and so on. Their products add up to 220. Pairing the largest values with the smallest gives the smallest sum, so no other pairing of these numbers gives less.
 
 Any other pairing of 1 to 10 with 1 to 10 gives a sum between these two extremes, 220 and 385.
 
@@ -560,7 +560,7 @@ We often want a relationship measure that is directional, unitless, and bounded.
 -   $r=0$: no linear relationship
 -   $r=-1$: perfect negative linear relationship
 
-Values closer to $\pm1$ indicate a stronger linear association. Values near $0$ indicate a weak linear association or none.
+Values closer to $\pm1$ indicate a stronger linear relationship. Values near $0$ indicate a weak linear relationship or none.
 
 One formula for Pearson's $r$ is
 
@@ -695,13 +695,13 @@ ggplot(df,aes(x=move_line,y=total_error))+
 
 ### Computing the best-fit line
 
-In principle, you could find the line that minimizes the sum of squared residuals by trying many lines and comparing their errors, but that is slow. @fig-2minimizeSS tried 25 positions and only moved the line up and down, and a full search would also have to change its slope. In practice, we let software identify the line with the smallest total error, the same `lm()` fit behind every regression line drawn in this chapter's figures.
+In principle, you could find the line that minimizes the sum of squared residuals by trying many lines and comparing their errors, but that is slow. @fig-2minimizeSS tried 25 positions and only moved the line up and down, and a full search would also have to change its slope. In practice, we let software identify the line with the smallest total error. R's `lm()` function did this for every regression line drawn in this chapter's figures.
 
-@fig-2corwithLine shows a small example: seven $x,y$ pairs, plotted with their fitted line.
+@fig-2corwithLine shows seven $x,y$ pairs with their fitted line. Chapter 9 returns to these seven points and computes the line's slope and intercept by hand.
 
 ```{r}
 #| label: fig-2corwithLine
-#| fig-cap: "An example regression line going through a few data points in a scatterplot."
+#| fig-cap: "An example regression line going through a few data points in a scatter plot."
 #| fig-alt: "Seven points rising left to right with a blue fitted line."
 #| out-width: "75%"
 
@@ -715,11 +715,9 @@ ggplot(plot_df,aes(x=x,y=y))+
 
 ```
 
-Chapter 9 returns to this example and computes the line's slope and intercept by hand.
-
 ## Ways a correlation can mislead
 
-A common warning is that correlation does not imply causation. Interpreting correlations requires care, because the same number can arise from very different situations: random chance, confounding influences, or nonlinear patterns.
+A common warning is that correlation does not imply causation. Interpreting correlations requires care, because the same number can arise from very different situations. This section covers random chance and sample size, nonlinear patterns, data whose shape a summary hides (Anscombe's quartet), the direction of a causal link, and confounding variables.
 
 ### Spurious correlation: chance alone can look convincing
 
@@ -807,7 +805,7 @@ For example, if you observed $r=0.1$, the histogram shows that such values are c
 
 ### Sample size and stability
 
-So far, our lottery game has used 10 draws per participant. With $n = 10$, chance produces correlations from about $-0.9$ to $0.9$.
+So far, our lottery game has used 10 draws per participant, a sample size of $n = 10$. With $n = 10$, chance produces correlations from about $-0.9$ to $0.9$.
 
 We can repeat the simulation at four sample sizes: each participant draws 10, 50, 100, or 1,000 numbers. At each size we run the game 1,000 times and record the correlation.
 
@@ -894,7 +892,7 @@ Because we usually only have one sample, we can never know for certain whether o
 
 ### Nonlinearity: when $r$ misses real relationships
 
-Consider a snake plant. Like most plants, it needs water to stay alive, but also needs *the right amount* of water. Imagine we grow 1,000 snake plants, each receiving a different amount of water per day, ranging from *no water* to *extreme overwatering* (say 1000 teaspoons a day), and measure their weekly growth. Water affects plant growth, so we'd expect to see a correlation.
+Consider a snake plant. Like most plants, it needs water to stay alive, but also needs *the right amount* of water. Imagine we grow 1,000 snake plants, each receiving a different amount of water per day, ranging from *no water* to *extreme overwatering* (say 1,000 teaspoons a day), and measure their weekly growth. Water affects plant growth, so we'd expect to see a correlation.
 
 Plants given no water at all will eventually die, showing little or no weekly growth. With only a few teaspoons per day, plants may survive but grow only modestly. In a scatter plot, those cases would appear near the bottom left (low water, low growth) and rise upward as water increases. Growth continues to improve until a threshold is reached, beyond which excess water harms the plants. Severely overwatered plants also fail to grow and eventually die, just as those given no water do.
 
@@ -953,11 +951,11 @@ If the scatter shows a U-shape or other curve, a single straight-line correlatio
 
 Everything so far has compressed a relationship into a number: a covariance, an $r$, a slope. A single number leaves out the shape of the data. Francis Anscombe (@Anscombe1973) built four datasets, now called *Anscombe's quartet*, that share almost every statistic you would think to compute. He built them to show how much a single number can hide about the shape of the data.
 
-Each panel in @fig-2anscombe shows one dataset's pairs of $x$ and $y$ values as a scatterplot.
+Each panel in @fig-2anscombe shows one dataset's pairs of $x$ and $y$ values as a scatter plot.
 
 ```{r}
 #| label: fig-2anscombe
-#| fig-cap: "Anscombe's Quartet."
+#| fig-cap: "Anscombe's quartet."
 #| fig-alt: "Four scatter plots with the same fitted line, y = 3 + 0.5x. Panel 1 is a linear cloud, panel 2 a smooth curve, panel 3 a tight line with one high outlier, and panel 4 ten points stacked at x = 8 with one point far to the right at x = 19. The four sets have nearly identical means, variances and correlations."
 
 library(data.table)
@@ -1085,10 +1083,10 @@ An experiment settles both problems at once. When you set $X$ yourself, $X$ came
 **Core ideas**
 
 -   **Variance and standard deviation.** Deviations from the mean always sum to zero, so we square them. The variance is the mean of the squared deviations, and the standard deviation is its square root, back in the units of the data.
--   **Plot the scatter before computing $r$.** A scatter plot shows direction (up, down, none), form (straight vs curved), and outliers. If the pattern is curved, don't stop at $r$: fit a suitable model (e.g., add a quadratic term) or transform a variable instead.
+-   **Plot the scatter before computing $r$.** A scatter plot shows the direction of a relationship (up, down, none), whether it is straight or curved, and any outliers. If the pattern is curved, fit a suitable model (for example, add a squared term) or transform a variable instead of stopping at $r$.
 -   **Pearson's $r$ is covariance rescaled.** Covariance measures whether deviations from each mean tend to align. Pearson's $r$ rescales covariance by the standard deviations so the result is unitless and bounded (\[-1, 1\]).
 -   **Interpreting $r$.** The sign of $r$ gives the direction, and its magnitude gives the strength of a *linear* relationship. $r$ near 0 can still hide a strong *nonlinear* pattern.
 -   **Regression link.** The best-fit line summarizes the average relationship. Residuals are the vertical gaps between data and the line. The line is chosen to minimize the sum of squared residuals.
--   **Chance alone can manufacture a correlation.** Small samples can produce large \|$r$\| by accident, and larger samples shrink the "chance window" toward 0. Always report $r$ alongside its sample size ($n$). If a result hinges on a small sample, say so and treat the conclusion as tentative.
+-   **Chance alone can manufacture a correlation.** Small samples can produce large \|$r$\| by accident, and larger samples shrink the "chance window" toward 0. A large $r$ from a large sample is much harder to attribute to chance.
 -   **Nonlinearity hides real effects.** Curved relationships (e.g., too little or too much water harming plant growth) can yield $r$ ≈ 0 even when the underlying effect is strong.
 -   **Confounding.** A third variable can create or inflate a correlation (e.g., sunlight affecting both watering patterns and plant growth). Without a design that rules out third variables, write "associated with," not "caused by."
