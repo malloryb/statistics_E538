@@ -36,7 +36,7 @@ library(broom)
 library(knitr)
 ```
 
-Back in Chapter 2, we used the covariance between two variables to quantify the strength and direction of a relationship (Pearson's $r$), fit a best-fit line through a scatterplot, and judged $r$ against a simulated chance window. What we did not yet have was a formal test of the question every other test in this book has asked:
+Back in Chapter 2, we used the covariance between two variables to quantify the strength and direction of a relationship (Pearson's $r$), fit a best-fit line through a scatterplot, and judged $r$ against a simulated chance window. Chapter 2 gave no formal test of the question every other test in this book has asked:
 
 *Could chance alone plausibly have produced our result?*
 
@@ -44,7 +44,7 @@ Now that we've learned hypothesis testing, sampling distributions, and the logic
 
 ## Regression basics
 
-The equation for a linear regression will be familiar, and it's one of the most heavily used equations in applied science:
+The equation for a linear regression is one of the most heavily used equations in applied science:
 
 $$y = \beta_0 + \beta_1 x + \varepsilon$$
 
@@ -98,7 +98,7 @@ Warmer water holds less dissolved gas, so ecologists expect dissolved oxygen (DO
 
 ```{r}
 #| label: fig-9streamdesign
-#| fig-cap: "A regression design. Instead of a few groups to sort sites into, every site sits somewhere along a continuous range, and every temperature value is treated as its own group. A slope describes how the mean changes across that range."
+#| fig-cap: "A regression design. Instead of a few groups to sort sites into, every site is somewhere along a continuous range, and every temperature value is treated as its own group. A slope describes how the mean changes across that range."
 #| fig-alt: "Study design schematic. IV: stream temperature, continuous, an arrow running from 10 to 24 degrees Celsius across 30 sites. DV: dissolved oxygen in mg per liter."
 #| fig-asp: 0.34
 #| out-width: "100%"
@@ -226,7 +226,7 @@ The slope ($b_1 = `r sprintf("%.2f", coef(fit)[2])`$) is the part we care about 
 
 ## Testing the slope
 
-The slope $b_1$ is a sample estimate. Recall the hypothesis test asks whether the population slope $\beta_1$ could plausibly be zero:
+The slope $b_1$ is a sample estimate. The hypothesis test for the slope asks whether the population slope $\beta_1$ could plausibly be zero:
 
 -   $H_0: \beta_1 = 0$ (no linear relationship between stream temperature and dissolved oxygen)
 
@@ -280,7 +280,7 @@ Our observed $t = `r sprintf("%.2f", fit_tidy$statistic[2])`$ is far past the cr
 
 We reject $H_0$ and conclude that stream temperature is linearly related to dissolved oxygen.
 
-The 95% confidence interval for the slope, from `confint(fit)`, in the last two columns of the table above, is 95% CI [`r sprintf("%.2f", fit_tidy$conf.low[2])`, `r sprintf("%.2f", fit_tidy$conf.high[2])`] mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test.
+The last two columns of the coefficient table give the 95% confidence interval for the slope, 95% CI [`r sprintf("%.2f", fit_tidy$conf.low[2])`, `r sprintf("%.2f", fit_tidy$conf.high[2])`] mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test.
 
 This is the same agreement you saw for $z$ in Chapter 4 and for $t$ in Chapter 6. Here the critical value is $t_{crit} = `r sprintf("%.2f", qt(.975, nrow(stream_df) - 2))`$ at $df = `r nrow(stream_df) - 2`$. The test rejects $H_0$ when the observed $b_1$ is more than $t_{crit}$ standard errors from 0, and the 95% interval contains every slope within $t_{crit}$ standard errors of $b_1$. So 0 falls outside the interval exactly when the two-tailed test rejects $H_0$ at $\alpha = 0.05$.
 
@@ -368,9 +368,9 @@ Here $R^2 = `r sprintf("%.2f", fit_glance$r.squared)`$, so stream temperature ex
 
 ## Consider both significance and effect size
 
-As with every test in this book, the significance test is not the whole picture. Testing the slope asks whether $\beta_1$ differs from 0. $R^2$, regression's effect size, says how much of the variation the line explains. The two can disagree in either direction.
+As with every test in this book, we report an effect size alongside the significance test. Testing the slope asks whether $\beta_1$ differs from 0. $R^2$, regression's effect size, says how much of the variation the line explains. The two can disagree in either direction.
 
-A very large sample, the kind common in remote sensing and other big-data environmental work, can make a trivial effect significant, because more observations shrink the standard error until almost any nonzero slope clears $p<0.05$. A small sample can fail the other way and miss a real, sizeable effect because its standard error is too large. Because $p$ and $R^2$ answer different questions, we report both.
+A sample of thousands of observations, common in remote sensing and other big-data environmental work, can make a trivial effect significant, because more observations shrink the standard error until almost any nonzero slope clears $p<0.05$. A small sample can fail the other way and miss a real, sizeable effect because its standard error is too large. Because $p$ and $R^2$ answer different questions, we report both.
 
 ```{r}
 # Three simulated data sets for fig-9regeffectpanels
@@ -413,7 +413,7 @@ ggplot(all_panels, aes(x, y)) +
 ```
 
 ::: {.callout-caution title="Warning: How big is a \"good\" $R^2$?"}
-It depends on the field. In studies of human behavior, where many unmeasured factors shape any outcome, 0.20 is a strong result. Environmental systems tend toward more direct physical relationships, so 0.5 to 0.8 for a well-chosen single predictor isn't unusual. An $R^2$ that looks *too* good, say 0.98 from a single predictor in a noisy field system, more often points to a problem in how the analysis was set up than to a real result.
+It depends on the field. In studies of human behavior, where many unmeasured factors shape any outcome, 0.20 is a strong result. Environmental systems tend toward more direct physical relationships, so 0.5 to 0.8 for a well-chosen single predictor isn't unusual. An $R^2$ that looks *too* good, say 0.98 from a single predictor in a noisy field system, more often points to a mistake in the analysis, such as a predictor that is computed from the DV, than to a real result.
 :::
 
 ## Checking assumptions
@@ -429,12 +429,12 @@ Simple linear regression has three test-specific assumptions, plus the universal
 
 : Assumptions of simple linear regression and how to check them. {#tbl-9assumptions}
 
-### Sometimes the truth isn't a line at all
+### When the true relationship is curved
 
 > You can do linear regression without thinking about whether the phenomenon you're modeling is actually close to linear. But you shouldn't.\
 > Jordan Ellenberg, *How Not to Be Wrong*
 
-A straight line is not guaranteed to be the right shape for your data. A residuals-versus-fitted plot checks two of the assumptions above at once. A curve means linearity is violated, and a funnel shape means constant variance is violated.
+A straight line may be the wrong shape for your data. A residuals-versus-fitted plot checks two of the assumptions above at once. A curve means linearity is violated, and a funnel shape means constant variance is violated.
 
 ```{r}
 #| label: fig-9regresid
@@ -496,13 +496,13 @@ ggplot(outbreak_df, aes(days, cases)) +
   ylab("New cases detected")
 ```
 
-A straight line fit to these 14 days gives $R^2 = `r sprintf("%.2f", outbreak_tidy$r.squared)`$ and $p `r fmt_p_eq(outbreak_tidy$p.value)`$, which by the benchmark in the "How big is a good $R^2$?" warning above looks like a solid, significant fit for a field system. Nothing about those numbers alone raises a flag. The plot does raise one, though. The fitted line starts at about -40 cases on day 1, and a count of cases can't be negative.
+A straight line fit to these 14 days gives $R^2 = `r sprintf("%.2f", outbreak_tidy$r.squared)`$ and $p `r fmt_p_eq(outbreak_tidy$p.value)`$, which by the benchmark in the "How big is a good $R^2$?" warning above looks like a solid, significant fit for a field system. Neither number alone suggests a problem, but the plot does. The fitted line starts at about -40 cases on day 1, and a count of cases can't be negative.
 
 **Check the residuals.** The residuals-versus-fitted plot shows a problem that the $R^2$ and slope test did not.
 
 ```{r}
 #| label: fig-9outbreakresid
-#| fig-cap: "Residuals versus fitted values for the linear outbreak model. A clear U-shape, not random scatter, is the signature of a nonlinear relationship forced into a straight line."
+#| fig-cap: "Residuals versus fitted values for the linear outbreak model. The residuals form a U-shape instead of a random scatter, which happens when a straight line is fit to a curved relationship."
 #| fig-alt: "Residuals plotted against fitted values. The residuals form a clear U-shaped curve: negative in the middle, positive at both low and high fitted values, rather than scattering randomly around zero."
 
 outbreak_df$fitted <- fitted(fit_outbreak)
@@ -566,7 +566,7 @@ knitr::kable(
 )
 ```
 
-The residuals don't depart from normality here ($p `r fmt_p_eq(sh_out$p.value)`$). As with any formal normality test, treat this as one piece of evidence alongside the Q-Q plot and residual plot, not a strict gate. Shapiro-Wilk has the least power to detect real departures when the sample is small, which is also when the visual checks matter most.
+The residuals don't depart from normality here ($p `r fmt_p_eq(sh_out$p.value)`$). As with any formal normality test, treat this as one piece of evidence alongside the Q-Q plot and residual plot, and do not decide on the test result alone. Shapiro-Wilk has the least power to detect real departures when the sample is small, which is also when the visual checks matter most.
 
 Now apply the same two normality checks to the avian influenza model, the one we already know is badly nonlinear.
 
@@ -586,7 +586,7 @@ ggplot(outbreak_df, aes(sample = resid)) +
 sh_outbreak <- shapiro.test(resid(fit_outbreak))
 ```
 
-The Q-Q plot bends away from the diagonal at the low end, but Shapiro-Wilk does not reject normality ($p `r fmt_p_eq(sh_outbreak$p.value)`$). On a model we already know is the wrong shape, the normality checks give at most a borderline signal. They check *normality of the residuals*, which is a different assumption from linearity, and a model can badly violate linearity while its residuals look only mildly non-normal.
+The Q-Q plot bends away from the diagonal at the low end, but Shapiro-Wilk does not reject normality ($p `r fmt_p_eq(sh_outbreak$p.value)`$). On a model we already know is the wrong shape, the normality checks give at most borderline evidence of a problem. They check *normality of the residuals*, which is a different assumption from linearity, and a model can badly violate linearity while its residuals look only mildly non-normal.
 
 ::: {.callout-important title="Results reporting: regression"}
 We report a regression result the same way as any other test: the slope, the test statistic with its degrees of freedom, $p$, the slope's confidence interval, and $R^2$ as the effect size.
@@ -666,7 +666,7 @@ ggplot() +
   theme(legend.position = "top")
 ```
 
-Regression is used for extrapolation all the time, and often reasonably. A well-understood physical process can justify projecting a line beyond the data you happened to collect. Extrapolating a straight line is only safe if the true relationship actually stays straight past the range you observed.
+Regression is used for extrapolation all the time, and often reasonably. A well-understood physical process can justify projecting a line beyond the data we collected. Extrapolating a straight line is only safe if the true relationship stays straight past the range we observed.
 
 The problem is that a narrow window of data can't tell you which kind of curve you're actually on. @fig-9curveshapes shows four very different relationships, exponential growth, a sigmoid, a hump-shaped curve, and a truly straight line, each with the same short observed window highlighted in blue. In each panel a straight line (dashed red) is fit to that window and extended. Once you see the full curve (gray), you can see how badly linear extrapolation beyond the range of observed data would perform in each case.
 
@@ -746,13 +746,13 @@ In @fig-9outbreakextrap, the dashed line keeps rising slowly past day 14, while 
 
 The linear model predicts about `r round(lin_pred30)` cases on day 30. On the exponential curve the data were built from, the count is closer to `r formatC(round(true_val30), big.mark=",", format="d")`, roughly `r round(true_val30/lin_pred30)` times higher.
 
-Planning surveillance and containment staffing off the linear forecast would leave the response badly under-resourced for the outbreak that actually arrives. A straight line can look fine over a short early window and still be very wrong about where that window leads.
+Planning surveillance and containment staffing off the linear forecast would leave the response badly under-resourced for the outbreak that actually arrives.
 
 This problem calls for a different model. More data or a better-fitting straight line would not fix it. Fitting curves and transformations is beyond this course, but you can recognize when you need one by plotting the data and the residuals.
 
 ## Chapter Summary
 
-**Why it matters.** Chapter 2 drew a best-fit line through a scatterplot. This chapter turns that line into something you can test, quantify, and make predictions from. Chapter 11 adds a categorical factor to this same line.
+**Why it matters.** Chapter 2 drew a best-fit line through a scatterplot. This chapter tests that line's slope, measures how much variation it explains with $R^2$, and uses it to predict new values. Chapter 11 adds a categorical factor to this same line.
 
 **Core ideas**
 
