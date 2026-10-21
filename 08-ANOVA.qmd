@@ -105,7 +105,7 @@ The one-way ANOVA (also called a between-subjects ANOVA) is the simplest version
 
 : Three kinds of ANOVA. {#tbl-8types}
 
-With exactly two groups, a $t$-test and a one-way ANOVA give the same answer: $t^2=F$. Both compare the size of an effect to the amount of variation you'd expect from sampling error alone. The $t$-test expresses that comparison as $t$, and the ANOVA expresses the same ratio as $F$ (named for Fisher, its inventor).
+ANOVA's test statistic is $F$, named for Fisher, who invented ANOVA. Like $t$, $F$ compares the size of an effect to the amount of variation you'd expect from sampling error alone. With exactly two groups, a $t$-test and a one-way ANOVA give the same answer, because $t^2 = F$.
 
 $$F = \frac{\text{measure of effect}}{\text{measure of error}}$$
 
@@ -165,7 +165,7 @@ The next sections compute each piece for a small example with nine scores. We fi
 
 ### SS Total
 
-$SS_\text{Total}$ is the sum of the squared differences between each score and the grand mean. It captures all of the variation in a dataset. Writing $Y_{ij}$ for score $i$ in group $j$ and $\bar{Y}_\text{grand}$ for the grand mean,
+$SS_\text{Total}$ is the sum of the squared differences between each score and the grand mean, the mean of all the scores. It captures all of the variation in a dataset. Writing $Y_{ij}$ for score $i$ in group $j$ and $\bar{Y}_\text{grand}$ for the grand mean,
 
 $$SS_\text{Total} = \sum (Y_{ij} - \bar{Y}_\text{grand})^2.$$
 
@@ -537,6 +537,8 @@ Before running the ANOVA, check whether its assumptions hold. Chapter 6 introduc
 
 The first is **homogeneity of variance**, which means the groups have roughly equal spread around their own means. The second is approximately normal residuals. In ANOVA the model predicts each score with its group mean, so a residual is the score minus its group mean, the same idea as the residuals in Chapter 2. Here each residual is a plot's count minus its forest type's mean, the same deviations that make up $SS_\text{Within}$, and the residuals should be roughly bell-shaped. Both matter because the $F$-test pools the within-group spread of every group into one error variance, $MS_\text{Within}$, and then compares $F$ to a null distribution that assumes normal residuals. Pooling only makes sense when the groups have similar spread.
 
+Levene's test checks homogeneity of variance. Its null hypothesis is that every group has the same variance, so a small $p$-value is evidence that the spreads differ. It reports its own $F$ statistic, separate from the ANOVA's $F$. The Shapiro-Wilk test from Chapter 6 checks normality, here applied to the residuals.
+
 ```{r}
 #| echo: true
 #| eval: false
@@ -576,7 +578,7 @@ knitr::kable(
 
 Levene's test [@Levene1960; @BrownForsythe1974] gives $F(2, 21) = `r sprintf("%.2f", levene_out[1, "F value"])`$, $p `r fmt_p_eq(levene_out[1, "Pr(>F)"])`$, so there is no evidence of unequal variance across forest types. The Shapiro-Wilk test [@Shapiro1965] on the model's residuals gives $W = `r sprintf("%.2f", shapiro_out$statistic)`$, $p `r fmt_p_eq(shapiro_out$p.value)`$, so there is no evidence against normality either. Both checks agree with the individual plots in @fig-8salamanderData, which show similar spread across groups and no outliers far from the rest.
 
-**Formal assumption tests are evidence, not a gate.** Chapter 6 made this point about Shapiro-Wilk, and it holds for Levene's test too. It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." With a small sample (exactly when a violated assumption matters most), these tests have low power and will often say "no problem" even when there is one. With a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." Look at the diagnostic plots too and use judgment.
+**Formal assumption tests are evidence, not a gate.** Chapter 6 made this point about Shapiro-Wilk, and it holds for Levene's test too. It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." With a small sample (exactly when a violated assumption matters most), these tests have low power and will often say "no problem" even when there is one. With a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." Look at the data too, as in @fig-8salamanderData, and check whether the groups have similar spread and whether any points are far from the rest.
 
 In practice, one-way ANOVA is moderately robust to mild departures from these assumptions, especially when the design is **balanced**, with the same number of observations in every group, as here (8 plots per forest type). Be most cautious when small, unbalanced samples come with visibly skewed data or very different spreads. In that case, the nonparametric alternative below is the better choice.
 
