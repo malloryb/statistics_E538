@@ -69,35 +69,35 @@ null_hist <- function(sim, exact, obs, stat, xlab, ylab = "Count out of 20,000 s
 }
 ```
 
-# Nonparametric and Categorical Data
+# Nonparametric and Categorical Data {#sec-nonparametric}
 
 ## Parametric vs. nonparametric tests
 
-Chapter 6 covered three forms of the $t$-test (one-sample, paired, and independent-samples, also called two-sample). All three need a continuous outcome that is roughly normal (for the paired test, the difference scores), and the pooled independent-samples test also assumes similar variance across the two groups. This chapter covers what to do when those assumptions aren't met. We'll also cover what to do if your data aren't continuous at all.
+@sec-ttests covered three forms of the $t$-test (one-sample, paired, and independent-samples, also called two-sample). All three need a continuous outcome that is roughly normal (for the paired test, the difference scores), and the pooled independent-samples test also assumes similar variance across the two groups. This chapter covers what to do when those assumptions aren't met. We'll also cover what to do if your data aren't continuous at all.
 
-Every test needs a known null distribution for its test statistic (Chapter 4), because that is the shape we compare our result against to get a $p$-value. A **parametric** test is one whose null distribution we can know only by assuming something specific about the shape of the population the data came from. Every test so far in this book has been parametric.
+Every test needs a known null distribution for its test statistic (@sec-inference), because that is the shape we compare our result against to get a $p$-value. A **parametric** test is one whose null distribution we can know only by assuming something specific about the shape of the population the data came from. Every test so far in this book has been parametric.
 
-For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of the raw data. It's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the central limit theorem (Chapter 3) for a large enough sample.
+For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of the raw data. It's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the central limit theorem (@sec-probability) for a large enough sample.
 
-When the distributional assumptions are met, parametric tests generally have the most power (Chapter 5) of any test available. However, when distributional assumptions are not met, a parametric test's $p$-value can be too small or too large, and without simulation it is hard to tell which. The worse the departure from the assumed distribution, the larger the possible error.
+When the distributional assumptions are met, parametric tests generally have the most power (@sec-errors-power) of any test available. However, when distributional assumptions are not met, a parametric test's $p$-value can be too small or too large, and without simulation it is hard to tell which. The worse the departure from the assumed distribution, the larger the possible error.
 
 A **nonparametric test** is a test whose null distribution does not depend on the population having a particular shape, such as normal. These tests still make assumptions, and those assumptions are usually easier to meet than normality.
 
 The **rank** of a value is its position when the data are put in order from smallest to largest (first, second, third, and so on). Many nonparametric tests are run on the ranks instead of the raw values. The median is a familiar statistic that depends only on this ordering. It is the middle value once the data are put in order.
 
-**Rank-based tests also work on ordinal data.** Because the rank-based tests in this chapter only need a rank ordering, they are not limited to interval- or ratio-scale measurements (Chapter 1) the way a $t$-test is. A $t$-test needs a mean, which requires numbers where the *distance* between values means something. Plenty of environmental data doesn't work that way: a water-quality rating (poor, fair, good, excellent), a disturbance-severity class, a Likert-style survey response. You can put those in order, but "the average disturbance class was 2.4" isn't meaningful the way "the average pH was 6.8" is.
+**Rank-based tests also work on ordinal data.** Because the rank-based tests in this chapter only need a rank ordering, they are not limited to interval- or ratio-scale measurements (@sec-describing-data) the way a $t$-test is. A $t$-test needs a mean, which requires numbers where the *distance* between values means something. Plenty of environmental data doesn't work that way: a water-quality rating (poor, fair, good, excellent), a disturbance-severity class, a Likert-style survey response. You can put those in order, but "the average disturbance class was 2.4" isn't meaningful the way "the average pH was 6.8" is.
 
 This chapter covers two different kinds of tools:
 
 -   **Nonparametric alternatives (to $t$-tests).** Your outcome is still continuous, but it's skewed, has outliers, or your sample is too small to trust normality. The **Wilcoxon signed-rank test** [@Wilcoxon1945] answers the same question as the one-sample or paired $t$-test without assuming normality. The **Mann-Whitney-Wilcoxon test** [@MannWhitney1947] answers the same question as the independent-samples $t$-test without assuming normality.
 
--   **Categorical data.** Your outcome is a category (Chapter 1) instead of a number. A site either has an invasive species or it doesn't, and a sample either exceeds a threshold or it doesn't. None of the tests above apply here. The **chi-square ($\chi^2$) tests** compare the counts observed in each category with the counts expected under $H_0$.
+-   **Categorical data.** Your outcome is a category (@sec-describing-data) instead of a number. A site either has an invasive species or it doesn't, and a sample either exceeds a threshold or it doesn't. None of the tests above apply here. The **chi-square ($\chi^2$) tests** compare the counts observed in each category with the counts expected under $H_0$.
 
 We'll state the assumptions explicitly for each test as we go through them.
 
 ## The Wilcoxon signed-rank test
 
-Chapter 6 built the paired $t$-test around this same example, wetland restoration and soil moisture, with a full 20-plot dataset, and drew the design in @fig-6paireddesign. The same plots are measured before and after, so each plot contributes one difference. Let's run the same design on a separate, smaller study of 12 plots, and this time check whether we should trust the result before reporting it. The data in this example are invented. The section runs the paired $t$-test, checks its assumption, and then runs two nonparametric tests on the same plots, the Wilcoxon signed-rank test and the sign test.
+@sec-ttests built the paired $t$-test around this same example, wetland restoration and soil moisture, with a full 20-plot dataset, and drew the design in @fig-6paireddesign. The same plots are measured before and after, so each plot contributes one difference. Let's run the same design on a separate, smaller study of 12 plots, and this time check whether we should trust the result before reporting it. The data in this example are invented. The section runs the paired $t$-test, checks its assumption, and then runs two nonparametric tests on the same plots, the Wilcoxon signed-rank test and the sign test.
 
 ```{r}
 before <- c(20, 15, 22, 18, 16, 24, 19, 14, 21, 17, 25, 20)
@@ -110,7 +110,7 @@ knitr::kable(
 )
 ```
 
-**Step 1: run the paired $t$-test, the way Chapter 6 taught it.**
+**Step 1: run the paired $t$-test, the way @sec-ttests taught it.**
 
 ```{r}
 t_out <- t.test(differences, mu = 0)
@@ -148,7 +148,7 @@ knitr::kable(
 )
 ```
 
-The Shapiro-Wilk test (Chapter 6) has the null hypothesis that the data came from a normal distribution. Here $p = 0.039$, below 0.05, so the test rejects normality for the differences and agrees with the picture. Three plots didn't change at all, three dropped slightly, and the rest rose by 3 to 8 points. That is not symmetric, let alone normal. The $t$-test's "significant" result depends on an assumption the data don't meet, so we turn to the Wilcoxon signed-rank test.
+The Shapiro-Wilk test (@sec-ttests) has the null hypothesis that the data came from a normal distribution. Here $p = 0.039$, below 0.05, so the test rejects normality for the differences and agrees with the picture. Three plots didn't change at all, three dropped slightly, and the rest rose by 3 to 8 points. That is not symmetric, let alone normal. The $t$-test's "significant" result depends on an assumption the data don't meet, so we turn to the Wilcoxon signed-rank test.
 
 **The question.** Did soil moisture systematically change after restoration, or is any change we see just plot-to-plot noise?
 
@@ -218,11 +218,11 @@ The test does not need normality because nothing in this distribution assumed a 
 
 **So far.** $t$-test $p=0.026$ (significant), signed-rank test $p = 0.057$ (not significant). The two tests reach different verdicts on the same 12 plots because the $t$-test's numerator and denominator both used the exact magnitudes the signed-rank test ignores. In the $t$-test, the increases of 3 to 8 points count at their full size.
 
-**The sign test.** The **sign test** looks only at whether each difference is positive or negative. It is an even simpler nonparametric option than the signed-rank test, and it asks whether pluses outnumber minuses more than chance would suggest. The sign test makes no assumption about the distribution of the differences, not even symmetry. Its only assumption is the one every test in this book shares, independent observations from a sound study design (see Chapter 6).
+**The sign test.** The **sign test** looks only at whether each difference is positive or negative. It is an even simpler nonparametric option than the signed-rank test, and it asks whether pluses outnumber minuses more than chance would suggest. The sign test makes no assumption about the distribution of the differences, not even symmetry. Its only assumption is the one every test in this book shares, independent observations from a sound study design (see @sec-ttests).
 
 We already flagged the symmetry assumption as shaky for these data, so the sign test avoids the one assumption the signed-rank test still needed. Assuming less costs power, though, because the sign test throws away the size of every difference, so it is usually a last resort.
 
-The sign test uses the binomial distribution from Chapter 3. `binom.test(6, 9, p = 0.5)` asks how often chance alone would give 6 or more increases out of 9, or 3 or fewer (the same distance from 4.5 in the other direction, because the test is two-tailed), if each plot were equally likely to go up or go down ($\theta = 0.5$, the binomial success probability from Chapter 3).
+The sign test uses the binomial distribution from Chapter 3. `binom.test(6, 9, p = 0.5)` asks how often chance alone would give 6 or more increases out of 9, or 3 or fewer (the same distance from 4.5 in the other direction, because the test is two-tailed), if each plot were equally likely to go up or go down ($\theta = 0.5$, the binomial success probability from @sec-probability).
 
 ```{r}
 #| echo: true
@@ -296,7 +296,7 @@ knitr::kable(
 )
 ```
 
-**Step 1: run the $t$-test, the way Chapter 6 taught it.**
+**Step 1: run the $t$-test, the way @sec-ttests taught it.**
 
 ```{r}
 t_out <- t.test(sodium, led, var.equal = TRUE)
@@ -312,7 +312,7 @@ knitr::kable(
 
 $t(14) = 2.54$, $p = 0.024$, a significant result. Bat activity looks higher under sodium lights.
 
-**Step 2: check the assumptions.** Chapter 6 said to check them before trusting a $p$-value, so we look at the data now.
+**Step 2: check the assumptions.** @sec-ttests said to check them before trusting a $p$-value, so we look at the data now.
 
 ```{r}
 #| label: fig-7bats-boxplot
@@ -440,7 +440,7 @@ The test does not need normality because nothing in this distribution assumed a 
 
 ## Categorical data: the chi-square tests
 
-Every test so far (the $t$-tests in Chapter 6, and the signed-rank and Mann-Whitney-Wilcoxon tests above) needs a continuous outcome variable. But a lot of environmental data isn't continuous at all: a site either has an invasive species or it doesn't; a stream sample either exceeds a safety threshold or it doesn't; a plot falls into one land-cover category, not a number line. None of the tests above apply to categorical data. Counts in categories need a different test, the chi-square ($\chi^2$) test [@Pearson1900].
+Every test so far (the $t$-tests in @sec-ttests, and the signed-rank and Mann-Whitney-Wilcoxon tests above) needs a continuous outcome variable. But a lot of environmental data isn't continuous at all: a site either has an invasive species or it doesn't; a stream sample either exceeds a safety threshold or it doesn't; a plot falls into one land-cover category, not a number line. None of the tests above apply to categorical data. Counts in categories need a different test, the chi-square ($\chi^2$) test [@Pearson1900].
 
 The **chi-square distribution** is the family of curves that the $\chi^2$ statistic approximately follows when $H_0$ is true and the expected counts (the counts $H_0$ predicts for each category, defined below) are large enough. The test compares its statistic with this distribution. The symbol $\chi^2$ is used for both the statistic and the distribution, the way $t$ is. Because $\chi^2$ adds up squared gaps between observed and expected counts, it can never be negative, and a mismatch in either direction makes it bigger. A $\chi^2$ near 0 means the counts match the expectation closely, so only the upper tail counts against $H_0$. Like $t$, the chi-square distribution has one curve for each number of degrees of freedom (@fig-7chisq-shapes). With few degrees of freedom it is sharply right-skewed, and as $df$ grows it shifts right and becomes more symmetric.
 
@@ -543,7 +543,7 @@ knitr::kable(
 
 **Assumption.** The goodness-of-fit test makes no assumption about the shape of your data, since categories aren't numbers. It does require expected counts of about 5 or more in each category [@Cochran1954; @Larntz1978]. The 5 is a conventional rule of thumb, not a value computed from these data or compared to a critical value. The rule tells you whether the chi-square curve is a trustworthy approximation. Check it before you run the test.
 
-Here, expected count per zone is $200 \times 0.25 = 50$ (total fish times the 25%-per-zone expectation under $H_0$), comfortably above that minimum. The **expected count** for a category is the total count times the probability $H_0$ gives that category. This is the expected-value idea from Chapter 3 applied to counts. When expected counts are too small, the chi-square approximation breaks down and a different method (like Fisher's exact test) is more appropriate.
+Here, expected count per zone is $200 \times 0.25 = 50$ (total fish times the 25%-per-zone expectation under $H_0$), comfortably above that minimum. The **expected count** for a category is the total count times the probability $H_0$ gives that category. This is the expected-value idea from @sec-probability applied to counts. When expected counts are too small, the chi-square approximation breaks down and a different method (like Fisher's exact test) is more appropriate.
 
 **$\chi^2$ adds one term per category.** For each category, subtract the expected count from the observed count, square the difference, and divide by the expected count. Then add these terms across categories: $\chi^2 = \sum \frac{(O-E)^2}{E}$.
 
@@ -678,7 +678,7 @@ Here every land use has 50 blocks, so the raw counts already compare fairly. Wit
 
 @tbl-7choose collects the tests in this chapter by the kind of data and design each one handles.
 
-| Outcome              | Design                                              | Parametric test (Chapter 6)     | Test in this chapter |
+| Outcome              | Design                                              | Parametric test (@sec-ttests)     | Test in this chapter |
 |:---------------------|:----------------------------------------------------|:--------------------------------|:---------------------|
 | Continuous           | One group vs. a reference, or paired (before/after) | One-sample or paired $t$-test   | Wilcoxon signed-rank test; sign test if the differences are not symmetric |
 | Continuous           | Two independent groups                              | Independent-samples $t$-test    | Mann-Whitney-Wilcoxon test |
@@ -708,7 +708,7 @@ Report the number of nonzero differences for a signed-rank test, since dropped z
 
 ## Chapter Summary
 
-**Why it matters.** Environmental data often fail the assumptions a $t$-test needs. Samples can be small, distributions can be skewed, and some outcomes are counts in categories instead of measurements. This chapter covers the tests for those cases and how to tell when you need one. Chapter 8 compares three or more groups, with the Kruskal-Wallis test as its rank-based option.
+**Why it matters.** Environmental data often fail the assumptions a $t$-test needs. Samples can be small, distributions can be skewed, and some outcomes are counts in categories instead of measurements. This chapter covers the tests for those cases and how to tell when you need one. @sec-anova compares three or more groups, with the Kruskal-Wallis test as its rank-based option.
 
 **Core ideas**
 

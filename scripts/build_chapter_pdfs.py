@@ -48,6 +48,22 @@ def xref_text(stem):
     return out
 
 
+def chapter_ids():
+    """Map each chapter heading's id (# Title {#sec-...}) to its chapter number."""
+    out = {}
+    for n, src in enumerate(CHAPTERS, 1):
+        in_code = False
+        for line in open(os.path.join(REPO, src), encoding="utf-8"):
+            if line.startswith("```"):
+                in_code = not in_code
+            elif not in_code and line.startswith("# "):
+                m = re.search(r"\{#(sec-[\w-]+)", line)
+                if m:
+                    out[m.group(1)] = n
+                break
+    return out
+
+
 def prepare(src, chap_no, today):
     text = open(os.path.join(REPO, src), encoding="utf-8").read()
     stem = src[:-4]
@@ -100,6 +116,13 @@ def prepare(src, chap_no, today):
         text = text.replace('source("global_stuff.R")',
                             'source("global_stuff.R")\noptions(knitr.table.format = "pipe")\n'
                             'kable <- function(x, format = NULL, ...) knitr::kable(x, format = "pipe", ...)', 1)
+    # Chapter references (@sec-<id> on a chapter heading): "Chapter N", or just "N"
+    # in the "Chapters [-@a] and [-@b]" form. Numbers come from the CHAPTERS order.
+    chap_ids = chapter_ids()
+    text = re.sub(r"\[-@(sec-[\w-]+)\]",
+                  lambda m: str(chap_ids[m.group(1)]) if m.group(1) in chap_ids else m.group(0), text)
+    text = re.sub(r"(?<![\w@\[-])@(sec-[\w-]+)",
+                  lambda m: f"Chapter {chap_ids[m.group(1)]}" if m.group(1) in chap_ids else m.group(0), text)
     # References to labels defined in other chapters: use the site's text for them.
     local = set(re.findall(r"#\|\s*label:\s*([\w.-]+)", text)) | set(re.findall(r"\{#([\w.-]+)", text))
     shown = xref_text(stem)

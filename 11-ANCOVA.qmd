@@ -9,7 +9,7 @@ source("global_stuff.R")
 knitr::opts_chunk$set(cache=FALSE)
 ```
 
-# Analysis of Covariance (ANCOVA)
+# Analysis of Covariance (ANCOVA) {#sec-ancova}
 
 ```{r}
 # Libraries
@@ -36,7 +36,7 @@ anova_kable <- function(fit, caption = NULL) {
 }
 ```
 
-We've now covered regression (Chapter 9) and ANOVA (Chapters 8 and 10). This chapter merges them:
+We've now covered regression (@sec-regression) and ANOVA (Chapters [-@sec-anova] and [-@sec-factorial-anova]). This chapter merges them:
 
 $$\text{Regression} + \text{ANOVA} = \text{ANCOVA}$$
 
@@ -60,13 +60,13 @@ ANCOVA adds a categorical factor to that equation. The chapter asks whether ever
 
 We answer it in order: first check that the model explains anything at all, then test whether the groups have different slopes, and only if the slopes are parallel, test whether the groups differ in adjusted means. Adjusted means are group means compared at the same covariate value, and Step 2 below defines them.
 
-@tbl-11designs places ANCOVA beside regression and the two kinds of ANOVA from Chapters 8 to 10, each written as a model.
+@tbl-11designs places ANCOVA beside regression and the two kinds of ANOVA from Chapters [-@sec-anova] to [-@sec-factorial-anova], each written as a model.
 
 | Design | Predictors | Model | First question |
 |:---|:---|:---|:---|
-| Regression (Chapter 9) | One continuous | $y = \beta_0 + \beta_1 x + \varepsilon$ | Is the slope zero? |
-| One-way ANOVA (Chapter 8) | One categorical factor (three or more groups) | One mean per group | Are all the group means equal? |
-| Factorial ANOVA (Chapter 10) | Two categorical factors, fully crossed | Main effect of A + main effect of B + A × B interaction | Does the effect of one factor depend on the level of the other? |
+| Regression (@sec-regression) | One continuous | $y = \beta_0 + \beta_1 x + \varepsilon$ | Is the slope zero? |
+| One-way ANOVA (@sec-anova) | One categorical factor (three or more groups) | One mean per group | Are all the group means equal? |
+| Factorial ANOVA (@sec-factorial-anova) | Two categorical factors, fully crossed | Main effect of A + main effect of B + A × B interaction | Does the effect of one factor depend on the level of the other? |
 | ANCOVA | One categorical factor and one continuous covariate | $y = \beta_0 + \beta_1 x + \beta_2 G + \beta_3 xG + \varepsilon$, with $G$ = 0 or 1 for the two groups | After the whole-model check, do the groups share a slope? |
 
 : Four designs as linear models. {#tbl-11designs}
@@ -154,7 +154,7 @@ rate_tbl <- tidyr::pivot_wider(dat[, c("Age", "Country", "CFR_band_pct")],
 knitr::kable(rate_tbl[, c("Age", "Italy", "China")], col.names = c("Age band", "Italy", "China"))
 ```
 
-@tbl-11simpsonrates lists the rates themselves. The reversal happens because Italy's cases were older on average and China's were younger (@fig-11age-distributions). A country's overall fatality rate is an average of its age-band rates, weighted by the share of that country's cases in each band. Italy had a larger share of its cases in the oldest bands, where fatality rates are highest, so its overall rate is pulled up. China had a larger share of its cases in the younger bands, where fatality rates are low, so its overall rate is pulled down. Aggregating without adjusting for age hid the within-group pattern entirely. Age is what Chapter 2 called a confounding variable, related both to which country a case came from and to whether the case was fatal.
+@tbl-11simpsonrates lists the rates themselves. The reversal happens because Italy's cases were older on average and China's were younger (@fig-11age-distributions). A country's overall fatality rate is an average of its age-band rates, weighted by the share of that country's cases in each band. Italy had a larger share of its cases in the oldest bands, where fatality rates are highest, so its overall rate is pulled up. China had a larger share of its cases in the younger bands, where fatality rates are low, so its overall rate is pulled down. Aggregating without adjusting for age hid the within-group pattern entirely. Age is what @sec-correlation called a confounding variable, related both to which country a case came from and to whether the case was fatal.
 
 ```{r}
 #| label: fig-11age-distributions
@@ -186,7 +186,7 @@ A **covariate** is a continuous predictor that is related to the outcome and hel
 
 A **fixed factor** is a categorical predictor whose levels the researcher chose on purpose, such as urban vs. rural or shaded vs. open canopy. A **random factor** is a categorical predictor whose levels are a sample from a larger population of possible levels. For example, the counties your streams are in could be a random factor. You aren't interested in those ten counties for their own sake. They represent a larger population of counties, and you want your conclusions to apply beyond the ones you sampled.
 
-Every categorical predictor in this chapter is a fixed factor. The distinction between fixed and random factors matters once you build mixed-effects models, which contain both kinds of factor. This course does not cover them. Mixed-effects models are a different idea from Chapter 10's mixed design, which mixes between-subjects and within-subjects factors.
+Every categorical predictor in this chapter is a fixed factor. The distinction between fixed and random factors matters once you build mixed-effects models, which contain both kinds of factor. This course does not cover them. Mixed-effects models are a different idea from @sec-factorial-anova's mixed design, which mixes between-subjects and within-subjects factors.
 
 ## What ANCOVA is
 
@@ -242,7 +242,7 @@ $$y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x}
 
 -   $\beta_0$ and $\beta_1$ describe the line for the reference group ($G=0$).
 -   $\beta_2$ is how much the intercept moves for the other group.
--   $\beta_3$ is how much the slope changes for the other group. This is the interaction term. In Chapter 10, an interaction meant that the effect of one factor depended on the level of the other factor. Here it means that the effect of $x$, its slope, depends on the group. Both are the same idea, because an interaction means the effect of one predictor depends on the value of another, whether that predictor is a factor or a covariate.
+-   $\beta_3$ is how much the slope changes for the other group. This is the interaction term. In @sec-factorial-anova, an interaction meant that the effect of one factor depended on the level of the other factor. Here it means that the effect of $x$, its slope, depends on the group. Both are the same idea, because an interaction means the effect of one predictor depends on the value of another, whether that predictor is a factor or a covariate.
 
 The **parallel-lines model** includes $\beta_2$ but leaves out $\beta_3$, so the intercept can shift between groups but the slope cannot, and the two lines are parallel. When the slope difference is not significant, we use this simpler model instead of keeping the interaction term.
 
@@ -304,7 +304,7 @@ ggplot(lines_df, aes(x, y, color = g)) +
 
 ANCOVA works right to left across that figure. It first asks whether the rightmost panel is what we have (do the slopes differ?), and only if the answer is no does it ask whether we have the middle panel or the leftmost (are the parallel lines at different heights?).
 
-**Step 0: Does the model explain anything?** Before looking at any single term, check the whole-model $F$-test, the regression $F$ from Chapter 9 applied to all the terms at once, which asks whether the covariate, the group, and their interaction together explain more of $y$ than chance would: $H_0:\beta_1=\beta_2=\beta_3=0$. R reports it on the last line of `summary(lm(...))`. If it is not significant, stop. The data give no evidence that the covariate, the group, or their interaction explains $y$, so no single term is worth interpreting.
+**Step 0: Does the model explain anything?** Before looking at any single term, check the whole-model $F$-test, the regression $F$ from @sec-regression applied to all the terms at once, which asks whether the covariate, the group, and their interaction together explain more of $y$ than chance would: $H_0:\beta_1=\beta_2=\beta_3=0$. R reports it on the last line of `summary(lm(...))`. If it is not significant, stop. The data give no evidence that the covariate, the group, or their interaction explains $y$, so no single term is worth interpreting.
 
 **Step 1: Are slopes equal across groups?** This tests whether the covariate effect is the same in each group.
 
@@ -344,8 +344,8 @@ Most of these are ones ANOVA already needed. Three are new because a covariate h
 
 | Assumption | New with ANCOVA? | How to check |
 |:-----------|:-----------------|:-------------|
-| Independent observations | No (universal, Chapter 6) | The study design |
-| Normal residuals and similar variances across groups | No (Chapters 8 and 9) | Q-Q plot, residuals-versus-fitted plot, Levene's test |
+| Independent observations | No (universal, @sec-ttests) | The study design |
+| Normal residuals and similar variances across groups | No (Chapters [-@sec-anova] and [-@sec-regression]) | Q-Q plot, residuals-versus-fitted plot, Levene's test |
 | Linearity within each group | Yes | A scatter plot with a fitted line for each group |
 | Homogeneity of slopes (the groups' lines are parallel) | Yes | The interaction test (Step 1), not a check run beforehand |
 | The covariate is measured with little error and is not affected by the group factor (the treatment) | Yes | The study design |
@@ -382,7 +382,7 @@ Suppose we are studying the effect of air pollution, measured as PM2.5 (fine par
 
 ```{r}
 #| label: fig-11design
-#| fig-cap: "An ANCOVA design: one continuous predictor and one categorical factor. Compare it with the factorial design in Chapter 10, which has the same shape with a second set of levels in place of the gradient."
+#| fig-cap: "An ANCOVA design: one continuous predictor and one categorical factor. Compare it with the factorial design in @sec-factorial-anova, which has the same shape with a second set of levels in place of the gradient."
 #| fig-alt: "Study design schematic. Two predictors: area type with levels Rural and Urban, crossed with air pollution as a continuous gradient from low to high, across 200 observations. DV: bird species density."
 #| fig-asp: 0.36
 #| out-width: "100%"
