@@ -126,7 +126,7 @@ design_crossed("Pollution (categorical) × Flow rate (categorical)",
 
 With two IVs of two levels each, this is a 2x2 design. Reading the schematic left to right also shows why the notation works the way it does. Crossing two levels with two levels *is* the multiplication that gives four conditions.
 
-That four-cell grid resembles the chi-square table from @sec-nonparametric, but the cells mean different things. There, the cells held *counts* of city blocks that already had a given land use and either did or did not top 40°C, and nobody put them there. Here, the cells are *conditions we assign channels to*, and within each one we then measure something else entirely, the species count.
+That four-cell grid resembles the chi-square table from @sec-7independence, but the cells mean different things. There, the cells held *counts* of city blocks that already had a given land use and either did or did not top 40°C, and nobody put them there. Here, the cells are *conditions we assign channels to*, and within each one we then measure something else entirely, the species count.
 
 **Predictions.** No pollution plus high flow should support the most species, and pollution plus low flow the fewest. The other two combinations are the informative ones. They show whether pollution matters only when flow is low, with fast water washing its effect away, or hurts a stream no matter how fast the water moves. A one-factor study could not tell these apart, and the interaction test in a factorial experiment can.
 
@@ -149,7 +149,7 @@ knitr::kable(raw_tbl, align = "crrrr")
 
 ### Cell means and marginal means
 
-Each condition, such as no pollution with low flow, is a cell, the same word @sec-nonparametric used for one combination in a table of counts. A **cell mean** is the mean of the scores in one cell. Here, each cell mean averages the species counts of the five stream channels assigned to that condition. A **marginal mean** is the mean for one level of a factor, averaged across the levels of the other factor. For example, the no-pollution marginal mean averages the two no-pollution cells, one at each flow rate. @tbl-10means shows the means from the experiment this chapter analyzes.
+Each condition, such as no pollution with low flow, is a cell, the same word @sec-7independence used for one combination in a table of counts. A **cell mean** is the mean of the scores in one cell. Here, each cell mean averages the species counts of the five stream channels assigned to that condition. A **marginal mean** is the mean for one level of a factor, averaged across the levels of the other factor. For example, the no-pollution marginal mean averages the two no-pollution cells, one at each flow rate. @tbl-10means shows the means from the experiment this chapter analyzes.
 
 ```{r}
 #| label: tbl-10means
@@ -439,11 +439,11 @@ ss_error <- ss_total - ss_poll - ss_flow - ss_int
 
 $$SS_\text{Error} = `r round(ss_total,2)` - `r round(ss_poll,2)` - `r round(ss_flow,2)` - `r round(ss_int,2)` = `r round(ss_error,2)`$$
 
-$SS_\text{Error}$ is the same quantity @sec-anova called $SS_\text{Within}$ in the one-way ANOVA, the spread of channels around their own cell mean. We can check it directly. The squared distances of the channels from their own cell mean sum to 5.2 in each of the first three cells and 10.0 in the pollution, high-flow cell, and $5.2 + 5.2 + 5.2 + 10.0 = 25.6$. It is the variation none of the three effects can explain.
+$SS_\text{Error}$ is the same quantity as $SS_\text{Within}$ in the one-way ANOVA (@sec-8sswithin), the spread of channels around their own cell mean. We can check it directly. The squared distances of the channels from their own cell mean sum to 5.2 in each of the first three cells and 10.0 in the pollution, high-flow cell, and $5.2 + 5.2 + 5.2 + 10.0 = 25.6$. It is the variation none of the three effects can explain.
 
 ### Degrees of freedom, mean squares, and $F$
 
-Each sum of squares becomes a mean square the same way it did in @sec-anova, by dividing by its degrees of freedom. With $a$ levels of pollution, $b$ levels of flow, and $N$ channels in all:
+Each sum of squares becomes a mean square the same way it did in the one-way ANOVA (@sec-8meansquares), by dividing by its degrees of freedom. With $a$ levels of pollution, $b$ levels of flow, and $N$ channels in all:
 
 -   $df_\text{Pollution} = a-1 = 1$
 -   $df_\text{Flow} = b-1 = 1$
@@ -502,15 +502,15 @@ anova_kable(aov_fit)
 
 The SS column matches the hand-calculated values above: `r round(ss_poll,2)` for Pollution, `r round(ss_flow,2)` for Flow, `r round(ss_int,2)` for the interaction, `r round(ss_error,2)` for Error. All three effects are significant here, including the interaction we previewed informally. The difference in the pollution effect between the two flow rates is larger than chance would produce.
 
-This example is balanced (@sec-anova), with five stream channels in every condition. With unequal numbers, two things change. First, R computes the sums of squares one term at a time in the order the terms appear in `aov()`, so changing the order can change the results. Second, the marginal means become estimates from the fitted model, called estimated marginal means, instead of simple averages of the scores. Balanced designs avoid both complications, so plan equal sample sizes when you can.
+This example is balanced (@sec-8assumptions), with five stream channels in every condition. With unequal numbers, two things change. First, R computes the sums of squares one term at a time in the order the terms appear in `aov()`, so changing the order can change the results. Second, the marginal means become estimates from the fitted model, called estimated marginal means, instead of simple averages of the scores. Balanced designs avoid both complications, so plan equal sample sizes when you can.
 
 ### Checking the assumptions
 
-A factorial ANOVA has the same test-specific assumptions as the one-way ANOVA in @sec-anova: similar spread in every cell and approximately normal residuals. Check them the same way, with Levene's test across the four cells and a Q-Q plot or Shapiro-Wilk test on the residuals of `aov_fit`.
+A factorial ANOVA has the same test-specific assumptions as the one-way ANOVA (@sec-8assumptions): similar spread in every cell and approximately normal residuals. Check them the same way, with Levene's test across the four cells and a Q-Q plot or Shapiro-Wilk test on the residuals of `aov_fit`.
 
 ### Effect size in a factorial design
 
-The one-way ANOVA in @sec-anova had one effect and so needed one effect size, $\eta^2 = SS_\text{Between}/SS_\text{Total}$. A 2x2 runs three tests, so it needs three effect sizes, and the sums of squares we just computed by hand are all the ingredients required.
+The one-way ANOVA had one effect and so needed one effect size, $\eta^2 = SS_\text{Between}/SS_\text{Total}$ (@sec-8etasq). A 2x2 runs three tests, so it needs three effect sizes, and the sums of squares we just computed by hand are all the ingredients required.
 
 The direct extension keeps $SS_\text{Total}$ in the denominator for every effect:
 
@@ -719,7 +719,7 @@ When a factor has only two levels, as Pollution does here, each simple-effects t
 
 When we conduct a two-way ANOVA, we always begin by reading the interaction term, because it decides what the main effects mean.
 
--   If the interaction is *not significant*, examine the two main effects separately, interpreting each as an overall difference averaged across the other factor. If a significant main effect has three or more levels, follow it with Tukey HSD on that factor, exactly as in @sec-anova.
+-   If the interaction is *not significant*, examine the two main effects separately, interpreting each as an overall difference averaged across the other factor. If a significant main effect has three or more levels, follow it with Tukey HSD on that factor, exactly as in @sec-8tukey.
 
 -   If the interaction is significant, lead with the simple effects: how one factor behaves at each level of the other. "Pollution reduced species count sharply under low flow, and less under high flow" is a simple-effects sentence. "There was a main effect of pollution" on its own is not enough. Whether the main effect is still worth reporting depends on the direction of the simple effects:
 
@@ -1056,7 +1056,7 @@ Now suppose the same experiment ran in summer and again in winter, so season is 
 
 Graph it as two 2x2 plots side by side, one for each season. A three-way interaction shows up as a different pattern of lines in the two plots. In applied research, most studies stop at two factors unless there's a strong reason to add more.
 
-### Mixed designs
+### Mixed designs {#sec-10mixed}
 
 A **mixed design** has at least one between-subjects factor and at least one within-subjects factor. For example, sites or treatments could be a between-subjects factor, and repeated measures over time a within-subjects factor.
 

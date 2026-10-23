@@ -44,7 +44,7 @@ This chapter starts with why running a $t$-test for every pair of groups goes wr
 Sir Ronald Fisher invented the ANOVA [@salsburg2001lady] and wanted to publish it in the journal Biometrika. The editor at the time was Karl Pearson, of Pearson's $r$, and the two men disliked each other, so Pearson refused to publish the new test. Fisher published it in the Journal of Agricultural Science instead. The feud carried into the next generation. Years later, Karl Pearson's son Egon Pearson, working with Jerzy Neyman, revamped Fisher's ideas and re-cast them into what we now call null vs. alternative hypothesis testing. Fisher objected to that too.
 :::
 
-### Why not run multiple $t$-tests?
+### Why not run multiple $t$-tests? {#sec-8multiplet}
 
 With three groups, A, B and C, there are three possible pairwise differences (@tbl-8pairs). We could test each with a separate $t$-test, asking whether that pair's means differ significantly.
 
@@ -56,7 +56,7 @@ With three groups, A, B and C, there are three possible pairwise differences (@t
 
 : The three pairwise $t$-tests for three groups. {#tbl-8pairs}
 
-The problem is that every test carries its own 5% chance of a false positive (a Type I error, @sec-errors-power), and those chances accumulate across tests. This follows from the independence multiplication rule in @sec-probability. Each test has a $1-\alpha = 0.95$ chance of avoiding a false positive. If the $m$ tests are independent, the chance that all of them avoid one is 0.95 multiplied by itself $m$ times, or $(1-\alpha)^m$. The chance of at least one false positive is 1 minus that, so for $m$ independent tests at $\alpha = 0.05$,
+The problem is that every test carries its own 5% chance of a false positive (a Type I error, @sec-errors-power), and those chances accumulate across tests. This follows from the independence multiplication rule (@sec-3independence). Each test has a $1-\alpha = 0.95$ chance of avoiding a false positive. If the $m$ tests are independent, the chance that all of them avoid one is 0.95 multiplied by itself $m$ times, or $(1-\alpha)^m$. The chance of at least one false positive is 1 minus that, so for $m$ independent tests at $\alpha = 0.05$,
 
 $$P(\text{at least one false positive}) = 1-(1-\alpha)^m.$$
 
@@ -143,7 +143,7 @@ $$F = \frac{\text{Variation between groups}}{\text{Variation within groups}}$$
 
 When the two are about the same size, $F \approx 1$, and the group means differ no more than ordinary sampling noise would make them. When the between-group variation is much larger than the within-group variation, $F$ climbs well above 1, which is evidence that the groups differ. When the between-group variation is smaller, $F$ drops below 1. An $F$ of 5 means the group means vary five times as much as within-group noise alone would make them vary, and an $F$ of 0.6 means they vary less than that noise alone would typically produce. Both parts of $F$ are variances, so "five times as much" compares squared distances, not raw distances.
 
-With two groups, $F$ is exactly the square of the pooled $t$ from @sec-ttests, $t^2 = F$, which is why the two tests give the same $p$-value.
+With two groups, $F$ is exactly the square of the pooled $t$ (@sec-6indep), $t^2 = F$, which is why the two tests give the same $p$-value.
 
 @fig-8betweenwithin shows both situations with the same noise. The dashed line in each panel is the **grand mean**, the mean of all the scores across every group.
 
@@ -402,7 +402,7 @@ knitr::kable(tab, col.names = c("Neighborhood", "Score", "Deviation from grand m
 
 The deviations sum to zero, because the mean is the balancing point of the data, so their sum can't measure spread. Squaring turns every deviation positive and, as a side effect, weights larger deviations more heavily.
 
-Adding up the squared deviations gives the sum of squares (SS) from @sec-correlation. Writing $Y_{ij}$ for score $i$ in group $j$ and $\bar{Y}_\text{grand}$ for the grand mean,
+Adding up the squared deviations gives the sum of squares (SS) from @tbl-2squaredDeviations. Writing $Y_{ij}$ for score $i$ in group $j$ and $\bar{Y}_\text{grand}$ for the grand mean,
 
 $$SS_\text{Total} = \sum (Y_{ij} - \bar{Y}_\text{grand})^2 = 302.$$
 
@@ -446,7 +446,7 @@ $$SS_\text{Between} = 3(11-7)^2 + 3(5-7)^2 + 3(5-7)^2 = 48 + 12 + 12 = 72.$$
 
 $SS_\text{Within}$ is a sum of squares, so it cannot be negative. That means $SS_\text{Between}$ can never be larger than $SS_\text{Total}$, and here 72 is smaller than 302.
 
-### SS Within
+### SS Within {#sec-8sswithin}
 
 We already have $SS_\text{Total} = 302$ and $SS_\text{Between} = 72$, so we can solve for $SS_\text{Within}$ by subtraction:
 
@@ -484,7 +484,7 @@ $df_\text{Within} = N-k$, where $N$ is the total number of scores. With $N=9$ an
 
 $df_\text{Total} = N-1$, and it splits the same way the sums of squares do: $df_\text{Total} = df_\text{Between} + df_\text{Within}$, here $8 = 2 + 6$.
 
-### Mean squares
+### Mean squares {#sec-8meansquares}
 
 We're building toward $F=\dfrac{\text{measure of effect}}{\text{measure of error}}$, and the first idea is to divide $SS_\text{Between}$ by $SS_\text{Within}$ directly. The problem is that each sum of squares grows with the number of free pieces that go into it, its degrees of freedom. $SS_\text{Between}$ comes from 3 group means, which have 2 degrees of freedom, and $SS_\text{Within}$ comes from 9 deviations with 6 degrees of freedom. Even with no real differences, $SS_\text{Within}$ would tend to be about three times as large as $SS_\text{Between}$ for that reason alone. Dividing each one by its degrees of freedom turns it into an average, and two averages can be compared directly.
 
@@ -498,7 +498,7 @@ Both are variances. $MS_\text{Within}$ measures how much individual scores vary 
 
 $$\frac{(11-7)^2 + (5-7)^2 + (5-7)^2}{3-1} = \frac{24}{2} = 12,$$
 
-and $3 \times 12 = 36$, which is $MS_\text{Between}$. The multiplication is needed because a mean of $n$ scores varies less than a single score does. The variance of a mean is $\sigma^2/n$, the squared standard error from @sec-probability. Multiplying by $n$ puts $MS_\text{Between}$ on the same scale as $MS_\text{Within}$.
+and $3 \times 12 = 36$, which is $MS_\text{Between}$. The multiplication is needed because a mean of $n$ scores varies less than a single score does. The variance of a mean is $\sigma^2/n$, the squared standard error from @sec-3se. Multiplying by $n$ puts $MS_\text{Between}$ on the same scale as $MS_\text{Within}$.
 
 ### Calculate $F$
 
@@ -603,13 +603,13 @@ ggplot(descriptive_df, aes(x = forest_type, y = means)) +
 
 The bar graph shows a gradient. Old-growth plots have the highest mean abundance, managed plantations the lowest, and secondary forest is in between. The individual plot counts (dots) spread widely within each forest type. Old-growth plots range from `r min(old_growth)` to `r max(old_growth)` salamanders and secondary plots from `r min(secondary)` to `r max(secondary)`, so even where a real difference exists, individual plots from different forest types overlap.
 
-### Checking ANOVA's assumptions
+### Checking ANOVA's assumptions {#sec-8assumptions}
 
-Before running the ANOVA, check whether its assumptions hold. @sec-ttests introduced independence as the assumption every test in this book shares, so we do not list it again here. ANOVA adds two assumptions of its own.
+Before running the ANOVA, check whether its assumptions hold. @sec-6assumptions introduced independence as the assumption every test in this book shares, so we do not list it again here. ANOVA adds two assumptions of its own.
 
-The first is **homogeneity of variance**, which means the groups have roughly equal spread around their own means. The second is approximately normal residuals. In ANOVA the model predicts each score with its group mean, so a residual is the score minus its group mean, the same idea as the residuals in @sec-correlation. Here each residual is a plot's count minus its forest type's mean, the same deviations that make up $SS_\text{Within}$, and the residuals should be roughly bell-shaped. Both matter because the $F$-test pools the within-group spread of every group into one error variance, $MS_\text{Within}$, and then compares $F$ to a null distribution that assumes normal residuals. Pooling only makes sense when the groups have similar spread.
+The first is **homogeneity of variance**, which means the groups have roughly equal spread around their own means. The second is approximately normal residuals. In ANOVA the model predicts each score with its group mean, so a residual is the score minus its group mean, the same idea as the residuals in @fig-2regressionResiduals. Here each residual is a plot's count minus its forest type's mean, the same deviations that make up $SS_\text{Within}$, and the residuals should be roughly bell-shaped. Both matter because the $F$-test pools the within-group spread of every group into one error variance, $MS_\text{Within}$, and then compares $F$ to a null distribution that assumes normal residuals. Pooling only makes sense when the groups have similar spread.
 
-Levene's test [@Levene1960; @BrownForsythe1974] checks homogeneity of variance. Its null hypothesis is that every group has the same variance, so a small $p$-value is evidence that the spreads differ. It reports its own $F$ statistic, separate from the ANOVA's $F$. The Shapiro-Wilk test from @sec-ttests checks normality, here applied to the residuals.
+Levene's test [@Levene1960; @BrownForsythe1974] checks homogeneity of variance. Its null hypothesis is that every group has the same variance, so a small $p$-value is evidence that the spreads differ. It reports its own $F$ statistic, separate from the ANOVA's $F$. The Shapiro-Wilk test from @sec-6assumptions checks normality, here applied to the residuals.
 
 ```{r}
 #| echo: true
@@ -650,7 +650,7 @@ knitr::kable(
 
 Levene's test gives $F(2, 21) = `r sprintf("%.2f", levene_out[1, "F value"])`$, $p `r fmt_p_eq(levene_out[1, "Pr(>F)"])`$, so there is no evidence of unequal variance across forest types. The Shapiro-Wilk test [@Shapiro1965] on the model's residuals gives $W = `r sprintf("%.2f", shapiro_out$statistic)`$, $p `r fmt_p_eq(shapiro_out$p.value)`$, so there is no evidence against normality either. Both checks agree with the individual plots in @fig-8salamanderData, which show similar spread across groups and no outliers far from the rest.
 
-**Formal assumption tests are evidence, not a gate.** @sec-ttests made this point about Shapiro-Wilk, and it holds for Levene's test too. It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." With a small sample (exactly when a violated assumption matters most), these tests have low power and will often say "no problem" even when there is one. With a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." Look at the data too, as we did with @fig-8salamanderData above.
+**Formal assumption tests are evidence, not a gate.** @sec-6assumptions made this point about Shapiro-Wilk, and it holds for Levene's test too. It's tempting to treat Levene's test as a strict gate, where significant means "stop" and not significant means "proceed." With a small sample (exactly when a violated assumption matters most), these tests have low power and will often say "no problem" even when there is one. With a very large sample (where ANOVA is fairly robust to mild violations anyway), they have high power and will flag trivial differences as "significant." Look at the data too, as we did with @fig-8salamanderData above.
 
 In practice, one-way ANOVA's $p$-values stay close to correct under mild departures from these assumptions, especially when the design is **balanced**, with the same number of observations in every group, as here (8 plots per forest type). Be most cautious when small, unbalanced samples come with visibly skewed data or very different spreads. For very different spreads, use Welch's ANOVA, and for skewed residuals in a small or unbalanced sample, use the Kruskal-Wallis test. Both are described below.
 
@@ -683,7 +683,7 @@ anova_kable(aov_out)
 
 @tbl-8salamanderANOVA gives the result. With 3 forest types and 24 plots, the degrees of freedom are $3 - 1 = 2$ and $24 - 3 = 21$, and the critical value at $\alpha = 0.05$ is `r sprintf("%.2f", qf(0.95, 2, 21))`, a little higher than the 3.35 for 30 plots because the error term has fewer degrees of freedom. Our $F$ of `r sprintf("%.2f", F_obs)` is more than four times that cutoff. Values this large arise by chance less than 0.1% of the time, so we reject the null hypothesis that all three group means are equal.
 
-### Effect size: eta-squared
+### Effect size: eta-squared {#sec-8etasq}
 
 The $F$-test answers whether the group means differ by more than chance would produce. It says nothing about *how much* of the variation in salamander abundance forest type explains. @sec-errors-power made the same distinction, where $p$ told us whether a difference was detectable and the effect size told us how large it was, in the study's units or, with Cohen's $d$, in standard deviations. ANOVA adds a third kind, the share of the total variation that the groups explain.
 
@@ -724,7 +724,7 @@ Regression (@sec-regression, the next chapter) uses the same quantity under the 
 
 ### Post-hoc comparisons with Tukey HSD {#sec-8tukey}
 
-The omnibus $F$ test tells us that at least one group mean differs, but not which pairs, and the ANOVA table does not report the group means at all. **Post-hoc comparisons** are tests run after a significant omnibus test to find which pairs of groups differ. This is a different use of "post-hoc" from @sec-errors-power's post-hoc power. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test [@Tukey1949]. Tukey HSD compares every pair of groups while keeping the familywise error rate across all of the comparisons at $\alpha$, so it is the standard choice after a significant ANOVA.
+The omnibus $F$ test tells us that at least one group mean differs, but not which pairs, and the ANOVA table does not report the group means at all. **Post-hoc comparisons** are tests run after a significant omnibus test to find which pairs of groups differ. This is a different use of "post-hoc" from post-hoc power (@sec-5planning). To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test [@Tukey1949]. Tukey HSD compares every pair of groups while keeping the familywise error rate across all of the comparisons at $\alpha$, so it is the standard choice after a significant ANOVA.
 
 ```{r}
 #| echo: true
@@ -827,7 +827,7 @@ Report the direction in plain language, the test statistic with both degrees of 
 
 ### Nonparametric alternative: the Kruskal-Wallis test
 
-Our assumption checks above came back clean, so the ANOVA result stands as-is. Suppose instead the groups had visibly unequal spread. Then Welch's ANOVA (`oneway.test()` in R) compares the means without assuming equal variances, the same fix Welch's $t$-test makes in @sec-ttests. If the residuals were clearly skewed in a small or unbalanced sample, the **Kruskal-Wallis test** [@KruskalWallis1952] is the rank-based, nonparametric alternative to one-way ANOVA. It has the same relationship to ANOVA that the Mann-Whitney-Wilcoxon test has to the independent-samples $t$-test.
+Our assumption checks above came back clean, so the ANOVA result stands as-is. Suppose instead the groups had visibly unequal spread. Then Welch's ANOVA (`oneway.test()` in R) compares the means without assuming equal variances, the same fix Welch's $t$-test makes (@tbl-6pooled-welch). If the residuals were clearly skewed in a small or unbalanced sample, the **Kruskal-Wallis test** [@KruskalWallis1952] is the rank-based, nonparametric alternative to one-way ANOVA. It has the same relationship to ANOVA that the Mann-Whitney-Wilcoxon test has to the independent-samples $t$-test.
 
 ```{r}
 #| include: false
@@ -908,11 +908,11 @@ The pattern matches Tukey HSD exactly. Old-growth forest differs significantly f
 
 : Test card: Kruskal-Wallis test. {#tbl-8card-kw tbl-colwidths="[20,80]"}
 
-## Repeated-measures ANOVA
+## Repeated-measures ANOVA {#sec-8rmanova}
 
 Every unit in the salamander study was measured once: 24 plots, 8 per forest type. Many environmental studies instead measure the same monitoring stations in every season or the same streams before, during, and after a drought. A **repeated-measures** (within-subjects) design measures the same units under every condition, and it calls for a repeated-measures ANOVA.
 
-This is ANOVA's version of the paired $t$-test from @sec-ttests. The paired $t$-test subtracted each plot's before score from its own after score, so differences between plots dropped out and only the change was left. With three or more conditions there is no single difference to take, so repeated-measures ANOVA does the equivalent with sums of squares, measuring how much the units differ from one another and removing that variation from the error term.
+This is ANOVA's version of the paired $t$-test (@sec-6paired). The paired $t$-test subtracted each plot's before score from its own after score, so differences between plots dropped out and only the change was left. With three or more conditions there is no single difference to take, so repeated-measures ANOVA does the equivalent with sums of squares, measuring how much the units differ from one another and removing that variation from the error term.
 
 ### Fine particulate matter at four monitoring stations
 

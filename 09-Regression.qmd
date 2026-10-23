@@ -48,19 +48,19 @@ The equation for a linear regression is one of the most heavily used equations i
 
 $$y = \beta_0 + \beta_1 x + \varepsilon$$
 
-Here $y$ is the dependent variable (DV) and $x$ is the predictor, the independent variable (IV) (@sec-describing-data). $\beta_1$ is the slope, the change in $y$ for each one-unit increase in $x$. $\beta_0$ is the intercept, the value of $y$ when $x = 0$. The intercept and slope are the **regression coefficients**. These subscripted $\beta$s have no connection to $\beta$, the Type II error rate from @sec-errors-power.
+Here $y$ is the dependent variable (DV) and $x$ is the predictor, the independent variable (IV) (@sec-1ivdv). $\beta_1$ is the slope, the change in $y$ for each one-unit increase in $x$. $\beta_0$ is the intercept, the value of $y$ when $x = 0$. The intercept and slope are the **regression coefficients**. These subscripted $\beta$s have no connection to $\beta$, the Type II error rate from @sec-5errors.
 
 A statistical **model** is an equation that describes how the DV changes with a predictor, plus a term for the variation the equation leaves out. A linear equation fit to data is one example. Real data do not fall exactly on a line, and the **error term** $\varepsilon$ is the part of the DV that the population line does not explain. We never observe $\beta_0$, $\beta_1$, or $\varepsilon$ directly, because they describe the population, and we have only a sample.
 
-### Computing the best-fit line by hand
+### Computing the best-fit line by hand {#sec-9byhand}
 
-In practice, we let software find the line with the smallest sum of squared residuals (the least-squares line from @sec-correlation), but working through one example by hand shows where that line comes from. We write the intercept and slope calculated from a sample as $b_0$ and $b_1$, to keep them apart from the population values $\beta_0$ and $\beta_1$. Here are the formulas for $b_0$ and $b_1$, calculated straight from the data:
+In practice, we let software find the line with the smallest sum of squared residuals (the least-squares line from @sec-2bestfit), but working through one example by hand shows where that line comes from. We write the intercept and slope calculated from a sample as $b_0$ and $b_1$, to keep them apart from the population values $\beta_0$ and $\beta_1$. Here are the formulas for $b_0$ and $b_1$, calculated straight from the data:
 
 $$\text{intercept} = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2}$$
 
 $$\text{slope} = b_1 = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2}$$
 
-Here $x$ and $y$ are the individual scores, $n$ is the number of $(x, y)$ pairs, and $\sum$ means add up that column over all pairs. This is the same line from @fig-2corwithLine in @sec-correlation. To find its slope and intercept, we start with this table:
+Here $x$ and $y$ are the individual scores, $n$ is the number of $(x, y)$ pairs, and $\sum$ means add up that column over all pairs. This is the same line from @fig-2corwithLine. To find its slope and intercept, we start with this table:
 
 ```{r}
 x  <- c(1, 4, 3, 6, 5, 7, 8)
@@ -93,7 +93,7 @@ $$\begin{aligned}
 &= \frac{291}{244} = 1.19
 \end{aligned}$$
 
-With $b_0$ and $b_1$ in hand, we can compute a residual for any observed point. A residual, as in @sec-correlation, is the difference between what we observed and what the line predicts. The symbol $\hat y$ (read "y-hat") is the value the line predicts:
+With $b_0$ and $b_1$ in hand, we can compute a residual for any observed point. A residual, as in @sec-2bestfit, is the difference between what we observed and what the line predicts. The symbol $\hat y$ (read "y-hat") is the value the line predicts:
 
 $$\begin{aligned}
 \hat y &= b_0 + b_1x \\
@@ -309,11 +309,11 @@ We reject $H_0$ and conclude that stream temperature is linearly related to diss
 
 The last two columns of the coefficient table give the 95% confidence interval for the slope, 95% CI [`r sprintf("%.2f", fit_tidy$conf.low[2])`, `r sprintf("%.2f", fit_tidy$conf.high[2])`] mg/L per °C. Because this interval does not contain 0, it agrees with the hypothesis test.
 
-This is the same agreement you saw for $z$ in @sec-inference and for $t$ in @sec-ttests. Here the critical value is $t_{crit} = `r sprintf("%.2f", qt(.975, nrow(stream_df) - 2))`$ at $df = `r nrow(stream_df) - 2`$. The test rejects $H_0$ when the observed $b_1$ is more than $t_{crit}$ standard errors from 0, and the 95% interval contains every slope within $t_{crit}$ standard errors of $b_1$. So 0 falls outside the interval exactly when the two-tailed test rejects $H_0$ at $\alpha = 0.05$.
+This is the same agreement you saw for $z$ in @sec-4routes and for $t$ in @sec-6onesample. Here the critical value is $t_{crit} = `r sprintf("%.2f", qt(.975, nrow(stream_df) - 2))`$ at $df = `r nrow(stream_df) - 2`$. The test rejects $H_0$ when the observed $b_1$ is more than $t_{crit}$ standard errors from 0, and the 95% interval contains every slope within $t_{crit}$ standard errors of $b_1$. So 0 falls outside the interval exactly when the two-tailed test rejects $H_0$ at $\alpha = 0.05$.
 
 The interval also contains $\beta_1 = -0.28$, the true slope we built into the data. A 95% interval catches the true value in about 95% of samples, and this sample is one of them.
 
-## Partitioning variation: regression as ANOVA
+## Partitioning variation: regression as ANOVA {#sec-9partition}
 
 Besides testing the slope, we want to know how much of the variation in DO the line explains. We answer that the same way as one-way ANOVA in @sec-anova, by splitting the total variation into a piece the model explains and a piece it leaves over.
 
@@ -360,7 +360,7 @@ ggplot(part_df, aes(stream_temp)) +
   theme(strip.text = element_text(size = 9))
 ```
 
-$SS_\text{Total}$ is the sum of the squared distances from each point to mean DO. $SS_\text{Regression}$ is the sum of the squared distances from the line to mean DO. $SS_\text{Residual}$ is the sum of the squared residuals, the distances from each point to the line. For each site, the two shorter segments add up to the long one. After squaring each segment and summing over all 30 sites, the totals still add up, as they did in @sec-anova:
+$SS_\text{Total}$ is the sum of the squared distances from each point to mean DO. $SS_\text{Regression}$ is the sum of the squared distances from the line to mean DO. $SS_\text{Residual}$ is the sum of the squared residuals, the distances from each point to the line. For each site, the two shorter segments add up to the long one. After squaring each segment and summing over all 30 sites, the totals still add up, as they did in @sec-8byhand:
 
 $$SS_\text{Total} = SS_\text{Regression} + SS_\text{Residual}, \qquad `r sprintf("%.2f", ss_total)` = `r sprintf("%.2f", ss_reg)` + `r sprintf("%.2f", ss_res)`$$
 
@@ -370,9 +370,9 @@ The pieces line up with @sec-anova's. $SS_\text{Regression}$ is the variation th
 
 $$R^2 = \frac{SS_\text{Regression}}{SS_\text{Total}} = \frac{`r sprintf("%.2f", ss_reg)`}{`r sprintf("%.2f", ss_total)`} = `r sprintf("%.2f", ss_reg / ss_total)`$$
 
-It runs from 0 to 1, and it is the same quantity as $\eta^2$ from @sec-anova. For simple regression with one predictor, $R^2$ is also Pearson's $r$ from @sec-correlation, squared: $(`r sprintf("%.3f", cor(stream_df$stream_temp, stream_df$DO))`)^2 = `r sprintf("%.3f", cor(stream_df$stream_temp, stream_df$DO)^2)`$.
+It runs from 0 to 1, and it is the same quantity as $\eta^2$ from @sec-8etasq. For simple regression with one predictor, $R^2$ is also Pearson's $r$ from @sec-2pearson, squared: $(`r sprintf("%.3f", cor(stream_df$stream_temp, stream_df$DO))`)^2 = `r sprintf("%.3f", cor(stream_df$stream_temp, stream_df$DO)^2)`$.
 
-**The regression ANOVA table.** Dividing each sum of squares by its degrees of freedom gives mean squares, and their ratio is $F$, exactly as in @sec-anova. The regression row uses 1 degree of freedom, one for the slope. The residual row uses $n-2$, since the line estimated two things, an intercept and a slope.
+**The regression ANOVA table.** Dividing each sum of squares by its degrees of freedom gives mean squares, and their ratio is $F$, exactly as in @tbl-8anovaformulas. The regression row uses 1 degree of freedom, one for the slope. The residual row uses $n-2$, since the line estimated two things, an intercept and a slope.
 
 ```{r}
 #| echo: true
@@ -425,7 +425,7 @@ all_panels <- rbind(panel_under, panel_huge_n, panel_both)
 all_panels$panel <- factor(all_panels$panel, levels = unique(all_panels$panel))
 ```
 
-@fig-9regeffectpanels shows three of these combinations, using invented data: a strong relationship with a non-significant slope (underpowered, @sec-errors-power), a weak relationship with a significant slope (a large sample), and a relationship that is both strong and significant. In the left panel, six points give $R^2 = `r sprintf("%.2f", attr(panel_under, "r2"))`$ but $p `r fmt_p_eq(attr(panel_under, "p"))`$. In the middle panel, 5,000 points give $p `r fmt_p_eq(attr(panel_huge_n, "p"))`$ for a line that explains `r sprintf("%.1f", 100 * attr(panel_huge_n, "r2"))`% of the variation. We built a true slope of 0.05 into that panel. With $x$ running from 0 to 10, the line rises $0.05 \times 10 = 0.5$ units across the whole range.
+@fig-9regeffectpanels shows three of these combinations, using invented data: a strong relationship with a non-significant slope (underpowered, @sec-5power), a weak relationship with a significant slope (a large sample), and a relationship that is both strong and significant. In the left panel, six points give $R^2 = `r sprintf("%.2f", attr(panel_under, "r2"))`$ but $p `r fmt_p_eq(attr(panel_under, "p"))`$. In the middle panel, 5,000 points give $p `r fmt_p_eq(attr(panel_huge_n, "p"))`$ for a line that explains `r sprintf("%.1f", 100 * attr(panel_huge_n, "r2"))`% of the variation. We built a true slope of 0.05 into that panel. With $x$ running from 0 to 10, the line rises $0.05 \times 10 = 0.5$ units across the whole range.
 
 ```{r}
 #| label: fig-9regeffectpanels
@@ -443,15 +443,15 @@ ggplot(all_panels, aes(x, y)) +
 It depends on the field. In studies of human behavior, where many unmeasured factors shape any outcome, 0.20 is a strong result. Environmental systems tend toward more direct physical relationships, so 0.5 to 0.8 for a well-chosen single predictor isn't unusual. An $R^2$ that looks *too* good, say 0.98 from a single predictor in a noisy field system, more often points to a mistake in the analysis, such as a predictor that is computed from the DV, than to a real result.
 :::
 
-## Checking assumptions
+## Checking assumptions {#sec-9assumptions}
 
-Simple linear regression has three test-specific assumptions, plus the universal independence assumption from @sec-ttests. @tbl-9assumptions lists all four with the check this chapter uses.
+Simple linear regression has three test-specific assumptions, plus the universal independence assumption from @sec-6assumptions. @tbl-9assumptions lists all four with the check this chapter uses.
 
 | Assumption | What it means | How to check | What a violation looks like |
 |:-----------|:--------------|:-------------|:----------------------------|
 | Linearity | The true relationship between $x$ and $y$ is a straight line. | Residuals-versus-fitted plot | A curve, such as a U-shape |
 | Independence | Each observation's error is unrelated to the others'. | The study design | Sites along the same stream, or repeated measurements over time |
-| Constant variance (homoscedasticity) | The spread of residuals is about the same across the whole range of $x$, the regression version of @sec-anova's homogeneity of variance. | Residuals-versus-fitted plot | A funnel that widens or narrows |
+| Constant variance (homoscedasticity) | The spread of residuals is about the same across the whole range of $x$, the regression version of homogeneity of variance (@sec-8assumptions). | Residuals-versus-fitted plot | A funnel that widens or narrows |
 | Normal residuals | The residuals are approximately normally distributed. | Q-Q plot and Shapiro-Wilk | Points bending away from the Q-Q diagonal |
 
 : Assumptions of simple linear regression and how to check them. {#tbl-9assumptions}
@@ -558,9 +558,9 @@ Fixes typically include:
 -   a transformation, re-expressing a variable on a different scale so a straight line fits it (log-transforming a variable that grows multiplicatively, like the outbreak data above, is the most common case)
 -   or a nonlinear model entirely, beyond what this course covers
 
-### Checking normality
+### Checking normality {#sec-9normality}
 
-For normality, we check the residuals two ways: visually, with a Q-Q plot, and formally, with the Shapiro-Wilk test (@sec-ttests).
+For normality, we check the residuals two ways: visually, with a Q-Q plot, and formally, with the Shapiro-Wilk test (@sec-6assumptions).
 
 A **Q-Q plot** sorts the residuals and compares them to where a perfectly normal distribution would place values at the same percentiles. If the residuals are normal, the points fall close to the diagonal line. A systematic curve or S-shape means they don't.
 

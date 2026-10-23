@@ -77,7 +77,7 @@ null_hist <- function(sim, exact, obs, stat, xlab, ylab = "Count out of 20,000 s
 
 Every test needs a known null distribution for its test statistic (@sec-inference), because that is the shape we compare our result against to get a $p$-value. A **parametric** test is one whose null distribution we can know only by assuming something specific about the shape of the population the data came from. Every test so far in this book has been parametric.
 
-For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of the raw data. It's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the central limit theorem (@sec-probability) for a large enough sample.
+For the $t$-test, that assumption is normality. The $t$-distribution isn't the shape of the raw data. It's the shape the $t$-statistic takes across repeated samples, and we can only derive it because we assumed the population itself was normal, or relied on the central limit theorem (@sec-3clt) for a large enough sample.
 
 When the distributional assumptions are met, parametric tests generally have the most power (@sec-errors-power) of any test available. However, when distributional assumptions are not met, a parametric test's $p$-value can be too small or too large, and without simulation it is hard to tell which. The worse the departure from the assumed distribution, the larger the possible error.
 
@@ -85,7 +85,7 @@ A **nonparametric test** is a test whose null distribution does not depend on th
 
 The **rank** of a value is its position when the data are put in order from smallest to largest (first, second, third, and so on). Many nonparametric tests are run on the ranks instead of the raw values. The median is a familiar statistic that depends only on this ordering. It is the middle value once the data are put in order.
 
-**Rank-based tests also work on ordinal data.** Because the rank-based tests in this chapter only need a rank ordering, they are not limited to interval- or ratio-scale measurements (@sec-describing-data) the way a $t$-test is. A $t$-test needs a mean, which requires numbers where the *distance* between values means something. Plenty of environmental data doesn't work that way: a water-quality rating (poor, fair, good, excellent), a disturbance-severity class, a Likert-style survey response. You can put those in order, but "the average disturbance class was 2.4" isn't meaningful the way "the average pH was 6.8" is.
+**Rank-based tests also work on ordinal data.** Because the rank-based tests in this chapter only need a rank ordering, they are not limited to interval- or ratio-scale measurements (@sec-1scales) the way a $t$-test is. A $t$-test needs a mean, which requires numbers where the *distance* between values means something. Plenty of environmental data doesn't work that way: a water-quality rating (poor, fair, good, excellent), a disturbance-severity class, a Likert-style survey response. You can put those in order, but "the average disturbance class was 2.4" isn't meaningful the way "the average pH was 6.8" is.
 
 This chapter covers two different kinds of tools:
 
@@ -110,7 +110,7 @@ knitr::kable(
 )
 ```
 
-**Step 1: run the paired $t$-test, the way @sec-ttests taught it.**
+**Step 1: run the paired $t$-test, the way @sec-6paired taught it.**
 
 ```{r}
 t_out <- t.test(differences, mu = 0)
@@ -148,7 +148,7 @@ knitr::kable(
 )
 ```
 
-The Shapiro-Wilk test (@sec-ttests) has the null hypothesis that the data came from a normal distribution. Here $p = 0.039$, below 0.05, so the test rejects normality for the differences and agrees with the picture. Three plots didn't change at all, three dropped slightly, and the rest rose by 3 to 8 points. That is not symmetric, let alone normal. The $t$-test's "significant" result depends on an assumption the data don't meet, so we turn to the Wilcoxon signed-rank test.
+The Shapiro-Wilk test (@sec-6assumptions) has the null hypothesis that the data came from a normal distribution. Here $p = 0.039$, below 0.05, so the test rejects normality for the differences and agrees with the picture. Three plots didn't change at all, three dropped slightly, and the rest rose by 3 to 8 points. That is not symmetric, let alone normal. The $t$-test's "significant" result depends on an assumption the data don't meet, so we turn to the Wilcoxon signed-rank test.
 
 **The question.** Did soil moisture systematically change after restoration, or is any change we see just plot-to-plot noise?
 
@@ -217,11 +217,11 @@ The test does not need normality because nothing in this distribution assumed a 
 
 **So far.** $t$-test $p=0.026$ (significant), signed-rank test $p = 0.057$ (not significant). The two tests reach different verdicts on the same 12 plots because the $t$-test's numerator and denominator both used the exact magnitudes the signed-rank test ignores. In the $t$-test, the increases of 3 to 8 points count at their full size.
 
-**The sign test.** The **sign test** looks only at whether each difference is positive or negative. It is an even simpler nonparametric option than the signed-rank test, and it asks whether pluses outnumber minuses more than chance would suggest. The sign test makes no assumption about the distribution of the differences, not even symmetry. Its only assumption is the one every test in this book shares, independent observations from a sound study design (see @sec-ttests).
+**The sign test.** The **sign test** looks only at whether each difference is positive or negative. It is an even simpler nonparametric option than the signed-rank test, and it asks whether pluses outnumber minuses more than chance would suggest. The sign test makes no assumption about the distribution of the differences, not even symmetry. Its only assumption is the one every test in this book shares, independent observations from a sound study design (see @sec-6assumptions).
 
 We already flagged the symmetry assumption as shaky for these data, so the sign test avoids the one assumption the signed-rank test still needed. Assuming less costs power, though, because the sign test throws away the size of every difference, so it is usually a last resort.
 
-The sign test uses the binomial distribution from @sec-probability. `binom.test(6, 9, p = 0.5)` asks how often chance alone would give 6 or more increases out of 9, or 3 or fewer (the same distance from 4.5 in the other direction, because the test is two-tailed), if each plot were equally likely to go up or go down ($\theta = 0.5$, the binomial success probability).
+The sign test uses the binomial distribution (@sec-3binomial). `binom.test(6, 9, p = 0.5)` asks how often chance alone would give 6 or more increases out of 9, or 3 or fewer (the same distance from 4.5 in the other direction, because the test is two-tailed), if each plot were equally likely to go up or go down ($\theta = 0.5$, the binomial success probability).
 
 ```{r}
 #| echo: true
@@ -309,7 +309,7 @@ knitr::kable(
 )
 ```
 
-**Step 1: run the $t$-test, the way @sec-ttests taught it.**
+**Step 1: run the $t$-test, the way @sec-6indep taught it.**
 
 ```{r}
 t_out <- t.test(sodium, led, var.equal = TRUE)
@@ -325,7 +325,7 @@ knitr::kable(
 
 $t(14) = 2.54$, $p = 0.024$, a significant result. Bat activity looks higher under sodium lights.
 
-**Step 2: check the assumptions.** @sec-ttests said to check them before trusting a $p$-value, so we look at the data now.
+**Step 2: check the assumptions.** @sec-6assumptions said to check them before trusting a $p$-value, so we look at the data now.
 
 ```{r}
 #| label: fig-7bats-boxplot
@@ -518,7 +518,7 @@ For the rank tests, listing every possible arrangement of the ranks under $H_0$ 
 
 There are two chi-square tests, and the question decides which one to use. The goodness-of-fit test works with one categorical variable, and the test of independence works with two.
 
-### The chi-square goodness-of-fit test
+### The chi-square goodness-of-fit test {#sec-7gof}
 
 The **chi-square goodness-of-fit test** checks how well (the "goodness") the observed counts for one categorical variable match (the "fit") the counts expected under a stated pattern. The expectation can come from a historical baseline, a theory, or an assumption that every category is equally likely. A small chi-square statistic means a good fit, with observed counts close to expected. A large one means a poor fit, with observed counts far from expected.
 
@@ -624,7 +624,7 @@ With $df = 3$, the critical value at $\alpha = 0.05$ is 7.81 (the same one marke
 
 : Test card: chi-square goodness-of-fit test. {#tbl-7card-gof tbl-colwidths="[20,80]"}
 
-### The chi-square test of independence
+### The chi-square test of independence {#sec-7independence}
 
 The **chi-square test of independence** asks whether two categorical variables measured on the same units are related. Suppose researchers classify 150 city blocks by land use and by whether each block's peak summer surface temperature, measured from satellite images, topped 40°C. The data in this example are invented. Every block falls into exactly one cell of @fig-7indepdesign. A **cell** is one combination of categories in the table, here one land use with one temperature outcome.
 

@@ -143,7 +143,7 @@ p_lin / p_log
 If the population SD $\sigma$ is known *and* the sampling distribution of the sample mean is (approximately) normal, use $z$. In practice, $\sigma$ is rarely known, so we use $t$ with $s$ and $df=n-1$ (degrees of freedom, defined in the next section).
 :::
 
-### Degrees of freedom
+### Degrees of freedom {#sec-6df}
 
 @fig-6-z-vs-t-linear-log drew a different $t$ curve for each value of the **degrees of freedom**, $df$. The degrees of freedom are the number of values still free to vary once something has been estimated from the data. The $df$ is also the number in parentheses whenever a $t$-test is reported, as in $t(9) = 1.94$.
 
@@ -282,7 +282,7 @@ t.test(sound_db, mu = 50)
 
 **Results:** $t(9) = `r sprintf("%.2f", tt$statistic)`$, $p `r fmt_p_eq(tt$p.value)`$, mean $= `r sprintf("%.1f", tt$estimate)`$ dB, 95% CI [`r ci_lo`, `r ci_hi`].
 
-**Confidence interval.** The 95% CI in that output is $\bar{x} \pm t_{crit} \cdot SE_{\bar{x}}$, with $t_{crit}$ taken from the $t$ distribution with $n-1$ degrees of freedom. Here $t_{crit} = `r round(qt(.975, n-1),3)`$, the same two-tailed cutoff for $df = 9$ as in the critical values section, so the interval is $`r round(x,2)` \pm `r round(qt(.975, n-1),3)`(`r round(SE,2)`)$, or \[`r ci_lo`, `r ci_hi`\]. The interval contains 50, so the test does not reject $H_0$. For a two-tailed test at $\alpha$, the $100(1-\alpha)\%$ CI and the critical value always reach the same decision, the same equivalence @sec-inference showed for $z$. The critical value is a cutoff on the $t$ scale, and we compare the observed $t$ to it. The confidence interval is a range on the scale of the data (dB here), built around $\bar{x}$, and we check whether it contains $\mu_0$. Both use the same $t_{crit}$ and the same standard error, so they agree.
+**Confidence interval.** The 95% CI in that output is $\bar{x} \pm t_{crit} \cdot SE_{\bar{x}}$, with $t_{crit}$ taken from the $t$ distribution with $n-1$ degrees of freedom. Here $t_{crit} = `r round(qt(.975, n-1),3)`$, the same two-tailed cutoff for $df = 9$ as in the critical values section, so the interval is $`r round(x,2)` \pm `r round(qt(.975, n-1),3)`(`r round(SE,2)`)$, or \[`r ci_lo`, `r ci_hi`\]. The interval contains 50, so the test does not reject $H_0$. For a two-tailed test at $\alpha$, the $100(1-\alpha)\%$ CI and the critical value always reach the same decision, the same equivalence @sec-4routes showed for $z$. The critical value is a cutoff on the $t$ scale, and we compare the observed $t$ to it. The confidence interval is a range on the scale of the data (dB here), built around $\bar{x}$, and we check whether it contains $\mu_0$. Both use the same $t_{crit}$ and the same standard error, so they agree.
 
 **Interpretation.** The mean (`r round(x,0)` dB) is above the 50 dB guideline, but the difference is not statistically significant at $\alpha=0.05$.
 
@@ -360,7 +360,7 @@ Software needs two things from you to compute a $p$-value: the degrees of freedo
 
 ### One-tailed vs. two-tailed, applied
 
-Chapters [-@sec-inference] and [-@sec-errors-power] covered when each is justified. For a $t$-test, the tail choice changes both the critical value and the $p$-value for the exact same data.
+Sections [-@sec-4whichtail] and [-@sec-5tails] covered when each is justified. For a $t$-test, the tail choice changes both the critical value and the $p$-value for the exact same data.
 
 For the highway noise example ($df=9$), a one-tailed test puts the whole 5% rejection region in one tail, so its critical value is 1.83. A two-tailed test splits the 5% into 2.5% in each tail, which pushes the critical values farther out, to $\pm 2.26$.
 
@@ -423,13 +423,13 @@ The two-tailed $p$ is exactly double, because a two-tailed test counts the match
 
 Every test in this book has assumptions. Assumptions are conditions that need to be roughly true for the math behind the test to be trustworthy. There are two different kinds of assumptions.
 
-**The universal assumption.** Every test in this book, including the nonparametric tests in @sec-nonparametric, makes two universal assumptions. First, the observations are independent, so knowing one observation's value tells you nothing about another's (@sec-probability's definition, applied to data). In a paired design, the pairs are the observations. Second, the data come from a sound study design, meaning a fair sample that does not systematically favor certain values. Because it applies everywhere, we won't list it test by test from here on. When an exam or homework question asks you to "list the assumptions of this test," it means the test-specific assumptions below.
+**The universal assumption.** Every test in this book, including the nonparametric tests in @sec-nonparametric, makes two universal assumptions. First, the observations are independent, so knowing one observation's value tells you nothing about another's (the definition in @sec-3independence, applied to data). In a paired design, the pairs are the observations. Second, the data come from a sound study design, meaning a fair sample that does not systematically favor certain values. Because it applies everywhere, we won't list it test by test from here on. When an exam or homework question asks you to "list the assumptions of this test," it means the test-specific assumptions below.
 
 **Test-specific assumptions.** These come from how a particular test's math works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is approximate normality of the outcome itself (one-sample) or of the difference scores (paired). The $t$ distribution we've been using to get $p$-values is *derived* assuming the population is normal, which makes the sample mean normally distributed too. When the population is far from normal, the $p$-value may not be the true probability of a result this extreme under $H_0$.
 
 **Whether non-normality matters depends on $n$.** With a large sample, the sampling distribution of the sample mean tends toward normal even when individual observations are skewed (the central limit theorem), so the $t$-test's $p$-values stay close to correct. Much environmental field data comes from small samples that are also skewed. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit in a season. A $t$-test's answer becomes questionable when the sample is small and the data are also non-normal.
 
-**What to do about it.** First, look at your data. A histogram or a Q-Q plot (@sec-regression shows how to read one) will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. A small Shapiro-Wilk $p$-value is evidence that the data did not come from a normal distribution. A large $p$-value means the test found no such evidence, which is weaker than showing the data are normal. Treat the result as one more piece of evidence alongside the plot. With a small sample, which is when a violation matters most, the test has low power and often fails to reject $H_0$ even when the data are far from normal. If your data look far from normal and your sample is small, you can use a nonparametric test instead, which does not assume normality. You'll meet these nonparametric alternatives in the next chapter, once we've covered all three $t$-test forms below.
+**What to do about it.** First, look at your data. A histogram or a Q-Q plot (@sec-9normality shows how to read one) will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. A small Shapiro-Wilk $p$-value is evidence that the data did not come from a normal distribution. A large $p$-value means the test found no such evidence, which is weaker than showing the data are normal. Treat the result as one more piece of evidence alongside the plot. With a small sample, which is when a violation matters most, the test has low power and often fails to reject $H_0$ even when the data are far from normal. If your data look far from normal and your sample is small, you can use a nonparametric test instead, which does not assume normality. You'll meet these nonparametric alternatives in the next chapter, once we've covered all three $t$-test forms below.
 
 @tbl-6card-onesample collects the one-sample $t$-test on one card.
 
@@ -455,7 +455,7 @@ Every test in this book has assumptions. Assumptions are conditions that need to
 
 : Test card: one-sample $t$-test. {#tbl-6card-onesample tbl-colwidths="[20,80]"}
 
-## The paired $t$-test
+## The paired $t$-test {#sec-6paired}
 
 When the same units are measured twice (before/after, matched pairs), the question is whether they changed. The data for the test are difference scores. A **difference score** is one unit's second measurement minus its first.
 
@@ -497,7 +497,7 @@ Here $n$ is the number of pairs, 20 plots in this study.
 
 $t$ has the same sign as $\bar d$. If you subtracted Before from After, a positive $t$ means moisture went up. Reversing the order flips the sign of every $d_i$, $\bar d$, and $t$, and leaves $p$ unchanged.
 
-**What to report.** $\bar d$ (the mean difference score), a 95% CI, $t(df)$, and $p$. Optionally add a standardized effect size, $\bar d / s_d$, the paired version of Cohen's $d$. Cohen's $d$ is the @sec-errors-power effect size.
+**What to report.** $\bar d$ (the mean difference score), a 95% CI, $t(df)$, and $p$. Optionally add a standardized effect size, $\bar d / s_d$, the paired version of Cohen's $d$. Cohen's $d$ is the effect size from @sec-5effectsize.
 
 @tbl-6two-ds separates the two uses of the letter $d$.
 
@@ -647,7 +647,7 @@ This is the interval R reports in the table above. It is the 95% CI for the effe
 
 : Test card: paired $t$-test. {#tbl-6card-paired tbl-colwidths="[20,80]"}
 
-## The independent-samples $t$-test
+## The independent-samples $t$-test {#sec-6indep}
 
 The independent-samples $t$-test is the third and last design in this chapter.
 
@@ -659,7 +659,7 @@ A natural first guess is to average the two groups' standard errors. Here $SE_A 
 
 $$t = \frac{\bar{x}_A-\bar{x}_B}{\left(\dfrac{SE_A+SE_B}{2}\right)}$$
 
-That average understates how much a difference between two means varies. The standard error of a difference between two independent means is $\sqrt{SE_A^2 + SE_B^2}$, because variances add when two independent quantities are subtracted. This is always larger than the average of the two SEs. The pooled independent-samples $t$-test also assumes the two populations share one variance. Both samples estimate that shared variance, so the test combines them, which gives a better estimate, with more degrees of freedom, than either group alone. The **pooled variance**, $s_p^2$, is that combined estimate, a weighted average of the two sample variances, $s_A^2$ and $s_B^2$, with each weighted by its degrees of freedom (@sec-describing-data's weighted mean). The **pooled standard deviation**, $s_p$, is its square root. Putting $s_p^2$ in place of each group's variance in $\sqrt{SE_A^2 + SE_B^2}$ gives $\sqrt{s_p^2/n_A + s_p^2/n_B} = s_p\sqrt{1/n_A + 1/n_B}$, the denominator below:
+That average understates how much a difference between two means varies. The standard error of a difference between two independent means is $\sqrt{SE_A^2 + SE_B^2}$, because variances add when two independent quantities are subtracted. This is always larger than the average of the two SEs. The pooled independent-samples $t$-test also assumes the two populations share one variance. Both samples estimate that shared variance, so the test combines them, which gives a better estimate, with more degrees of freedom, than either group alone. The **pooled variance**, $s_p^2$, is that combined estimate, a weighted average of the two sample variances, $s_A^2$ and $s_B^2$, with each weighted by its degrees of freedom (the weighted mean, @sec-1weighted). The **pooled standard deviation**, $s_p$, is its square root. Putting $s_p^2$ in place of each group's variance in $\sqrt{SE_A^2 + SE_B^2}$ gives $\sqrt{s_p^2/n_A + s_p^2/n_B} = s_p\sqrt{1/n_A + 1/n_B}$, the denominator below:
 
 $$t = \frac{\bar{x}_A-\bar{x}_B}{s_p\sqrt{\dfrac{1}{n_A}+\dfrac{1}{n_B}}}$$
 
@@ -834,7 +834,7 @@ Note the paired write-up never mentions the before and after means separately. T
 
 Earlier in this chapter we simulated $t$ under $H_0$ and saw its null distribution in @fig-6t-sim. The same kind of simulation also gives a $p$-value for each repetition, and those $p$-values show what a test does when $H_0$ is true and when it is false.
 
-Simulating under conditions you choose shows how sampling error affects results for a given sample size, expected difference, and amount of variation. @sec-errors-power estimated power the same way and checked each estimate against the exact power computed from the $t$ distribution.
+Simulating under conditions you choose shows how sampling error affects results for a given sample size, expected difference, and amount of variation. @tbl-5power-sims shows power estimated the same way, with each estimate checked against the exact power computed from the $t$ distribution.
 
 ### Simulating a one-sample $t$-test
 
@@ -874,7 +874,7 @@ The first bar holds the `r sum(save_ps < 0.05)` $p$-values below 0.05. Each one 
 
 The paired and independent-samples cases behave the same way, because they use the same $t$ calculation on different inputs. A paired test runs a one-sample $t$ on the difference scores. An independent-samples test uses the pooled standard error in the denominator. Simulate either one under $H_0$ and you get the same two pictures: a $t$ distribution centered on zero, and a flat $p$ distribution.
 
-@sec-errors-power simulated 1,000 experiments with a real difference of 2.5 points (two groups of 10, SD 5, so Cohen's $d = 0.5$) and counted how often $p < 0.05$ to estimate power. @fig-6simtrueps shows the 1,000 $p$-values from the same design, with the group means set at 10 and 12.5.
+@sec-5simpower simulated 1,000 experiments with a real difference of 2.5 points (two groups of 10, SD 5, so Cohen's $d = 0.5$) and counted how often $p < 0.05$ to estimate power. @fig-6simtrueps shows the 1,000 $p$-values from the same design, with the group means set at 10 and 12.5.
 
 ```{r}
 save_ps <- numeric(1000)
@@ -905,4 +905,4 @@ With a real difference, the $p$-values pile up near 0, while under $H_0$ in @fig
 -   **Why $t$ and not $z$.** When the population SD $\sigma$ is unknown, we estimate it with $s$, which adds uncertainty. The $t$ distribution accounts for that with heavier tails than the normal, and it approaches the normal as degrees of freedom grow.
 -   **Assumptions come in two kinds.** *Independence and a sound study design* apply to every test in this book and are assumed from here on. The *test-specific* assumption is approximate normality: of the outcome (one-sample), of the difference scores (paired), or of each group (independent samples). The pooled independent-samples test also assumes similar variances.
 -   **How worried to be depends on $n$.** Thanks to the central limit theorem, a $t$-test's $p$-values stay close to correct with non-normal data once samples are reasonably large. $t$-tests are least trustworthy when samples are small *and* skewed, which describes a lot of environmental field data. Plot your data first, and treat a Shapiro-Wilk result as evidence rather than a gate, since it has the least power with small samples, when a violation matters most.
--   **The tail choice changes $p$ for the same data.** For the highway noise example, $t(9) = 1.94$ gives a one-tailed $p$ of 0.042 and a two-tailed $p$ of 0.084. Decide which you need before seeing the result, using the rule from Chapters [-@sec-inference] and [-@sec-errors-power].
+-   **The tail choice changes $p$ for the same data.** For the highway noise example, $t(9) = 1.94$ gives a one-tailed $p$ of 0.042 and a two-tailed $p$ of 0.084. Decide which you need before seeing the result, using the rule from Sections [-@sec-4whichtail] and [-@sec-5tails].

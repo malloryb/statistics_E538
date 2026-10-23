@@ -133,11 +133,11 @@ Pairwise comparisons have two problems. The first is the count, which grows fast
 
 We have used the words variability, variation, and variance a lot, and all three refer to the same idea, that numbers differ. The word *variance* does double duty, though. Loosely it means that general idea. Precisely it names a specific statistic, the mean of the squared deviations from the mean.
 
-A score's **deviation score** is the score minus the mean, $x_i - \bar{x}$, where $x_i$ is one score and $\bar{x}$ is the mean (@sec-describing-data). To calculate the variance, find each score's deviation score, square those deviations, then average them. Squaring stops positive and negative deviations from canceling. In short:
+A score's **deviation score** is the score minus the mean, $x_i - \bar{x}$, where $x_i$ is one score and $\bar{x}$ is the mean (@sec-1mean). To calculate the variance, find each score's deviation score, square those deviations, then average them. Squaring stops positive and negative deviations from canceling. In short:
 
 $\text{variance} = \frac{\text{Sum of squared deviation scores}}{\text{Number of Scores}}$
 
-@sec-probability explains when to divide by $N$ (when you have the entire population) and when to divide by $n-1$ (when you only have a sample, which is almost always the case). In this chapter, we divide by $N$.
+@sec-3estsd explains when to divide by $N$ (when you have the entire population) and when to divide by $n-1$ (when you only have a sample, which is almost always the case). In this chapter, we divide by $N$.
 
 **Deviations from the mean.**
 
@@ -165,7 +165,7 @@ The mean here is
 
 $$\bar{x} = \frac{1+2+6+7+9}{5} = \frac{25}{5} = 5.$$
 
-The third column repeats the mean on every row. That shows the point from @sec-describing-data that the mean spreads the total evenly, because five copies of 5 add back to the original total of 25. The fourth column is the deviation score, $x_{i}-\bar{x}$. The score of 1 is 4 below the mean and the score of 6 is 1 above it.
+The third column repeats the mean on every row. That shows the point from @fig-1mean-equal-share that the mean spreads the total evenly, because five copies of 5 add back to the original total of 25. The fourth column is the deviation score, $x_{i}-\bar{x}$. The score of 1 is 4 below the mean and the score of 6 is 1 above it.
 
 **The deviations sum to zero.** In the table, the two negative deviations add to $-7$ and the three positive ones add to $7$, so the Sums row shows 0. A total of zero would suggest there is no variation at all, but the scores run from 1 to 9. Squaring will fix the cancellation, but first we look at *why* it happens.
 
@@ -328,7 +328,7 @@ $$\text{variance} = \frac{SS}{N}$$
 
 For our data it comes to $46 / 5 = 9.2$. On its own that number is hard to interpret, because squaring the deviations put it on a *squared* scale, so it is no longer in the same units as the data. The fix is to take the square root, $\sqrt{9.2} \approx 3.03$.
 
-### The standard deviation
+### The standard deviation {#sec-2sd}
 
 The **standard deviation (SD)** is the square root of the variance. It is in the units of the data and gives the typical size of a deviation from the mean:
 
@@ -366,7 +366,7 @@ The **mean absolute deviation (MAD)** is the mean of the absolute deviations fro
 
 R's `mad()` function computes a different statistic, the median absolute deviation, so use `mean(abs(x - mean(x)))` for the MAD.
 
-@tbl-2spread sets the range from @sec-describing-data beside the three measures from this section, all computed for the same five scores.
+@tbl-2spread sets the range from @sec-1range beside the three measures from this section, all computed for the same five scores.
 
 ```{r}
 #| label: tbl-2spread
@@ -544,7 +544,7 @@ ggplot(quad_df, aes(x = chocolate, y = happiness)) +
   theme(legend.position = "bottom")
 ```
 
-The formula above divides by $N$, which is the population version, and that is what the table computes. R's `cov()` and `sd()` divide by $n-1$ instead, for a reason @sec-probability explains. Dividing by $n-1$ makes the covariance $n/(n-1)$ times larger. It makes each standard deviation $\sqrt{n/(n-1)}$ times larger, so the product of the two standard deviations is also $n/(n-1)$ times larger. Pearson's $r$, defined below, divides the covariance by that product, so the factor cancels and $r$ comes out identical either way:
+The formula above divides by $N$, which is the population version, and that is what the table computes. R's `cov()` and `sd()` divide by $n-1$ instead, for a reason @sec-3estsd explains. Dividing by $n-1$ makes the covariance $n/(n-1)$ times larger. It makes each standard deviation $\sqrt{n/(n-1)}$ times larger, so the product of the two standard deviations is also $n/(n-1)$ times larger. Pearson's $r$, defined below, divides the covariance by that product, so the factor cancels and $r$ comes out identical either way:
 
 $$\frac{\frac{n}{n-1}\,\text{cov}(X,Y)}{\sqrt{\frac{n}{n-1}}\,\sigma_X \cdot \sqrt{\frac{n}{n-1}}\,\sigma_Y} = \frac{\cancel{\frac{n}{n-1}}\,\text{cov}(X,Y)}{\cancel{\frac{n}{n-1}}\,\sigma_X \sigma_Y} = \frac{\text{cov}(X,Y)}{\sigma_X \sigma_Y}$$
  If you compute the covariance itself in R, though, expect a number 10/9 times the one in this table, about 11% larger, because the table has $n = 10$.
@@ -612,7 +612,7 @@ ggplot(all_data,aes(x=chocolate_x,y=happiness_x))+
 
 ```
 
-### The best-fit line
+### The best-fit line {#sec-2bestfit}
 
 Each panel now has a blue line. The **best-fit line** is the straight line that summarizes the pattern of dots with the least error. The chapter also calls it the fitted line or the regression line. The line slopes down in the negative panel, up in the positive panel, and is nearly flat in the no-correlation panel.
 
@@ -696,7 +696,7 @@ ggplot(df,aes(x=move_line,y=total_error))+
 
 In principle, you could find the line that minimizes the sum of squared residuals by trying many lines and comparing their errors, but that is slow. @fig-2minimizeSS tried 25 positions and only moved the line up and down, and a full search would also have to change its slope (how steeply it rises or falls). In practice, we let software identify the line with the smallest total error. R's `lm()` function did this for every regression line drawn in this chapter's figures.
 
-@fig-2corwithLine shows seven $x,y$ pairs with their fitted line. @sec-regression returns to these seven points and computes the line's slope and intercept by hand.
+@fig-2corwithLine shows seven $x,y$ pairs with their fitted line. @sec-9byhand returns to these seven points and computes the line's slope and intercept by hand.
 
 ```{r}
 #| label: fig-2corwithLine
@@ -718,7 +718,7 @@ ggplot(plot_df,aes(x=x,y=y))+
 
 A common warning is that correlation does not imply causation. Interpreting correlations requires care, because the same number can arise from very different situations. This section covers random chance and sample size, nonlinear patterns, data whose shape a summary hides (Anscombe's quartet), the direction of a causal link, and confounding variables.
 
-### Spurious correlation: chance alone can look convincing
+### Spurious correlation: chance alone can look convincing {#sec-2spurious}
 
 Two measures that have nothing to do with one another can still show a positive or negative correlation by random chance, and with small samples this happens often, as the lottery game below shows. A **spurious correlation** is a correlation that does not come from a link between the two variables. Chance correlations like these are one kind, and correlations caused by a confounding variable (the last section of this chapter) are the other.
 
@@ -866,7 +866,7 @@ Bigger $n$ narrows the chance window. If you expect a modest linear effect (e.g.
 
 **When there is a true correlation.**
 
-In @fig-2realcorFour, we built a true correlation of `r true_r` into the population (the full set of values the samples are drawn from, @sec-probability), then drew a new sample in every frame at each of the same four sample sizes. The true correlation is the correlation in the whole population. Each sample gives its own $r$, which varies around the true value from sample to sample.
+In @fig-2realcorFour, we built a true correlation of `r true_r` into the population (the full set of values the samples are drawn from, @sec-3population), then drew a new sample in every frame at each of the same four sample sizes. The true correlation is the correlation in the whole population. Each sample gives its own $r$, which varies around the true value from sample to sample.
 
 ::: {.content-visible when-format="html"}
 ```{r}
@@ -1017,7 +1017,7 @@ Rounded to two decimals, all four datasets have the same mean and variance for $
 
 The **causal directionality problem** arises when $X$ and $Y$ are causally linked but no outside knowledge, such as the physics of the system or which variable came first, settles the direction. Without that knowledge, $r$ alone cannot tell you whether $X$ causes $Y$, $Y$ causes $X$, or both. For example, people who exercise more tend to report better moods. Exercise could improve mood, a better mood could make people more likely to exercise, or both could be true.
 
-### Confounding variables
+### Confounding variables {#sec-2confound}
 
 A correlation can also arise from a **confounding variable**, a third variable that drives both of the variables you are looking at, creating an apparent relationship between them or inflating a real one. A confounder does this whether or not anyone measured it, and dealing with it starts with measuring it.
 
