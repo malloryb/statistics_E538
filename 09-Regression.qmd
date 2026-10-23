@@ -75,11 +75,28 @@ knitr::kable(tab, col.names = c("Pair", "x", "y", "x²", "xy"),
 
 The table has 7 pairs of $x$ and $y$ scores, plus columns for $x^2$ and $xy$ (each $x$ score times its matching $y$ score), with column sums at the bottom. These sums are everything the formulas need. From the table, $n = 7$, $\sum x = 34$, $\sum y = 39$, $\sum x^2 = 200$, and $\sum xy = 231$. Substituting:
 
-$$\text{intercept} = b_0 = \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2} = \frac{39 \times 200 - 34 \times 231}{7 \times 200-34^2} = \frac{7800 - 7854}{1400 - 1156} = \frac{-54}{244} = -0.221$$
+$$\begin{aligned}
+\text{intercept} = b_0 &= \frac{\sum{y}\sum{x^2}-\sum{x}\sum{xy}}{n\sum{x^2}-(\sum{x})^2} \\
+&= \frac{39 \times 200 - 34 \times 231}{7 \times 200-34^2} \\
+&= \frac{7800 - 7854}{1400 - 1156} \\
+&= \frac{-54}{244} = -0.221
+\end{aligned}$$
 
-$$\text{slope} = b_1 = \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2} = \frac{7 \times 231-34 \times 39}{7 \times 200-34^2} = \frac{1617 - 1326}{1400 - 1156} = \frac{291}{244} = 1.19$$
+$$\begin{aligned}
+\text{slope} = b_1 &= \frac{n\sum{xy}-\sum{x}\sum{y}}{n\sum{x^2}-(\sum{x})^2} \\
+&= \frac{7 \times 231-34 \times 39}{7 \times 200-34^2} \\
+&= \frac{1617 - 1326}{1400 - 1156} \\
+&= \frac{291}{244} = 1.19
+\end{aligned}$$
 
-With $b_0$ and $b_1$ in hand, we can compute a residual for any observed point. A residual, as in @sec-correlation, is the difference between what we observed and what the line predicts, $e = y - \hat y$. The symbol $\hat y$ (read "y-hat") is the value the line predicts, $\hat y = b_0 + b_1x$. For the first row above ($x=1, y=2$): $\hat y = -0.221 + 1.19(1) = 0.969$, so $e = 2 - 0.969 = 1.031$. The residual is positive, so that point is above the line. Repeating this for every point, then squaring and summing the residuals, gives the sum of squared residuals, the quantity that $b_0$ and $b_1$ were chosen to make as small as possible.
+With $b_0$ and $b_1$ in hand, we can compute a residual for any observed point. A residual, as in @sec-correlation, is the difference between what we observed and what the line predicts, $e = y - \hat y$. The symbol $\hat y$ (read "y-hat") is the value the line predicts, $\hat y = b_0 + b_1x$. For the first row above ($x=1$, $y=2$):
+
+$$\begin{aligned}
+\hat y &= -0.221 + 1.19(1) = 0.969 \\
+e &= y - \hat y = 2 - 0.969 = 1.031
+\end{aligned}$$
+
+The residual is positive, so that point is above the line. Repeating this for every point, then squaring and summing the residuals, gives the sum of squared residuals, the quantity that $b_0$ and $b_1$ were chosen to make as small as possible.
 
 The residual $e$ is the sample's version of the error $\varepsilon$. The error $\varepsilon$ belongs to the population line, which we never see, and the residual $e$ belongs to the line we fit.
 
@@ -226,9 +243,8 @@ The slope ($b_1 = `r sprintf("%.2f", coef(fit)[2])`$) is the part we care about 
 
 The slope $b_1$ is a sample estimate. The hypothesis test for the slope asks whether the population slope $\beta_1$ could plausibly be zero:
 
--   $H_0: \beta_1 = 0$ (no linear relationship between stream temperature and dissolved oxygen)
-
--   $H_a: \beta_1 \neq 0$ (there is a linear relationship)
+-   **Null ($H_0$):** no linear relationship between stream temperature and dissolved oxygen, $\beta_1 = 0$.
+-   **Alternative ($H_a$):** a linear relationship, $\beta_1 \neq 0$.
 
 Like any other statistic, $b_1$ varies from sample to sample. If we drew a new sample of streams and fit a new line, we'd get a slightly different $b_1$, just by chance. The test asks whether our $b_1$ is large relative to that sampling variability, the same signal-over-noise pattern as every test so far:
 
@@ -596,13 +612,33 @@ We report a regression result the same way as any other test: the slope, the tes
 
 @tbl-9card-regression collects the slope test in simple linear regression on one card.
 
-| | |
-|:--|:--|
-| Purpose | Is one continuous variable linearly related to another? One predictor, one outcome |
-| Hypotheses | $H_0: \beta_1 = 0$, $\quad H_a: \beta_1 \neq 0$ |
-| Assumptions | Linearity, constant variance of the residuals across $X$, and approximately normal residuals |
-| Test statistic | $t = b_1/SE(b_1)$, $\quad df = n - 2$ (equivalently $F = t^2$ with 1 and $n - 2$ df) |
-| Report | $b_1$ in its units, $t(df)$, $p$, 95% CI for the slope, and $R^2$ |
++:---------------+:--------------------------------------------------------+
+| Purpose        | Is one continuous variable linearly related to another? |
+|                |                                                         |
+|                | One predictor, one outcome                              |
++----------------+---------------------------------------------------------+
+| Hypotheses     | $H_0: \beta_1 = 0$                                      |
+|                |                                                         |
+|                | $H_a: \beta_1 \neq 0$                                   |
++----------------+---------------------------------------------------------+
+| Assumptions    | Linearity                                               |
+|                |                                                         |
+|                | Constant variance of the residuals across $x$           |
+|                |                                                         |
+|                | Approximately normal residuals                          |
++----------------+---------------------------------------------------------+
+| Test statistic | $t = b_1/SE(b_1)$                                       |
+|                |                                                         |
+|                | $df = n - 2$                                            |
+|                |                                                         |
+|                | Equivalently, $F = t^2$ with 1 and $n - 2$ df           |
++----------------+---------------------------------------------------------+
+| Report         | $b_1$ in its units, with the 95% CI for the slope       |
+|                |                                                         |
+|                | $t(df)$ and $p$                                         |
+|                |                                                         |
+|                | $R^2$                                                   |
++----------------+---------------------------------------------------------+
 
 : Test card: simple linear regression. {#tbl-9card-regression tbl-colwidths="[20,80]"}
 

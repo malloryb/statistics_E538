@@ -605,7 +605,12 @@ Figure&nbsp;11.3: Case age distribution by country. Italy’s cases are older on
 <p>When <span class="math inline">\(G = 0\)</span> (indicator off), only the baseline terms are active:</p>
 <p><span class="math display">\[y = 2x + 3 \qquad \text{slope} = 2, \ \text{intercept} = 3\]</span></p>
 <p>When <span class="math inline">\(G = 1\)</span> (indicator on), the term <span class="math inline">\(1(xG)\)</span> becomes <span class="math inline">\(1x\)</span> and the term <span class="math inline">\(-7G\)</span> becomes <span class="math inline">\(-7\)</span>. Adding them to the baseline terms and collecting the <span class="math inline">\(x\)</span> terms and the constants gives</p>
-<p><span class="math display">\[y = (2x + 3) + (1x - 7) = (2 + 1)x + (3 - 7) = 3x - 4 \qquad \text{slope} = 3, \ \text{intercept} = -4\]</span></p>
+<p><span class="math display">\[\begin{aligned}
+y &amp;= (2x + 3) + (1x - 7) \\
+&amp;= (2 + 1)x + (3 - 7) \\
+&amp;= 3x - 4
+\end{aligned}\]</span></p>
+<p>so the slope is 3 and the intercept is <span class="math inline">\(-4\)</span>.</p>
 <p>Turning on the indicator adds +1 to the slope and −7 to the intercept. The one equation gives two different lines, and the value of the indicator decides which one applies.</p>
 <p>Linear models represent different groups this way. The indicator (<span class="math inline">\(G\)</span>) and its interaction with <span class="math inline">\(x\)</span> let a single equation shift the intercept and the slope for each group. ANCOVA uses exactly this logic to test, in order, whether the slopes differ between groups (the <span class="math inline">\(x G\)</span> term) and, if they don’t, whether the adjusted means differ (the <span class="math inline">\(G\)</span> term).</p>
 <p><strong>Naming the pieces.</strong> Written in the general form, the same equation gives each coefficient a name and a meaning:</p>
@@ -650,18 +655,23 @@ Figure&nbsp;11.4: The question ANCOVA answers. Left: one line describes both gro
 </div>
 </div>
 <p>ANCOVA works right to left across that figure. It first asks whether the rightmost panel is what we have (do the slopes differ?), and only if the answer is no does it ask whether we have the middle panel or the leftmost (are the parallel lines at different heights?).</p>
-<p><strong>Step 0: Does the model explain anything?</strong> Before looking at any single term, check the whole-model <span class="math inline">\(F\)</span>-test, the regression <span class="math inline">\(F\)</span> from <a href="09-Regression.html" class="quarto-xref"><span>Chapter 9</span></a> applied to all the terms at once, which asks whether the covariate, the group, and their interaction together explain more of <span class="math inline">\(y\)</span> than chance would: <span class="math inline">\(H_0:\beta_1=\beta_2=\beta_3=0\)</span>. R reports it on the last line of <code>summary(lm(...))</code>. If it is not significant, stop. The data give no evidence that the covariate, the group, or their interaction explains <span class="math inline">\(y\)</span>, so no single term is worth interpreting.</p>
+<p><strong>Step 0: Does the model explain anything?</strong> Before looking at any single term, check the whole-model <span class="math inline">\(F\)</span>-test, the regression <span class="math inline">\(F\)</span> from <a href="09-Regression.html" class="quarto-xref"><span>Chapter 9</span></a> applied to all the terms at once, which asks whether the covariate, the group, and their interaction together explain more of <span class="math inline">\(y\)</span> than chance would.</p>
+<ul>
+<li><strong>Null (<span class="math inline">\(H_0\)</span>):</strong> none of the three terms explains <span class="math inline">\(y\)</span>, <span class="math inline">\(\beta_1=\beta_2=\beta_3=0\)</span>.</li>
+<li><strong>Alternative (<span class="math inline">\(H_a\)</span>):</strong> at least one of <span class="math inline">\(\beta_1\)</span>, <span class="math inline">\(\beta_2\)</span>, <span class="math inline">\(\beta_3\)</span> is not 0.</li>
+</ul>
+<p>R reports it on the last line of <code>summary(lm(...))</code>. If it is not significant, stop. The data give no evidence that the covariate, the group, or their interaction explains <span class="math inline">\(y\)</span>, so no single term is worth interpreting.</p>
 <p><strong>Step 1: Are slopes equal across groups?</strong></p>
 <ul>
-<li>Null: <span class="math inline">\(H_{0,\text{int}}:\beta_3=0\)</span> (parallel lines, same slope)</li>
-<li>Alternative: <span class="math inline">\(H_{a,\text{int}}:\beta_3\neq 0\)</span> (non-parallel lines, different slopes)</li>
+<li><strong>Null (<span class="math inline">\(H_{0,\text{int}}\)</span>):</strong> parallel lines, the same slope in both groups, <span class="math inline">\(\beta_3=0\)</span>.</li>
+<li><strong>Alternative (<span class="math inline">\(H_{a,\text{int}}\)</span>):</strong> different slopes, <span class="math inline">\(\beta_3\neq 0\)</span>.</li>
 </ul>
 <p><strong>If Step 1 rejects.</strong> The slopes differ, so stop testing the group term. There is no single group difference to test, because the gap between the lines changes along the covariate. Describe each group’s line instead. The model gives both slopes (the reference group’s is <span class="math inline">\(\beta_1\)</span>, the other group’s is <span class="math inline">\(\beta_1+\beta_3\)</span>), but it does not test whether each one differs from zero. To test each slope, fit a separate simple regression within each group.</p>
 <p><strong>Step 2: Are adjusted means equal?</strong> <em>(only if Step 1 did not reject <span class="math inline">\(H_{0,\text{int}}\)</span>, so the slopes are treated as parallel)</em> Drop the interaction and refit the parallel-lines model,</p>
 <p><span class="math display">\[y=\beta_0+\beta_1 x+\beta_2 G+\varepsilon\]</span></p>
 <ul>
-<li>Null: <span class="math inline">\(H_{0,\text{group}}:\beta_2=0\)</span></li>
-<li>Alternative: <span class="math inline">\(H_{a,\text{group}}:\beta_2\neq 0\)</span></li>
+<li><strong>Null (<span class="math inline">\(H_{0,\text{group}}\)</span>):</strong> no difference between the groups at the same covariate value, <span class="math inline">\(\beta_2=0\)</span>.</li>
+<li><strong>Alternative (<span class="math inline">\(H_{a,\text{group}}\)</span>):</strong> the groups differ at the same covariate value, <span class="math inline">\(\beta_2\neq 0\)</span>.</li>
 </ul>
 <p>With parallel lines, <span class="math inline">\(\beta_2\)</span> is the vertical gap between the two lines, and it is the same at every value of <span class="math inline">\(x\)</span>. The <strong>adjusted difference</strong> is how much the groups differ when they are compared at the same covariate value, so with parallel lines it equals <span class="math inline">\(\beta_2\)</span>. The <strong>adjusted means</strong> are the group means you would expect if both groups had the same average covariate value. To get them, evaluate each group’s line at the overall mean of <span class="math inline">\(x\)</span>. Raw group means compare the groups at whatever covariate values each group happens to have. Adjusted means compare them at one shared covariate value, the overall mean of <span class="math inline">\(x\)</span>. So if one group happens to have higher covariate values, that difference does not enter the comparison. The second example at the end of this chapter works through one.</p>
 <p>In the parallel-lines model, <span class="math inline">\(\beta_1\)</span> is the common slope.</p>
@@ -758,7 +768,8 @@ Table&nbsp;11.4: Test card: ANCOVA.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Purpose</td>
-<td style="text-align: left;">Does the covariate’s relationship with the outcome differ between groups? If not, do the groups differ at the same covariate value?</td>
+<td style="text-align: left;"><p>Does the covariate’s relationship with the outcome differ between groups?</p>
+<p>If not, do the groups differ at the same covariate value?</p></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Hypotheses</td>
@@ -768,15 +779,22 @@ Table&nbsp;11.4: Test card: ANCOVA.
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Assumptions</td>
-<td style="text-align: left;">Normal residuals and similar variances across groups, linearity within each group, homogeneity of slopes (tested in Step 1), and a covariate measured with little error and not affected by the treatment</td>
+<td style="text-align: left;"><p>Normal residuals and similar variances across groups</p>
+<p>Linearity within each group</p>
+<p>Homogeneity of slopes (tested in Step 1)</p>
+<p>A covariate measured with little error and not affected by the treatment</p></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Test statistic</td>
-<td style="text-align: left;">Model <span class="math inline">\(y=\beta_0+\beta_1 x+\beta_2 G+\beta_3(x\times G)+\varepsilon\)</span>. Step 0: whole-model <span class="math inline">\(F(3, N-4)\)</span>. Step 1: <span class="math inline">\(F(1, N-4)\)</span> for the <span class="math inline">\(x \times G\)</span> row. Step 2: <span class="math inline">\(t = b_2/SE(b_2)\)</span>, <span class="math inline">\(\;df = N - 3\)</span></td>
+<td style="text-align: left;"><p>Model: <span class="math inline">\(y=\beta_0+\beta_1 x+\beta_2 G+\beta_3(x\times G)+\varepsilon\)</span></p>
+<p>Step 0: whole-model <span class="math inline">\(F(3, N-4)\)</span></p>
+<p>Step 1: <span class="math inline">\(F(1, N-4)\)</span> for the <span class="math inline">\(x \times G\)</span> row</p>
+<p>Step 2: <span class="math inline">\(t = b_2/SE(b_2)\)</span>, <span class="math inline">\(df = N - 3\)</span></p></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Report</td>
-<td style="text-align: left;">If <span class="math inline">\(x \times G\)</span> is significant: its <span class="math inline">\(F(df)\)</span>, <span class="math inline">\(p\)</span>, model <span class="math inline">\(R^2\)</span>, and each group’s slope from a separate regression with <span class="math inline">\(t(df)\)</span> and <span class="math inline">\(p\)</span>. If not: the adjusted difference <span class="math inline">\(b_2\)</span> with <span class="math inline">\(t(df)\)</span>, <span class="math inline">\(p\)</span>, 95% CI, the adjusted means, the common slope, and the interaction <span class="math inline">\(F\)</span></td>
+<td style="text-align: left;"><p>If <span class="math inline">\(x \times G\)</span> is significant: its <span class="math inline">\(F(df)\)</span>, <span class="math inline">\(p\)</span>, model <span class="math inline">\(R^2\)</span>, and each group’s slope from a separate regression with <span class="math inline">\(t(df)\)</span> and <span class="math inline">\(p\)</span></p>
+<p>If not: the adjusted difference <span class="math inline">\(b_2\)</span> with <span class="math inline">\(t(df)\)</span>, <span class="math inline">\(p\)</span> and 95% CI, the adjusted means, the common slope, and the interaction <span class="math inline">\(F\)</span></p></td>
 </tr>
 </tbody>
 </table>

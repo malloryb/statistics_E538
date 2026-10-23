@@ -228,7 +228,13 @@ $$y = 2x + 3 \qquad \text{slope} = 2, \ \text{intercept} = 3$$
 
 When $G = 1$ (indicator on), the term $1(xG)$ becomes $1x$ and the term $-7G$ becomes $-7$. Adding them to the baseline terms and collecting the $x$ terms and the constants gives
 
-$$y = (2x + 3) + (1x - 7) = (2 + 1)x + (3 - 7) = 3x - 4 \qquad \text{slope} = 3, \ \text{intercept} = -4$$
+$$\begin{aligned}
+y &= (2x + 3) + (1x - 7) \\
+&= (2 + 1)x + (3 - 7) \\
+&= 3x - 4
+\end{aligned}$$
+
+so the slope is 3 and the intercept is $-4$.
 
 Turning on the indicator adds +1 to the slope and −7 to the intercept. The one equation gives two different lines, and the value of the indicator decides which one applies.
 
@@ -302,12 +308,17 @@ ggplot(lines_df, aes(x, y, color = g)) +
 
 ANCOVA works right to left across that figure. It first asks whether the rightmost panel is what we have (do the slopes differ?), and only if the answer is no does it ask whether we have the middle panel or the leftmost (are the parallel lines at different heights?).
 
-**Step 0: Does the model explain anything?** Before looking at any single term, check the whole-model $F$-test, the regression $F$ from @sec-regression applied to all the terms at once, which asks whether the covariate, the group, and their interaction together explain more of $y$ than chance would: $H_0:\beta_1=\beta_2=\beta_3=0$. R reports it on the last line of `summary(lm(...))`. If it is not significant, stop. The data give no evidence that the covariate, the group, or their interaction explains $y$, so no single term is worth interpreting.
+**Step 0: Does the model explain anything?** Before looking at any single term, check the whole-model $F$-test, the regression $F$ from @sec-regression applied to all the terms at once, which asks whether the covariate, the group, and their interaction together explain more of $y$ than chance would.
+
+-   **Null ($H_0$):** none of the three terms explains $y$, $\beta_1=\beta_2=\beta_3=0$.
+-   **Alternative ($H_a$):** at least one of $\beta_1$, $\beta_2$, $\beta_3$ is not 0.
+
+R reports it on the last line of `summary(lm(...))`. If it is not significant, stop. The data give no evidence that the covariate, the group, or their interaction explains $y$, so no single term is worth interpreting.
 
 **Step 1: Are slopes equal across groups?**
 
--   Null: $H_{0,\text{int}}:\beta_3=0$ (parallel lines, same slope)
--   Alternative: $H_{a,\text{int}}:\beta_3\neq 0$ (non-parallel lines, different slopes)
+-   **Null ($H_{0,\text{int}}$):** parallel lines, the same slope in both groups, $\beta_3=0$.
+-   **Alternative ($H_{a,\text{int}}$):** different slopes, $\beta_3\neq 0$.
 
 **If Step 1 rejects.** The slopes differ, so stop testing the group term. There is no single group difference to test, because the gap between the lines changes along the covariate. Describe each group's line instead. The model gives both slopes (the reference group's is $\beta_1$, the other group's is $\beta_1+\beta_3$), but it does not test whether each one differs from zero. To test each slope, fit a separate simple regression within each group.
 
@@ -315,8 +326,8 @@ ANCOVA works right to left across that figure. It first asks whether the rightmo
 
 $$y=\beta_0+\beta_1 x+\beta_2 G+\varepsilon$$
 
--   Null: $H_{0,\text{group}}:\beta_2=0$
--   Alternative: $H_{a,\text{group}}:\beta_2\neq 0$
+-   **Null ($H_{0,\text{group}}$):** no difference between the groups at the same covariate value, $\beta_2=0$.
+-   **Alternative ($H_{a,\text{group}}$):** the groups differ at the same covariate value, $\beta_2\neq 0$.
 
 With parallel lines, $\beta_2$ is the vertical gap between the two lines, and it is the same at every value of $x$. The **adjusted difference** is how much the groups differ when they are compared at the same covariate value, so with parallel lines it equals $\beta_2$. The **adjusted means** are the group means you would expect if both groups had the same average covariate value. To get them, evaluate each group's line at the overall mean of $x$. Raw group means compare the groups at whatever covariate values each group happens to have. Adjusted means compare them at one shared covariate value, the overall mean of $x$. So if one group happens to have higher covariate values, that difference does not enter the comparison. The second example at the end of this chapter works through one.
 
@@ -354,21 +365,37 @@ If the covariate is measured with error, ANCOVA only partly adjusts for group di
 
 @tbl-11card-ancova collects the three steps of an ANCOVA on one card.
 
-+:---------------+:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Purpose        | Does the covariate's relationship with the outcome differ between groups? If not, do the groups differ at the same covariate value?                                                                                                                                   |
-+----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Hypotheses     | Step 0: $H_0: \beta_1=\beta_2=\beta_3=0$                                                                                                                                                                                                                              |
-|                |                                                                                                                                                                                                                                                                       |
-|                | Step 1: $H_{0,\text{int}}: \beta_3 = 0$ (parallel lines)                                                                                                                                                                                                              |
-|                |                                                                                                                                                                                                                                                                       |
-|                | Step 2, only if Step 1 fails to reject: $H_{0,\text{group}}: \beta_2 = 0$ in the parallel-lines model                                                                                                                                                                 |
-+----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Assumptions    | Normal residuals and similar variances across groups, linearity within each group, homogeneity of slopes (tested in Step 1), and a covariate measured with little error and not affected by the treatment                                                             |
-+----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Test statistic | Model $y=\beta_0+\beta_1 x+\beta_2 G+\beta_3(x\times G)+\varepsilon$. Step 0: whole-model $F(3, N-4)$. Step 1: $F(1, N-4)$ for the $x \times G$ row. Step 2: $t = b_2/SE(b_2)$, $\;df = N - 3$                                                                        |
-+----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Report         | If $x \times G$ is significant: its $F(df)$, $p$, model $R^2$, and each group's slope from a separate regression with $t(df)$ and $p$. If not: the adjusted difference $b_2$ with $t(df)$, $p$, 95% CI, the adjusted means, the common slope, and the interaction $F$ |
-+----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
++:---------------+:--------------------------------------------------------------------------------------------------------------------------------------+
+| Purpose        | Does the covariate's relationship with the outcome differ between groups?                                                             |
+|                |                                                                                                                                       |
+|                | If not, do the groups differ at the same covariate value?                                                                             |
++----------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| Hypotheses     | Step 0: $H_0: \beta_1=\beta_2=\beta_3=0$                                                                                              |
+|                |                                                                                                                                       |
+|                | Step 1: $H_{0,\text{int}}: \beta_3 = 0$ (parallel lines)                                                                              |
+|                |                                                                                                                                       |
+|                | Step 2, only if Step 1 fails to reject: $H_{0,\text{group}}: \beta_2 = 0$ in the parallel-lines model                                 |
++----------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| Assumptions    | Normal residuals and similar variances across groups                                                                                  |
+|                |                                                                                                                                       |
+|                | Linearity within each group                                                                                                           |
+|                |                                                                                                                                       |
+|                | Homogeneity of slopes (tested in Step 1)                                                                                              |
+|                |                                                                                                                                       |
+|                | A covariate measured with little error and not affected by the treatment                                                              |
++----------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| Test statistic | Model: $y=\beta_0+\beta_1 x+\beta_2 G+\beta_3(x\times G)+\varepsilon$                                                                 |
+|                |                                                                                                                                       |
+|                | Step 0: whole-model $F(3, N-4)$                                                                                                       |
+|                |                                                                                                                                       |
+|                | Step 1: $F(1, N-4)$ for the $x \times G$ row                                                                                          |
+|                |                                                                                                                                       |
+|                | Step 2: $t = b_2/SE(b_2)$, $df = N - 3$                                                                                               |
++----------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| Report         | If $x \times G$ is significant: its $F(df)$, $p$, model $R^2$, and each group's slope from a separate regression with $t(df)$ and $p$ |
+|                |                                                                                                                                       |
+|                | If not: the adjusted difference $b_2$ with $t(df)$, $p$ and 95% CI, the adjusted means, the common slope, and the interaction $F$     |
++----------------+---------------------------------------------------------------------------------------------------------------------------------------+
 
 : Test card: ANCOVA. {#tbl-11card-ancova tbl-colwidths="[20,80]"}
 

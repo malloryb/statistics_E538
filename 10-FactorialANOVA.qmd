@@ -272,7 +272,11 @@ The hypotheses are about the population mean species count for each condition, w
 Under the interaction null, the gap between polluted and unpolluted channels is the same whether the water is moving fast or slow. If that gap changes, for example if pollution does far more damage under low flow, you've found an interaction.
 
 ::: {.callout-note title="Note: The interaction null for any two factors"}
-You'll sometimes see this written in abstract terms, with "Factor A" and "Factor B." For example: $H_0: (\mu_{A1,B1}-\mu_{A2,B1})=(\mu_{A1,B2}-\mu_{A2,B2})$. The logic is the same, with A and B standing for your own variables.
+You'll sometimes see this written in abstract terms, with "Factor A" and "Factor B." For example,
+
+$$H_0: (\mu_{A1,B1}-\mu_{A2,B1})=(\mu_{A1,B2}-\mu_{A2,B2})$$
+
+The logic is the same, with A and B standing for your own variables.
 :::
 
 ## What the ANOVA compares
@@ -378,9 +382,26 @@ Every low-flow channel is replaced by the low-flow marginal mean, `r round(low_m
 
 The interaction is the one new piece a factorial ANOVA adds. It asks whether the four cell means behave differently than the two main effects alone would predict.
 
-If the main effects told the whole story, each cell mean would be the grand mean, shifted by that cell's pollution effect and its flow effect. Take the no-pollution, low-flow cell. The no-pollution marginal mean is $`r round(nopoll_mean,2)` - `r round(gm,2)` = `r round(nopoll_mean - gm,2)`$ above the grand mean. The low-flow marginal mean is $`r round(gm,2)` - `r round(low_mean,2)` = `r round(gm - low_mean,2)`$ below it. Together, the two main effects predict $`r round(gm,2)` + `r round(nopoll_mean - gm,2)` - `r round(gm - low_mean,2)` = `r round(nopoll_mean + low_mean - gm,2)`$ for this cell. The observed cell mean is `r f1(mean(A))`. The leftover, `r round(mean(A) - (nopoll_mean + low_mean - gm),2)`, is the part of that cell the two main effects can't explain. Those leftovers, one per cell, are what the interaction captures.
+If the main effects told the whole story, each cell mean would be the grand mean, shifted by that cell's pollution effect and its flow effect. Take the no-pollution, low-flow cell.
 
-Each cell's predicted mean is the grand mean plus the pollution shift plus the flow shift, $\bar{Y}_\text{grand} + (\bar{Y}_\text{Pollution marginal} - \bar{Y}_\text{grand}) + (\bar{Y}_\text{Flow marginal} - \bar{Y}_\text{grand})$, which simplifies to $\bar{Y}_\text{Pollution marginal} + \bar{Y}_\text{Flow marginal} - \bar{Y}_\text{grand}$. Subtracting that from the cell mean gives each channel's leftover:
+$$\begin{aligned}
+\text{No-pollution shift} &= `r round(nopoll_mean,2)` - `r round(gm,2)` = +`r round(nopoll_mean - gm,2)` \\
+\text{Low-flow shift} &= `r round(low_mean,2)` - `r round(gm,2)` = -`r round(gm - low_mean,2)` \\
+\text{Predicted cell mean} &= `r round(gm,2)` + `r round(nopoll_mean - gm,2)` - `r round(gm - low_mean,2)` = `r round(nopoll_mean + low_mean - gm,2)` \\
+\text{Observed cell mean} &= `r f1(mean(A))` \\
+\text{Leftover} &= `r f1(mean(A))` - `r round(nopoll_mean + low_mean - gm,2)` = `r round(mean(A) - (nopoll_mean + low_mean - gm),2)`
+\end{aligned}$$
+
+The leftover is the part of that cell the two main effects can't explain. Those leftovers, one per cell, are what the interaction captures.
+
+Each cell's predicted mean is the grand mean plus the pollution shift plus the flow shift, which simplifies:
+
+$$\begin{aligned}
+\text{Predicted} &= \bar{Y}_\text{grand} + (\bar{Y}_\text{Pollution marginal} - \bar{Y}_\text{grand}) + (\bar{Y}_\text{Flow marginal} - \bar{Y}_\text{grand}) \\
+&= \bar{Y}_\text{Pollution marginal} + \bar{Y}_\text{Flow marginal} - \bar{Y}_\text{grand}
+\end{aligned}$$
+
+Subtracting that from the cell mean gives each channel's leftover:
 
 $$\bar{Y}_\text{cell} - \bar{Y}_\text{Pollution marginal} - \bar{Y}_\text{Flow marginal} + \bar{Y}_\text{grand}$$
 
@@ -432,9 +453,24 @@ Each sum of squares becomes a mean square the same way it did in @sec-anova, by 
 
 Each effect gets its own $F$, and all three share the same denominator:
 
-$$F_\text{Pollution} = \frac{MS_\text{Pollution}}{MS_\text{Error}}, \qquad F_\text{Flow} = \frac{MS_\text{Flow}}{MS_\text{Error}}, \qquad F_\text{Interaction} = \frac{MS_\text{Interaction}}{MS_\text{Error}}$$
+$$\begin{aligned}
+F_\text{Pollution} &= \frac{MS_\text{Pollution}}{MS_\text{Error}} \\
+F_\text{Flow} &= \frac{MS_\text{Flow}}{MS_\text{Error}} \\
+F_\text{Interaction} &= \frac{MS_\text{Interaction}}{MS_\text{Error}}
+\end{aligned}$$
 
-Here $MS_\text{Error} = `r sprintf('%.2f', ss_error)`/16 = `r sprintf('%.2f', ss_error/16)`$. Every effect has 1 degree of freedom, so each effect's $MS$ equals its $SS$. For pollution, $F = `r sprintf('%.2f', ss_poll)`/`r sprintf('%.2f', ss_error/16)` = `r sprintf('%.2f', ss_poll/(ss_error/16))`$. For flow, $F = `r sprintf('%.2f', ss_flow)`/`r sprintf('%.2f', ss_error/16)` = `r sprintf('%.2f', ss_flow/(ss_error/16))`$, and for the interaction, $F = `r sprintf('%.2f', ss_int)`/`r sprintf('%.2f', ss_error/16)` = `r sprintf('%.2f', ss_int/(ss_error/16))`$. Each $F$ is compared with the critical value for 1 and 16 degrees of freedom, $F_{crit}(1, 16) = `r sprintf('%.2f', qf(0.95, 1, 16))`$ at $\alpha = 0.05$, and all three are larger.
+Here $MS_\text{Error} = `r sprintf('%.2f', ss_error)`/16 = `r sprintf('%.2f', ss_error/16)`$. Every effect has 1 degree of freedom, so each effect's $MS$ equals its $SS$, and @tbl-10Fbyhand gives each $F$.
+
+| Effect | $SS$ | $df$ | $MS$ | $F$ |
+|:--|--:|--:|--:|--:|
+| Pollution | `r sprintf('%.2f', ss_poll)` | 1 | `r sprintf('%.2f', ss_poll)` | `r sprintf('%.2f', ss_poll/(ss_error/16))` |
+| Flow | `r sprintf('%.2f', ss_flow)` | 1 | `r sprintf('%.2f', ss_flow)` | `r sprintf('%.2f', ss_flow/(ss_error/16))` |
+| Interaction | `r sprintf('%.2f', ss_int)` | 1 | `r sprintf('%.2f', ss_int)` | `r sprintf('%.2f', ss_int/(ss_error/16))` |
+| Error | `r sprintf('%.2f', ss_error)` | 16 | `r sprintf('%.2f', ss_error/16)` | |
+
+: Each effect's $F$, computed by hand as its $MS$ divided by $MS_\text{Error}$. {#tbl-10Fbyhand}
+
+Each $F$ is compared with the critical value for 1 and 16 degrees of freedom, $F_{crit}(1, 16) = `r sprintf('%.2f', qf(0.95, 1, 16))`$ at $\alpha = 0.05$, and all three are larger.
 
 ### Check your work
 
@@ -628,7 +664,10 @@ The statistics are identical either way, since the same cell means get plotted r
 
 When an interaction is present, the natural follow-up is to describe each simple effect, the effect of one factor at a single level of the other. Start with the $\Delta$ values from the cell means, as we did earlier:
 
-$$\Delta_\text{Pollution|Low} = `r f1(mean(A))` - `r f1(mean(B))` = `r f1(simple_low)`, \qquad \Delta_\text{Pollution|High} = `r f1(mean(C))` - `r f1(mean(D))` = `r f1(simple_high)`$$
+$$\begin{aligned}
+\Delta_\text{Pollution|Low} &= `r f1(mean(A))` - `r f1(mean(B))` = `r f1(simple_low)` \\
+\Delta_\text{Pollution|High} &= `r f1(mean(C))` - `r f1(mean(D))` = `r f1(simple_high)`
+\end{aligned}$$
 
 Those two numbers describe the interaction. Pollution costs `r f1(simple_low)` species under low flow and `r f1(simple_high)` under high flow. But saying "pollution reduced species count under low flow" is still a claim, and like any claim in this book, it needs its own test, not just a look at the plot.
 
@@ -638,7 +677,14 @@ The simple-effects test reuses that pooled estimate, $MS_\text{Error}$ with its 
 
 $$t = \frac{\bar{Y}_\text{NoPoll} - \bar{Y}_\text{Poll}}{\sqrt{MS_\text{Error}\left(\dfrac{1}{n_\text{NoPoll}}+\dfrac{1}{n_\text{Poll}}\right)}}, \qquad df = df_\text{Error}$$
 
-Here the two means are the no-pollution and pollution cell means at one flow rate. Using $MS_\text{Error}=`r sprintf('%.2f', ss_error/16)`$ and $df=16$ from the omnibus table computed earlier, the denominator is the same at both flow rates, $\sqrt{`r sprintf('%.2f', ss_error/16)`(1/5 + 1/5)} = `r sprintf('%.2f', sqrt(ss_error/16*0.4))`$. Under low flow, $t = `r f1(simple_low)`/`r sprintf('%.2f', sqrt(ss_error/16*0.4))` = `r sprintf('%.2f', simple_low/sqrt(ss_error/16*0.4))`$. @tbl-10simpleeffects gives both tests.
+Here the two means are the no-pollution and pollution cell means at one flow rate. Using $MS_\text{Error}=`r sprintf('%.2f', ss_error/16)`$ and $df=16$ from the omnibus table computed earlier, the denominator is the same at both flow rates. Under low flow,
+
+$$\begin{aligned}
+\sqrt{MS_\text{Error}\left(\tfrac{1}{5} + \tfrac{1}{5}\right)} &= \sqrt{`r sprintf('%.2f', ss_error/16)`(0.4)} = `r sprintf('%.2f', sqrt(ss_error/16*0.4))` \\
+t &= \frac{`r f1(simple_low)`}{`r sprintf('%.2f', sqrt(ss_error/16*0.4))`} = `r sprintf('%.2f', simple_low/sqrt(ss_error/16*0.4))`
+\end{aligned}$$
+
+@tbl-10simpleeffects gives both tests.
 
 ```{r}
 #| label: tbl-10simpleeffects
@@ -775,7 +821,14 @@ ggplot(p_masked, aes(x = Flow, y = mean_count, color = Pollution, group = Pollut
 
 @fig-10mainintMasked shows the most misleading pattern of the three. Under low flow, pollution *reduces* species count (8 vs. 4). Under high flow, pollution *increases* it (8 vs. 12). Both are real, sizable effects, just pointed in opposite directions.
 
-Average across flow rates to get a main effect, and they cancel: unpolluted channels give $(8+8)/2=8$, polluted channels give $(4+12)/2=8$, a main-effect difference of exactly $0$. An ANOVA on data with these cell means would report no main effect of pollution at all, because its two opposite effects average each other out.
+Average across flow rates to get a main effect, and the two effects cancel:
+
+$$\begin{aligned}
+\text{Unpolluted} &= (8+8)/2 = 8 \\
+\text{Polluted} &= (4+12)/2 = 8
+\end{aligned}$$
+
+The main-effect difference is exactly 0. An ANOVA on data with these cell means would report no main effect of pollution at all, because its two opposite effects average each other out.
 
 This is the case the "read the interaction first" rule exists for. A non-significant main effect here would be true and misleading. Pollution has no effect *on average* and a large effect *in each condition*. Reporting only the main effect would suggest pollution is irrelevant, when it has a large effect at both flow rates, in opposite directions.
 
@@ -819,21 +872,37 @@ Lead with the interaction, then give the simple effects. Report a main effect on
 
 @tbl-10card-factorial collects the two-factor ANOVA on one card.
 
-+:---------------+:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Purpose        | Do two factors, crossed in every combination, each change the mean, and does the effect of one depend on the level of the other?                                                                                                                                                                  |
-+----------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Hypotheses     | No main effect of A                                                                                                                                                                                                                                                                               |
-|                |                                                                                                                                                                                                                                                                                                   |
-|                | No main effect of B                                                                                                                                                                                                                                                                               |
-|                |                                                                                                                                                                                                                                                                                                   |
-|                | No interaction, $H_0: (\mu_{A1,B1}-\mu_{A2,B1})=(\mu_{A1,B2}-\mu_{A2,B2})$                                                                                                                                                                                                                        |
-+----------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Assumptions    | Similar spread in every cell and approximately normal residuals                                                                                                                                                                                                                                   |
-+----------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Test statistic | $F = MS_\text{Effect}/MS_\text{Error}$ for each effect. $\;df$: $a - 1$ (A), $b - 1$ (B), $(a-1)(b-1)$ (interaction), $N - ab$ (error)                                                                                                                                                            |
-+----------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Report         | Interaction first, $F(df, df_\text{Error})$, $p$, $\eta_p^2$ (labeled as partial). If it is significant, the simple effects, and a main effect only when the simple effects point the same way. If it is not, each main effect, with Tukey HSD for a significant factor with three or more levels |
-+----------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
++:---------------+:------------------------------------------------------------------------------------------------------------+
+| Purpose        | Do two factors, crossed in every combination, each change the mean?                                         |
+|                |                                                                                                             |
+|                | Does the effect of one depend on the level of the other?                                                    |
++----------------+-------------------------------------------------------------------------------------------------------------+
+| Hypotheses     | No main effect of A, $H_0: \mu_{A1} = \mu_{A2}$ (averaged over B)                                           |
+|                |                                                                                                             |
+|                | No main effect of B, $H_0: \mu_{B1} = \mu_{B2}$ (averaged over A)                                           |
+|                |                                                                                                             |
+|                | No interaction, $H_0: (\mu_{A1,B1}-\mu_{A2,B1})=(\mu_{A1,B2}-\mu_{A2,B2})$                                  |
++----------------+-------------------------------------------------------------------------------------------------------------+
+| Assumptions    | Similar spread in every cell                                                                                |
+|                |                                                                                                             |
+|                | Approximately normal residuals                                                                              |
++----------------+-------------------------------------------------------------------------------------------------------------+
+| Test statistic | $F = MS_\text{Effect}/MS_\text{Error}$ for each effect                                                      |
+|                |                                                                                                             |
+|                | $df_A = a - 1$                                                                                              |
+|                |                                                                                                             |
+|                | $df_B = b - 1$                                                                                              |
+|                |                                                                                                             |
+|                | $df_\text{Interaction} = (a-1)(b-1)$                                                                        |
+|                |                                                                                                             |
+|                | $df_\text{Error} = N - ab$                                                                                  |
++----------------+-------------------------------------------------------------------------------------------------------------+
+| Report         | Interaction first, with $F(df, df_\text{Error})$, $p$, and $\eta_p^2$ labeled as partial                    |
+|                |                                                                                                             |
+|                | If it is significant, the simple effects, and a main effect only when the simple effects point the same way |
+|                |                                                                                                             |
+|                | If it is not, each main effect, with Tukey HSD for a significant factor with three or more levels           |
++----------------+-------------------------------------------------------------------------------------------------------------+
 
 : Test card: two-factor ANOVA. {#tbl-10card-factorial tbl-colwidths="[20,80]"}
 
