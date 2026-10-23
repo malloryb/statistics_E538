@@ -158,7 +158,7 @@ The Shapiro-Wilk test (@sec-ttests) has the null hypothesis that the data came f
 
 **How it works, conceptually.** Instead of using the actual sizes of the differences, the test ranks the *absolute* differences from smallest to largest, then checks whether the positive-signed ranks and negative-signed ranks are roughly balanced. Balanced ranks are the null case, meaning a plot's rank (how extreme its change was) has nothing to do with whether that change was an increase or a decrease. If soil moisture really increased at most plots, the larger ranks should belong mostly to positive differences instead. Because the test uses ranks, the plot that rose by 8 points gets the top rank, 9, and it would get the same rank if it had risen by 30. The top rank is 9 instead of 12 because the three plots with no change drop out of the test, as explained below. One extreme plot can't dominate the result the way it could dominate a mean.
 
-**Its assumption.** The Wilcoxon signed-rank test does not require normality, but it assumes the differences come from a symmetric distribution around their median. That's a milder assumption than normality (symmetric-but-not-normal distributions are common), but our histogram above strains it: the positive side stretches to 8, the negative side barely reaches -1. We'll run the test anyway, because its symmetry assumption is still milder than the $t$-test's normality assumption and the 8-point plot counts only as the top rank. We will note the problem when we interpret the result.
+**Its assumption.** The Wilcoxon signed-rank test does not require normality, but it assumes the differences come from a symmetric distribution around their median. That's a milder assumption than normality (symmetric-but-not-normal distributions are common), but our histogram above strains it: the positive side stretches to 8, the negative side barely reaches -1. We'll run the test anyway, because the 8-point plot counts only as the top rank. We will note the problem when we interpret the result.
 
 ```{r}
 #| echo: true
@@ -197,7 +197,7 @@ knitr::kable(
 
 $V$ is the sum of the ranks where Sign is "+": $6.5+6.5+5+8+9+4 = 39$, matching the table R gave us above.
 
-**How the null distribution of $V$ is built.** Under $H_0$, each plot's rank has an independent 50/50 chance of being positive or negative. With $n = 9$ nonzero differences (not 12, since the zeros dropped out), that gives $2^9 = 512$ equally likely sign patterns. No new plots are measured. Each pattern gives one $V$, the value our data would have produced if each plot's change had been equally likely to go up or down. Listing the $V$ for all 512 patterns gives the exact null distribution of $V$, shown in @fig-7wilcoxon-null.
+**How the null distribution of $V$ is built.** Under $H_0$, each plot's rank has an independent 50/50 chance of being positive or negative. With $n = 9$ nonzero differences, that gives $2^9 = 512$ equally likely sign patterns. No new plots are measured. Each pattern gives one $V$, the value our data would have produced if each plot's change had been equally likely to go up or down. Listing the $V$ for all 512 patterns gives the exact null distribution of $V$, shown in @fig-7wilcoxon-null.
 
 ```{r}
 #| label: fig-7wilcoxon-null
@@ -212,7 +212,7 @@ null_hist(exact_V, exact_V, obs_V, "V", "V (sum of positive ranks)",
           ylab = "Number of sign patterns (out of 512)")
 ```
 
-Our observed $V=39$ falls just short of the upper critical value, 40, so it is not in the 5% region. $V$ can only take certain values, so the boundary can't fall exactly at 2.5%. A $V$ of 39 or more comes from just over 2.5% of the 512 patterns, which puts the exact two-tailed $p$ at `r sprintf("%.3f", p_exact_V)`. The result is not significant, though it is close to the cutoff. With zeros and tied differences, R uses a normal approximation to this distribution instead of the exact one, so its $p$-value, `r sprintf("%.3f", wilcox_out$p.value)`, differs slightly from the exact figure.
+Our observed $V=39$ falls just short of the upper critical value, 40, so it is not in the 5% region. $V$ can only take certain values, so the boundary can't fall exactly at 2.5%. A $V$ of 39 or more comes from just over 2.5% of the 512 patterns, which puts the exact two-tailed $p$ at `r sprintf("%.3f", p_exact_V)`. The result is not significant, though it is close to the cutoff. R's normal-approximation $p$-value, `r sprintf("%.3f", wilcox_out$p.value)`, differs slightly from the exact figure.
 
 The test does not need normality because nothing in this distribution assumed a shape for soil moisture. The only inputs were our 9 ranks and the 50/50 sign rule from $H_0$.
 
@@ -256,7 +256,7 @@ Six of the 9 nonzero plots increased, and $p = 0.508$ is far from significant.
 
 : Three tests on the same 12 restoration plots. {#tbl-7threetests}
 
-The $t$-test gave the smallest $p$-value here because it used the full size of every change, including the increases of 3 to 8 points. That $p$-value is trustworthy only if the differences are roughly normal, and these are not. Check the assumptions before you run the test, so the result cannot influence which test you choose. The examples in this chapter ran the $t$-test first only to show how far its $p$-value can move when an assumption fails.
+The $t$-test's $p$-value, the smallest of the three, is trustworthy only if the differences are roughly normal, and these are not. Check the assumptions before you run the test, so the result cannot influence which test you choose. The examples in this chapter ran the $t$-test first only to show how far its $p$-value can move when an assumption fails.
 
 @tbl-7card-signedrank collects the Wilcoxon signed-rank test on one card.
 
@@ -361,7 +361,7 @@ Both groups fail the Shapiro-Wilk test, sodium with $p = 0.002$ and LED with $p 
 
 -   $H_a$: bat activity tends to rank higher at one type of site than the other.
 
-**How it works, conceptually.** The signed-rank test ranked the absolute differences within one set of paired differences. The Mann-Whitney-Wilcoxon test ranks the raw values from both groups together, because independent groups have no pairs to subtract. Pool all the observations from both groups together, rank them from smallest to largest, then compare the sum of ranks in Group A to the sum of ranks in Group B. If the groups don't differ, their ranks should be well mixed. If one group tends to have higher values, its ranks should be higher too. The outlier site gets the highest rank, 16, whether it had 23 passes or 34. Its size enters the $t$-test through both the mean and the standard deviation, but the Mann-Whitney-Wilcoxon test uses only its rank.
+**How it works, conceptually.** The signed-rank test ranked the absolute differences within one set of paired differences. Independent groups have no pairs to subtract, so the Mann-Whitney-Wilcoxon test pools the raw values from both groups, ranks them from smallest to largest, then compares the sum of ranks in Group A to the sum of ranks in Group B. If the groups don't differ, their ranks should be well mixed. If one group tends to have higher values, its ranks should be higher too. The outlier site gets the highest rank, 16, whether it had 23 passes or 34. Its size enters the $t$-test through both the mean and the standard deviation, but the Mann-Whitney-Wilcoxon test uses only its rank.
 
 **Its assumption.** The Mann-Whitney-Wilcoxon test assumes both groups' population distributions have the same shape. It does not require normality. Distributions with the same shape also have equal variances, but equal variances alone do not meet the assumption, because two distributions can share a variance and differ in shape. If the two groups have differently shaped distributions (say, one skewed and one symmetric), the test still runs. A significant result could then come from a difference in center (location), in shape, or both, so it no longer tells you only that the medians differ.
 
@@ -420,7 +420,7 @@ null_hist(exact_U, exact_U, obs_U, "U", "U (Mann-Whitney statistic)",
           ylab = "Number of splits (out of 12,870)")
 ```
 
-Our observed $U=50$ falls just short of the upper critical value, 50.5, so it is not in the 5% region. A $U$ of 50 or more comes from about 2.9% of the 12,870 splits, which puts the exact two-tailed $p$ at `r sprintf("%.3f", p_exact_U)`. The result is not significant, though it is close to the cutoff. With tied counts, R uses a normal approximation to this distribution instead of the exact one, so its $p$-value, `r sprintf("%.3f", mww_out$p.value)`, differs slightly from the exact figure.
+Our observed $U=50$ falls just short of the upper critical value, 50.5, so it is not in the 5% region. A $U$ of 50 or more comes from about 2.9% of the 12,870 splits, which puts the exact two-tailed $p$ at `r sprintf("%.3f", p_exact_U)`. The result is not significant, though it is close to the cutoff. R's normal-approximation $p$-value, `r sprintf("%.3f", mww_out$p.value)`, differs slightly from the exact figure.
 
 The test does not need normality because nothing in this distribution assumed a shape for bat activity. The only inputs were our 16 ranks and the rule from $H_0$ that every split is equally likely.
 
@@ -483,9 +483,9 @@ ggplot(df3, aes(x, density)) +
   labs(x = expression(chi^2*" (df = 3)"), y = "Density")
 ```
 
-For the rank tests, listing every possible arrangement of the ranks under $H_0$ gives the exact null distribution, though R used a normal approximation to it in both examples because of ties and zeros. For the chi-square tests, the chi-square curve approximates the null distribution of the statistic, and the approximation is good only when expected counts are large enough. Each chi-square test below therefore comes with an expected-count rule.
+For the rank tests, listing every possible arrangement of the ranks under $H_0$ gives the exact null distribution. For the chi-square tests, the chi-square curve approximates the null distribution of the statistic, and the approximation is good only when expected counts are large enough. Each chi-square test below therefore comes with an expected-count rule.
 
-There are two chi-square tests, and the question decides which one to use. The goodness-of-fit test asks whether the counts for one categorical variable match an expected pattern. The test of independence asks whether two categorical variables are related.
+There are two chi-square tests, and the question decides which one to use. The goodness-of-fit test works with one categorical variable, and the test of independence works with two.
 
 ### The chi-square goodness-of-fit test
 
@@ -495,7 +495,7 @@ A state wildlife agency has historically found fish evenly distributed across fo
 
 ```{r}
 #| label: fig-7gofdesign
-#| fig-cap: "A goodness-of-fit design. The counts themselves are the data, with no dependent variable measured on each unit, and they are compared against an expected pattern rather than against another group."
+#| fig-cap: "A goodness-of-fit design. Observed counts in each zone are compared against the counts expected under a stated pattern."
 #| fig-alt: "Study design schematic. Variable: lake zone, four zones. A row of observed counts, 38, 61, 52 and 49, compared against a dashed row of expected counts of 50 each. What is counted: 200 fish sorted into zones."
 #| fig-asp: 0.40
 #| out-width: "100%"
@@ -543,7 +543,7 @@ knitr::kable(
 
 **Assumption.** The goodness-of-fit test makes no assumption about the shape of your data, since categories aren't numbers. It does require expected counts of about 5 or more in each category [@Cochran1954; @Larntz1978]. The 5 is a conventional rule of thumb, not a value computed from these data or compared to a critical value. The rule tells you whether the chi-square curve is a trustworthy approximation. Check it before you run the test.
 
-Here, expected count per zone is $200 \times 0.25 = 50$ (total fish times the 25%-per-zone expectation under $H_0$), comfortably above that minimum. The **expected count** for a category is the total count times the probability $H_0$ gives that category. This is the expected-value idea from @sec-probability applied to counts. When expected counts are too small, a different method (like Fisher's exact test) is more appropriate.
+The **expected count** for a category is the total count times the probability $H_0$ gives that category. This is the expected-value idea from @sec-probability applied to counts. Here, the expected count per zone is $200 \times 0.25 = 50$, comfortably above the minimum of 5. When expected counts are too small, a different method (like Fisher's exact test) is more appropriate.
 
 **$\chi^2$ adds one term per category.** For each category, subtract the expected count from the observed count, square the difference, and divide by the expected count. Then add these terms across categories: $\chi^2 = \sum \frac{(O-E)^2}{E}$.
 
@@ -560,7 +560,7 @@ knitr::kable(
 
 Summing the last column: $2.88+2.42+0.08+0.02 = 5.40$, matching R's statistic above. For goodness-of-fit, $df = k - 1$, where $k$ is the number of categories. Once three zone counts are known, the fourth is fixed because all four must add to 200, so $df = 4 - 1 = 3$. With $df = 3$, the critical value at $\alpha = 0.05$ is 7.81 (the same one marked in @fig-7chisq-crit). Our 5.40 falls well short of it.
 
-**Interpretation.** $\chi^2(3) = 5.40$, $p = 0.145$, so the result is not significant. This year's zone counts are consistent with the historical 25%-each pattern. The unevenness we see is within the range chance alone would produce.
+**Interpretation.** $\chi^2(3) = 5.40$, $p = 0.145$, so the result is not significant. This year's zone counts are consistent with the historical 25%-each pattern.
 
 @tbl-7card-gof collects the chi-square goodness-of-fit test on one card.
 

@@ -206,13 +206,11 @@ $\widehat{DO} = `r sprintf("%.2f", coef(fit)[1])` `r ifelse(coef(fit)[2] >= 0, "
 
 The hat over $DO$ marks it as a *predicted* value, what the model outputs for a given temperature, as distinct from an actually observed $DO$ measurement.
 
-In the coefficient table, the `Estimate` values for the intercept and slope are $b_0$ and $b_1$, not $\beta_0$ and $\beta_1$.
-
 @tbl-9coefcols says what each column of the coefficient table holds.
 
 | In this book | In R's `summary()` output | What it is |
 |:---|:---|:---|
-| Estimate | `Estimate` | $b_0$ and $b_1$, the fitted intercept and slope |
+| Estimate | `Estimate` | $b_0$ and $b_1$, the fitted intercept and slope (sample values, not $\beta_0$ and $\beta_1$) |
 | SE | `Std. Error` | How much that estimate would vary from sample to sample |
 | $t$ | `t value` | The estimate divided by its SE |
 | $p$ | Pr(>\|t\|) | The probability of a $t$ at least this far from 0, in either tail, if the population coefficient were 0 |
@@ -240,7 +238,7 @@ Here "error" means the standard error of $b_1$, the standard deviation of its sa
 
 R reports the $t$-test for the slope in the coefficient table from `summary(fit)`, so there is no separate test to run.
 
-The test statistic divides the estimated slope by its standard error, the SE column in the coefficient table above. R computes the standard error of the slope from the residuals and the spread of temperatures, $SE(b_1) = \sqrt{\dfrac{\sum e^2/(n-2)}{\sum (x - \bar x)^2}}$. More scatter around the line makes it larger, and a wider spread of temperatures makes it smaller. The standard error measures how much $b_1$ would vary from sample to sample if we repeated this study many times:
+The test statistic divides the estimated slope by its standard error, the SE column in the coefficient table above. R computes the standard error of the slope from the residuals and the spread of temperatures, $SE(b_1) = \sqrt{\dfrac{\sum e^2/(n-2)}{\sum (x - \bar x)^2}}$. More scatter around the line makes it larger, and a wider spread of temperatures makes it smaller. For the stream data,
 
 $$t = \frac{b_1}{SE(b_1)} = \frac{`r sprintf("%.3f", coef(fit)[2])`}{`r sprintf("%.3f", fit_tidy$std.error[2])`} = `r sprintf("%.2f", fit_tidy$statistic[2])`$$
 
@@ -292,7 +290,7 @@ The interval also contains $\beta_1 = -0.28$, the true slope we built into the d
 
 Besides testing the slope, we want to know how much of the variation in DO the line explains. We answer that the same way as one-way ANOVA in @sec-anova, by splitting the total variation into a piece the model explains and a piece it leaves over.
 
-@fig-9regpartition shows the three pieces for the stream data. In the left panel, each gray segment is one site's distance from mean DO. That distance splits into two pieces. The middle panel shows the piece from the mean to the line, the part the line explains. The right panel shows the piece from the line to the point, the residual.
+@fig-9regpartition shows the three pieces for the stream data. Each site's distance from mean DO (gray, left panel) splits into two pieces, the distance from the mean to the line (middle), which the line explains, and the distance from the line to the point (right), the residual.
 
 ```{r}
 #| label: fig-9regpartition
@@ -500,7 +498,7 @@ ggplot(outbreak_df, aes(days, cases)) +
 
 A straight line fit to these 14 days gives $R^2 = `r sprintf("%.2f", outbreak_tidy$r.squared)`$ and $p `r fmt_p_eq(outbreak_tidy$p.value)`$, which is higher than the 0.5 to 0.8 that is common for a single predictor in environmental work, and significant. Neither number alone suggests a problem, but the plot does. The fitted line starts at about -40 cases on day 1, and a count of cases can't be negative.
 
-**Check the residuals.** The residuals-versus-fitted plot shows a problem that the $R^2$ and slope test did not.
+**Check the residuals.** @fig-9outbreakresid shows the residuals-versus-fitted plot for the outbreak model.
 
 ```{r}
 #| label: fig-9outbreakresid
@@ -635,7 +633,7 @@ knitr::kable(
 
 At 20°C, the model predicts DO of `r sprintf("%.2f", pred_out[1])` mg/L, 95% CI [`r sprintf("%.2f", pred_out[2])`, `r sprintf("%.2f", pred_out[3])`]. Because 20°C falls inside the observed range of `r sprintf("%.1f", min(stream_df$stream_temp))` to `r sprintf("%.1f", max(stream_df$stream_temp))`°C, this prediction is interpolation. **Interpolation** is predicting $y$ at an $x$ value inside the range of $x$ we observed, which is what regression is good for.
 
-This confidence interval is for the mean DO of all streams at 20°C. It is a different interval from the ones in the coefficient table. Those give a range of plausible values for each parameter, $\beta_0$ and $\beta_1$. This one gives a range for the population mean DO at one temperature, the value the model predicts at $x = 20$, $\beta_0 + 20\beta_1$. A single stream at 20°C will scatter around that mean by about as much as the points scatter around the line, so its DO can fall well outside this interval.
+This confidence interval is for the population mean DO of all streams at 20°C, the value the model predicts at $x = 20$, $\beta_0 + 20\beta_1$. It is a different interval from the ones in the coefficient table, which give a range of plausible values for each parameter, $\beta_0$ and $\beta_1$. A single stream at 20°C will scatter around that mean by about as much as the points scatter around the line, so its DO can fall well outside this interval.
 
 **Extrapolation** is predicting $y$ at an $x$ value outside the range of $x$ we observed. Predicting DO at, say, 35°C would be extrapolation. The fitted line gives `r sprintf("%.1f", predict(fit, data.frame(stream_temp = 35)))` mg/L at 35°C, a number with no data behind it. Nothing in the data tells us the relationship stays linear (or even stays a relationship at all) beyond the range we actually observed, and the further outside that range, the less trustworthy the prediction. @fig-9regextrap shows both zones on the same line.
 
@@ -670,7 +668,7 @@ ggplot() +
 
 Regression is used for extrapolation all the time, and often reasonably. A well-understood physical process can justify projecting a line beyond the data we collected. Extrapolating a straight line is only safe if the true relationship stays straight past the range we observed.
 
-Data from a narrow range of $x$ cannot show what shape the relationship has outside that range. @fig-9curveshapes shows four very different relationships, exponential growth, a sigmoid, a hump-shaped curve, and a truly straight line, each with the same short observed window highlighted in blue. In each panel a straight line (dashed red) is fit to that window and extended. Once you see the full curve (gray), you can see how badly linear extrapolation beyond the range of observed data would perform in each case.
+@fig-9curveshapes shows four very different relationships, exponential growth, a sigmoid, a hump-shaped curve, and a truly straight line, each with the same short observed window highlighted in blue. In each panel a straight line (dashed red) is fit to that window and extended. Once you see the full curve (gray), you can see how badly linear extrapolation beyond the range of observed data would perform in each case.
 
 ```{r}
 #| label: fig-9curveshapes

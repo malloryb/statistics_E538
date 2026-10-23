@@ -46,11 +46,11 @@ The last chapter compared macroinvertebrate species count across two discrete Po
 
 -   Is the relationship between PFAS exposure and lifetime cancer incidence the same in low-income and high-income American populations? *(covariate: PFAS exposure; factor: income level)*
 
-In each question, a continuous variable is related to the outcome, and a categorical variable splits the observations into groups. That pairing, one continuous variable (the covariate) and one categorical variable (the factor), is what makes a design an ANCOVA rather than a plain regression or a plain ANOVA.
+In each question, a continuous variable is related to the outcome, and a categorical variable splits the observations into groups.
 
 The first question points to a limitation of the last chapter. "Pollution: present or absent" simplifies a continuous measurement, a concentration in parts per billion. Sorting continuous measurements into "high" and "low" buckets throws away the information a covariate needs, which is how much more polluted a channel is, not just whether it is polluted. Whenever you have the measured values, analyze them as a continuous covariate instead of forcing them into groups first. With a categorical factor still in the design, that analysis is ANCOVA. With no categorical factor left, it is plain regression.
 
-**Analysis of covariance (ANCOVA)** is a linear model with a continuous outcome, at least one continuous predictor (the covariate), and at least one categorical predictor (the factor). It asks whether the covariate's relationship with the outcome is the same in every group and, if it is, whether the groups differ at the same covariate value. ANCOVA is built directly on the regression equation from @sec-regression. A simple linear model is
+**Analysis of covariance (ANCOVA)** is a linear model with a continuous outcome, at least one continuous predictor (the covariate), and at least one categorical predictor (the factor). ANCOVA is built directly on the regression equation from @sec-regression. A simple linear model is
 
 $$y = \beta_0 + \beta_1 x + \varepsilon$$
 
@@ -58,7 +58,7 @@ Here $\beta_0$ is the intercept, $\beta_1$ is the slope, and $\varepsilon$ is th
 
 ANCOVA adds a categorical factor to that equation. The chapter asks whether every group follows the same line, whether the groups share a slope but need different intercepts, or whether each group needs its own slope.
 
-We answer it in order: first check that the model explains anything at all, then test whether the groups have different slopes, and only if the slopes are parallel, test whether the groups differ in adjusted means. Adjusted means are group means compared at the same covariate value, and Step 2 below defines them.
+We answer it in order: first check that the model explains anything at all, then test whether the groups have different slopes, and only if the slopes are parallel, test whether the groups differ in adjusted means. Step 2 below defines adjusted means, the group means you would expect if both groups had the same average covariate value.
 
 @tbl-11designs places ANCOVA beside regression and the two kinds of ANOVA from Chapters [-@sec-anova] to [-@sec-factorial-anova], each written as a model.
 
@@ -182,7 +182,7 @@ ANCOVA handles this situation when the third variable is continuous, instead of 
 
 ## Covariates and fixed factors
 
-A **covariate** is a continuous predictor that is related to the outcome and helps explain part of its variation. In environmental studies, common covariates include temperature, rainfall, soil moisture, and pollution concentration. Sometimes the covariate's relationship with the outcome is the question, as in this chapter's bird example. Other times the covariate is a background variable you adjust for so the group comparison is fair, as in the building example at the end of the chapter. Including one lets us remove the variation it explains, so the test of the group difference is clearer.
+A **covariate** is a continuous predictor that is related to the outcome and helps explain part of its variation. In environmental studies, common covariates include temperature, rainfall, soil moisture, and pollution concentration. Including one lets us remove the variation it explains, so the test of the group difference is clearer.
 
 A **fixed factor** is a categorical predictor whose levels the researcher chose on purpose, such as urban vs. rural or shaded vs. open canopy. A **random factor** is a categorical predictor whose levels are a sample from a larger population of possible levels. For example, the counties your streams are in could be a random factor. You aren't interested in those ten counties for their own sake. They represent a larger population of counties, and you want your conclusions to apply beyond the ones you sampled.
 
@@ -380,7 +380,7 @@ Suppose we are studying the effect of air pollution, measured as PM2.5 (fine par
 
 ```{r}
 #| label: fig-11design
-#| fig-cap: "An ANCOVA design: one continuous predictor and one categorical factor. Compare it with the factorial design in @sec-factorial-anova, which has the same shape with a second set of levels in place of the gradient."
+#| fig-cap: "An ANCOVA design: one continuous predictor and one categorical factor."
 #| fig-alt: "Study design schematic. Two predictors: area type with levels Rural and Urban, crossed with air pollution as a continuous gradient from low to high, across 200 observations. DV: bird species density."
 #| fig-asp: 0.36
 #| out-width: "100%"
@@ -398,7 +398,7 @@ Both groups span the full pollution range, so rural sites are not simply the cle
 
 We might expect pollution to have a stronger negative effect in urban areas. Urban habitat is already fragmented and offers birds fewer clean patches to retreat to, while rural areas have more intact habitat nearby.
 
-We'll fit an ANCOVA model to test whether air pollution's relationship with bird density differs between urban and rural sites. Area type enters as an indicator variable, and air pollution enters as the covariate.
+In the ANCOVA model, area type enters as an indicator variable, and air pollution enters as the covariate.
 
 ### Null and alternative hypotheses in our example ANCOVA
 
@@ -541,7 +541,7 @@ A scatter plot with fitted regression lines (@fig-11ancovalines) lets us see how
 
 ```{r}
 #| label: fig-11ancovalines
-#| fig-cap: "Bird density against air pollution, with a separate fitted line for each area type. Both lines slope down, but the urban line falls about twice as steeply, which is what the interaction term tests."
+#| fig-cap: "Bird density against air pollution, with a separate fitted line for each area type. Both lines slope down, but the urban line falls about twice as steeply."
 #| fig-alt: "Scatter plot of bird density against air pollution, colored by area type, with separate straight fitted lines for rural and urban sites. Both slope downward, and the urban line is noticeably steeper, so the two lines diverge as pollution increases."
 
 ggplot(data, aes(AirPollution, BirdDensity, color = AreaType)) +
@@ -609,7 +609,7 @@ knitr::kable(
 
 Centering doesn't change the slopes, the interaction, or their $p$-values. It moves the intercept and the group term, and the group term's test now compares the groups at average pollution instead of at zero, so its $p$-value changes too.
 
-**Interpreting the centered model.** The intercept and the `AreaTypeUrban` term are now interpreted at the *mean pollution level*, about `r round(mean(data$AirPollution))` units, instead of pollution = 0.
+**Interpreting the centered model.** The mean pollution level is about `r round(mean(data$AirPollution))` µg/m³.
 
 -   **Intercept (`r sprintf("%.1f", cc["(Intercept)"])`).** Predicted bird density for rural sites at average air pollution.
 
@@ -646,7 +646,7 @@ In the bird example, the covariate relationship was the question, and the intera
 
 ### Retrofits and electricity use
 
-A city facilities office wants to know whether energy retrofits (new insulation, lighting, and controls) reduced electricity use. It compares 30 retrofitted buildings with 30 standard ones. Electricity use depends heavily on how many people are in a building, and the retrofitted buildings happen to be the busier ones. The covariate is occupancy, and the question is about the group term. These buildings are invented. In the invented data, a retrofit cuts electricity use by 40 kWh per day at any occupancy, both kinds of building use 2 more kWh per day for each extra occupant, and retrofitted buildings hold 60 to 120 people against 30 to 90 for standard ones.
+A city facilities office wants to know whether energy retrofits (new insulation, lighting, and controls) reduced electricity use. It compares 30 retrofitted buildings with 30 standard ones. Electricity use depends heavily on how many people are in a building, and the retrofitted buildings happen to be the busier ones. These buildings are invented. In the invented data, a retrofit cuts electricity use by 40 kWh per day at any occupancy, both kinds of building use 2 more kWh per day for each extra occupant, and retrofitted buildings hold 60 to 120 people against 30 to 90 for standard ones.
 
 Occupancy also passes the last check on the assumptions list. A retrofit changes a building's equipment, not how many people use it, so adjusting for occupancy doesn't remove any of the retrofit's own effect.
 
