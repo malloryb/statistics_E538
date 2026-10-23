@@ -36,9 +36,9 @@ anova_kable <- function(fit, caption = NULL) {
 
 ## ANOVA is analysis of variance
 
-ANOVA stands for analysis of variance. It tests whether differences among several group means are larger than we'd expect from chance alone. Chapters [-@sec-ttests] and [-@sec-nonparametric] compared two groups. This chapter builds the one-way ANOVA by hand, runs the full workflow on one example through post-hoc comparisons and a rank-based (nonparametric) alternative, and ends with repeated-measures ANOVA.
+ANOVA stands for analysis of variance. It tests whether the means of three or more groups differ by more than chance alone would produce. Chapters [-@sec-ttests] and [-@sec-nonparametric] compared two groups, and with two groups a $t$-test answers this question. Environmental studies often compare more than two, such as several sites, treatments, or time periods, and ANOVA extends the $t$-test's logic to them.
 
-With two groups, a $t$-test already answers that question. ANOVA extends the same logic to three or more groups. Environmental studies often compare that many, such as several sites, treatments, or time periods.
+This chapter starts with why running a $t$-test for every pair of groups goes wrong, and with the single question ANOVA asks instead. It then builds ANOVA's test statistic, $F$, as a ratio, shows what values $F$ takes when there are no real differences, and computes $F$ by hand for a small example. The full workflow on one example follows, through post-hoc comparisons and a rank-based (nonparametric) alternative, and the chapter ends with repeated-measures ANOVA.
 
 ::: {.callout-note title="Note: Where ANOVA came from"}
 Sir Ronald Fisher invented the ANOVA [@salsburg2001lady] and wanted to publish it in the journal Biometrika. The editor at the time was Karl Pearson, of Pearson's $r$, and the two men disliked each other, so Pearson refused to publish the new test. Fisher published it in the Journal of Agricultural Science instead. The feud carried into the next generation. Years later, Karl Pearson's son Egon Pearson, working with Jerzy Neyman, revamped Fisher's ideas and re-cast them into what we now call null vs. alternative hypothesis testing. Fisher objected to that too.
@@ -95,13 +95,28 @@ ggplot(data.frame(m, familywise), aes(x = m, y = familywise)) +
   theme_classic(base_size = 12)
 ```
 
-ANOVA solves this by replacing many separate $t$-tests with *one* test that controls the overall error rate. An **omnibus test** is a single test that covers several comparisons at once, and ANOVA is one. It asks a single question:
+ANOVA solves this by replacing the separate $t$-tests with one test, so the chance of a false positive stays at $\alpha$.
 
-$$H_0: \mu_1=\mu_2=\mu_3 \qquad H_a: \text{at least one mean differs}$$
+### ANOVA is an omnibus test
+
+An **omnibus test** is a single test that covers several comparisons at once, and ANOVA is one. Instead of the three pairwise $t$-tests in @tbl-8pairs, ANOVA asks one more general question about all three means at once:
+
+Hypothesis of no differences anywhere: $\mu_A=\mu_B=\mu_C$
+
+Any differences anywhere:
+
+a.  $\mu_A\neq \mu_B=\mu_C$ (A differs)
+b.  $\mu_B\neq \mu_A=\mu_C$ (B differs)
+c.  $\mu_C\neq \mu_A=\mu_B$ (C differs)
+d.  $\mu_A\neq \mu_B$, $\mu_B\neq \mu_C$, and $\mu_A\neq \mu_C$ (all three differ)
+
+A large $p$-value means we don't reject the hypothesis of no differences. We have no evidence the three group means differ, and whatever gaps exist could easily be chance. A small $p$-value (below $\alpha$) means we reject that hypothesis and conclude at least one group mean differs from the others. The omnibus test tells us *whether* the means differ, and a separate step tells us *which* ones.
+
+In symbols, $H_0: \mu_A=\mu_B=\mu_C$ and $H_a$: at least one mean differs.
+
+### Kinds of ANOVA
 
 Just like the $t$-test, different research designs call for different kinds of ANOVA: a one-way (between-subjects) ANOVA when every unit is measured once, and a repeated-measures ANOVA when the same units are measured under multiple conditions. This chapter covers the one-way case and ends with a short look at repeated measures. @sec-factorial-anova extends the one-way case to two factors.
-
-## One-way ANOVA
 
 The one-way ANOVA (also called a between-subjects ANOVA) is the simplest version of the test. In ANOVA an independent variable is called a **factor**, and the groups it defines are its **levels**. A one-way ANOVA has one factor with two or more levels, and every unit is measured once. With two levels it gives the same result as the pooled $t$-test, so in practice it is used for three or more.
 
@@ -115,22 +130,26 @@ The one-way ANOVA (also called a between-subjects ANOVA) is the simplest version
 
 : Three kinds of ANOVA. {#tbl-8types}
 
-ANOVA's test statistic is $F$, named for Fisher, who invented ANOVA. Like $t$, $F$ compares the size of an effect to the amount of variation you'd expect from sampling error alone. With exactly two groups, a $t$-test and a one-way ANOVA give the same answer, because $t^2 = F$.
+## The $F$ ratio {#sec-8fratio}
+
+ANOVA's test statistic is $F$, named for Fisher, who invented ANOVA. It has the same shape as every test statistic in this book (@sec-inference), an effect divided by the variation that sampling error alone would produce.
 
 $$F = \frac{\text{measure of effect}}{\text{measure of error}}$$
 
-The $t$-test puts a difference between two means over its standard error. $F$ uses variances for both the numerator and the denominator. It divides the variance you can explain (differences between group means) by the variance you can't (leftover noise within each group).
+The $t$-test puts a difference between two means over its standard error. $F$ uses variances for both parts. It divides the variation **between** groups (how far the group means are from one another) by the variation **within** groups (how far individual scores are from their own group's mean).
 
-$$F = \frac{\text{Can explain}}{\text{Can't explain}}$$
+$$F = \frac{\text{Variation between groups}}{\text{Variation within groups}}$$
 
-When the two are about the same size, $F \approx 1$, and group differences are no bigger than ordinary sampling noise. When explained variance is much larger than unexplained variance, $F$ climbs well above 1, which is evidence that the groups differ. When it's smaller, $F$ drops below 1. An $F$ of 5 means the group means vary five times as much as within-group noise alone would make them vary. Both parts of $F$ are variances, so "five times as much" compares squared distances, not raw distances. An $F$ of 0.6 means they vary less than that noise alone would typically produce.
+When the two are about the same size, $F \approx 1$, and the group means differ no more than ordinary sampling noise would make them. When the between-group variation is much larger than the within-group variation, $F$ climbs well above 1, which is evidence that the groups differ. When it's smaller, $F$ drops below 1. An $F$ of 5 means the group means vary five times as much as within-group noise alone would make them vary. Both parts of $F$ are variances, so "five times as much" compares squared distances, not raw distances. An $F$ of 0.6 means they vary less than that noise alone would typically produce.
+
+With exactly two groups, a $t$-test and a one-way ANOVA give the same answer, because $t^2 = F$.
 
 @fig-8betweenwithin shows both situations with the same noise. On the left, the group means differ by no more than the scatter within each group would produce. On the right, the means are separated by much more than that scatter. $F$ measures that separation relative to the within-group scatter.
 
 ```{r}
 #| label: fig-8betweenwithin
-#| fig-cap: "The same within-group noise with no real differences (left) and with the group means shifted (right). Three groups of 12; small points are individual scores, large dots are group means, bars are 95% confidence intervals."
-#| fig-alt: "Two side-by-side panels on the same vertical scale, each showing three groups of 12 jittered points with a group mean and 95% confidence interval. In the left panel, labeled no real differences, the three means sit near 10 and their intervals overlap heavily. In the right panel, labeled means shifted, the means climb from about 10 to about 12 to about 16. The Group C interval is clear of the other two, and A and B overlap only slightly, while the spread of points within each group is the same as on the left."
+#| fig-cap: "The same within-group noise with no real differences (left) and with real differences between the group means (right). Three groups of 12; small points are individual scores, large dots are group means, bars are 95% confidence intervals. The blue bracket marks within-group variation, the spread of Group A's scores. The orange arrows mark between-group variation, each group mean's distance from the grand mean (dashed line)."
+#| fig-alt: "Two side-by-side panels on the same vertical scale, each showing three groups of 12 jittered points with a group mean and 95% confidence interval, and a dashed horizontal line at the grand mean. A blue bracket beside Group A spans its points, labeled within, and is about the same height in both panels. Orange arrows run from the grand mean to each group mean, labeled between. In the left panel, labeled no real differences, the three means sit near 10 and the arrows are very short. In the right panel, labeled real differences, the means climb from about 10 to about 12 to about 16, and the arrows are long, especially for Group C."
 #| fig-asp: 0.4
 #| out-width: "100%"
 
@@ -140,28 +159,182 @@ between_within_panel <- function(true_means, title) {
   k <- 3; n <- 12
   g <- factor(rep(paste0("Group ", LETTERS[1:k]), each = n))
   y <- rnorm(k * n, mean = rep(true_means, each = n), sd = 2)
-  pts <- data.frame(g, y)
+  pts <- data.frame(g, y, x = as.numeric(g))
   summ <- pts %>%
     dplyr::group_by(g) %>%
-    dplyr::summarise(mean = mean(y), ci = qt(.975, n() - 1) * sd(y) / sqrt(n()))
+    dplyr::summarise(mean = mean(y), ci = qt(.975, n() - 1) * sd(y) / sqrt(n()),
+                     lo = min(y), hi = max(y))
+  summ$x <- as.numeric(summ$g)
+  grand <- mean(pts$y)
+  within_col <- "#0072B2"; between_col <- "#D55E00"
+  a <- summ[1, ]
+  bw_F[[title]] <<- summary(aov(y ~ g))[[1]]$`F value`[1]
   ggplot() +
-    geom_point(aes(g, y), data = pts, alpha = 0.25, size = 1.2,
-               position = position_jitter(width = 0.08, seed = 1)) +
-    geom_errorbar(aes(g, ymin = mean - ci, ymax = mean + ci), data = summ, width = 0.12) +
-    geom_point(aes(g, mean), data = summ, size = 2) +
-    coord_cartesian(ylim = c(4, 20)) +
+    geom_hline(yintercept = grand, linetype = "dashed", colour = "grey40") +
+    geom_point(aes(x, y), data = pts, alpha = 0.25, size = 1.2,
+               position = position_jitter(width = 0.08, height = 0, seed = 1)) +
+    geom_errorbar(aes(x, ymin = mean - ci, ymax = mean + ci), data = summ, width = 0.12) +
+    geom_point(aes(x, mean), data = summ, size = 2) +
+    # between: each group mean's distance from the grand mean
+    geom_segment(aes(x = x + 0.22, xend = x + 0.22, y = grand, yend = mean), data = summ,
+                 colour = between_col, linewidth = 0.8,
+                 arrow = arrow(length = unit(0.12, "cm"), ends = "last")) +
+    # within: the spread of one group's scores around its own mean
+    annotate("segment", x = a$x - 0.22, xend = a$x - 0.22, y = a$lo, yend = a$hi,
+             colour = within_col, linewidth = 0.8) +
+    annotate("segment", x = a$x - 0.26, xend = a$x - 0.18, y = c(a$lo, a$hi), yend = c(a$lo, a$hi),
+             colour = within_col, linewidth = 0.8) +
+    annotate("text", x = a$x - 0.30, y = (a$lo + a$hi) / 2, label = "within",
+             colour = within_col, angle = 90, vjust = 0, size = 3.4) +
+    annotate("text", x = 0.55, y = 20, label = "between: group means\nvs. grand mean (dashed)",
+             colour = between_col, hjust = 0, vjust = 1, size = 3.2, lineheight = 0.9) +
+    scale_x_continuous(breaks = 1:3, labels = levels(g)) +
+    coord_cartesian(ylim = c(4, 20), xlim = c(0.55, 3.45)) +
     labs(title = title, x = NULL, y = "Response") +
     theme_classic(base_size = 12)
 }
 
+bw_F <- list()
 patchwork::wrap_plots(
   between_within_panel(c(10, 10, 10), "No real differences"),
-  between_within_panel(c(10, 12.2, 15), "Means shifted"),
+  between_within_panel(c(10, 12.2, 15), "Real differences"),
   nrow = 1
 )
 ```
 
-### Computing the $F$-value
+The within-group variation is the same in both panels. Group A's scores span about 9 units, and every group's scores spread about as widely. On the left, that spread is large next to the group means, which all sit within about half a unit of the grand mean, so the between-group variation is small and $F$ = `r sprintf("%.2f", bw_F[["No real differences"]])`. On the right, the within-group spread is unchanged, but Group C's mean sits about 3 units above the grand mean, and $F$ = `r sprintf("%.1f", bw_F[["Real differences"]])`. How large the within-group spread looks matters only next to the between-group variation, and that comparison is what $F$ measures.
+
+## $F$ when $H_0$ is true {#sec-8fnull}
+
+Before computing $F$ by hand, we need to know what values it takes when the null hypothesis is true, because that is what an observed $F$ is compared against. The $p$-value for $F$ means the same thing as for every other test we've covered. It is the probability of an $F$ this large or larger if the null hypothesis (no real group differences) were true.
+
+Since $F$ is a sample statistic, we can find out how it behaves the same way we did for $t$, by simulating it many times under the null. Consider a monitoring study with three site types (A, B, C) and 10 sampling plots per type, 30 in all, measuring species abundance at each plot. All 30 plots are drawn from one null population distribution (mean 100, $\sigma = 10$), so site type has no real effect, and any differences between the group means come from sampling error alone. We run this experiment 10,000 times and compute $F$ each time. The histogram of those 10,000 $F$-values, in @fig-8fnull, is the null distribution of $F$ for this design. The null population distribution describes individual abundance scores. The null distribution of $F$ describes the $F$-values, one per experiment.
+
+**Before you look.** Each bar in @fig-8fnull counts $F$-values from these null experiments. Decide whether most of them will fall near 0, near 1, or well above 1.
+
+```{r}
+#| label: fig-8fnull
+#| fig-cap: "A simulation of 10,000 experiments from a null population distribution with no group differences. The histogram shows the 10,000 $F$-values, one per experiment, all produced by sampling error alone. The blue dot-dash curve is the $F$ distribution with 2 and 27 degrees of freedom. The red line is the critical value at $\\alpha = 0.05$, and the shaded bars beyond it hold 5% of the $F$-values."
+#| fig-alt: "Histogram of 10,000 simulated F values from a null population distribution, tallest at zero and falling off into a long right-hand tail, with the theoretical F distribution for 2 and 27 degrees of freedom drawn over it as a blue dot-dash curve that follows the bars closely. A red vertical line labeled crit equals 3.35 is solid up to the curve and thin dashed above it. The bars beyond it are shaded red and labeled 5% of F-values; they form only the thin tail at the far right of the histogram."
+#| fig-asp: 0.5
+#| out-width: "100%"
+
+library(ggplot2)
+
+save_F <- length(10000)
+for (i in 1:10000) {
+  abundance   <- rnorm(30, 100, 10)
+  site_type   <- as.factor(rep(1:3, each = 10))
+  simulations <- rep(i, each = 30)
+  sample_df   <- data.frame(simulations, site_type, abundance)
+  aov.out <- summary(aov(abundance ~ site_type, sample_df))
+  save_F[i] <- aov.out[[1]]$`F value`[1]
+}
+
+plot_df <- data.frame(sims = 1:10000, save_F)
+plot_df <- plot_df[plot_df$save_F < 10, ]
+
+f_curve <- data.frame(x = seq(0.01, 10, length.out = 500))
+f_curve$y <- df(f_curve$x, 2, 27)
+
+crit_F <- qf(.95, 2, 27)
+plot_df$region <- plot_df$save_F >= crit_F
+
+ggplot(plot_df, aes(x = save_F)) +
+  # one shared bin grid (an edge at the critical value) and one shared density scale,
+  # so splitting the bars by region doesn't rescale the tail
+  geom_histogram(aes(y = after_stat(count / (nrow(plot_df) * width)), fill = region, alpha = region),
+                 color = "white", breaks = c(0, seq(crit_F %% 0.1, 10.1, by = 0.1))) +
+  scale_fill_manual(values = c(`FALSE` = "#008cff", `TRUE` = "red"), guide = "none") +
+  scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = .35), guide = "none") +
+  geom_line(data = f_curve, aes(x, y), colour = "blue", linetype = "dotdash", linewidth = 1.1) +
+  annotate("segment", x = crit_F, xend = crit_F, y = 0, yend = df(crit_F, 2, 27), colour = "red", linewidth = 0.8) +
+  annotate("segment", x = crit_F, xend = crit_F, y = df(crit_F, 2, 27), yend = 0.93,
+           colour = "red", linetype = "dashed", linewidth = 0.6) +
+  annotate("text", x = crit_F, y = 0.97, label = paste0("crit = ", round(crit_F, 2)),
+           colour = "red", size = 4.2) +
+  annotate("segment", x = 5.6, xend = 4.1, y = 0.13, yend = 0.03,
+           arrow = arrow(length = unit(.14, "cm")), linewidth = .4) +
+  annotate("text", x = 5.7, y = 0.15, label = "5% of F-values", colour = "grey20", hjust = 0, size = 4.2) +
+  annotate("text", x = 6.2, y = 0.6, label = "'F(2, 27) under '*H[0]", parse = TRUE,
+           colour = "blue", hjust = 0, size = 4.2) +
+  labs(x = "F", y = "Density")
+```
+
+The null distribution of $F$ never goes below 0, because $F$ is a ratio of two variances and variances can't be negative. It is right-skewed, and its exact shape depends on the numerator and denominator degrees of freedom.
+
+Most simulated $F$-values here fall near or below 1, because under the null the numerator and denominator of $F$ estimate the same thing. All 30 plots come from one null population distribution with $\sigma = 10$. The denominator of $F$, the within-group variation, estimates $\sigma^2$ from the spread of scores inside each group. The numerator, the between-group variation, estimates the same $\sigma^2$ from how far the group means stray from the grand mean, since with no real effect, sampling variation is the only thing moving them. Two estimates of one variance give a ratio near 1. When the population means really differ, the numerator picks up those differences on top of $\sigma^2$, and $F$ grows. (@sec-8byhand shows how each part is computed.) Values of 5 or more occur in about `r round(100 * mean(save_F >= 5))`% of the simulations.
+
+**From simulation to the $F$ distribution.** The blue dot-dash curve over the histogram is the **$F$ distribution**, the theoretical distribution of $F$ when the null hypothesis is true. Its shape is set by two degrees of freedom, the numerator $df$ ($k - 1 = 2$ for the three site types) and the denominator $df$ ($N - k = 27$ for the 30 plots). It is worked out from theory with no simulation, and it follows the histogram closely, so from here on we use the curve. Software does the same. The $p$-value in an ANOVA table comes from the $F$ distribution for the design's two $df$s.
+
+### Making decisions
+
+To decide whether a real experiment's $F$ is too large to be explained by chance:
+
+1.  Set $\alpha = 0.05$.
+2.  Find the critical value of $F$ for the design's two $df$s (in R, `qf(0.95, 2, 27)`), the red line in @fig-8fnull.
+3.  Reject $H_0$ if the observed $F$ is at or beyond it.
+
+Only 5% of the $F$ distribution lies at or beyond 3.35. The $F$-test has one critical value, in the upper tail. Differences among the means in any direction make the numerator of $F$ larger, so they all push $F$ up. A small $F$ is consistent with $H_0$. The simulation agrees, with `r round(100 * mean(save_F >= crit_F), 1)`% of the 10,000 simulated $F$-values at or beyond it. If we ran the same design for real (30 plots, 10 per site type), we could treat $F\geq3.35$ as evidence that the differences between site types are larger than chance would produce. An observed $F$ of 3.4 or larger, for instance, would occur less than 5% of the time under the null, so seeing it would lead us to reject the null and conclude that site type mattered. The critical value and the $p$-value give the same decision. $F$ is at or beyond the critical value exactly when its $p$-value is at or below $\alpha$.
+
+### What group means look like when $F$ exceeds the critical value
+
+Earlier we found a critical value of 3.35. Only 5% of $F$-values from this null distribution exceed it. The 10,000 simulated experiments kept only each $F$-value, not the group means behind it. To see those means, we reran the same null simulation and kept the first 10 experiments with $F > 3.35$, shown in @fig-8sigdiffs. Every one of them was still drawn from the same null population distribution, with no real group differences. Rejecting the null whenever $F$ clears 3.35 is the right long-run decision rule, but every one of these particular simulations would be a Type I error if we did.
+
+```{r}
+#| label: fig-8sigdiffs
+#| fig-cap: "Group means from 10 null simulations in which $F$ exceeded the critical value. Error bars are 95% confidence intervals. Every one of them is a Type I error."
+#| fig-alt: "Ten small panels, each showing the mean abundance for site types A, B and C as a point with 95% confidence interval error bars, all from simulations where F exceeded the critical value of 3.35. In several panels at least one pair of intervals does not overlap, and in the rest the means are still widely spread, although all ten were generated with no true group difference."
+#| out-width: "100%"
+
+all_df <- data.frame()
+counter <- 0
+for (i in 1:1000) {
+  abundance   <- rnorm(30, 100, 10)
+  site_type   <- as.factor(rep(1:3, each = 10))
+  simulations <- rep(i, each = 30)
+  sample_df   <- data.frame(simulations, site_type, abundance)
+  aov.out <- summary(aov(abundance ~ site_type, sample_df))
+  the_f <- aov.out[[1]]$`F value`[1]
+  if (the_f > crit_F) {
+    all_df <- rbind(all_df, sample_df)
+    counter <- counter + 1
+  }
+  if (counter == 10) {
+    break
+  }
+}
+
+# number the ten kept simulations 1-10 rather than by their loop index
+all_df$simulations <- factor(match(all_df$simulations, unique(all_df$simulations)))
+levels(all_df$site_type) <- c("A", "B", "C")
+
+plot_df <- all_df %>%
+  dplyr::group_by(simulations, site_type) %>%
+  dplyr::summarise(means = mean(abundance),
+                   ci = qt(.975, length(abundance) - 1) * sd(abundance) / sqrt(length(abundance)))
+# panels where at least one pair of 95% intervals does not overlap
+sep_panels <- plot_df %>%
+  dplyr::summarise(sep = max(means - ci) > min(means + ci)) %>%
+  dplyr::pull(sep)
+n_sep <- sum(sep_panels)
+
+ggplot(plot_df, aes(x = site_type, y = means)) +
+  geom_errorbar(aes(ymin = means - ci, ymax = means + ci), width = 0.25) +
+  geom_point(size = 2.5) +
+  facet_wrap( ~ simulations, nrow = 2) +
+  xlab("Site type") +
+  ylab("Mean abundance") +
+  coord_cartesian(ylim = c(80, 120)) +
+  theme(panel.border = element_rect(colour = "grey30", fill = NA, linewidth = 0.5))
+
+```
+
+In `r c("none", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "all ten")[n_sep + 1]` of the ten panels in @fig-8sigdiffs, at least one pair of 95% confidence intervals doesn't overlap, which looks like a convincing real difference.`r if (n_sep < 10) " In the others, the means are still spread out enough for $F$ to clear the critical value." else ""` All ten are Type I errors. When this happens by chance, the data show a pattern, the $F$-value is large, and the $p$-value is small. A Type I error looks exactly like a real effect, and nothing in the output distinguishes them.
+
+Experiments like these ten are the 5% the critical value allows. One $F$-test keeps that chance at 5% for the whole set of groups, where the three separate $t$-tests in @tbl-8pairs would have raised it to 14%. The same risk returns after a significant $F$, when post-hoc comparisons test each pair of groups, and that is why those comparisons are adjusted (@sec-8tukey).
+
+## Computing $F$ by hand {#sec-8byhand}
 
 ANOVA splits the total variation in the data into two sources: variation between groups, which group membership can explain, and variation within groups, which it can't. If we can measure those two parts separately, we can turn them into a ratio and get an $F$-value.
 
@@ -171,15 +344,49 @@ To make that precise we need an actual measure of variation. As in @sec-correlat
 
 $$SS_\text{Total} = SS_\text{Between} + SS_\text{Within}$$
 
-The next sections compute each piece for a small example with nine scores. We find $SS_\text{Total}$ and $SS_\text{Between}$, get $SS_\text{Within}$ by subtraction, and check it directly. Then we divide each sum of squares by its degrees of freedom and take the ratio to get $F$.
+The next sections compute each piece for a small example with nine scores. We find $SS_\text{Total}$ and $SS_\text{Between}$, get $SS_\text{Within}$ by subtraction, and check it directly. Then we divide each sum of squares by its degrees of freedom, take the ratio to get $F$, and compare it with its critical value.
+
+### Nine litter counts
+
+Suppose a city counts the pieces of litter along nine stretches of sidewalk, three in each of three neighborhoods, A, B, and C. Each count is one score. @tbl-8toy lists them by neighborhood, with each neighborhood's mean and the **grand mean**, the mean of all nine scores.
+
+| Neighborhood | Scores | Group mean |
+|:--|:--|--:|
+| A | 20, 11, 2 | 11 |
+| B | 6, 2, 7 | 5 |
+| C | 2, 11, 2 | 5 |
+| All nine | | 7 (grand mean) |
+
+: Litter counts on nine stretches of sidewalk, three per neighborhood. {#tbl-8toy}
+
+@fig-8toy plots the same nine scores. The tables in the next sections list them in long format, which means each row is a single score, the way R stores them.
+
+```{r}
+#| label: fig-8toy
+#| fig-cap: "The nine litter counts. Points are individual scores, short solid bars are the neighborhood means, and the dashed line is the grand mean, 7."
+#| fig-alt: "Dot plot of nine litter counts in three neighborhoods. Neighborhood A has scores of 2, 11 and 20, with a short bar at its mean of 11. Neighborhood B has 2, 6 and 7 with a mean of 5. Neighborhood C has 2, 2 and 11 with a mean of 5. A dashed horizontal line marks the grand mean of 7, above the means of B and C and below the mean of A."
+#| fig-asp: 0.55
+#| out-width: "70%"
+
+toy_plot <- data.frame(
+  hood  = rep(c("A", "B", "C"), each = 3),
+  score = c(20, 11, 2, 6, 2, 7, 2, 11, 2)
+)
+toy_means <- aggregate(score ~ hood, toy_plot, mean)
+ggplot(toy_plot, aes(hood, score)) +
+  geom_hline(yintercept = 7, linetype = "dashed", colour = "grey40") +
+  geom_point(size = 2, alpha = 0.6, position = position_jitter(width = 0.06, height = 0, seed = 3)) +
+  geom_segment(aes(x = as.numeric(factor(hood)) - 0.2, xend = as.numeric(factor(hood)) + 0.2,
+                   y = score, yend = score), data = toy_means, linewidth = 1.2) +
+  annotate("text", x = 3.45, y = 7.8, label = "grand mean = 7", hjust = 1, colour = "grey30", size = 3.5) +
+  scale_y_continuous(breaks = seq(0, 20, 5), limits = c(0, 21)) +
+  labs(x = "Neighborhood", y = "Pieces of litter") +
+  theme_classic(base_size = 12)
+```
 
 ### SS Total
 
-$SS_\text{Total}$ is the sum of the squared differences between each score and the grand mean, the mean of all the scores. It captures all of the variation in a dataset. Writing $Y_{ij}$ for score $i$ in group $j$ and $\bar{Y}_\text{grand}$ for the grand mean,
-
-$$SS_\text{Total} = \sum (Y_{ij} - \bar{Y}_\text{grand})^2.$$
-
-Suppose we have three groups, A, B, and C, with 3 scores in each:
+$SS_\text{Total}$ measures all of the variation in the data, how far every score is from the grand mean. Each score's distance from the grand mean is its deviation. The table below lists every deviation and its square.
 
 ```{r}
 scores <- c(20, 11, 2, 6, 2, 7, 2, 11, 2)
@@ -187,17 +394,18 @@ groups <- rep(c("A", "B", "C"), each = 3)
 dev    <- scores - mean(scores)
 tab <- data.frame(Group = groups, Score = scores, Deviation = dev, Squared = dev^2)
 tab <- rbind(tab,
-             data.frame(Group = "Sums",  Score = sum(scores),  Deviation = sum(dev),  Squared = sum(dev^2)),
-             data.frame(Group = "Means", Score = mean(scores), Deviation = mean(dev), Squared = mean(dev^2)))
-knitr::kable(tab, col.names = c("Group", "Score", "Deviation from grand mean", "Squared deviation"),
+             data.frame(Group = "Sums", Score = sum(scores), Deviation = sum(dev), Squared = sum(dev^2)))
+knitr::kable(tab, col.names = c("Neighborhood", "Score", "Deviation from grand mean", "Squared deviation"),
              digits = 2, caption = "Deviations from the grand mean.")
 ```
 
-The data are in long format, which means each row is a single score. The mean of all of the scores is the **grand mean**, calculated in the table as 7.
+The deviations sum to zero, because the mean is the balancing point of the data, so their sum can't measure spread. Squaring turns every deviation positive and, as a side effect, weights larger deviations more heavily.
 
-The deviation column holds every score's distance from the grand mean, and the last column squares those distances. Squaring matters because the raw deviations always sum to zero (the mean is the balancing point of the data), so their sum can't measure spread. Squaring turns every deviation positive and, as a side effect, weights larger deviations more heavily.
+Adding up the squared deviations gives the sum of squares (SS) from @sec-correlation. Writing $Y_{ij}$ for score $i$ in group $j$ and $\bar{Y}_\text{grand}$ for the grand mean,
 
-Adding up all of the squared deviations gives the sum of squares (SS) from @sec-correlation. Here $SS_\text{Total} = 302$, the first piece of the partition:
+$$SS_\text{Total} = \sum (Y_{ij} - \bar{Y}_\text{grand})^2 = 302.$$
+
+That is the first piece of the partition:
 
 $$SS_\text{Total} = SS_\text{Between} + SS_\text{Within}, \qquad 302 = SS_\text{Between} + SS_\text{Within}.$$
 
@@ -221,7 +429,7 @@ dev    <- means - mean(scores)
 tab <- data.frame(Group = groups, Score = scores, Mean = means, Deviation = dev, Squared = dev^2)
 tab <- rbind(tab, data.frame(Group = "Sums", Score = sum(scores), Mean = sum(means),
                              Deviation = sum(dev), Squared = sum(dev^2)))
-knitr::kable(tab, col.names = c("Group", "Score", "Group mean", "Group mean minus grand mean", "Squared"),
+knitr::kable(tab, col.names = c("Neighborhood", "Score", "Group mean", "Group mean minus grand mean", "Squared"),
              digits = 2, caption = "Group means replace the scores.")
 ```
 
@@ -251,7 +459,7 @@ dev    <- scores - means
 tab <- data.frame(Group = groups, Score = scores, Mean = means, Deviation = dev, Squared = dev^2)
 tab <- rbind(tab, data.frame(Group = "Sums", Score = sum(scores), Mean = sum(means),
                              Deviation = sum(dev), Squared = sum(dev^2)))
-knitr::kable(tab, col.names = c("Group", "Score", "Group mean", "Score minus group mean", "Squared"),
+knitr::kable(tab, col.names = c("Neighborhood", "Score", "Group mean", "Score minus group mean", "Squared"),
              digits = 2, caption = "Deviations from each group's own mean.")
 ```
 
@@ -307,169 +515,11 @@ toy_df <- data.frame(
 anova_kable(aov(scores ~ groups, data = toy_df), caption = "R's ANOVA table for the toy data.")
 ```
 
-R labels the two rows `groups` (the between-groups row: what the means can explain) and `Residuals` (the within-groups row: what they can't). Other software uses slightly different labels for the same two rows. Apart from the $p$-value in the last column, the table contains only numbers we already computed. R leaves out the Total row. It organizes the numbers, and $MS_\text{Between}$ (36) divided by $MS_\text{Within}$ (38.33) gives the $F$-value. With $F = 0.94$, the group means vary no more than the noise within groups would make them vary, so these nine scores give no evidence that the groups differ.
-
-## What does $F$ mean?
-
-Every number in the ANOVA table so far was computed directly from the data except the $p$-value. It means the same thing as for every other test we've covered. The $p$-value is the probability of observing an $F$ this large or larger if the null hypothesis (no real group differences) were true.
-
-Since $F$ is a sample statistic, we can find out how it behaves the same way we found out how $t$ behaves, by simulating it many times under the null and looking at the resulting distribution.
-
-To build intuition for the $F$ distribution, consider a simulated monitoring study with three site types (A, B, C). Each site type has 10 sampling plots, for 30 total. We measure species abundance at each plot. All 30 plots are drawn from the same null population distribution (mean = 100, $\sigma$ = 10), so site type has no real effect on abundance. Any differences between group means arise from sampling error alone.
-
-We run this simulation 10,000 times. Each time we compute $F$ from the sample data. The histogram of those 10,000 $F$-values, shown in @fig-8fnull, is the null distribution of $F$ for this design. The null population distribution gives the individual abundance scores (mean 100, $\sigma = 10$). The null distribution of $F$ describes the $F$-values, one per experiment, that repeated experiments drawn from that population produce.
-
-**Before you look.** Each bar in @fig-8fnull counts $F$-values from these null experiments. Decide whether most of them will fall near 0, near 1, or well above 1.
-
-```{r}
-#| label: fig-8fnull
-#| fig-cap: "A simulation of 10,000 experiments from a null population distribution with no group differences. The histogram shows 10,000 $F$-values, one for each simulation. They show the values $F$ takes when the null hypothesis is true. All of these $F$-values were produced by random sampling error. The blue dot-dash curve is the $F$ distribution with 2 and 27 degrees of freedom."
-#| fig-alt: "Histogram of 10,000 simulated F values from a null population distribution, with the theoretical F distribution for 2 and 27 degrees of freedom drawn over it as a blue dot-dash curve that follows the bars closely. The histogram is tallest at zero and falls off steadily into a long right-hand tail, with very few values reaching as high as 5."
-#| fig-asp: 0.5
-#| out-width: "100%"
-
-library(ggplot2)
-
-save_F <- length(10000)
-for (i in 1:10000) {
-  abundance   <- rnorm(30, 100, 10)
-  site_type   <- as.factor(rep(1:3, each = 10))
-  simulations <- rep(i, each = 30)
-  sample_df   <- data.frame(simulations, site_type, abundance)
-  aov.out <- summary(aov(abundance ~ site_type, sample_df))
-  save_F[i] <- aov.out[[1]]$`F value`[1]
-}
-
-plot_df <- data.frame(sims = 1:10000, save_F)
-plot_df <- plot_df[plot_df$save_F < 10, ]
-
-f_curve <- data.frame(x = seq(0.01, 10, length.out = 500))
-f_curve$y <- df(f_curve$x, 2, 27)
-
-ggplot(plot_df, aes(x = save_F)) +
-  geom_histogram(aes(y = after_stat(density)), color = "white", binwidth = 0.1, boundary = 0) +
-  geom_line(data = f_curve, aes(x, y), colour = "blue", linetype = "dotdash", linewidth = 1.1) +
-  annotate("text", x = 3, y = 0.6, label = "'F(2, 27) under '*H[0]", parse = TRUE,
-           colour = "blue", hjust = 0, size = 4.2) +
-  labs(x = "F", y = "Density")
-
-```
-
-The simulated null distribution of $F$ has two properties. First, it never goes below 0, because $F$ is a ratio of two variances and variances can't be negative. Second, it is right-skewed, and its exact shape depends on the numerator and denominator degrees of freedom.
-
-Most simulated $F$-values here fall near or below 1, because under the null the two mean squares estimate the same thing. All 30 plots come from one null population distribution with $\sigma = 10$. $MS_\text{Within}$ estimates $\sigma^2$ from the spread of scores inside each group. $MS_\text{Between}$ estimates the same $\sigma^2$ from how far the group means stray from the grand mean, since with no real effect, sampling variation is the only thing moving them. Two estimates of one variance give a ratio near 1. When the population means really differ, $MS_\text{Between}$ picks up those differences on top of $\sigma^2$, and $F$ grows. Values of 5 or more occur in about `r round(100 * mean(save_F >= 5))`% of the simulations.
-
-**From simulation to the $F$ distribution.** Everything in @fig-8fnull so far came from simulation. The **$F$ distribution** is the theoretical distribution of $F$ when the null hypothesis is true. Its shape is set by two degrees of freedom, the numerator $df$ ($k - 1$) and the denominator $df$ ($N - k$). The blue dot-dash curve drawn over the histogram is the $F$ distribution with 2 and 27 degrees of freedom ($k - 1 = 2$ for the three site types, $N - k = 27$ for the 30 plots), worked out from theory with no simulation at all. It follows the histogram closely, so from here on we use the curve. Software does the same. The $p$-value in an ANOVA table comes from the $F$ distribution for the design's two $df$s, and nothing is simulated.
-
-### Making decisions
-
-We can use this null distribution of $F$ to decide when a real experiment's result is too large to be explained by chance:
-
-1.  Set $\alpha = 0.05$.
-2.  Find the critical value of $F$ for our design's numerator and denominator $df$s, from the $F$ distribution (in R, `qf(0.95, 2, 27)`).
-
-@fig-8criticalF marks that critical value on the histogram:
-
-```{r}
-#| label: fig-8criticalF
-#| fig-cap: "The critical value of $F$ at $\\alpha = 0.05$ for df = 2 and 27. Five percent of the $F$ distribution lies beyond it, and about 5% of the simulated $F$-values do too."
-#| fig-alt: "The same histogram of 10,000 simulated F values with the blue dot-dash F curve over it, now with a red vertical line labeled crit equals 3.35, solid up to the curve and thin dashed above it. The bars beyond that line are shaded red and labeled '5% of F-values'; they form only the thin tail at the far right of the histogram."
-#| out-width: "100%"
-#| fig-asp: 0.5
-
-crit_F <- qf(.95, 2, 27)
-plot_df$region <- plot_df$save_F >= crit_F
-
-ggplot(plot_df, aes(x = save_F)) +
-  # one shared bin grid (an edge at the critical value) and one shared density scale,
-  # so splitting the bars by region doesn't rescale the tail
-  geom_histogram(aes(y = after_stat(count / (nrow(plot_df) * width)), fill = region, alpha = region),
-                 color = "white", breaks = c(0, seq(crit_F %% 0.1, 10.1, by = 0.1))) +
-  scale_fill_manual(values = c(`FALSE` = "#008cff", `TRUE` = "red"), guide = "none") +
-  scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = .35), guide = "none") +
-  geom_line(data = f_curve, aes(x, y), colour = "blue", linetype = "dotdash", linewidth = 1.1) +
-  annotate("segment", x = crit_F, xend = crit_F, y = 0, yend = df(crit_F, 2, 27), colour = "red", linewidth = 0.8) +
-  annotate("segment", x = crit_F, xend = crit_F, y = df(crit_F, 2, 27), yend = 0.93,
-           colour = "red", linetype = "dashed", linewidth = 0.6) +
-  annotate("text", x = crit_F, y = 0.97, label = paste0("crit = ", round(crit_F, 2)),
-           colour = "red", size = 4.2) +
-  annotate("segment", x = 5.6, xend = 4.1, y = 0.13, yend = 0.03,
-           arrow = arrow(length = unit(.14, "cm")), linewidth = .4) +
-  annotate("text", x = 5.7, y = 0.15, label = "5% of F-values", colour = "grey20", hjust = 0, size = 4.2) +
-  labs(x = "F", y = "Density")
-
-```
-
-Only 5% of the $F$ distribution lies at or beyond 3.35. The $F$-test has one critical value, in the upper tail. Differences among the means in any direction make $MS_\text{Between}$ larger, so they all push $F$ up. A small $F$ is consistent with $H_0$. The simulation agrees, with `r round(100 * mean(save_F >= crit_F), 1)`% of the 10,000 simulated $F$-values at or beyond it. That gives us a decision rule. If we ran the same design for real (30 plots, 10 per site type), we could treat $F\geq3.35$ as evidence that the differences between site types are larger than chance would produce. An observed $F$ of 3.4 or larger, for instance, would occur less than 5% of the time under the null, so seeing it would lead us to reject the null and conclude that site type mattered. The critical value and the $p$-value give the same decision. $F$ is at or beyond the critical value exactly when its $p$-value is at or below $\alpha$.
+R labels the two rows `groups` (the between-groups row: what the means can explain) and `Residuals` (the within-groups row: what they can't). Other software uses slightly different labels for the same two rows. Apart from the $p$-value in the last column, the table contains only numbers we already computed. R leaves out the Total row. It organizes the numbers, and $MS_\text{Between}$ (36) divided by $MS_\text{Within}$ (38.33) gives the $F$-value. With $F = 0.94$, the group means vary no more than the noise within groups would make them vary, The critical value of $F$ at $\alpha = 0.05$ for 2 and 6 degrees of freedom is 5.14 (`qf(0.95, 2, 6)`), and 0.94 is far below it, so we fail to reject $H_0$, as in @sec-8fnull. These nine scores give no evidence that the neighborhoods differ.
 
 ### F and the means
 
 An $F$-value and its $p$-value say whether the group means differ, but not what the means were. If a study reports $F(2, 27) = 6.0$, $p = 0.007$, we know only that an $F$ this large would happen by chance less than 1% of the time. We still don't know which means differed, or by how much, without looking at the group means directly (the ANOVA table itself doesn't report them).
-
-### ANOVA is an omnibus test
-
-Instead of the three pairwise $t$-tests in @tbl-8pairs, ANOVA asks one more general question about all three means at once:
-
-Hypothesis of no differences anywhere: $\mu_A=\mu_B=\mu_C$
-
-Any differences anywhere:
-
-a.  $\mu_A\neq \mu_B=\mu_C$ (A differs)
-b.  $\mu_B\neq \mu_A=\mu_C$ (B differs)
-c.  $\mu_C\neq \mu_A=\mu_B$ (C differs)
-d.  $\mu_A\neq \mu_B$, $\mu_B\neq \mu_C$, and $\mu_A\neq \mu_C$ (all three differ)
-
-A small $F$ with a large $p$-value means we don't reject the hypothesis of no differences. We have no evidence the three group means differ, and whatever gaps exist could easily be chance. A large $F$ with a small $p$-value (below $\alpha$) means we reject that hypothesis and conclude at least one group mean differs from the others. The omnibus test tells us *whether* the means differ, and a separate step tells us *which* ones.
-
-### What group means look like when $F$ exceeds the critical value
-
-Earlier we found a critical value of 3.35. Only 5% of $F$-values from this null distribution exceed it. The 10,000 simulated experiments kept only each $F$-value, not the group means behind it. To see those means, we reran the same null simulation and kept the first 10 experiments with $F > 3.35$, shown in @fig-8sigdiffs. Every one of them was still drawn from the same null population distribution, with no real group differences. Rejecting the null whenever $F$ clears 3.35 is the right long-run decision rule, but every one of these particular simulations would be a Type I error if we did.
-
-```{r}
-#| label: fig-8sigdiffs
-#| fig-cap: "Group means from 10 null simulations in which $F$ exceeded the critical value. Error bars show ±1 SE. Every one of them is a Type I error."
-#| fig-alt: "Ten small panels, each showing the mean abundance for site types A, B and C as a point with plus-or-minus 1 SE error bars, all from simulations where F exceeded the critical value of 3.35. In every panel at least one mean's error bars do not overlap with another's, although all ten were generated with no true group difference."
-#| out-width: "100%"
-
-all_df <- data.frame()
-counter <- 0
-for (i in 1:1000) {
-  abundance   <- rnorm(30, 100, 10)
-  site_type   <- as.factor(rep(1:3, each = 10))
-  simulations <- rep(i, each = 30)
-  sample_df   <- data.frame(simulations, site_type, abundance)
-  aov.out <- summary(aov(abundance ~ site_type, sample_df))
-  the_f <- aov.out[[1]]$`F value`[1]
-  if (the_f > crit_F) {
-    all_df <- rbind(all_df, sample_df)
-    counter <- counter + 1
-  }
-  if (counter == 10) {
-    break
-  }
-}
-
-# number the ten kept simulations 1-10 rather than by their loop index
-all_df$simulations <- factor(match(all_df$simulations, unique(all_df$simulations)))
-levels(all_df$site_type) <- c("A", "B", "C")
-
-plot_df <- all_df %>%
-  dplyr::group_by(simulations, site_type) %>%
-  dplyr::summarise(means = mean(abundance),
-                   SEs = sd(abundance) / sqrt(length(abundance)))
-
-ggplot(plot_df, aes(x = site_type, y = means)) +
-  geom_errorbar(aes(ymin = means - SEs, ymax = means + SEs), width = 0.25) +
-  geom_point(size = 2.5) +
-  facet_wrap( ~ simulations, nrow = 2) +
-  xlab("Site type") +
-  ylab("Mean abundance") +
-  coord_cartesian(ylim = c(85, 115)) +
-  theme(panel.border = element_rect(colour = "grey30", fill = NA, linewidth = 0.5))
-
-```
-
-Every panel of @fig-8sigdiffs now shows at least one group mean whose error bars don't overlap with another's, which looks like a convincing real difference. All ten are Type I errors. When this happens by chance, the data show a pattern, the $F$-value is large, and the $p$-value is small. A Type I error looks exactly like a real effect, and nothing in the output distinguishes them.
 
 ## The full ANOVA workflow
 
@@ -658,7 +708,7 @@ $\eta^2$ is the same quantity as $R^2$ in regression (@sec-regression), computed
 
 **$p$ depends on sample size, and $\eta^2$ does not.** Survey enough plots and a difference of half a salamander per plot will clear $p < 0.05$ while explaining almost none of the variation. Reporting both keeps a statistically detectable result from being mistaken for an ecologically meaningful one.
 
-### Post-hoc comparisons with Tukey HSD
+### Post-hoc comparisons with Tukey HSD {#sec-8tukey}
 
 The omnibus $F$ test tells us that at least one group mean differs, but not which pairs. **Post-hoc comparisons** are tests run after a significant omnibus test to find which pairs of groups differ. This is a different use of "post-hoc" from @sec-errors-power's post-hoc power. To identify which forest types differ, we use **Tukey's Honestly Significant Difference (HSD)** test [@Tukey1949]. Tukey HSD compares every pair of groups while keeping the familywise error rate across all of the comparisons at $\alpha$, so it is the standard choice after a significant ANOVA.
 
