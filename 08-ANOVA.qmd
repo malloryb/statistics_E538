@@ -142,11 +142,11 @@ When the two are about the same size, $F \approx 1$, and the group means differ 
 
 With two groups, $F$ is exactly the square of the pooled $t$ (@sec-6indep), $t^2 = F$, which is why the two tests give the same $p$-value.
 
-@fig-8betweenwithin shows both situations with the same noise. The dashed line in each panel is the **grand mean**, the mean of all the scores across every group.
+@fig-8betweenwithin shows both situations with the same noise. Both panels are simulated, so we know the population means behind them. In the left panel all three population means are 10, so any differences among the group means are chance. In the right panel the population means are 10, 12.2 and 15. The dashed line in each panel is the **grand mean**, the mean of all the scores across every group.
 
 ```{r}
 #| label: fig-8betweenwithin
-#| fig-cap: "The same within-group noise with no real differences (left) and with real differences between the group means (right). Three groups of 12; small points are individual scores, large dots are group means, bars are 95% confidence intervals. The blue bracket marks within-group variation, the spread of Group A's scores. The orange arrows mark between-group variation, each group mean's distance from the grand mean (dashed line)."
+#| fig-cap: "Simulated scores with the same within-group noise. Left: all three population means are 10, so there are no real differences. Right: the population means are 10, 12.2 and 15. Three groups of 12; small points are individual scores, large dots are group means, bars are 95% confidence intervals. The blue bracket marks within-group variation, the spread of Group A's scores. The orange arrows mark between-group variation, each group mean's distance from the grand mean (dashed line)."
 #| fig-alt: "Two side-by-side panels on the same vertical scale, each showing three groups of 12 jittered points with a group mean and 95% confidence interval, and a dashed horizontal line at the grand mean. A blue bracket beside Group A spans its points, labeled within, and is about the same height in both panels. Orange arrows run from the grand mean to each group mean, labeled between. In the left panel, labeled no real differences, the three means sit near 10 and the arrows are very short. In the right panel, labeled real differences, the means climb from about 10 to about 12 to about 16, and the arrows are long, especially for Group C."
 #| fig-asp: 0.4
 #| out-width: "100%"
@@ -257,7 +257,9 @@ ggplot(plot_df, aes(x = save_F)) +
   labs(x = "F", y = "Density")
 ```
 
-Most simulated $F$-values here fall near or below 1, because under the null the numerator and denominator of $F$ estimate the same thing. All 30 plots come from one null population distribution with $\sigma = 10$. The denominator of $F$, the within-group variation, estimates $\sigma^2$ from the spread of scores inside each group. The numerator, the between-group variation, estimates the same $\sigma^2$ from how far the group means stray from the grand mean, since with no real effect, sampling variation is the only thing moving them. Two estimates of one variance give a ratio near 1. When the population means really differ, the numerator picks up those differences on top of $\sigma^2$, and $F$ grows. (@sec-8byhand shows how each part is computed.) The $F$ of 5 from @sec-8fratio is rare under the null. Values that large occur in about `r round(100 * mean(save_F >= 5))`% of the simulations.
+Most simulated $F$-values here fall near or below 1, because under the null the numerator and denominator of $F$ estimate the same thing. All 30 plots come from one null population distribution with $\sigma = 10$. The denominator of $F$, the within-group variation, estimates $\sigma^2$ from the spread of scores inside each group. The numerator, the between-group variation, estimates the same $\sigma^2$ from how far the group means stray from the grand mean, since with no real effect, sampling variation is the only thing moving them. Two estimates of one variance give a ratio near 1. When the population means really differ, the numerator picks up those differences on top of $\sigma^2$, and $F$ grows. (@sec-8byhand shows how each part is computed.)
+
+The $F$ of 5 from @sec-8fratio is rare under the null. Values that large occur in about `r round(100 * mean(save_F >= 5))`% of the simulations.
 
 The null distribution of $F$ never goes below 0, because $F$ is a ratio of two variances and variances can't be negative. It is right-skewed.
 
@@ -271,7 +273,9 @@ To decide whether a real study's $F$ is too large to be explained by chance:
 2.  Find the critical value of $F$ for the design's two $df$s (in R, `qf(0.95, 2, 27)`), the red line in @fig-8fnull.
 3.  Reject $H_0$ if the observed $F$ is at or beyond it.
 
-For 2 and 27 degrees of freedom the critical value is 3.35, and only 5% of the $F$ distribution lies at or beyond it. The simulation agrees, with `r round(100 * mean(save_F >= crit_F), 1)`% of the 10,000 simulated $F$-values at or beyond 3.35. The $F$-test has one critical value, in the upper tail. Differences among the means in any direction make the numerator of $F$ larger, so they all push $F$ up, and a small $F$ is consistent with $H_0$. If we ran the same design for real (30 plots, 10 per site type), an observed $F$ at or beyond 3.35 would lead us to reject $H_0$ and conclude that mean abundance differs among site types. The critical value and the $p$-value give the same decision. $F$ is at or beyond the critical value exactly when its $p$-value is at or below $\alpha$.
+For 2 and 27 degrees of freedom the critical value is 3.35, and only 5% of the $F$ distribution lies at or beyond it. The simulation agrees, with `r round(100 * mean(save_F >= crit_F), 1)`% of the 10,000 simulated $F$-values at or beyond 3.35. The $F$-test has one critical value, in the upper tail. Differences among the means in any direction make the numerator of $F$ larger, so they all push $F$ up, and a small $F$ is consistent with $H_0$.
+
+If we ran the same design for real (30 plots, 10 per site type), an observed $F$ at or beyond 3.35 would lead us to reject $H_0$ and conclude that mean abundance differs among site types. The critical value and the $p$-value give the same decision. $F$ is at or beyond the critical value exactly when its $p$-value is at or below $\alpha$.
 
 ### What group means look like when $F$ exceeds the critical value
 
@@ -604,7 +608,9 @@ The bar graph shows a gradient. Old-growth plots have the highest mean abundance
 
 Before running the ANOVA, check whether its assumptions hold. @sec-6assumptions introduced independence as the assumption every test in this book shares, so we do not list it again here. ANOVA adds two assumptions of its own.
 
-The first is **homogeneity of variance**, which means the groups have roughly equal spread around their own means. The second is approximately normal residuals. In ANOVA the model predicts each score with its group mean, so a residual is the score minus its group mean, the same idea as the residuals in @fig-2regressionResiduals. Here each residual is a plot's count minus its forest type's mean, the same deviations that make up $SS_\text{Within}$, and the residuals should be roughly bell-shaped. Both matter because the $F$-test pools the within-group spread of every group into one error variance, $MS_\text{Within}$, and then compares $F$ to a null distribution that assumes normal residuals. Pooling only makes sense when the groups have similar spread.
+The first is **homogeneity of variance**, which means the groups have roughly equal spread around their own means. The second is approximately normal residuals. In ANOVA the model predicts each score with its group mean, so a residual is the score minus its group mean, the same idea as the residuals in @fig-2regressionResiduals. Here each residual is a plot's count minus its forest type's mean, the same deviations that make up $SS_\text{Within}$, and the residuals should be roughly bell-shaped.
+
+Both matter because the $F$-test pools the within-group spread of every group into one error variance, $MS_\text{Within}$, and then compares $F$ to a null distribution that assumes normal residuals. Pooling only makes sense when the groups have similar spread.
 
 Levene's test [@Levene1960; @BrownForsythe1974] checks homogeneity of variance. Its null hypothesis is that every group has the same variance, so a small $p$-value is evidence that the spreads differ. It reports its own $F$ statistic, separate from the ANOVA's $F$. The Shapiro-Wilk test from @sec-6assumptions checks normality, here applied to the residuals.
 
