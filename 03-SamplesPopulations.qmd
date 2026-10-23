@@ -158,7 +158,12 @@ Two coin flips are independent. A head on the first flip does not change the pro
 
 Every test in this book requires independent observations. @sec-ttests states this assumption once, and later chapters refer back to it.
 
-Independence also gives a result used in @sec-anova. Run $m$ independent tests, each with a 5% chance of a false positive, a test result that signals an effect when there is none (@sec-errors-power calls this a Type I error). By the multiplication rule applied $m$ times, the chance that none of them gives a false positive is $(1-0.05)^m$, so the chance of at least one false positive is $1-(1-0.05)^m$. For $m = 5$, $(0.95)^5 = 0.77$, so the chance of at least one false positive is $1 - 0.77 = 0.23$. For $m = 10$, $(0.95)^{10} = 0.60$, so the chance is $1 - 0.60 = 0.40$.
+Independence also gives a result used in @sec-anova. Run $m$ independent tests, each with a 5% chance of a false positive, a test result that signals an effect when there is none (@sec-errors-power calls this a Type I error). By the multiplication rule applied $m$ times, the chance that none of them gives a false positive is $(1-0.05)^m$, so the chance of at least one false positive is $1-(1-0.05)^m$. For 5 and 10 tests:
+
+$$\begin{aligned}
+m = 5: \quad 1 - 0.95^5 &= 1 - 0.77 = 0.23 \\
+m = 10: \quad 1 - 0.95^{10} &= 1 - 0.60 = 0.40
+\end{aligned}$$
 
 ## Probability distributions
 
@@ -759,7 +764,15 @@ Neither fact needs the central limit theorem. Both come from how averages of ind
 
 The law of large numbers follows from the standard error. Because $\sigma/\sqrt{n}$ shrinks toward zero as $n$ grows, a single sample's $\bar{x}$ becomes very likely to be close to $\mu$. The formal argument uses [Chebyshev's inequality](https://en.wikipedia.org/wiki/Law_of_large_numbers#Proof_using_Chebyshev%27s_inequality_assuming_finite_variance), but this is the idea we need.
 
-The second fact also gives the width of @fig-3unifmany. The numbers 1 to 10 have mean 5.5. Their population variance is the average squared distance from 5.5, $\frac{1}{10}\sum_{x=1}^{10}(x - 5.5)^2 = 82.5/10 = 8.25$, so $\sigma = \sqrt{8.25} = 2.87$. With $n = 20$ the formula gives $\sigma/\sqrt{n} = 2.87/\sqrt{20} = 2.87/4.47 = 0.64$. The standard deviation of the 10,000 sample means in @fig-3unifmany is `r sprintf("%.2f", sd(unif_means))`, matching the formula.
+The second fact also gives the width of @fig-3unifmany. The numbers 1 to 10 have mean 5.5. Their population variance is the average squared distance from 5.5, and with $n = 20$ the formula gives the standard error:
+
+$$\begin{aligned}
+\sigma^2 &= \frac{1}{10}\sum_{x=1}^{10}(x - 5.5)^2 = 82.5/10 = 8.25 \\
+\sigma &= \sqrt{8.25} = 2.87 \\
+SE_{\bar{x}} &= \sigma/\sqrt{n} = 2.87/\sqrt{20} = 2.87/4.47 = 0.64
+\end{aligned}$$
+
+The standard deviation of the 10,000 sample means in @fig-3unifmany is `r sprintf("%.2f", sd(unif_means))`, matching the formula.
 
 ## The central limit theorem
 
@@ -903,7 +916,11 @@ Together, these figures show the central limit theorem at work. The sampling dis
 
 $$SE_{\bar{x}} = \frac{\sigma}{\sqrt{n}}.$$
 
-This formula shows how sample size controls the precision of $\bar{x}$, meaning how little $\bar{x}$ varies from sample to sample. As $n$ increases, the denominator grows and the SE falls. The SE falls with the square root of $n$. Doubling $n$ divides the SE by $\sqrt{2} = 1.41$, which multiplies it by $1/1.41 = 0.71$, a cut of about 30%. Each further increase in sample size gives a smaller gain in precision. In @fig-3samplingmean, going from $n = 2$ to $n = 8$, six more observations, cuts the SE from 0.71 to 0.35. Going from $n = 32$ to $n = 128$, 96 more observations, cuts it from 0.18 to 0.09.
+This formula shows how sample size controls the precision of $\bar{x}$, meaning how little $\bar{x}$ varies from sample to sample. As $n$ increases, the denominator grows and the SE falls. The SE falls with the square root of $n$. Doubling $n$ divides the SE by $\sqrt{2} = 1.41$:
+
+$$SE_\text{new} = SE/1.41 = 0.71 \times SE,$$
+
+a cut of about 30%. Each further increase in sample size gives a smaller gain in precision. In @fig-3samplingmean, going from $n = 2$ to $n = 8$, six more observations, cuts the SE from 0.71 to 0.35. Going from $n = 32$ to $n = 128$, 96 more observations, cuts it from 0.18 to 0.09.
 
 The facts about sample means in this chapter fall into two groups: three facts about the pile of sample means, and the law of large numbers, which is about a single sample.
 
@@ -1037,7 +1054,14 @@ ggplot(t_df, aes(x=x_range,y=dnorm_vec))+
 
 **Standardizing** converts a raw score, the value as measured, into a $z$-score by subtracting the mean and dividing by the standard deviation. $z$-scores are also called **standardized scores**.
 
-Standardizing lets you compare values that come from distributions with different means and spreads, because a $z$-score's unit is the standard deviation. A stream that usually runs at 12 °C, with an SD of 2 °C, reads 18 °C one afternoon. That reading is $(18 - 12)/2 = 3$ SDs above the stream's usual temperature. A city whose summer days average 25 °C, with an SD of 5 °C, has a 30 °C day. That day is $(30 - 25)/5 = 1$ SD above usual. The city's 30 °C is the larger number, but the stream's 18 °C is the more unusual reading, and the $z$-scores of 3 and 1 show it.
+Standardizing lets you compare values that come from distributions with different means and spreads, because a $z$-score's unit is the standard deviation. A stream that usually runs at 12 °C, with an SD of 2 °C, reads 18 °C one afternoon. A city whose summer days average 25 °C, with an SD of 5 °C, has a 30 °C day.
+
+$$\begin{aligned}
+\text{Stream: } z &= (18 - 12)/2 = 3 \\
+\text{City: } z &= (30 - 25)/5 = 1
+\end{aligned}$$
+
+The city's 30 °C is the larger number, but the stream's 18 °C is the more unusual reading, and the $z$-scores of 3 and 1 show it.
 
 There are two versions, depending on which mean and SD you have:
 
@@ -1228,7 +1252,14 @@ gridExtra::grid.arrange(
 
 The sum of squared distances around $\bar{x}$, 14, is smaller than the sum around the true mean, 17, because $\bar{x}$ was calculated from these same three values. This happens in every sample. The sum of squared distances is smallest around the sample's own mean, so it is never larger than the sum around $\mu$.
 
-The gap between the two sums has an exact size, and that size is where the $n - 1$ comes from. In this sample it is 17 − 14 = 3, which equals $n(\bar{x} - \mu)^2 = 3 \times (5 - 6)^2$. The same holds in every sample. The sum around $\mu$ always equals the sum around $\bar{x}$ plus $n(\bar{x} - \mu)^2$. The standard error is the standard deviation of the sampling distribution of $\bar{x}$, which is centered at $\mu$, so the average of $(\bar{x} - \mu)^2$ is the squared standard error, $\sigma^2/n$. The gap therefore averages $n \times \sigma^2/n = \sigma^2$. Each $(x_i - \mu)^2$ averages $\sigma^2$, because that is the definition of the population variance, so the sum of $n$ of them around $\mu$ averages $n\sigma^2$. The sum around $\bar{x}$ is the sum around $\mu$ minus the gap, so it averages $n\sigma^2 - \sigma^2 = (n-1)\sigma^2$. Dividing it by $n - 1$ gives $\sigma^2$ on average.
+The gap between the two sums has an exact size, and that size is where the $n - 1$ comes from. In this sample the gap is
+
+$$\begin{aligned}
+17 - 14 &= 3 \\
+n(\bar{x} - \mu)^2 &= 3 \times (5 - 6)^2 = 3
+\end{aligned}$$
+
+The same holds in every sample. The sum around $\mu$ always equals the sum around $\bar{x}$ plus $n(\bar{x} - \mu)^2$. The standard error is the standard deviation of the sampling distribution of $\bar{x}$, which is centered at $\mu$, so the average of $(\bar{x} - \mu)^2$ is the squared standard error, $\sigma^2/n$. The gap therefore averages $n \times \sigma^2/n = \sigma^2$. Each $(x_i - \mu)^2$ averages $\sigma^2$, because that is the definition of the population variance, so the sum of $n$ of them around $\mu$ averages $n\sigma^2$. The sum around $\bar{x}$ is the sum around $\mu$ minus the gap, so it averages $n\sigma^2 - \sigma^2 = (n-1)\sigma^2$. Dividing it by $n - 1$ gives $\sigma^2$ on average.
 
 Variance and SD are built from these squared distances, so they come out too small as well. Dividing the sum around $\bar{x}$ by $n$ gives a variance that underestimates $\sigma^2$, and the sample SD inherits that bias.
 
@@ -1420,7 +1451,14 @@ The $n-1$ correction is already built into $s$, so the denominator here is still
 
 Estimating $\sigma$ with $s$ adds uncertainty, because $s$ itself varies from sample to sample, as @fig-3sdbias-simulation showed. To account for this, we swap the normal cutoffs for those from the $t$-distribution (@sec-ttests), which depends on sample size. With small $n$, the $t$ values are larger, so the CI widens. At $n = 5$ the 95% cutoff is 2.78 instead of 1.96. As $n$ grows, $t$ values shrink toward 1.96 (2.05 at $n = 30$), and the $t$-based CI becomes indistinguishable from the normal version.
 
-**A confidence interval shows how precise an estimate is.** A larger $n$ gives a smaller standard error and so a narrower interval. With $\sigma = 15$, the standard error is $15/\sqrt{25} = 3$ at $n = 25$, so the interval is $\bar{x} \pm 1.96 \times 3 = \bar{x} \pm 5.88$. At $n = 100$ the standard error is $15/\sqrt{100} = 1.5$, so the interval is $\bar{x} \pm 2.94$. A wide interval means the estimate is imprecise, and a narrow one means it is precise.
+**A confidence interval shows how precise an estimate is.** A larger $n$ gives a smaller standard error and so a narrower interval. With $\sigma = 15$:
+
+$$\begin{aligned}
+n = 25: \quad SE &= 15/\sqrt{25} = 3, \quad \bar{x} \pm 1.96 \times 3 = \bar{x} \pm 5.88 \\
+n = 100: \quad SE &= 15/\sqrt{100} = 1.5, \quad \bar{x} \pm 1.96 \times 1.5 = \bar{x} \pm 2.94
+\end{aligned}$$
+
+A wide interval means the estimate is imprecise, and a narrow one means it is precise.
 
 ## Chapter Summary
 

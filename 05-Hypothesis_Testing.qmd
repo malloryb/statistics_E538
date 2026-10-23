@@ -309,7 +309,9 @@ The choice between a one-tailed and a two-tailed test changes power. @sec-infere
 -   the direction is set *before* seeing the data, and
 -   a result in the other direction would lead to the same action as no result.
 
-A city testing whether a no-idling rule changed PM2.5 near schools would act on a rise just as much as on a drop, so that test stays two-tailed. For a plant checking whether its discharge exceeds a permit limit of 10 mg/L, a mean below the limit leads to the same action as a mean at the limit, which is to keep operating. That test can be one-tailed, with $H_a: \mu > 10$, as long as the plant wrote the direction down before sampling.
+A city testing whether a no-idling rule changed PM2.5 near schools would act on a rise just as much as on a drop, so that test stays two-tailed. For a plant checking whether its discharge exceeds a permit limit of 10 mg/L, a mean below the limit leads to the same action as a mean at the limit, which is to keep operating. That test can be one-tailed, as long as the plant wrote the direction down before sampling:
+
+$$H_a: \mu > 10$$
 
 ```{r}
 #| include: false
@@ -409,7 +411,14 @@ In $z$ the numerator is the observed effect, $\bar{x}-\mu_0$. In Cohen's $d$ it 
 
 : The test statistic $z$ and the effect size Cohen's $d$ compared. {#tbl-5z-vs-d}
 
-A large test statistic therefore does not mean a large effect. In a one-sample test, dividing by $\sigma/\sqrt{n}$ is the same as dividing by $\sigma$ and multiplying by $\sqrt{n}$, so $z = \frac{\bar{x}-\mu_0}{\sigma}\sqrt{n}$. The fraction is Cohen's $d$ computed from the sample, with $\bar{x}$ in place of $\mu$, so $z = (\text{Cohen's } d)\sqrt{n}$. An observed Cohen's $d = 0.05$ gives $z = 0.05 \times \sqrt{100} = 0.5$ at $n = 100$ and $z = 0.05 \times \sqrt{10{,}000} = 5$ at $n = 10{,}000$. The $t$ in @sec-ttests is the same ratio with an estimated $s$ in place of a known $\sigma$, so the same holds for $t$.
+A large test statistic therefore does not mean a large effect. In a one-sample test, dividing by $\sigma/\sqrt{n}$ is the same as dividing by $\sigma$ and multiplying by $\sqrt{n}$, so $z = \frac{\bar{x}-\mu_0}{\sigma}\sqrt{n}$. The fraction is Cohen's $d$ computed from the sample, with $\bar{x}$ in place of $\mu$, so $z = (\text{Cohen's } d)\sqrt{n}$. For an observed Cohen's $d = 0.05$:
+
+$$\begin{aligned}
+n = 100: \quad z &= 0.05 \times \sqrt{100} = 0.5 \\
+n = 10{,}000: \quad z &= 0.05 \times \sqrt{10{,}000} = 5
+\end{aligned}$$
+
+The $t$ in @sec-ttests is the same ratio with an estimated $s$ in place of a known $\sigma$, so the same holds for $t$.
 
 **Environmental example (biodiversity index).** Suppose an index increases from 3 to 4 after reforestation.
 
@@ -724,7 +733,14 @@ This sequence is a **formal power analysis**. A formal power analysis finds the 
 
 @fig-5effectsizeType1 shows that a significant result from a small study overstates the effect. Each dot in the figure is one simulated study in which the true mean is exactly $\mu_0$. We ran 1,000 studies at each of four sample sizes (10, 50, 100, and 1,000) and kept only the ones that gave $p < 0.05$, about 50 at each size.
 
-When the null hypothesis is true, 5% of tests still give $p < 0.05$. In small samples, those false positives come with large estimated effect sizes, even though the true effect is zero. A one-sample $t$-test (@sec-ttests) at $n = 10$ reaches $p < 0.05$ only when $|t| > `r sprintf("%.2f", qt(0.975, 9))`$, the $t$ critical value for this sample size. Because $t = (\text{Cohen's } d)\sqrt{n}$ as well (the effect size section), that means $|\text{Cohen's } d| = |t|/\sqrt{10}$ must be at least `r sprintf("%.2f", qt(0.975, 9) / sqrt(10))`. At $n = 1{,}000$ the threshold is `r sprintf("%.2f", qt(0.975, 999) / sqrt(1000))`.
+When the null hypothesis is true, 5% of tests still give $p < 0.05$. In small samples, those false positives come with large estimated effect sizes, even though the true effect is zero. A one-sample $t$-test (@sec-ttests) reaches $p < 0.05$ only when $|t|$ is beyond the $t$ critical value. Because $t = (\text{Cohen's } d)\sqrt{n}$ as well (the effect size section), $|\text{Cohen's } d| = |t|/\sqrt{n}$ must be at least the critical value divided by $\sqrt{n}$ (@tbl-5minimumd).
+
+| $n$ | $t$ critical value | Smallest $\lvert\text{Cohen's } d\rvert$ with $p < 0.05$ |
+|--:|--:|--:|
+| 10 | `r sprintf("%.2f", qt(0.975, 9))` | `r sprintf("%.2f", qt(0.975, 9) / sqrt(10))` |
+| 1,000 | `r sprintf("%.2f", qt(0.975, 999))` | `r sprintf("%.2f", qt(0.975, 999) / sqrt(1000))` |
+
+: The smallest estimated effect that can reach $p < 0.05$ in a one-sample $t$-test. {#tbl-5minimumd}
 
 ```{r}
 #| label: fig-5effectsizeType1

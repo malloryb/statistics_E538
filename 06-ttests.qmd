@@ -149,7 +149,11 @@ If the population SD $\sigma$ is known *and* the sampling distribution of the sa
 
 For one-sample and paired $t$-tests, $df = n-1$. A sample of 10 has $df=9$.
 
-Consider three numbers with a mean of 2. Three numbers with a mean of 2 must add up to $3 \times 2 = 6$. Pick the first two freely, say 51 and $-3$. They add up to 48, so the third number has to be $6 - 48 = -42$. Two of the three numbers were free to vary, and the third was not. That's $df=n-1=2$ for three numbers.
+Consider three numbers with a mean of 2. Three numbers with a mean of 2 must add up to $3 \times 2 = 6$. Pick the first two freely, say 51 and $-3$. They add up to 48, so the third number has to be
+
+$$x_3 = 6 - (51 + (-3)) = 6 - 48 = -42.$$
+
+Two of the three numbers were free to vary, and the third was not. That's $df=n-1=2$ for three numbers.
 
 In a $t$-test, the mean is the thing estimated, and the $df$ tells you how much information is left for estimating the spread, $s$. With few degrees of freedom, $s$ can be well above or below $\sigma$, so the $t$ curve has the heavier tails described earlier in this chapter. As $df$ grows, $s$ settles close to $\sigma$ and the $t$ curve approaches the normal. Each $df$ therefore gets its own $t$ curve.
 
@@ -234,8 +238,8 @@ Let's calculate a one-sample $t$ statistic step by step using a short example. A
 
 **Sound levels (dB):** 50, 70, 60, 40, 80, 30, 90, 60, 70, 60
 
--   $H_0$: $\mu = 50$. The mean sound level near the highway equals the 50 dB guideline.
--   $H_a$: $\mu \neq 50$.
+-   **Null ($H_0$):** the mean sound level near the highway equals the 50 dB guideline, $\mu = 50$.
+-   **Alternative ($H_a$):** it differs from the guideline, $\mu \neq 50$.
 
 ```{r}
 #| label: ex-onesample-t
@@ -252,7 +256,15 @@ ci_lo <- round(tt$conf.int[[1]], 2)
 ci_hi <- round(tt$conf.int[[2]], 2)
 ```
 
-By hand, the mean of the ten sound levels is $610/10 = 61$ dB. The squared deviations from 61 add up to 2,890, so $s^2 = 2890/9 = 321.1$ and $s = \sqrt{321.1} = 17.92$ dB. The standard error of the mean is the sample SD divided by the square root of $n$:
+By hand (the squared deviations from 61 add up to 2,890):
+
+$$\begin{aligned}
+\bar{x} &= 610/10 = 61 \text{ dB} \\
+s^2 &= 2890/9 = 321.1 \\
+s &= \sqrt{321.1} = 17.92 \text{ dB}
+\end{aligned}$$
+
+The standard error of the mean is the sample SD divided by the square root of $n$:
 
 $$SE_{\bar{x}} = \frac{s}{\sqrt{n}} = \frac{`r round(s,2)`}{\sqrt{`r n`}} = `r round(SE,2)`$$
 
@@ -398,7 +410,14 @@ ggplot(plot_df, aes(x = range, y = null_distribution)) +
   labs(x = "t", y = "Density")
 ```
 
-For our result, $t(9) = 1.94$. A one-tailed test with $H_a$: $\mu > 50$ gives $p = 0.042$. The two-tailed test with $H_a$: $\mu \neq 50$ gives $p = 0.084$, exactly double, because a two-tailed test counts the matching region in both tails. The choice changes the decision here. One-tailed, the result is significant at $\alpha = 0.05$. Two-tailed, it is not significant.
+For our result, $t(9) = 1.94$.
+
+| Test | $H_a$ | $p$ | At $\alpha = 0.05$ |
+|:--|:--|--:|:--|
+| One-tailed | $\mu > 50$ | 0.042 | significant |
+| Two-tailed | $\mu \neq 50$ | 0.084 | not significant |
+
+The two-tailed $p$ is exactly double, because a two-tailed test counts the matching region in both tails, and here the choice changes the decision.
 
 ### Assumptions, and what to do when they don't hold {#sec-6assumptions}
 
@@ -414,13 +433,25 @@ Every test in this book has assumptions. Assumptions are conditions that need to
 
 @tbl-6card-onesample collects the one-sample $t$-test on one card.
 
-| | |
-|:--|:--|
-| Purpose | Compare a sample mean to a reference value $\mu_0$ (a standard, a historical mean, a policy target) |
-| Hypotheses | $H_0: \mu = \mu_0$, $\quad H_a: \mu \neq \mu_0$ |
-| Assumptions | Population approximately normal |
-| Test statistic | $t = (\bar{x} - \mu_0)/(s/\sqrt{n})$, $\quad df = n - 1$ |
-| Report | $\bar{x}$, 95% CI, $t(df)$, $p$ |
++:---------------+:---------------------------------------------------------------+
+| Purpose        | Compare a sample mean to a reference value $\mu_0$             |
+|                |                                                                |
+|                | For example, a standard, a historical mean, or a policy target |
++----------------+----------------------------------------------------------------+
+| Hypotheses     | $H_0: \mu = \mu_0$                                             |
+|                |                                                                |
+|                | $H_a: \mu \neq \mu_0$                                          |
++----------------+----------------------------------------------------------------+
+| Assumptions    | Population approximately normal                                |
++----------------+----------------------------------------------------------------+
+| Test statistic | $t = (\bar{x} - \mu_0)/(s/\sqrt{n})$                           |
+|                |                                                                |
+|                | $df = n - 1$                                                   |
++----------------+----------------------------------------------------------------+
+| Report         | $\bar{x}$ and 95% CI                                           |
+|                |                                                                |
+|                | $t(df)$ and $p$                                                |
++----------------+----------------------------------------------------------------+
 
 : Test card: one-sample $t$-test. {#tbl-6card-onesample tbl-colwidths="[20,80]"}
 
@@ -453,8 +484,8 @@ The dashed boxes mark what makes this design paired. In the design figures in ea
 
 This subtraction cancels between-plot variability (some plots are naturally wetter than others) and focuses on within-plot change, so the difference scores vary less than the raw soil moisture values do. A smaller $s_d$ gives a smaller standard error, so the paired test has more power than an independent-samples test (the third test in this chapter) on the same data.
 
--   $H_0$: $\mu_d = 0$, where $\mu_d$ is the mean difference score in the population of plots. Restoration did not change soil moisture.
--   $H_a$: $\mu_d \neq 0$.
+-   **Null ($H_0$):** restoration did not change soil moisture, $\mu_d = 0$, where $\mu_d$ is the mean difference score in the population of plots.
+-   **Alternative ($H_a$):** restoration changed soil moisture, $\mu_d \neq 0$.
 
 **Test on differences (paired $t$).** Compute one difference per plot, then run a one-sample $t$ against 0:
 
@@ -517,7 +548,14 @@ knitr::kable(paired_sample_df,
              caption = "Soil moisture (%) before and after restoration at five plots, with the steps for the paired t.")
 ```
 
-The five differences are 3, 4, 6, 4, and $-3$. They add up to 14, so $\bar d = 14/5 = 2.8$ percentage points. The squared deviations from 2.8 add up to 46.8, so $s_d = \sqrt{46.8/4} = 3.42$. Then $SE_{\bar{d}} = 3.42/\sqrt{5} = 1.53$ and $t = 2.8/1.53 = 1.83$.
+The five differences are 3, 4, 6, 4, and $-3$. They add up to 14, and their squared deviations from 2.8 add up to 46.8.
+
+$$\begin{aligned}
+\bar d &= 14/5 = 2.8 \text{ percentage points} \\
+s_d &= \sqrt{46.8/4} = 3.42 \\
+SE_{\bar{d}} &= 3.42/\sqrt{5} = 1.53 \\
+t &= 2.8/1.53 = 1.83
+\end{aligned}$$
 
 R gives almost the same numbers. The table rounds at each step, so its values differ slightly from R's.
 
@@ -583,13 +621,29 @@ This is the interval R reports in the table above. It is the 95% CI for the effe
 
 @tbl-6card-paired collects the paired $t$-test on one card.
 
-| | |
-|:--|:--|
-| Purpose | Did the units change, on average? Same units measured twice |
-| Hypotheses | $H_0: \mu_d = 0$, $\quad H_a: \mu_d \neq 0$ ($\mu_d$ = population mean of the difference scores) |
-| Assumptions | Difference scores approximately normal |
-| Test statistic | $d_i = \text{After}_i - \text{Before}_i$, $\quad t = \bar d/(s_d/\sqrt{n})$, $\quad df = n - 1$ ($n$ = number of pairs) |
-| Report | $\bar d$, 95% CI, $t(df)$, $p$, and optionally Cohen's $d = \bar d/s_d$ |
++:---------------+:--------------------------------------------------------------------------------+
+| Purpose        | Did the units change, on average?                                               |
+|                |                                                                                 |
+|                | Same units measured twice                                                       |
++----------------+---------------------------------------------------------------------------------+
+| Hypotheses     | $H_0: \mu_d = 0$, where $\mu_d$ is the population mean of the difference scores |
+|                |                                                                                 |
+|                | $H_a: \mu_d \neq 0$                                                             |
++----------------+---------------------------------------------------------------------------------+
+| Assumptions    | Difference scores approximately normal                                          |
++----------------+---------------------------------------------------------------------------------+
+| Test statistic | $d_i = \text{After}_i - \text{Before}_i$                                        |
+|                |                                                                                 |
+|                | $t = \bar d/(s_d/\sqrt{n})$                                                     |
+|                |                                                                                 |
+|                | $df = n - 1$, where $n$ is the number of pairs                                  |
++----------------+---------------------------------------------------------------------------------+
+| Report         | $\bar d$ and 95% CI                                                             |
+|                |                                                                                 |
+|                | $t(df)$ and $p$                                                                 |
+|                |                                                                                 |
+|                | Optionally, Cohen's $d = \bar d/s_d$                                            |
++----------------+---------------------------------------------------------------------------------+
 
 : Test card: paired $t$-test. {#tbl-6card-paired tbl-colwidths="[20,80]"}
 
@@ -630,8 +684,8 @@ The pooled test adds two test-specific assumptions: the outcome is approximately
 
 The worked example compares bird species at ten field-edge sites. Five sites had their hedgerow removed (Group A), and five kept an intact hedgerow (Group B). At each site, one 10-minute point count recorded the number of bird species seen or heard. The counts are invented.
 
--   $H_0$: $\mu_A = \mu_B$. Hedgerows make no difference to the mean number of bird species.
--   $H_a$: $\mu_A \neq \mu_B$.
+-   **Null ($H_0$):** hedgerows make no difference to the mean number of bird species, $\mu_A = \mu_B$.
+-   **Alternative ($H_a$):** the mean number of species differs, $\mu_A \neq \mu_B$.
 
 The code below follows the formula step by step in R, then checks it against `t.test()`.
 
@@ -661,7 +715,14 @@ sp <- sqrt(sp_numerator/sp_denominator) # compute sp
 t <- mean_difference / (sp * sqrt(1/n_a + 1/n_b))
 ```
 
-Group A's counts (1, 2, 3, 4, 5) have mean 3.0 and variance 2.5. Group B's counts (3, 5, 4, 7, 9) have mean 5.6 and variance 5.8. The pooled variance is $(4 \times 2.5 + 4 \times 5.8)/8 = 4.15$, so $s_p = \sqrt{4.15} = 2.04$. The standard error of the difference is $2.04\sqrt{1/5 + 1/5} = 1.29$, and $t = (3.0 - 5.6)/1.29 = -2.02$.
+Group A's counts (1, 2, 3, 4, 5) have mean 3.0 and variance 2.5. Group B's counts (3, 5, 4, 7, 9) have mean 5.6 and variance 5.8. The pooled variance, the standard error of the difference, and $t$ follow:
+
+$$\begin{aligned}
+s_p^2 &= (4 \times 2.5 + 4 \times 5.8)/8 = 4.15 \\
+s_p &= \sqrt{4.15} = 2.04 \\
+SE &= 2.04\sqrt{1/5 + 1/5} = 1.29 \\
+t &= (3.0 - 5.6)/1.29 = -2.02
+\end{aligned}$$
 
 ```{r}
 #| echo: true
@@ -708,13 +769,33 @@ Cohen's $d$ for two independent groups divides the mean difference by the pooled
 
 @tbl-6card-indep collects the independent-samples $t$-test on one card.
 
-| | |
-|:--|:--|
-| Purpose | Do two separate groups differ on average? Different units in each group |
-| Hypotheses | $H_0: \mu_A = \mu_B$, $\quad H_a: \mu_A \neq \mu_B$ |
-| Assumptions | Approximately normal within each group, and similar spread in both groups (pooled version). When the spreads clearly differ, use Welch's version |
-| Test statistic | $t = \dfrac{\bar{x}_A - \bar{x}_B}{s_p\sqrt{\dfrac{1}{n_A} + \dfrac{1}{n_B}}}$, $\quad s_p = \sqrt{\dfrac{(n_A-1)s_A^2 + (n_B-1)s_B^2}{n_A+n_B-2}}$, $\quad df = n_A + n_B - 2$ |
-| Report | $\bar{x}_A - \bar{x}_B$, 95% CI, $t(df)$, $p$, and optionally Cohen's $d = (\bar{x}_A - \bar{x}_B)/s_p$ |
++:---------------+:-------------------------------------------------------------------------------+
+| Purpose        | Do two separate groups differ on average?                                      |
+|                |                                                                                |
+|                | Different units in each group                                                  |
++----------------+--------------------------------------------------------------------------------+
+| Hypotheses     | $H_0: \mu_A = \mu_B$                                                           |
+|                |                                                                                |
+|                | $H_a: \mu_A \neq \mu_B$                                                        |
++----------------+--------------------------------------------------------------------------------+
+| Assumptions    | Approximately normal within each group                                         |
+|                |                                                                                |
+|                | Similar spread in both groups (pooled version)                                 |
+|                |                                                                                |
+|                | When the spreads clearly differ, use Welch's version                           |
++----------------+--------------------------------------------------------------------------------+
+| Test statistic | $t = \dfrac{\bar{x}_A - \bar{x}_B}{s_p\sqrt{\dfrac{1}{n_A} + \dfrac{1}{n_B}}}$ |
+|                |                                                                                |
+|                | $s_p = \sqrt{\dfrac{(n_A-1)s_A^2 + (n_B-1)s_B^2}{n_A+n_B-2}}$                  |
+|                |                                                                                |
+|                | $df = n_A + n_B - 2$                                                           |
++----------------+--------------------------------------------------------------------------------+
+| Report         | $\bar{x}_A - \bar{x}_B$ and 95% CI                                             |
+|                |                                                                                |
+|                | $t(df)$ and $p$                                                                |
+|                |                                                                                |
+|                | Optionally, Cohen's $d = (\bar{x}_A - \bar{x}_B)/s_p$                          |
++----------------+--------------------------------------------------------------------------------+
 
 : Test card: independent-samples $t$-test. {#tbl-6card-indep tbl-colwidths="[20,80]"}
 
