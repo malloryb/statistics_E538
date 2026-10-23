@@ -941,7 +941,44 @@ $F$ uses the same numerator as before, $MS_\text{Between} = 56/2 = 28$. Only the
 
 $$\text{One-way: } F = \frac{28}{174/9} = \frac{28}{19.33} = 1.45 \qquad \text{Repeated measures: } F = \frac{28}{12/6} = \frac{28}{2} = 14.00$$
 
-@tbl-8pmcompare sets the two analyses side by side.
+@fig-8pmpartition draws the two splits of the same 230, and @tbl-8pmcompare sets the two analyses side by side. In the repeated-measures split, the station-to-station variation is taken out of the error term, which leaves an error sum of squares of only 12.
+
+```{r}
+#| label: fig-8pmpartition
+#| fig-cap: "The same 12 PM2.5 values split two ways. Both bars total 230. The one-way analysis leaves the station differences in the within-groups error. The repeated-measures analysis removes them (dashed gray piece), so the error term shrinks from 174 to 12 and $F$ grows from 1.45 to 14.00."
+#| fig-alt: "Two horizontal stacked bars on one sum-of-squares axis from 0 to 230. The top bar, one-way, has an orange Between piece of 56 with 2 degrees of freedom and a blue Within piece of 174 with 9 degrees of freedom, and F equals 28 over 19.33, or 1.45. The bottom bar, repeated measures, has the same orange Between piece of 56, then a pale gray piece with a dashed outline labeled stations, removed from the error term, sum of squares 162 with 3 degrees of freedom, then a thin blue Error piece of 12 with 6 degrees of freedom, and F equals 28 over 2, or 14.00."
+#| fig-asp: 0.4
+#| out-width: "100%"
+
+parts <- data.frame(
+  y     = c(2, 2, 1, 1, 1),
+  piece = c("Between", "Within", "Between", "Subjects", "Error"),
+  xmin  = c(0, 56, 0, 56, 218),
+  xmax  = c(56, 230, 56, 218, 230)
+)
+fills <- c(Between = "#D55E00", Within = "#0072B2", Error = "#0072B2", Subjects = "grey92")
+
+ggplot(parts) +
+  geom_rect(aes(xmin = xmin, xmax = xmax, ymin = y - 0.28, ymax = y + 0.28, fill = piece),
+            colour = "white", linewidth = 0.6) +
+  # the station piece is set aside: pale fill, dashed outline
+  annotate("rect", xmin = 56, xmax = 218, ymin = 0.72, ymax = 1.28,
+           fill = NA, colour = "grey45", linetype = "dashed", linewidth = 0.5) +
+  annotate("text", x = 28, y = c(2, 1), label = "Between\nSS = 56, df = 2",
+           colour = "white", size = 3.2, lineheight = 0.9) +
+  annotate("text", x = 143, y = 2, label = "Within\nSS = 174, df = 9",
+           colour = "white", size = 3.2, lineheight = 0.9) +
+  annotate("text", x = 137, y = 1, label = "Stations: removed from the error term\nSS = 162, df = 3",
+           colour = "grey30", size = 3.2, lineheight = 0.9) +
+  annotate("text", x = 224, y = 0.6, label = "Error: SS = 12, df = 6", colour = "#0072B2", size = 3.2) +
+  annotate("text", x = 236, y = 2, label = "F = 28 / 19.33 = 1.45", hjust = 0, size = 3.4) +
+  annotate("text", x = 236, y = 1, label = "F = 28 / 2 = 14.00", hjust = 0, size = 3.4) +
+  scale_fill_manual(values = fills, guide = "none") +
+  scale_y_continuous(breaks = 1:2, labels = c("Repeated measures", "One-way"), limits = c(0.5, 2.4)) +
+  scale_x_continuous(limits = c(0, 330), breaks = seq(0, 200, 50), expand = c(0, 0)) +
+  labs(x = "Sum of squares (total = 230)", y = NULL) +
+  theme_classic(base_size = 12)
+```
 
 | Source | One-way df | One-way SS | One-way MS | Repeated-measures df | Repeated-measures SS | Repeated-measures MS |
 |:--|--:|--:|--:|--:|--:|--:|
