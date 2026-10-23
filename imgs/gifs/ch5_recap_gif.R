@@ -1,6 +1,7 @@
 # Builds imgs/gifs/ch5_recap.gif for Chapter 5: the two sampling distributions from Chapter 4,
 # the distance between them deciding the test. Ends where the Type I figure starts; the truth is added there.
 # Run from the project root: Rscript imgs/gifs/ch5_recap_gif.R
+# Also writes the final-frame still imgs/gifs/stills/ch5_recap.png for the PDF edition.
 suppressMessages({library(ggplot2); library(gifski)})
 se <- 0.4; sigma <- 0.8; mu0 <- 0; crit <- 1.96 * se; xlim <- c(-1.8, 2.8)
 xs <- seq(xlim[1], xlim[2], by = 0.005)
@@ -13,7 +14,9 @@ frame <- function(title, xbar = NULL, truth = FALSE, verdict = NULL) {
   if (truth) p <- p + geom_line(aes(xs, dnorm(xs, mu0, sigma)), colour = "orange", linewidth = 1.2)
   p <- p + geom_line(data = h0, aes(x, y), colour = "blue", linetype = "dotdash", linewidth = 1.2) +
     annotate("segment", x = mu0 + c(-crit, crit), xend = mu0 + c(-crit, crit), y = 0,
-             yend = dnorm(crit, 0, se), colour = "red", linewidth = 0.8)
+             yend = dnorm(crit, 0, se), colour = "red", linewidth = 0.8) +
+    annotate("segment", x = mu0 + c(-crit, crit), xend = mu0 + c(-crit, crit), y = dnorm(crit, 0, se),
+             yend = 1.22, colour = "red", linetype = "dashed", linewidth = 0.6)
   if (!is.null(xbar)) p <- p +
     geom_line(aes(xs, dnorm(xs, xbar, se)), colour = "darkgreen", linetype = "dotdash", linewidth = 1.2) +
     annotate("segment", x = xbar - crit, xend = xbar + crit, y = -0.04, yend = -0.04, colour = "darkgreen", linewidth = 3)
@@ -54,10 +57,12 @@ add <- function(p, n) for (r in seq_len(n)) { i <<- i + 1; f <- file.path(dir, s
 verdict_of <- function(z) if (abs(z) >= 1.96) "Reject" else "Fail to reject"
 
 # delay 0.25 s per frame: 16 frames = 4 s
-add(frame("'Under '*H[0]*': where the sample mean would land if '*H[0]*' were true'"), 16)
+add(frame("'Under '*H[0]*': where the sample mean would fall if '*H[0]*' were true'"), 16)
 add(frame("'From the sample: the sample mean and its sampling distribution'", xbar = 0.8 * se,
           verdict = verdict_of(0.8)), 16)
 for (z in seq(0.8, 2.4, by = 0.2)) add(frame("'The distance between them decides the test'", xbar = z * se,
                                              verdict = verdict_of(z)), if (abs(z - 2.0) < 1e-9) 3 else 2)
 add(frame("'The distance between them decides the test'", xbar = 2.4 * se, verdict = "Reject"), 24)
 gifski(files, gif_file = "imgs/gifs/ch5_recap.gif", width = 720, height = 450, delay = 0.25)
+# Final-frame still for the PDF edition
+file.copy(files[length(files)], "imgs/gifs/stills/ch5_recap.png", overwrite = TRUE)

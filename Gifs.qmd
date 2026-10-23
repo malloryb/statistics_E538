@@ -297,53 +297,37 @@ knitr::include_graphics(path="imgs/gifs/regression-1.gif")
 ```
 :::
 
-```{r regressiongif,echo=T, fig.path='imgs/gifs/', message=F, warning=F, eval=F}
-
-d <- mtcars
-fit <- lm(mpg ~ hp, data = d)
-d$predicted <- predict(fit)   # Save the predicted values
-d$residuals <- residuals(fit) # Save the residual values
-
-coefs<-coef(lm(mpg ~ hp, data = mtcars))
-coefs[1]
-coefs[2]
-
-x<-d$hp
-move_line<-c(seq(-6,6,.5),seq(6,-6,-.5))
-total_error<-length(length(move_line))
-cnt<-0
-for(i in move_line){
-  cnt<-cnt+1
-  predicted_y <- coefs[2]*x + coefs[1]+i
-  error_y <- (predicted_y-d$mpg)^2
-  total_error[cnt]<-sqrt(sum(error_y)/32)
-}
-
-move_line_sims<-rep(move_line,each=32)
-total_error_sims<-rep(total_error,each=32)
-sims<-rep(1:50,each=32)
-
-d<-d %>% slice(rep(row_number(), 50))
-
-d<-cbind(d,sims,move_line_sims,total_error_sims)
-
-
-anim<-ggplot(d, aes(x = hp, y = mpg, frame=sims)) +
-  geom_smooth(method = "lm", se = FALSE, color = "#10377f") +
-  geom_abline(intercept = 30.09886+move_line_sims, slope = -0.06822828)+
-  lims(x = c(0,400), y = c(-10,40))+
-  geom_segment(aes(xend = hp, yend = predicted+move_line_sims), color = "#b22222", alpha = .5) +
+```{r regressiongif,echo=T, message=F, warning=F, eval=F}
+# The first 20 people from Chapter 2's chocolate and happiness data
+suppressMessages({library(ggplot2); library(dplyr); library(gganimate)})
+withr::with_seed(13, {
+  chocolate <- sample(0:100, 100, replace = TRUE)
+  happiness <- round(pmin(100, pmax(0, 20 + 0.6 * chocolate + rnorm(100, 0, 20))))
+})
+d0 <- data.frame(chocolate = chocolate[1:20], happiness = happiness[1:20])
+fit <- lm(happiness ~ chocolate, data = d0)
+d0$predicted <- predict(fit)
+coefs <- coef(fit)
+n <- nrow(d0)
+move_line <- c(seq(-30, 30, 2.5), seq(30, -30, -2.5))
+total_error <- sapply(move_line, function(i) sqrt(sum((coefs[2]*d0$chocolate + coefs[1] + i - d0$happiness)^2)/n))
+d <- d0[rep(seq_len(n), length(move_line)), ]
+d$sims <- rep(seq_along(move_line), each = n)
+d$move_line_sims <- rep(move_line, each = n)
+d$total_error_sims <- rep(total_error, each = n)
+mk <- function(dd) ggplot(dd, aes(x = chocolate, y = happiness)) +
+  geom_abline(intercept = coefs[1], slope = coefs[2], color = "#10377f", linewidth = 1) +
+  geom_abline(aes(intercept = coefs[1] + move_line_sims, slope = coefs[2])) +
+  geom_segment(aes(xend = chocolate, yend = predicted + move_line_sims), color = "#b22222", alpha = .5) +
   geom_point() +
-  geom_ribbon(aes(ymin = predicted+move_line_sims - total_error_sims, ymax = predicted+move_line_sims + total_error_sims), fill = "lightgrey", alpha=.2)+ 
-  theme_classic()+
-  theme(legend.position="none")+
-  xlab("X")+ylab("Y")+
-  transition_manual(frames=sims)+
-  enter_fade() + 
-  exit_fade()+
-  ease_aes('sine-in-out')
-
-animate(anim,fps=5)
+  geom_ribbon(aes(ymin = predicted + move_line_sims - total_error_sims, ymax = predicted + move_line_sims + total_error_sims), fill = "lightgrey", alpha = .2) +
+  coord_cartesian(xlim = c(0, 100), ylim = c(-20, 130)) +
+  theme_classic() + theme(legend.position = "none") +
+  xlab("Chocolate supply") + ylab("Happiness")
+anim <- mk(d) + transition_manual(frames = sims)
+a <- animate(anim, fps = 5, nframes = length(move_line), width = 480, height = 480, renderer = gifski_renderer())
+anim_save("imgs/gifs/regression-1.gif", a)
+ggsave("imgs/gifs/stills/regression-1.png", mk(d[d$sims == length(move_line), ]), width = 5, height = 5, dpi = 96)
 ```
 
 ## Sampling distributions
