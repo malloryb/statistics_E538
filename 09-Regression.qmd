@@ -85,7 +85,7 @@ The residual $e$ is the sample's version of the error $\varepsilon$. The error $
 
 ### Parameters and sample statistics
 
-The regression coefficients $\beta_0$ and $\beta_1$ are population parameters. They describe the population line, which we estimate from a sample but never know for certain.
+The regression coefficients $\beta_0$ and $\beta_1$ are population parameters.
 
 | Symbol             | What is it?                         | Do we know it?                                  |
 |--------------------|-------------------------------------|-------------------------------------------------|
@@ -148,7 +148,7 @@ $$DO = \beta_0 + \beta_1(\text{Temperature}) + \varepsilon$$
 
 $\beta_0$ is the population intercept, $\beta_1$ is the population slope, and $\varepsilon$ is the error, the part of DO that temperature alone doesn't explain.
 
-We don't know $\beta_0$ and $\beta_1$. We estimate them from the sample as $b_0$ and $b_1$, using the same least-squares logic from @sec-correlation (the line that minimizes the sum of squared residuals).
+We don't know $\beta_0$ and $\beta_1$. We estimate them from the sample as $b_0$ and $b_1$, using the same least-squares logic from @sec-correlation.
 
 In R, this is a single line of code:
 
@@ -238,7 +238,7 @@ $$\text{statistic}=\frac{\text{effect}}{\text{error}}.$$
 
 Here "error" means the standard error of $b_1$, the standard deviation of its sampling distribution. It is a different quantity from the error term $\varepsilon$ in the model.
 
-R reports the $t$-test for the slope in the coefficient table from `summary(fit)`, so there is no separate test to run. You get the `Std. Error`, $t$, and $p$ for each coefficient at once.
+R reports the $t$-test for the slope in the coefficient table from `summary(fit)`, so there is no separate test to run.
 
 The test statistic divides the estimated slope by its standard error, the SE column in the coefficient table above. R computes the standard error of the slope from the residuals and the spread of temperatures, $SE(b_1) = \sqrt{\dfrac{\sum e^2/(n-2)}{\sum (x - \bar x)^2}}$. More scatter around the line makes it larger, and a wider spread of temperatures makes it smaller. The standard error measures how much $b_1$ would vary from sample to sample if we repeated this study many times:
 
@@ -372,7 +372,7 @@ Here $R^2 = `r sprintf("%.2f", fit_glance$r.squared)`$, so stream temperature ex
 
 As with every test in this book, we report an effect size alongside the significance test. Testing the slope asks whether $\beta_1$ differs from 0. $R^2$, regression's effect size, says how much of the variation the line explains. The two can disagree in either direction.
 
-A sample of thousands of observations, common in remote sensing and other big-data environmental work, can make a trivial effect significant, because more observations shrink the standard error until almost any nonzero slope clears $p<0.05$. A small sample can fail the other way and miss a real, sizeable effect because its standard error is too large. Because $p$ and $R^2$ answer different questions, we report both.
+A sample of thousands of observations, common in remote sensing and other big-data environmental work, can make a trivial effect significant, because more observations shrink the standard error until almost any nonzero slope clears $p<0.05$. A small sample can fail the other way and miss a real, sizeable effect because its standard error is too large.
 
 ```{r}
 # Three simulated data sets for fig-9regeffectpanels
@@ -425,7 +425,7 @@ Simple linear regression has three test-specific assumptions, plus the universal
 | Assumption | What it means | How to check | What a violation looks like |
 |:-----------|:--------------|:-------------|:----------------------------|
 | Linearity | The true relationship between $x$ and $y$ is a straight line. | Residuals-versus-fitted plot | A curve, such as a U-shape |
-| Independence | Each observation's error is unrelated to the others'. This is the universal assumption from @sec-ttests. | The study design | Sites along the same stream, or repeated measurements over time |
+| Independence | Each observation's error is unrelated to the others'. | The study design | Sites along the same stream, or repeated measurements over time |
 | Constant variance (homoscedasticity) | The spread of residuals is about the same across the whole range of $x$, the regression version of @sec-anova's homogeneity of variance. | Residuals-versus-fitted plot | A funnel that widens or narrows |
 | Normal residuals | The residuals are approximately normally distributed. | Q-Q plot and Shapiro-Wilk | Points bending away from the Q-Q diagonal |
 
@@ -459,13 +459,13 @@ ggplot(stream_df, aes(x = fitted, y = resid)) +
   ylab("Residuals")
 ```
 
-@fig-9regresid, for our stream temperature data, shows residuals scattered evenly above and below zero, with no curve (which would suggest the true relationship isn't linear) and no funnel shape (which would suggest variance changes systematically across the range of $X$).
+@fig-9regresid, for our stream temperature data, shows residuals scattered evenly above and below zero, with no curve and no funnel shape.
 
-The stream residuals pass both checks. To see what a violation looks like, we fit a straight line to a second data set, 14 days of invented avian influenza case counts. We built the counts from an exponential curve, $6e^{0.28 \times \text{day}}$, which grows by about 32% each day, plus random scatter, so we know the true shape that a straight line will miss. The design has the same structure as the stream example, with time as the continuous predictor.
+To see what a violation looks like, we fit a straight line to a second data set, 14 days of invented avian influenza case counts. We built the counts from an exponential curve, $6e^{0.28 \times \text{day}}$, which grows by about 32% each day, plus random scatter, so we know the true shape that a straight line will miss. The design has the same structure as the stream example, with time as the continuous predictor.
 
 ```{r}
 #| label: fig-9outbreakdesign
-#| fig-cap: "The outbreak data as a design. It has the same structure as the stream example."
+#| fig-cap: "The outbreak data as a design."
 #| fig-alt: "Study design schematic. IV: day of outbreak, continuous, an arrow running from day 1 to day 14. DV: new cases detected per day."
 #| fig-asp: 0.34
 #| out-width: "100%"
@@ -523,7 +523,7 @@ ggplot(outbreak_df, aes(fitted, resid)) +
   ylab("Residuals")
 ```
 
-The residuals form a U. The residuals are positive early and late in the outbreak, so the observed counts are above the line there and the line underpredicts. In the middle they are negative, so the line overpredicts. This is the pattern a straight line fit to a curve produces.
+The residuals form a U. The residuals are positive early and late in the outbreak, so the observed counts are above the line there and the line underpredicts. In the middle they are negative, so the line overpredicts.
 
 If a residual plot curves instead of scattering randomly, a straight line is the wrong model for the data.
 
@@ -568,7 +568,7 @@ knitr::kable(
 )
 ```
 
-Shapiro-Wilk does not reject normality here ($p `r fmt_p_eq(sh_out$p.value)`$). As with any formal normality test, treat this as one piece of evidence alongside the Q-Q plot and residual plot, and do not decide on the test result alone. Shapiro-Wilk has the least power to detect real departures when the sample is small, which is also when the visual checks matter most.
+Shapiro-Wilk does not reject normality here ($p `r fmt_p_eq(sh_out$p.value)`$). As with any formal normality test, treat this as one piece of evidence alongside the Q-Q plot and residual plot. Shapiro-Wilk has the least power to detect real departures when the sample is small, which is also when the visual checks matter most.
 
 Now apply the same two normality checks to the avian influenza model, the one we already know is badly nonlinear.
 
@@ -762,4 +762,4 @@ This problem calls for a different model. More data or a better-fitting straight
 -   **Regression partitions variation the way ANOVA does.** $SS_\text{Total}$ splits into $SS_\text{Regression}$ (@sec-anova's between) and $SS_\text{Residual}$ (@sec-anova's within), and $F = MS_\text{Regression}/MS_\text{Residual}$, which equals $t^2$ with one predictor. $R^2$, the proportion of variation explained by the line, is the effect size. A relationship can be real ($p$ small) and still explain very little, which is why you report both.
 -   **Look at your data, then look at your residuals.** The test-specific assumptions are linearity, constant variance, and roughly normal residuals, on top of independence. A residuals-versus-fitted plot can show a violation that $R^2$, the slope test, and Shapiro-Wilk all miss, as the outbreak example showed.
 -   **Predict inside the observed range, and extrapolate beyond it only with good reason.** Interpolating within the observed range of $x$ is what regression is for. Extrapolating beyond it is sometimes justified, but only when you have good reason to believe the relationship stays the same shape past the range you observed.
--   **A good $R^2$ can still be the wrong model.** The outbreak example fit a straight line to exponential growth and got $R^2=`r sprintf("%.2f", outbreak_tidy$r.squared)`$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast about 26,000 cases short of the exponential curve the data came from. The residual plot catches this. A normality check on the same residuals gives only a borderline signal, because it tests a different assumption.
+-   **A good $R^2$ can still be the wrong model.** The outbreak example fit a straight line to exponential growth and got $R^2=`r sprintf("%.2f", outbreak_tidy$r.squared)`$, a residuals-versus-fitted plot that clearly curved, and an extrapolated forecast about 26,000 cases short of the exponential curve the data came from. A normality check on the same residuals gives only a borderline signal, because it tests a different assumption.

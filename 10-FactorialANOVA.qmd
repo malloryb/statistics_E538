@@ -72,7 +72,7 @@ In science, outcomes rarely depend on just one thing. Climate, soil type, and wa
 
 ## Factorial basics
 
-Imagine investigating the growth rate of a plant species, with independent variables (IVs) like soil pH or water availability. Each added IV multiplies the number of conditions you can observe, and with it, the questions you can ask about how those factors work together. @tbl-10designs shows three designs built around the same plant-growth question.
+Imagine investigating the growth rate of a plant species, with IVs like soil pH or water availability. Each added IV multiplies the number of conditions you can observe, and with it, the questions you can ask about how those factors work together. @tbl-10designs shows three designs built around the same plant-growth question.
 
 | Design | Example question | Test |
 |:-------|:-----------------|:-----|
@@ -88,7 +88,7 @@ A **fully factorial** design includes every combination of the levels of its IVs
 
 ### Factorial notation
 
-Each combination of soil pH and water availability is one condition, so the design has four conditions in which to measure growth rate. With 2 IVs, each with 2 levels, there are 2x2 = 4 conditions.
+Each combination of soil pH and water availability is one condition. With 2 IVs, each with 2 levels, there are 2x2 = 4 conditions in which to measure growth rate.
 
 The name of a factorial design gives one number per IV, and each number is that IV's count of levels. Multiplying the numbers gives the number of conditions. Here are a few examples:
 
@@ -124,7 +124,7 @@ design_crossed("Pollution (categorical) × Flow rate (categorical)",
                note = "5 stream channels in every condition (20 total)")
 ```
 
-With two IVs of two levels each, this is a 2x2 design. Reading the schematic left to right also shows why the notation works the way it does. Crossing two levels with two levels *is* the multiplication that gives four conditions, and "fully crossed" means no cell is left empty.
+With two IVs of two levels each, this is a 2x2 design. Reading the schematic left to right also shows why the notation works the way it does. Crossing two levels with two levels *is* the multiplication that gives four conditions.
 
 That four-cell grid resembles the chi-square table from @sec-nonparametric, but the cells mean different things. There, the cells held *counts* of city blocks that already had a given land use and either did or did not top 40°C, and nobody put them there. Here, the cells are *conditions we assign channels to*, and within each one we then measure something else entirely, the species count.
 
@@ -287,7 +287,7 @@ Those two numbers aren't the same, so the effect of pollution isn't constant acr
 
 ## Computing a factorial ANOVA by hand
 
-In our between-subjects 2x2 design, different stream channels appear in each condition: 5 stream channels assigned to each condition, 20 channels total, no repeats. The logic is the same as the one-way ANOVA in @sec-anova, which partitions the total variance into parts. For a 2x2 design, there's now one more part, the interaction:
+In our between-subjects 2x2 design, 5 stream channels are assigned to each condition, 20 channels total, and no channel appears in more than one condition. The logic is the same as the one-way ANOVA in @sec-anova, which partitions the total variance into parts. For a 2x2 design, there's now one more part, the interaction:
 
 $$SS_\text{Total} = SS_\text{Pollution} + SS_\text{Flow} + SS_\text{Interaction} + SS_\text{Error}$$
 
@@ -380,7 +380,7 @@ The interaction is the one new piece a factorial ANOVA adds. It asks whether the
 
 If the main effects told the whole story, each cell mean would be the grand mean, shifted by that cell's pollution effect and its flow effect. Take the no-pollution, low-flow cell. The no-pollution marginal mean is $`r round(nopoll_mean,2)` - `r round(gm,2)` = `r round(nopoll_mean - gm,2)`$ above the grand mean. The low-flow marginal mean is $`r round(gm,2)` - `r round(low_mean,2)` = `r round(gm - low_mean,2)`$ below it. Together, the two main effects predict $`r round(gm,2)` + `r round(nopoll_mean - gm,2)` - `r round(gm - low_mean,2)` = `r round(nopoll_mean + low_mean - gm,2)`$ for this cell. The observed cell mean is `r f1(mean(A))`. The leftover, `r round(mean(A) - (nopoll_mean + low_mean - gm),2)`, is the part of that cell the two main effects can't explain. Those leftovers, one per cell, are what the interaction captures.
 
-To compute it, subtract each cell's predicted mean from its observed cell mean. The predicted mean is the grand mean plus the pollution shift plus the flow shift, $\bar{Y}_\text{grand} + (\bar{Y}_\text{Pollution marginal} - \bar{Y}_\text{grand}) + (\bar{Y}_\text{Flow marginal} - \bar{Y}_\text{grand})$, which simplifies to $\bar{Y}_\text{Pollution marginal} + \bar{Y}_\text{Flow marginal} - \bar{Y}_\text{grand}$. Subtracting that from the cell mean gives each channel's leftover:
+Each cell's predicted mean is the grand mean plus the pollution shift plus the flow shift, $\bar{Y}_\text{grand} + (\bar{Y}_\text{Pollution marginal} - \bar{Y}_\text{grand}) + (\bar{Y}_\text{Flow marginal} - \bar{Y}_\text{grand})$, which simplifies to $\bar{Y}_\text{Pollution marginal} + \bar{Y}_\text{Flow marginal} - \bar{Y}_\text{grand}$. Subtracting that from the cell mean gives each channel's leftover:
 
 $$\bar{Y}_\text{cell} - \bar{Y}_\text{Pollution marginal} - \bar{Y}_\text{Flow marginal} + \bar{Y}_\text{grand}$$
 
@@ -400,7 +400,7 @@ knitr::kable(df_int, row.names = FALSE,
              caption = "What is left of each cell mean after both main effects")
 ```
 
-In a balanced 2x2, the four leftovers are the same size, two positive and two negative, so every channel's squared leftover is $`r round(mean(A) - (nopoll_mean + low_mean - gm),2)`^2$. Squaring and summing gives $SS_\text{Interaction} = 20 \times `r round(mean(A) - (nopoll_mean + low_mean - gm),2)`^2 = `r round(sum(diff_sq),2)`$.
+In a balanced 2x2, the four leftovers are the same size, two positive and two negative, so every channel's squared leftover is $`r round(mean(A) - (nopoll_mean + low_mean - gm),2)`^2$. Summing over the 20 channels gives $SS_\text{Interaction} = 20 \times `r round(mean(A) - (nopoll_mean + low_mean - gm),2)`^2 = `r round(sum(diff_sq),2)`$.
 
 ### SS Error
 
@@ -492,7 +492,7 @@ $$
 
 Because each effect gets its own denominator, partial values do not sum to 1. They are always at least as large as the corresponding $\eta^2$, because $SS_\text{Effect} + SS_\text{Error}$ is never larger than $SS_\text{Total}$.
 
-The distinction never came up in @sec-anova, because a one-way ANOVA has only one effect, so there are no other factors to set aside, and $SS_\text{Effect} + SS_\text{Error}$ *is* $SS_\text{Total}$. The two formulas give the same number there. They only diverge once a design has more than one factor.
+The distinction never came up in @sec-anova, because a one-way ANOVA has only one effect, so there are no other factors to set aside, and $SS_\text{Effect} + SS_\text{Error}$ *is* $SS_\text{Total}$. The two formulas give the same number there.
 
 ```{r}
 #| label: tbl-10etasq
@@ -517,8 +517,6 @@ Flow explains `r round(100*ss_flow/ss_total)`% of the total variation, pollution
 **Say which one you report.** Most statistical software, including SPSS and R's `effectsize` package, gives you $\eta_p^2$ by default, and it is the more common choice in published work. Either is defensible, but say which you used, because the two can differ substantially: pollution is $\eta^2 = `r round(ss_poll/ss_total, 2)`$ but $\eta_p^2 = `r round(ss_poll/(ss_poll+ss_error), 2)`$ here. Reporting the larger number without labeling it overstates the effect. Do not compare $\eta_p^2$ from one study with $\eta^2$ from another, because the two use different denominators.
 
 ## Interpreting main effects and interactions
-
-With the ANOVA table computed, the next step is to interpret it.
 
 A main effect is a factor's effect averaged across the levels of the other factor. An interaction means the effect of one IV depends on the level of another. So when there is an interaction, the main effect of at least one factor is an average of effects that differ across conditions.
 
@@ -636,7 +634,7 @@ Those two numbers describe the interaction. Pollution costs `r f1(simple_low)` s
 
 Testing a simple effect asks whether pollution's effect holds at one specific level of flow, so it looks like a two-sample comparison: no pollution vs. pollution, at low flow only. One option is to pull out the 10 low-flow channels and run a two-sample $t$-test on them alone. That test estimates the error variance from those 10 channels, with 8 degrees of freedom, and ignores the 10 high-flow channels. The omnibus ANOVA above (@sec-anova) already gives a better estimate of that error variance, $MS_\text{Error}$, from all 20 channels.
 
-The fix is to reuse that pooled estimate. $MS_\text{Error}$ and its 16 degrees of freedom already describe the noise in this design better than any subset could, so the simple-effects test uses them in a two-sample $t$:
+The simple-effects test reuses that pooled estimate, $MS_\text{Error}$ with its 16 degrees of freedom, in a two-sample $t$:
 
 $$t = \frac{\bar{Y}_\text{NoPoll} - \bar{Y}_\text{Poll}}{\sqrt{MS_\text{Error}\left(\dfrac{1}{n_\text{NoPoll}}+\dfrac{1}{n_\text{Poll}}\right)}}, \qquad df = df_\text{Error}$$
 
@@ -845,7 +843,7 @@ Up until now we have focused on the simplest case for factorial designs, the 2x2
 
 ### 3x2 design
 
-This design works like the 2x2, with one more level added to one factor. The test structure is the same (two main effects and one interaction). The interaction is harder to interpret.
+This design works like the 2x2, with one more level added to one factor. The test structure is the same (two main effects and one interaction).
 
 The same stream example extends to a 3x2. Suppose we examine macroinvertebrate species count (the dependent variable, DV) under three flow rates (low, medium, high) crossed with two pollution conditions (no pollution vs. pollution).
 
@@ -1005,7 +1003,7 @@ Factorial ANOVA can handle many experimental structures, but each added factor m
 
 -   **Fully crossed means every combination.** A factorial design pairs every level of each IV with every level of the others. The notation says the structure: 2x2 is four conditions, 3x2 is six.
 -   **A 2x2 tests three things.** One main effect per factor, plus their interaction. That means three null hypotheses, and you should be able to state all three in plain language before running anything.
--   **An interaction is a difference between differences.** It asks whether the effect of one factor changes across levels of another. The interaction sum of squares computes this difference between differences.
+-   **An interaction is a difference between differences.** It asks whether the effect of one factor changes across levels of another. The interaction sum of squares measures it.
 -   **The partition extends the one-way logic.** $SS_\text{Total}$ now splits into each main effect, the interaction, and error ($SS_\text{Error}$, @sec-anova's $SS_\text{Within}$ in the one-way ANOVA). Each effect gets its own $F$, all sharing $MS_\text{Error}$ as the denominator. Working one table through by hand shows that the interaction term is the only new piece.
 -   **Three tests, three effect sizes.** $\eta^2$ divides each effect's $SS$ by $SS_\text{Total}$, and $\eta_p^2$ divides it by that effect plus error. Partial values are at least as large and do not sum to 1, so label which one you are reporting. A significant effect can still be a small one, which is exactly the case for this chapter's interaction.
 -   **Read the interaction first.** If it's significant, lead with simple effects: what factor A does at each level of B, as $\Delta$ values from the cell means, tested with the pooled $MS_\text{Error}$. A main effect can still be reported, qualified, when the simple effects all point the same way. When one is near zero or they reverse, the main effect describes no actual condition. When the interaction is not significant, interpret each main effect as an overall difference, with Tukey HSD for a factor with three or more levels.

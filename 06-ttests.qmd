@@ -166,7 +166,7 @@ pct_beyond2_n10  <- 100 * mean(abs(sim_t(10)) > 2)
 pct_beyond2_n101 <- 100 * mean(abs(sim_t(101)) > 2)
 ```
 
-In a simulation with $H_0$ true, `r sprintf("%.1f", pct_beyond2_n10)`% of $t$ values from samples of 10 fall beyond $\pm 2$, against `r sprintf("%.1f", pct_beyond2_n101)`% from samples of 101, close to the 5% a normal curve gives. Small samples produce more large $t$ values because $s$ is sometimes well below $\sigma$, which shrinks the denominator. A test with few degrees of freedom therefore needs a larger cutoff (2.26 at $df = 9$) to keep the Type I error rate at 5%.
+In a simulation with $H_0$ true, `r sprintf("%.1f", pct_beyond2_n10)`% of $t$ values from samples of 10 fall beyond $\pm 2$, against `r sprintf("%.1f", pct_beyond2_n101)`% from samples of 101, close to the 5% a normal curve gives. A test with few degrees of freedom therefore needs a larger cutoff (2.26 at $df = 9$) to keep the Type I error rate at 5%.
 
 ### Critical values
 
@@ -280,7 +280,7 @@ t.test(sound_db, mu = 50)
 
 The highway noise $t$ of 1.94 can be placed among the $t$ values that chance alone produces. Under $H_0$, sample means far from $\mu_0$ are unlikely, so large values of $|t|$ are rare. The decision rule for a $t$-test follows from this. If the observed $t$ falls beyond the critical values, reject $H_0$.
 
-The **null distribution** of $t$ is the distribution of $t$ values across many samples when $H_0$ is true. For the highway noise example, it is the distribution of $t$ values from many samples of 10 sites if the true mean were exactly the 50 dB guideline. The 1,000 simulated $t$ values in @fig-6t-sim are draws from this distribution at $df = 9$. We are asking whether our $t$ could plausibly have come from that distribution. It is the $t$ version of @sec-inference's chance window and of the sampling distribution of the sample mean under $H_0$. It is a different curve from the null population distribution, which describes individual values. @fig-6tnull shows what that distribution looks like, at $df=9$.
+The **null distribution** of $t$ is the distribution of $t$ values across many samples when $H_0$ is true. For the highway noise example, it is the distribution of $t$ values from many samples of 10 sites if the true mean were exactly the 50 dB guideline. The 1,000 simulated $t$ values in @fig-6t-sim are draws from this distribution at $df = 9$. It is the $t$ version of @sec-inference's chance window and of the sampling distribution of the sample mean under $H_0$. It is a different curve from the null population distribution, which describes individual values. @fig-6tnull shows what that distribution looks like, at $df=9$.
 
 ```{r}
 #| label: fig-6tnull
@@ -302,7 +302,7 @@ ggplot(plot_df, aes(x = range, y = null_distribution)) +
 
 ```
 
-Under $H_0$, $t$ is most likely to be near zero, because chance alone rarely produces a large difference. The distribution is symmetric, so half of all $t$-values are at or above zero and half are at or below.
+Under $H_0$, $t$ is most likely to be near zero. The distribution is symmetric, so half of all $t$-values are at or above zero and half are at or below.
 
 We can get more precise than a 50/50 split. @fig-6percentregions divides the same distribution into ten regions, each containing 10% of the distribution. Notice the regions get wider out in the tails: since most $t$-values cluster near 0, it takes a wider interval out there to capture the same 10%.
 
@@ -337,8 +337,6 @@ For example:
 2.  $-1.38 \leq t \leq -0.88$ contains 10% of the $t$ values.
 3.  $-0.88 \leq t \leq -0.54$ contains 10% of the $t$ values.
 4.  $t \geq 1.38$ contains 10% of the $t$ values.
-
-Each range captures the same 10% of the distribution, even though the ranges themselves are different widths.
 
 The highway noise $t$ of 1.94 is beyond 1.38, so it falls in the top 10% of this distribution. Its exact $p$-value comes from software, and the one-tailed section below uses it.
 
@@ -410,9 +408,9 @@ Every test in this book has assumptions. Assumptions are conditions that need to
 
 **Test-specific assumptions.** These come from how a particular test's math works, and they differ test to test. For the one-sample and paired $t$-tests, the specific assumption is approximate normality of the outcome itself (one-sample) or of the difference scores (paired). The $t$ distribution we've been using to get $p$-values is *derived* assuming the population is normal, which makes the sample mean normally distributed too. If your data are badly skewed and your sample is small, that assumption fails, and the $p$-value may not be the true probability of a result this extreme under $H_0$.
 
-**Whether non-normality matters depends on $n$.** With a large sample, the sampling distribution of the sample mean tends toward normal even when individual observations are skewed (the central limit theorem), so once $n$ is reasonably large, the $t$-test's $p$-values stay close to correct even when the data are not normal. Much environmental field data comes from small samples that are also skewed. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit in a season. A $t$-test's answer becomes questionable when the sample is small and the data are also non-normal.
+**Whether non-normality matters depends on $n$.** With a large sample, the sampling distribution of the sample mean tends toward normal even when individual observations are skewed (the central limit theorem), so the $t$-test's $p$-values stay close to correct. Much environmental field data comes from small samples that are also skewed. Examples include a handful of expensive water samples, a short list of monitoring wells, or the five plots you had time to visit in a season. A $t$-test's answer becomes questionable when the sample is small and the data are also non-normal.
 
-**What to do about it.** First, look at your data. A histogram or a Q-Q plot (@sec-regression shows how to read one) will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. A small Shapiro-Wilk $p$-value is evidence that the data did not come from a normal distribution. A large $p$-value means the test found no such evidence, which is weaker than showing the data are normal. Treat the result as one more piece of evidence alongside the plot. With a small sample, which is when a violation matters most, the test has low power and often fails to reject $H_0$ even when the data are far from normal. With a small sample, exactly when a violation matters most, it has low power and will often say "no problem" even when there is one. If your data look far from normal and your sample is small, you can use a nonparametric test instead, which does not assume normality (@sec-nonparametric). You'll meet these nonparametric alternatives in the next chapter, once we've covered all three $t$-test forms below.
+**What to do about it.** First, look at your data. A histogram or a Q-Q plot (@sec-regression shows how to read one) will usually tell you whether "approximately normal" is a reasonable description or a stretch. You can also run a formal normality test, the **Shapiro-Wilk test** (`shapiro.test()` in R), which tests $H_0$: the data came from a normal distribution. A small Shapiro-Wilk $p$-value is evidence that the data did not come from a normal distribution. A large $p$-value means the test found no such evidence, which is weaker than showing the data are normal. Treat the result as one more piece of evidence alongside the plot. With a small sample, which is when a violation matters most, the test has low power and often fails to reject $H_0$ even when the data are far from normal. If your data look far from normal and your sample is small, you can use a nonparametric test instead, which does not assume normality. You'll meet these nonparametric alternatives in the next chapter, once we've covered all three $t$-test forms below.
 
 @tbl-6card-onesample collects the one-sample $t$-test on one card.
 
@@ -453,7 +451,7 @@ The dashed boxes mark what makes this design paired. In the design figures in ea
 -   $d_i>0$: plot had more soil moisture after restoration (increase)
 -   $d_i<0$: plot had less soil moisture after restoration (decrease)
 
-This subtraction cancels between-plot variability (some plots are naturally wetter than others) and focuses on within-plot change. Because the subtraction removes those plot-to-plot differences, the difference scores vary less than the raw soil moisture values do. A smaller $s_d$ gives a smaller standard error, so the paired test has more power than an independent-samples test (the third test in this chapter) on the same data.
+This subtraction cancels between-plot variability (some plots are naturally wetter than others) and focuses on within-plot change, so the difference scores vary less than the raw soil moisture values do. A smaller $s_d$ gives a smaller standard error, so the paired test has more power than an independent-samples test (the third test in this chapter) on the same data.
 
 -   $H_0$: $\mu_d = 0$, where $\mu_d$ is the mean difference score in the population of plots. Restoration did not change soil moisture.
 -   $H_a$: $\mu_d \neq 0$.
@@ -481,7 +479,7 @@ $t$ has the same sign as $\bar d$. If you subtracted Before from After, a positi
 
 ### Calculating $t$ from the differences
 
-To calculate $t$ for a paired $t$-test, we use the one-sample $t$-test formula from the previous section, applied to the difference scores instead of raw scores. The paired-samples $t$-test is a one-sample $t$-test on a single group of numbers, the differences.
+To calculate $t$ for a paired $t$-test, we use the one-sample $t$-test formula from the previous section, applied to the difference scores instead of raw scores.
 
 To keep the arithmetic short, we first work through five of the 20 plots by hand. The next section runs the test on all 20. The table below shows the five plots and each step toward $t$.
 
@@ -617,7 +615,7 @@ $$s_p = \sqrt{\frac{(n_A-1)s_A^2 + (n_B-1)s_B^2}{n_A+n_B-2}}$$
 
 The pooled test has $df = n_A + n_B - 2$, one degree of freedom used for each group's mean. With two groups of 5, that is $df = 8$, the 8 in $t(8)$ below.
 
-The pooled test adds two test-specific assumptions: the outcome is approximately normal within each group, and the two groups have similar variances. When the spreads clearly differ, use Welch's version instead, which does not pool the variances. In R, `t.test(a, b)` without `var.equal = TRUE` runs Welch's version.
+The pooled test adds two test-specific assumptions: the outcome is approximately normal within each group, and the two groups have similar variances. When the spreads clearly differ, use Welch's version instead, which does not pool the variances.
 
 @tbl-6pooled-welch compares the pooled test with Welch's version.
 
@@ -635,7 +633,7 @@ The worked example compares bird species at ten field-edge sites. Five sites had
 -   $H_0$: $\mu_A = \mu_B$. Hedgerows make no difference to the mean number of bird species.
 -   $H_a$: $\mu_A \neq \mu_B$.
 
-The code below follows the formula step by step in R, then checks it against `t.test()`. R reports the same $t$ in the table below.
+The code below follows the formula step by step in R, then checks it against `t.test()`.
 
 ```{r, echo=TRUE }
 
@@ -734,7 +732,7 @@ Cohen's $d$ for two independent groups divides the mean difference by the pooled
 : The three $t$-tests compared. {#tbl-6three-tests}
 
 ::: {.callout-important title="Results reporting: t-tests"}
-All three forms report the same things in the same order. Each write-up gives the effect and its direction in plain language, the test statistic with its df, $p$, and the 95% CI for the effect. A write-up can add Cohen's $d$, as the independent-samples example does. For the paired test, that is the CI for the mean difference score. For the independent-samples test, it is the CI for the mean difference. The three forms differ only in what counts as the effect.
+All three forms report the same things in the same order. Each write-up gives the effect and its direction in plain language, the test statistic with its df, $p$, and the 95% CI for the effect. A write-up can add Cohen's $d$, as the independent-samples example does.
 
 One-sample, where the effect is the sample mean against the reference value:
 
