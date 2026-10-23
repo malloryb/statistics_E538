@@ -50,7 +50,7 @@ In each question, a continuous variable is related to the outcome, and a categor
 
 The first question points to a limitation of the last chapter. "Pollution: present or absent" simplifies a continuous measurement, a concentration in parts per billion. Sorting continuous measurements into "high" and "low" buckets throws away the information a covariate needs, which is how much more polluted a channel is, not just whether it is polluted. Whenever you have the measured values, analyze them as a continuous covariate instead of forcing them into groups first. With a categorical factor still in the design, that analysis is ANCOVA. With no categorical factor left, it is plain regression.
 
-**Analysis of covariance (ANCOVA)** is a linear model with a continuous outcome, at least one continuous predictor (the covariate), and at least one categorical predictor (the factor). It asks whether the covariate's relationship with the outcome is the same in every group and, if it is, whether the groups differ at the same covariate value. ANCOVA is built directly on the regression equation from Chapter 9. A simple linear model is
+**Analysis of covariance (ANCOVA)** is a linear model with a continuous outcome, at least one continuous predictor (the covariate), and at least one categorical predictor (the factor). It asks whether the covariate's relationship with the outcome is the same in every group and, if it is, whether the groups differ at the same covariate value. ANCOVA is built directly on the regression equation from @sec-regression. A simple linear model is
 
 $$y = \beta_0 + \beta_1 x + \varepsilon$$
 
@@ -394,9 +394,9 @@ design_mixed("PM2.5 (continuous) × Area type (categorical)",
              note = "full pollution range measured in BOTH groups")
 ```
 
-This design has the same structure as the factorial design in Chapter 10. Both cross two predictors and ask whether one changes the effect of the other. The only difference is that factorial's second predictor has levels, while ANCOVA's is a continuous range.
+This design has the same structure as the factorial design in @sec-factorial-anova. Both cross two predictors and ask whether one changes the effect of the other. The only difference is that factorial's second predictor has levels, while ANCOVA's is a continuous range.
 
-Both groups span the full pollution range, so rural sites are not simply the clean ones. An adjusted comparison compares the groups at the same pollution level, and that only works where both groups have sites at that level. Without the overlap, each group's line would have to be extended past its own data, the extrapolation problem from Chapter 9.
+Both groups span the full pollution range, so rural sites are not simply the clean ones. An adjusted comparison compares the groups at the same pollution level, and that only works where both groups have sites at that level. Without the overlap, each group's line would have to be extended past its own data, the extrapolation problem from @sec-regression.
 
 We might expect pollution to have a stronger negative effect in urban areas. Urban habitat is already fragmented and offers birds fewer clean patches to retreat to, while rural areas have more intact habitat nearby.
 
@@ -773,7 +773,7 @@ mse_raw   <- anova(lm(Energy ~ Type, data = energy))["Residuals", "Mean Sq"]
 mse_ancova <- anova(energy_par)["Residuals", "Mean Sq"]
 ```
 
-Adjusting for occupancy also shrank the error term. In the raw comparison the error mean square is `r round(mse_raw)`, and in the parallel-lines model it is `r round(mse_ancova)`. Much of the building-to-building variation in electricity use comes from occupancy, and once the model accounts for it, that variation no longer counts as error. Repeated-measures ANOVA gains power the same way in Chapter 8. There the known source of variation was the units themselves (the monitoring stations), and here it is a measured covariate. Either way, removing it from $MS_\text{Error}$ makes the denominator of the test smaller, so a real group difference is easier to detect.
+Adjusting for occupancy also shrank the error term. In the raw comparison the error mean square is `r round(mse_raw)`, and in the parallel-lines model it is `r round(mse_ancova)`. Much of the building-to-building variation in electricity use comes from occupancy, and once the model accounts for it, that variation no longer counts as error. Repeated-measures ANOVA gains power the same way in @sec-anova. There the known source of variation was the units themselves (the monitoring stations), and here it is a measured covariate. Either way, removing it from $MS_\text{Error}$ makes the denominator of the test smaller, so a real group difference is easier to detect.
 
 ::: {.callout-important title="Results reporting: ANCOVA with parallel slopes"}
 > After adjusting for occupancy, retrofitted buildings used less electricity than standard buildings, $b_2 = `r sprintf("%.1f", b2)`$ kWh per day, $t(57) = `r sprintf("%.2f", b2r$statistic)`$, $p `r fmt_p_eq(b2r$p.value)`$, 95% CI [`r sprintf("%.1f", b2r$conf.low)`, `r sprintf("%.1f", b2r$conf.high)`] kWh per day. Adjusted means at the average occupancy of `r round(occ_bar, 1)` people were `r sprintf("%.1f", adj_retr)` kWh per day for retrofitted buildings and `r sprintf("%.1f", adj_std)` for standard ones. The occupancy × building type interaction was not significant, $F(1, `r e_f[3]`) = `r sprintf("%.2f", e_int$statistic)`$, $p `r fmt_p_eq(e_int$p.value)`$, so a common slope was used (`r sprintf("%.2f", b1)` kWh per day per occupant).
