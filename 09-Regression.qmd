@@ -52,6 +52,7 @@ Here $y$ is the dependent variable (DV) and $x$ is the predictor, the independen
 
 A statistical **model** is an equation that describes how the DV changes with a predictor, plus a term for the variation the equation leaves out. A linear equation fit to data is one example. Real data do not fall exactly on a line, and the **error term** $\varepsilon$ is the part of the DV that the population line does not explain. We never observe $\beta_0$, $\beta_1$, or $\varepsilon$ directly, because they describe the population, and we have only a sample.
 
+::: {.fa26-skip}
 ### Computing the best-fit line by hand {#sec-9byhand}
 
 In practice, we let software find the line with the smallest sum of squared residuals (the least-squares line from @sec-2bestfit), but working through one example by hand shows where that line comes from. We write the intercept and slope calculated from a sample as $b_0$ and $b_1$, to keep them apart from the population values $\beta_0$ and $\beta_1$. Here are the formulas for $b_0$ and $b_1$, calculated straight from the data:
@@ -110,6 +111,7 @@ e &= y - \hat y = 2 - 0.969 = 1.031
 The residual is positive, so that point is above the line. Repeating this for every point, then squaring and summing the residuals, gives the sum of squared residuals, the quantity that $b_0$ and $b_1$ were chosen to make as small as possible.
 
 The residual $e$ is the sample's version of the error $\varepsilon$. The error $\varepsilon$ belongs to the population line, which we never see, and the residual $e$ belongs to the line we fit.
+:::
 
 ### Parameters and sample statistics
 
@@ -315,6 +317,7 @@ The interval also contains $\beta_1 = -0.28$, the true slope we built into the d
 
 ## Partitioning variation: regression as ANOVA {#sec-9partition}
 
+::: {.fa26-skip}
 Besides testing the slope, we want to know how much of the variation in DO the line explains. We answer that the same way as one-way ANOVA in @sec-anova, by splitting the total variation into a piece the model explains and a piece it leaves over.
 
 @fig-9regpartition shows the three pieces for the stream data. Each site's distance from mean DO (gray, left panel) splits into two pieces, the distance from the mean to the line (middle), which the line explains, and the distance from the line to the point (right), the residual.
@@ -365,6 +368,7 @@ $SS_\text{Total}$ is the sum of the squared distances from each point to mean DO
 $$SS_\text{Total} = SS_\text{Regression} + SS_\text{Residual}, \qquad `r sprintf("%.2f", ss_total)` = `r sprintf("%.2f", ss_reg)` + `r sprintf("%.2f", ss_res)`$$
 
 The pieces line up with @sec-anova's. $SS_\text{Regression}$ is the variation the predictor explains, the role $SS_\text{Between}$ played for group means. $SS_\text{Residual}$ is what's left over around the line, the role $SS_\text{Within}$ played around each group's mean. Treating every temperature value as its own group means that the line supplies a predicted mean at each value of $x$, in place of one mean per group.
+:::
 
 **R-squared** ($R^2$) is the proportion of the total variation explained by the line:
 
@@ -372,6 +376,7 @@ $$R^2 = \frac{SS_\text{Regression}}{SS_\text{Total}} = \frac{`r sprintf("%.2f", 
 
 It runs from 0 to 1, and it is the same quantity as $\eta^2$ from @sec-8etasq. For simple regression with one predictor, $R^2$ is also Pearson's $r$ from @sec-2pearson, squared: $(`r sprintf("%.3f", cor(stream_df$stream_temp, stream_df$DO))`)^2 = `r sprintf("%.3f", cor(stream_df$stream_temp, stream_df$DO)^2)`$.
 
+::: {.fa26-skip}
 **The regression ANOVA table.** Dividing each sum of squares by its degrees of freedom gives mean squares, and their ratio is $F$, exactly as in @tbl-8anovaformulas. The regression row uses 1 degree of freedom, one for the slope. The residual row uses $n-2$, since the line estimated two things, an intercept and a slope.
 
 ```{r}
@@ -390,6 +395,7 @@ anova_kable(fit)
 $$F = \frac{MS_\text{Regression}}{MS_\text{Residual}} = \frac{SS_\text{Regression}/1}{SS_\text{Residual}/`r nrow(stream_df) - 2`} = \frac{`r sprintf("%.2f", ss_reg)`/1}{`r sprintf("%.2f", ss_res)`/`r nrow(stream_df) - 2`} = \frac{`r sprintf("%.2f", ss_reg)`}{`r sprintf("%.3f", ss_res / (nrow(stream_df) - 2))`} = `r sprintf("%.2f", fit_glance$statistic)`$$
 
 With one predictor, $F$ and the slope's $t$ test the same thing: $F = t^2 = (`r sprintf("%.2f", fit_tidy$statistic[2])`)^2 = `r sprintf("%.2f", fit_tidy$statistic[2]^2)`$, with the same $p$. $F$ is the form that generalizes to models with more than one predictor, which is why software reports both.
+:::
 
 Here $R^2 = `r sprintf("%.2f", fit_glance$r.squared)`$, so stream temperature explains about `r round(fit_glance$r.squared*100)`% of the variation we observed in dissolved oxygen across sites. The remaining `r 100 - round(fit_glance$r.squared*100)`% comes from everything else the model doesn't capture (discharge, shading, groundwater input, and so on), and it shows up as the residuals.
 
@@ -557,6 +563,7 @@ Fixes typically include:
 -   a transformation, re-expressing a variable on a different scale so a straight line fits it (log-transforming a variable that grows multiplicatively, like the outbreak data above, is the most common case)
 -   or a nonlinear model entirely, beyond what this course covers
 
+::: {.fa26-skip}
 ### Checking normality {#sec-9normality}
 
 For normality, we check the residuals two ways: visually, with a Q-Q plot, and formally, with the Shapiro-Wilk test (@sec-6assumptions).
@@ -613,6 +620,7 @@ sh_outbreak <- shapiro.test(resid(fit_outbreak))
 ```
 
 The Q-Q plot bends away from the diagonal at the low end, but Shapiro-Wilk does not reject normality ($p `r fmt_p_eq(sh_outbreak$p.value)`$). On a model we already know is the wrong shape, the normality checks give at most borderline evidence of a problem. They check *normality of the residuals*, which is a different assumption from linearity, and a model can badly violate linearity while its residuals look only mildly non-normal.
+:::
 
 ::: {.callout-important title="Results reporting: regression"}
 We report a regression result the same way as any other test: the slope, the test statistic with its degrees of freedom, $p$, the slope's confidence interval, and $R^2$ as the effect size.
