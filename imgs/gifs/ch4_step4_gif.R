@@ -16,7 +16,7 @@ base <- function(title) ggplot() + coord_cartesian(xlim = c(-4.5, 4.5), ylim = c
   theme(axis.text = element_blank(), axis.ticks = element_blank(), plot.title = element_text(size = 13, face = "italic", colour = "grey35")) +
   annotate("segment", x = xbar, xend = xbar, y = 0, yend = 1.22, colour = "limegreen", linetype = "dotted", linewidth = 1.6) +
   annotate("text", x = xbar + 0.12, y = 1.3, label = "bar(x)", parse = TRUE, hjust = 0, colour = "#1E9E1E", fontface = "bold", size = 5)
-pop  <- function(p, y, a = 1) p + geom_line(aes(x = xs, y = !!y), colour = "green3", linetype = "dashed", linewidth = 1.3, alpha = a)
+pop  <- function(p, y, a = 1) p + geom_line(aes(x = xs, y = !!y), colour = "darkgreen", linetype = "dashed", linewidth = 1.3, alpha = a)
 samp <- function(p, a = 1) p + geom_line(aes(x = xs, y = dnorm(xs, xbar, SE)), colour = "darkgreen", linetype = "dotdash", linewidth = 1.2, alpha = a)
 lab  <- function(p, y, l1, l2, col) p +
   annotate("text", x = 4.45, y = y, label = l1, parse = TRUE, hjust = 1, colour = col, size = 4.6) +

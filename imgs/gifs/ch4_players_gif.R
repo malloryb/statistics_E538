@@ -7,7 +7,7 @@ xs <- seq(-4.5, 4.5, by = 0.01)
 curves <- list(
   nullpop = list(y = dnorm(xs, mu0, 1),    col = "blue",      lt = "solid",   lw = 1.3),
   sampH0  = list(y = dnorm(xs, mu0, SE),   col = "blue",      lt = "dotdash", lw = 1.1),
-  estpop  = list(y = dnorm(xs, xbar, 1),   col = "green3",    lt = "dashed",  lw = 1.3),
+  estpop  = list(y = dnorm(xs, xbar, 1),   col = "darkgreen",    lt = "dashed",  lw = 1.3),
   samp    = list(y = dnorm(xs, xbar, SE),  col = "darkgreen", lt = "dotdash", lw = 1.1),
   truepop = list(y = dnorm(xs, true_m, 1), col = "orange",    lt = "solid",   lw = 1.3)
 )
