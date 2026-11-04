@@ -208,6 +208,7 @@ For ANCOVA, you need:
 
 ### Indicator variables and how they work
 
+::: {.fa26-skip}
 Before reading coefficients off an ANCOVA table, it helps to see how one equation can represent two groups at once.
 
 An **indicator variable** is a variable that equals 1 for observations in one group and 0 for all other observations. Categorical predictors get into a linear model as indicator variables (you'll also see them called dummy variables). For a factor with $k$ groups you include $k-1$ indicators. The group left out needs no indicator of its own, because an observation with 0 on every indicator must belong to it. That group is the **reference group**, and every coefficient involving the factor is interpreted relative to it. With two groups, one indicator does the whole job:
@@ -237,9 +238,11 @@ y &= (2x + 3) + (1x - 7) \\
 so the slope is 3 and the intercept is $-4$.
 
 Turning on the indicator adds +1 to the slope and −7 to the intercept. The one equation gives two different lines, and the value of the indicator decides which one applies.
+:::
 
 Linear models represent different groups this way. The indicator ($G$) and its interaction with $x$ let a single equation shift the intercept and the slope for each group. ANCOVA uses exactly this logic to test, in order, whether the slopes differ between groups (the $x G$ term) and, if they don't, whether the adjusted means differ (the $G$ term).
 
+::: {.fa26-skip}
 **Naming the pieces.** Written in the general form, the same equation gives each coefficient a name and a meaning:
 
 $$y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x}_{\text{reference slope}} + \underbrace{\beta_2 G}_{\text{intercept shift}} + \underbrace{\beta_3 x G}_{\text{slope shift}} + \varepsilon$$
@@ -247,6 +250,7 @@ $$y = \underbrace{\beta_0}_{\text{reference intercept}} + \underbrace{\beta_1 x}
 -   $\beta_0$ and $\beta_1$ describe the line for the reference group ($G=0$).
 -   $\beta_2$ is how much the intercept moves for the other group.
 -   $\beta_3$ is how much the slope changes for the other group. This is the interaction term. In @sec-factorial-anova, an interaction meant that the effect of one factor depended on the level of the other factor. Here it means that the effect of $x$, its slope, depends on the group. Both are the same idea, because an interaction means the effect of one predictor depends on the value of another, whether that predictor is a factor or a covariate.
+:::
 
 The **parallel-lines model** includes $\beta_2$ but leaves out $\beta_3$, so the intercept can shift between groups but the slope cannot, and the two lines are parallel. When the slope difference is not significant, we use this simpler model instead of keeping the interaction term.
 
@@ -335,7 +339,9 @@ The **adjusted means** are the group means you would expect if both groups had t
 
 In the parallel-lines model, $\beta_1$ is the common slope.
 
+::: {.fa26-skip}
 **Intercepts and centering.** Intercepts are evaluated at $x=0$. In the model with an interaction, the lines can have different slopes, so $\beta_2$ compares the groups at $x=0$ only, which may be far outside the data. **Centering** the covariate means subtracting its mean from every value, $\tilde x = x - \bar x$. After centering, $\tilde x = 0$ where $x = \bar x$, so the intercept and $\beta_2$ now describe the lines at the average covariate value. In the parallel-lines model the gap is the same everywhere, so centering changes the intercept but not $\beta_2$.
+:::
 
 **What to report.**
 
@@ -614,6 +620,7 @@ Both slopes are significant. Bird density falls with pollution at rural sites an
 
 The points scatter around each line. The model's $R^2$ is `r sprintf("%.2f", summary(ancova_lm)$r.squared)`, so air pollution, area type, and their interaction explain about `r round(100*summary(ancova_lm)$r.squared)`% of the variation in bird density. The remaining `r 100 - round(100*summary(ancova_lm)$r.squared)`% is the random scatter built into these invented data. In field data, that remainder would include other factors, measurement noise, and natural variability. An $R^2$ this large is strong by the standards of field data, and it is large here partly because the data were invented to illustrate the method.
 
+::: {.fa26-skip}
 **Centering the covariate.**
 
 Interpreting intercepts at $x = 0$ can be misleading when "zero pollution" isn't meaningful.
@@ -648,6 +655,7 @@ Centering doesn't change the slopes, the interaction, or their $p$-values. It mo
 -   **Interaction ($`r sprintf("%.3f", cc["AirPollution_c:AreaTypeUrban"])`$).** Difference in slopes between groups. The urban slope = $`r sprintf("%.3f", cc["AirPollution_c"])` + (`r sprintf("%.3f", cc["AirPollution_c:AreaTypeUrban"])`) \approx `r sprintf("%.2f", cc["AirPollution_c"] + cc["AirPollution_c:AreaTypeUrban"])`$, roughly twice as steep a decline as in rural sites.
 
 The group difference changed when we centered, from $`r sprintf("%.1f", coef(ancova_lm)["AreaTypeUrban"])`$ to $`r sprintf("%.1f", cc["AreaTypeUrban"])`$. Uncentered, the term compares groups at pollution = 0, a value outside the observed data. Centered, it compares them at average pollution, a value inside the observed range. When slopes differ, "the group difference" is not one number. It depends on where along the covariate you look.
+:::
 
 **Summarize and interpret.**
 
