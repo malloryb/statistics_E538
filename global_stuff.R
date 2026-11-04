@@ -225,6 +225,8 @@ abbrev <- function(x) vapply(strsplit(x, "\\s+"),
 
 design_crossed <- function(iv, levels_a, levels_b, dv, question, note) {
   bw <- 1.02; gap <- 0.11
+  # a long level label (e.g. "No Pollution") goes on two lines so it stays inside its box
+  wrap_lab <- function(x) ifelse(nchar(x) > 10, sub(" ", "\n", x), x)
   ka <- length(levels_a); kb <- length(levels_b)
   ax <- XSHAPE + (seq_len(ka)-1)*(bw+gap) + bw/2
   cx <- max(ax) + bw/2 + 0.34
@@ -244,14 +246,14 @@ design_crossed <- function(iv, levels_a, levels_b, dv, question, note) {
              size = 3.1, fontface="bold", colour="grey45") +
     annotate("tile", x = ax, y = Y_KIND, width = bw, height = 0.42,
              fill = NA, colour = "grey25", linewidth = 0.7) +
-    annotate("text", x = ax, y = Y_KIND, label = levels_a, fontface="bold",
+    annotate("text", x = ax, y = Y_KIND, label = wrap_lab(levels_a), fontface="bold", lineheight = 0.9,
              size = 2.8, colour = "grey5") +
     annotate("text", x = cx, y = Y_KIND, label = "\u00d7", size = 5.5, colour="grey35") +
     annotate("text", x = mean(bx), y = Y_KIND+0.42, label = "Factor 2",
              size = 3.1, fontface="bold", colour="grey45") +
     annotate("tile", x = bx, y = Y_KIND, width = bw, height = 0.42,
              fill = NA, colour = "grey25", linewidth = 0.7) +
-    annotate("text", x = bx, y = Y_KIND, label = levels_b, fontface="bold",
+    annotate("text", x = bx, y = Y_KIND, label = wrap_lab(levels_b), fontface="bold", lineheight = 0.9,
              size = 2.8, colour = "grey5") +
     annotate("text", x = ex, y = Y_KIND, label = "=", size = 5.5, colour="grey35") +
     annotate("text", x = mean(gxs), y = Y_KIND+0.42,
