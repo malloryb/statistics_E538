@@ -68,7 +68,7 @@ f1 <- function(x) formatC(x, format = "f", digits = 1)  # one decimal, keeps 6.0
 
 In science, outcomes rarely depend on just one thing. Climate, soil type, and water availability all act together to influence ecosystems in ways a single-factor design can't capture. *Factorial designs* let us study several factors, and how they interact with each other, at once.
 
-@sec-anova's one-way ANOVA tested a single factor, the ANOVA name for an independent variable (IV). This chapter uses both words. This chapter covers how to compute a factorial ANOVA, including a full by-hand walkthrough of the sums-of-squares arithmetic, and how to interpret the result. With more than one factor, interpretation is harder, because an *interaction* changes what the main effects in the results table mean.
+@sec-regression split variation around a fitted line. This chapter goes back to group means. @sec-anova's one-way ANOVA tested a single factor, the ANOVA name for an independent variable (IV). This chapter uses both words. It covers how to compute a factorial ANOVA, including a full by-hand walkthrough of the sums-of-squares arithmetic, and how to interpret the result. With more than one factor, interpretation is harder, because an *interaction* changes what the main effects in the results table mean. Both terms are defined in the Main effects and interactions section below.
 
 ## Factorial basics
 
@@ -227,7 +227,7 @@ Equivalently, an interaction is a difference between differences. Each simple ef
 | Term | Definition | Stream experiment |
 |:---------|:--------------------------------|:-------------------|
 | Cell mean | The mean of the channels in one condition | No pollution with low flow: `r f1(mean(A))` species |
-| Main effect | The difference between one factor's marginal means, averaged across the levels of the other factor | Pollution: $`r f1(nopoll_mean)` - `r f1(poll_mean)` = `r f1(nopoll_mean - poll_mean)`$ species |
+| Main effect | A difference among one factor's marginal means, which average across the levels of the other factor | Pollution: $`r f1(nopoll_mean)` - `r f1(poll_mean)` = `r f1(nopoll_mean - poll_mean)`$ species |
 | Simple effect | The effect of one factor at a single level of the other | Pollution under low flow: `r f1(simple_low)` species. Under high flow: `r f1(simple_high)` species. |
 | Interaction | The effect of one factor depends on the level of the other. The simple effects differ, a difference between differences. | $`r f1(simple_low)` - `r f1(simple_high)` = `r f1(simple_low - simple_high)`$ species |
 
@@ -302,7 +302,7 @@ In our between-subjects 2x2 design, 5 stream channels are assigned to each condi
 
 $$SS_\text{Total} = SS_\text{Pollution} + SS_\text{Flow} + SS_\text{Interaction} + SS_\text{Error}$$
 
-The tables below build up each piece. The first three have one row per channel, showing what that channel's score gets replaced with, its distance from the grand mean, and that distance squared.
+The tables below build up each piece. The first three have one row per channel: the channel's score or the marginal mean that replaces it, its distance from the grand mean, and that distance squared. The interaction table has one row per cell.
 
 ### SS Total
 
@@ -447,9 +447,9 @@ knitr::kable(df_int, row.names = FALSE, align = "lrrrrrrr",
                            "Plus grand mean", "Leftover", "Leftover squared", "Times 5 channels"))
 ```
 
-In a balanced 2x2, the four leftovers are the same size, two positive and two negative (@tbl-10ssint), so every channel's squared leftover is $`r round(mean(A) - (nopoll_mean + low_mean - gm),2)`^2$. Summing over the 20 channels gives $SS_\text{Interaction} = 20 \times `r round(mean(A) - (nopoll_mean + low_mean - gm),2)`^2 = `r round(sum(diff_sq),2)`$.
+In a balanced 2x2 (the same number of channels in every cell, @sec-8assumptions), the four leftovers are the same size, two positive and two negative (@tbl-10ssint), so every channel's squared leftover is $`r round(mean(A) - (nopoll_mean + low_mean - gm),2)`^2$. Summing over the 20 channels gives $SS_\text{Interaction} = 20 \times `r round(mean(A) - (nopoll_mean + low_mean - gm),2)`^2 = `r round(sum(diff_sq),2)`$.
 
-Each leftover is a quarter of the difference between differences computed earlier, $`r f1(simple_low - simple_high)`/4 = `r sprintf('%.2f', (simple_low - simple_high)/4)`$, so a larger gap between the two simple effects gives larger leftovers and a larger $SS_\text{Interaction}$.
+Each leftover is a quarter of the difference between differences computed earlier, $`r f1(simple_low - simple_high)`/4 = `r sprintf('%.2f', (simple_low - simple_high)/4)`$, so a larger gap between the two simple effects gives larger leftovers and a larger $SS_\text{Interaction}$. The main-effect shifts cancel in a difference between differences, so the `r f1(simple_low - simple_high)` is made of leftovers alone: $(`r sprintf('%.2f', (simple_low - simple_high)/4)` - (-`r sprintf('%.2f', (simple_low - simple_high)/4)`)) - (-`r sprintf('%.2f', (simple_low - simple_high)/4)` - `r sprintf('%.2f', (simple_low - simple_high)/4)`) = 4 \times `r sprintf('%.2f', (simple_low - simple_high)/4)` = `r f1(simple_low - simple_high)`$.
 
 ### SS Error
 
@@ -643,13 +643,13 @@ ggplot(denoms, aes(x = ss, y = bar, fill = part)) +
   theme(legend.position = "top")
 ```
 
-Flow explains `r round(100*ss_flow/ss_total)`% of the total variation, pollution `r round(100*ss_poll/ss_total)`%, and the interaction `r round(100*ss_int/ss_total)`%. The interaction is significant, and it is also the smallest of the three effects. Significance and size answer different questions (@sec-errors-power). A significant $F$ says the effect is probably not zero, and $\eta^2$ says how large it is. Even with the smallest $\eta^2$, the interaction decides how the pollution main effect is read.
+@tbl-10etasq gives both values for each effect. Flow explains `r round(100*ss_flow/ss_total)`% of the total variation, pollution `r round(100*ss_poll/ss_total)`%, and the interaction `r round(100*ss_int/ss_total)`%. The interaction is significant, and it is also the smallest of the three effects. Significance and size answer different questions (@sec-errors-power). A significant $F$ says data like these would be unlikely if the effect were zero, and $\eta^2$ says how large it is. Even with the smallest $\eta^2$, the interaction decides how the pollution main effect is read.
 
 **Say which one you report.** Most statistical software, including SPSS and R's `effectsize` package, gives you $\eta_p^2$ by default, and it is the more common choice in published work. Either is defensible, but say which you used, because the two can differ substantially: pollution is $\eta^2 = `r round(ss_poll/ss_total, 2)`$ but $\eta_p^2 = `r round(ss_poll/(ss_poll+ss_error), 2)`$ here. Reporting the larger number without labeling it overstates the effect. Do not compare $\eta_p^2$ from one study with $\eta^2$ from another, because the two use different denominators.
 
 ## Interpreting main effects and interactions
 
-A main effect is the difference between the marginal means of one IV, which average across the levels of the other factor. An interaction means the effect of one IV depends on the level of another. So when there is an interaction, each factor's main effect is an average of simple effects that differ across the levels of the other factor. In the stream data, pollution's simple effects (`r f1(simple_low)` and `r f1(simple_high)`) and flow's simple effects (`r f1(mean(C) - mean(A))` and `r f1(mean(D) - mean(B))`) both differ by `r f1(simple_low - simple_high)` species.
+A main effect is a difference among the marginal means of one IV, which average across the levels of the other factor. An interaction means the effect of one IV depends on the level of another. So when there is an interaction, each factor's main effect is an average of simple effects that differ across the levels of the other factor. In the stream data, pollution's simple effects (`r f1(simple_low)` and `r f1(simple_high)`) and flow's simple effects ($`r f1(mean(C))` - `r f1(mean(A))` = `r f1(mean(C) - mean(A))`$ without pollution, $`r f1(mean(D))` - `r f1(mean(B))` = `r f1(mean(D) - mean(B))`$ with it) both differ by `r f1(simple_low - simple_high)` species.
 
 ### Reading patterns in a 2x2
 
@@ -723,7 +723,7 @@ ggplot(all_22s, aes(x = Flow, y = means, fill = Pollution)) +
 
 ```
 
-@fig-10lines22 shows the same patterns in line graph form:
+@fig-10lines22 shows the same patterns in line graph form. A line graph of cell means like these is called an **interaction plot**.
 
 ```{r}
 #| label: fig-10lines22
@@ -1013,7 +1013,7 @@ Lead with the interaction, then give the simple effects. Report a main effect on
 |                |                                                                                                             |
 |                | Each $H_a$ says its null is false                                                                           |
 +----------------+-------------------------------------------------------------------------------------------------------------+
-| Assumptions    | Similar spread in every cell                                                                                |
+| Assumptions    | Homogeneity of variance (similar spread in every cell)                                                      |
 |                |                                                                                                             |
 |                | Approximately normal residuals                                                                              |
 +----------------+-------------------------------------------------------------------------------------------------------------+
